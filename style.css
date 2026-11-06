@@ -1215,8 +1215,7 @@ a { color: inherit; text-decoration: none; }
   grid-template-columns: 46px minmax(0, 1fr) auto;
   grid-template-areas:
     "avatar details class"
-    "avatar uid management"
-    "avatar . copy";
+    "avatar uid management";
   column-gap: 14px;
   row-gap: 8px;
 }
@@ -1285,12 +1284,6 @@ a { color: inherit; text-decoration: none; }
   font-size: 11px;
   overflow-wrap: anywhere;
 }
-.member-card > .copy-member-id {
-  grid-area: copy;
-  justify-self: end;
-  width: auto;
-}
-
 @media (max-width: 850px) {
   .member-card {
     grid-template-columns: 46px minmax(0, 1fr);
@@ -1298,17 +1291,12 @@ a { color: inherit; text-decoration: none; }
       "avatar details"
       "avatar class"
       "avatar uid"
-      "avatar management"
-      "avatar copy";
+      "avatar management";
     align-items: start;
   }
   .member-class,
   .member-game-uid,
   .member-position-management,
-  .member-card > .copy-member-id {
-    grid-column: auto;
-    justify-self: start;
-  }
   .member-game-uid {
     width: max-content;
     max-width: 100%;
