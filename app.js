@@ -317,6 +317,8 @@ async function login(event) {
   }
 }
 
+window.login = login;
+
 let logoutInProgress = false;
 
 async function logout(event) {
@@ -1988,7 +1990,6 @@ function renderAccountDetails() {
 // ==========================================
 
 function registerAppEventListeners() {
-  $("login-form")?.addEventListener("submit", login);
   $("logout-btn")?.addEventListener("click", logout);
 
   $("member-search")?.addEventListener("input", filterMembers);
