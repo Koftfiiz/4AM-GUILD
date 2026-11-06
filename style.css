@@ -1820,3 +1820,59 @@ body #registration-screen.login-card::after {
     animation: none !important;
   }
 }
+
+
+/* ---- dashboard profile avatar upload ---- */
+.profile-avatar-column {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 148px;
+}
+
+.profile-avatar-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.profile-avatar-upload-btn .icon {
+  width: 16px;
+  height: 16px;
+}
+
+.profile-avatar-upload-btn:disabled {
+  opacity: .65;
+  cursor: wait;
+}
+
+.profile-avatar-upload-status {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+@container (max-width: 470px) {
+  .profile-avatar-column {
+    width: 100%;
+    align-items: flex-start;
+  }
+
+  .profile-avatar-upload-btn {
+    width: auto;
+    min-width: 148px;
+  }
+
+  .profile-avatar-upload-status {
+    text-align: left;
+  }
+}
