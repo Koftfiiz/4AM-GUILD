@@ -52,6 +52,44 @@
         document.head.appendChild(library);
       }
 
+      window.handleGuildLogin = function (event) {
+        event.preventDefault();
+        const button = document.querySelector("#login-form button[type='submit']");
+        const message = document.getElementById("login-message");
+
+        if (typeof window.login !== "function") {
+          if (message) {
+            message.textContent = "The guild application script did not start. Please send this message to support.";
+            message.className = "message error";
+          }
+          return false;
+        }
+
+        if (button) {
+          button.disabled = true;
+          button.textContent = "CONNECTING TO DISCORD...";
+        }
+        window.login(event);
+        return false;
+      };
+
+      window.addEventListener("error", function (event) {
+        if (!event.message) return;
+        const message = document.getElementById("login-message");
+        if (message) {
+          message.textContent = "Application error: " + event.message;
+          message.className = "message error";
+        }
+      });
+
+      window.addEventListener("unhandledrejection", function (event) {
+        const message = document.getElementById("login-message");
+        if (message) {
+          message.textContent = "Application error: " + String(event.reason?.message || event.reason || "Unknown error");
+          message.className = "message error";
+        }
+      });
+
       loadSupabase(0);
     })();
   </script>
@@ -103,7 +141,7 @@
         <span></span>
       </div>
       
-<form id="login-form">
+<form id="login-form" onsubmit="return window.handleGuildLogin(event)">
   <button type="submit" class="btn btn-primary login-submit">
     <i class="fa-brands fa-discord"></i>
     LOGIN WITH DISCORD
