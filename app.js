@@ -312,7 +312,7 @@ async function login(event) {
 
     if (submitButton) {
       submitButton.disabled = false;
-      submitButton.textContent = "ENTER THE GUILD";
+      submitButton.textContent = "ENTER 4AM GUILD";
     }
   }
 }
@@ -358,7 +358,7 @@ async function logout(event) {
     const loginButton = document.querySelector("#login-form button[type='submit']");
     if (loginButton) {
       loginButton.disabled = false;
-      loginButton.textContent = "ENTER THE GUILD";
+      loginButton.textContent = "ENTER 4AM GUILD";
     }
     showMessage("login-message", "");
   } catch (error) {
