@@ -1041,7 +1041,6 @@ function renderMembers(members) {
       </article>
     `;
   }).join("");
-}
 
   // Load each member's saved avatar into the circular member-list frame.
   members.forEach(async (member) => {
@@ -1055,6 +1054,7 @@ function renderMembers(members) {
     // Avoid applying a stale result if the member list has been re-rendered.
     if (avatar.isConnected) avatar.src = avatarUrl || DEFAULT_AVATAR;
   });
+}
 
 // ฝ่ายบริหารเท่านั้นที่กำหนดตำแหน่งกิลด์ให้สมาชิกได้
 async function assignGuildPosition(selectElement) {
