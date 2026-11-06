@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#090909">
+  <title>4AM GUILD | Sword of Justice</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="app.js" defer></script>
+</head>
+
+<body>
+  <!-- ICON SPRITE (ใช้ด้วย <svg class="icon"><use href="#i-xxx"/></svg>) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11.5 12 3.5l9 8"/><path d="M5.5 10v10.5h4.5v-6h4v6h4.5V10"/></symbol>
+      <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21c0-4.2 3.4-7 7.5-7s7.5 2.8 7.5 7"/></symbol>
+      <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.4"/><path d="M2.5 20c0-3.6 2.8-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="17" cy="9" r="2.7"/><path d="M17 14c2.8 0 4.5 1.9 4.5 5"/></symbol>
+      <symbol id="i-swords" viewBox="0 0 24 24"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6"/><path d="m16 16 4 4"/><path d="m19 21 2-2"/><path d="M9.5 17.5 21 6V3h-3L6.5 14.5"/><path d="m11 19-6-6"/><path d="m8 16-4 4"/><path d="m5 21-2-2"/></symbol>
+      <symbol id="i-folder-image" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="9" cy="12" r="1.2"/><path d="m5.5 18 4.5-4 3 2.5 3-3 3 3"/></symbol>
+      <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.6"/><path d="m4 18 5-5 4 3.5 3-3 4 4"/></symbol>
+      <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4.5 6v6c0 4.4 3.1 7.9 7.5 9 4.4-1.1 7.5-4.6 7.5-9V6z"/><path d="M12 8v6M9 11h6"/></symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="6.6"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></symbol>
+      <symbol id="i-crown" viewBox="0 0 24 24"><path d="m3 8 4.5 4L12 5l4.5 7L21 8l-1.8 11H4.8z"/><path d="M5 21.5h14"/></symbol>
+      <symbol id="i-megaphone" viewBox="0 0 24 24"><path d="M3 10v4l3.5.6L16 19V5L6.5 9.4z"/><path d="M19.5 9a4.5 4.5 0 0 1 0 6"/><path d="m7 15 1 4.5h2.5L9.5 16"/></symbol>
+      <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+      <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+      <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19.5 8.5l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
+      <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h2M12 14h2M16 14h.01M8 17.5h2M12 17.5h2"/></symbol>
+      <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+      <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+      <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 4H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h4"/><path d="m16 8 4 4-4 4M20 12H9"/></symbol>
+      <symbol id="i-discord" viewBox="0 0 24 24"><path stroke="none" fill="currentColor" d="M20.317 4.37a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.74 19.74 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .078-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .079.009c.12.1.245.198.372.292a.077.077 0 0 1-.006.127 12.3 12.3 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></symbol>
+    </defs>
+  </svg>
+
+  <!-- ===================== LOGIN ===================== -->
+  <section id="login-screen" class="login-screen">
+    <div class="login-bg"></div>
+
+    <div class="login-card">
+      <div class="login-emblem">
+        <img src="4am-guild-logo.png" alt="4AM Guild Logo">
+      </div>
+
+      <div class="login-heading">
+        <span class="eyebrow">SWORD OF JUSTICE · TIDEBORN DREAMS</span>
+        <h1>4AM GUILD</h1>
+        <p>THE NIGHT BELONGS TO US</p>
+      </div>
+
+      <div class="login-divider">
+        <span></span>
+        <i>✦</i>
+        <span></span>
+      </div>
+      
+<form id="login-form">
+  <button type="submit" class="btn btn-primary login-submit">
+    <i class="fa-brands fa-discord"></i>
+    LOGIN WITH DISCORD
+  </button>
+
+  <p id="login-message" class="message"></p>
+</form>
+
+      <div class="login-footer">
+        <span>◈</span> PRIVATE GUILD ACCESS <span>◈</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== MAIN APPLICATION ===================== -->
+  <div id="app-layout" class="app-layout hidden">
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <img src="4am-guild-logo.png" alt="4AM Guild">
+        <strong>4AM GUILD</strong>
+        <small>SWORD OF JUSTICE</small>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-page="dashboard">
+          <svg class="icon"><use href="#i-home"/></svg>
+          <span>ภาพรวมกิลด์</span>
+        </button>
+
+        <button class="nav-item" data-page="members">
+          <svg class="icon"><use href="#i-user"/></svg>
+          <span>สมาชิกกิลด์</span>
+        </button>
+
+        <button class="nav-item" data-page="war">
+          <svg class="icon"><use href="#i-swords"/></svg>
+          <span>Guild War</span>
+        </button>
+
+        <button class="nav-item" data-page="portfolio">
+          <svg class="icon"><use href="#i-folder-image"/></svg>
+          <span>แฟ้มผลงาน</span>
+        </button>
+
+        <button class="nav-item" data-page="activities">
+          <svg class="icon"><use href="#i-shield"/></svg>
+          <span>กิจกรรมกิลด์</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-divider"><span>ACCOUNT</span></div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item" data-page="settings">
+          <svg class="icon"><use href="#i-gear"/></svg>
+          <span>ตั้งค่าบัญชี</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-art">
+        <div class="sidebar-slogan">
+          <b>4AM</b>
+          <span>STRONGER TOGETHER</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-area">
+
+      <!-- TOPBAR (ลอยอยู่เหนือ Hero) -->
+      <header class="topbar">
+        <div class="topbar-right">
+          <div class="conn-item" id="connection-pill">
+            <span class="status-dot"></span>
+            <span id="connection-status">กำลังเชื่อมต่อ...</span>
+          </div>
+
+          <a
+            id="discord-pill"
+            class="conn-item conn-discord is-off"
+            href="https://discord.com/channels/1482056434572198139"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <svg class="icon icon-fill"><use href="#i-discord"/></svg>
+            <span id="discord-pill-text">ยังไม่ได้เชื่อมต่อ Discord</span>
+          </a>
+
+          <div class="user-menu" id="user-menu">
+            <button class="user-chip" id="user-chip" type="button" aria-haspopup="true" aria-expanded="false">
+              <img class="user-avatar" id="user-avatar" src="assets/default-avatar.jpg" alt="">
+              <span id="user-label">ผู้ใช้</span>
+              <svg class="icon chevron"><use href="#i-chevron-down"/></svg>
+            </button>
+
+            <div class="user-dropdown" role="menu">
+              <button type="button" class="dropdown-item" data-go-page="settings">
+                <svg class="icon"><use href="#i-gear"/></svg> ตั้งค่าบัญชี
+              </button>
+              <button type="button" class="dropdown-item" id="logout-btn">
+                <svg class="icon"><use href="#i-logout"/></svg> ออกจากระบบ
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ============ DASHBOARD ============ -->
+      <section id="page-dashboard" class="page page-dashboard">
+
+        <section class="dashboard-hero">
+          <div class="hero-content">
+            <span class="hero-welcome">ยินดีต้อนรับสู่</span>
+            <h1>4AM GUILD</h1>
+            <div class="hero-subtitle">
+              <i></i>
+              <span>SWORD OF JUSTICE</span>
+              <i></i>
+            </div>
+          </div>
+
+          <blockquote class="hero-quote">
+            “ร่วมเป็นส่วนหนึ่งของครอบครัว 4AM<br>
+            ก้าวไปด้วยกัน สู่ความแข็งแกร่งที่มากกว่า”
+          </blockquote>
+        </section>
+
+        <div class="dash-body">
+
+          <!-- STATS -->
+          <div class="stats-grid">
+            <article class="stat-card">
+              <div class="stat-icon"><svg class="icon"><use href="#i-users"/></svg></div>
+              <div class="stat-info">
+                <span class="stat-label">สมาชิกทั้งหมด</span>
+                <div class="stat-value"><strong id="stat-members">--</strong><em>คน</em></div>
+                <small>Guild Members</small>
+              </div>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-icon is-discord"><svg class="icon icon-fill"><use href="#i-discord"/></svg></div>
+              <div class="stat-info">
+                <span class="stat-label">บัญชี Discord ที่เชื่อมแล้ว</span>
+                <div class="stat-value"><strong id="stat-discord">--</strong><em>บัญชี</em></div>
+                <small>Connected Accounts</small>
+              </div>
+            </article>
+
+            <article class="stat-card">
+              <div class="stat-icon"><svg class="icon icon-fill"><use href="#i-crown"/></svg></div>
+              <div class="stat-info">
+                <span class="stat-label">สถานะบัญชีของคุณ</span>
+                <div class="stat-value is-text"><strong id="stat-role">--</strong></div>
+                <small>Your Guild Role</small>
+              </div>
+            </article>
+          </div>
+
+          <!-- ANNOUNCEMENT + PROFILE -->
+          <div class="dashboard-columns">
+            <article class="dash-card announcement-card">
+              <header class="dash-card-head">
+                <h3><svg class="icon"><use href="#i-megaphone"/></svg> ประกาศจากกิลด์</h3>
+                <button type="button" class="head-link" data-go-page="activities">
+                  ดูทั้งหมด <svg class="icon"><use href="#i-chevron-right"/></svg>
+                </button>
+              </header>
+
+              <!-- แก้ข้อความประกาศได้ที่ส่วนนี้ -->
+              <div class="announcement-body">
+                <div class="announcement-text">
+                  <span class="badge-important">ประกาศสำคัญ</span>
+                  <h4>Guild War รอบหน้า เตรียมพร้อม!</h4>
+                  <p>
+                    ลงชื่อได้ตั้งแต่วันที่ 13 พฤศจิกายน 2569<br>
+                  <h1>4AM vs ...</h1>
+                  </p>
+                  <div class="announcement-date">
+                    <svg class="icon"><use href="#i-clock"/></svg>
+                    9 พ.ย. 2569 00:00 น.
+                  </div>
+                </div>
+              </div>
+            </article>
+
+            <article class="dash-card profile-card">
+              <header class="dash-card-head">
+                <h3><svg class="icon"><use href="#i-user"/></svg> ข้อมูลบัญชีของคุณ</h3>
+                <button type="button" class="head-btn" data-go-page="settings">
+                  <svg class="icon"><use href="#i-edit"/></svg> แก้ไข
+                </button>
+              </header>
+
+              <div id="dashboard-profile" class="profile-content">
+                <p class="muted">กำลังโหลดข้อมูล...</p>
+              </div>
+            </article>
+          </div>
+
+          <!-- QUICK MENU -->
+          <section class="dash-card quick-panel">
+            <header class="dash-card-head">
+              <h3><svg class="icon"><use href="#i-bolt"/></svg> เมนูด่วน</h3>
+            </header>
+
+            <div class="quick-grid">
+              <button class="quick-tile" data-go-page="war">
+                <svg class="icon"><use href="#i-swords"/></svg>
+                <span>จัดทีม Guild War</span>
+              </button>
+
+              <button class="quick-tile" data-go-page="members">
+                <svg class="icon"><use href="#i-users"/></svg>
+                <span>ดูรายชื่อสมาชิก</span>
+              </button>
+
+              <button class="quick-tile" data-go-page="portfolio">
+                <svg class="icon"><use href="#i-image"/></svg>
+                <span>แฟ้มผลงาน</span>
+              </button>
+
+              <button class="quick-tile" data-go-page="activities">
+                <svg class="icon"><use href="#i-calendar"/></svg>
+                <span>กิจกรรมกิลด์</span>
+              </button>
+
+              <button class="quick-tile" data-go-page="settings">
+                <svg class="icon"><use href="#i-gear"/></svg>
+                <span>ตั้งค่าบัญชี</span>
+              </button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- ============ MEMBERS ============ -->
+      <section id="page-members" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">GUILD DIRECTORY</span>
+          <h1>สมาชิกกิลด์</h1>
+          <p>ดูและจัดการข้อมูลสมาชิกในกิลด์</p>
+        </div>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">MEMBER DATABASE</span>
+              <h3>รายชื่อสมาชิกทั้งหมด</h3>
+            </div>
+
+            <button id="refresh-members" class="btn btn-outline">
+              ↻ รีเฟรช
+            </button>
+          </div>
+
+          <div class="member-toolbar">
+            <input
+              id="member-search"
+              type="search"
+              placeholder="ค้นหาสมาชิก..."
+            >
+          </div>
+
+          <div id="members-list" class="members-list">
+            <p class="muted">กำลังโหลดรายชื่อสมาชิก...</p>
+          </div>
+        </section>
+      </section>
+
+      <!-- ============ GUILD WAR ============ -->
+      <section id="page-war" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">BATTLE MANAGEMENT</span>
+          <h1>Guild War</h1>
+          <p>จัดสมาชิกกิลด์เข้าปาร์ตี้ Raid</p>
+        </div>
+
+        <div class="war-summary">
+          <article class="stat-card stat-card-sm">
+            <div class="stat-icon"><svg class="icon"><use href="#i-swords"/></svg></div>
+            <div class="stat-info">
+              <span class="stat-label">TOTAL CAPACITY</span>
+              <div class="stat-value"><strong>60</strong></div>
+              <small>War Participants</small>
+            </div>
+          </article>
+
+          <article class="stat-card stat-card-sm">
+            <div class="stat-icon letter">A</div>
+            <div class="stat-info">
+              <span class="stat-label">RAID A</span>
+              <div class="stat-value"><strong>30</strong></div>
+              <small>5 Parties · 6 Players</small>
+            </div>
+          </article>
+
+          <article class="stat-card stat-card-sm">
+            <div class="stat-icon letter">B</div>
+            <div class="stat-info">
+              <span class="stat-label">RAID B</span>
+              <div class="stat-value"><strong>30</strong></div>
+              <small>5 Parties · 6 Players</small>
+            </div>
+          </article>
+        </div>
+
+        <div class="raid-section">
+          <div class="raid-title">
+            <span class="raid-badge">A</span>
+            <div>
+              <h2>Raid A</h2>
+              <p>First battle formation</p>
+            </div>
+          </div>
+          <div id="raid-a" class="raid-grid"></div>
+        </div>
+
+        <div class="raid-section">
+          <div class="raid-title">
+            <span class="raid-badge raid-b">B</span>
+            <div>
+              <h2>Raid B</h2>
+              <p>Second battle formation</p>
+            </div>
+          </div>
+          <div id="raid-b" class="raid-grid"></div>
+        </div>
+      </section>
+
+      <!-- ============ PORTFOLIO ============ -->
+      <section id="page-portfolio" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">CHARACTER SHOWCASE</span>
+          <h1>แฟ้มผลงาน</h1>
+          <p>ดูตัวละครและบิลด์ของสมาชิกกิลด์</p>
+        </div>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">CLASS DIRECTORY</span>
+              <h3>Character Classes</h3>
+            </div>
+          </div>
+
+          <div id="class-legend" class="class-legend"></div>
+
+          <div class="empty-state">
+            <span>▤</span>
+            <h3>Portfolio Gallery</h3>
+            <p>แฟ้มผลงานของตัวละครจะแสดงที่นี่เมื่อเชื่อมต่อข้อมูลแล้ว</p>
+          </div>
+        </section>
+      </section>
+
+      <!-- ============ ACTIVITIES ============ -->
+      <section id="page-activities" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">GUILD COMMUNITY</span>
+          <h1>กิจกรรมกิลด์</h1>
+          <p>ประกาศ กิจกรรม และข่าวสารของกิลด์</p>
+        </div>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">COMMUNITY BOARD</span>
+              <h3>ข่าวสารและกิจกรรม</h3>
+            </div>
+          </div>
+
+          <div class="empty-state">
+            <span>◷</span>
+            <h3>ยังไม่มีกิจกรรม</h3>
+            <p>กิจกรรมของกิลด์จะแสดงที่นี่เมื่อเชื่อมต่อฟีดกิจกรรมแล้ว</p>
+          </div>
+        </section>
+      </section>
+
+      <!-- ============ SETTINGS ============ -->
+      <section id="page-settings" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">ACCOUNT MANAGEMENT</span>
+          <h1>ตั้งค่าบัญชี</h1>
+          <p>จัดการบัญชีและการเชื่อมต่อ Discord</p>
+        </div>
+
+        <div class="settings-grid">
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <span class="panel-kicker">ACCOUNT INFORMATION</span>
+                <h3>บัญชีของฉัน</h3>
+              </div>
+            </div>
+
+            <div id="account-details"></div>
+          </section>
+
+          <section class="panel">
+            <div class="panel-heading">
+              <div>
+                <span class="panel-kicker">ACCOUNT INTEGRATION</span>
+                <h3>การเชื่อมต่อ Discord</h3>
+              </div>
+              <svg class="icon icon-fill panel-heading-icon"><use href="#i-discord"/></svg>
+            </div>
+
+            <div id="discord-status"></div>
+
+            <button id="connect-discord" class="btn btn-primary">
+              Connect Discord Account
+            </button>
+
+            <p id="discord-message" class="message"></p>
+          </section>
+        </div>
+      </section>
+
+      <footer class="site-footer">
+        <span>◈</span>
+        4AM GUILD · SWORD OF JUSTICE
+        <span>◈</span>
+      </footer>
+    </main>
+  </div>
+</body>
+</html>
