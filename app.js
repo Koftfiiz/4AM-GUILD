@@ -983,7 +983,14 @@ function renderMembers(members) {
     return `
       <article class="member-card">
         <div class="member-avatar">
-          ${escapeHTML(name.charAt(0).toUpperCase())}
+          <img
+            class="member-avatar-image"
+            data-member-avatar-user-id="${escapeHTML(userId)}"
+            src="${DEFAULT_AVATAR}"
+            alt="รูปโปรไฟล์ ${escapeHTML(name)}"
+            loading="lazy"
+            onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'"
+          >
         </div>
 
         <div class="member-details">
@@ -1033,6 +1040,19 @@ function renderMembers(members) {
     `;
   }).join("");
 }
+
+  // Load each member's saved avatar into the circular member-list frame.
+  members.forEach(async (member) => {
+    const userId = String(member.user_id || "");
+    const avatar = container.querySelector(
+      `.member-avatar-image[data-member-avatar-user-id="${CSS.escape(userId)}"]`
+    );
+    if (!avatar) return;
+
+    const avatarUrl = await resolveAvatarUrl(member);
+    // Avoid applying a stale result if the member list has been re-rendered.
+    if (avatar.isConnected) avatar.src = avatarUrl || DEFAULT_AVATAR;
+  });
 
 // ฝ่ายบริหารเท่านั้นที่กำหนดตำแหน่งกิลด์ให้สมาชิกได้
 async function assignGuildPosition(selectElement) {
