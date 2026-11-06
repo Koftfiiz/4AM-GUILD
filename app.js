@@ -1707,8 +1707,8 @@ async function saveOwnGameUID(form) {
     const cachedMember = allMembers.find((member) => member.user_id === currentUser.id);
     if (cachedMember) cachedMember.game_uid = data.game_uid;
 
-    showMessage("game-uid-message", "บันทึก Game UID สำเร็จ", "success");
     renderAccountDetails();
+    showMessage("game-uid-message", "บันทึก Game UID สำเร็จ", "success");
     renderDashboardProfile();
     renderMembers(allMembers);
   } catch (error) {
