@@ -513,7 +513,7 @@ function showRegistrationScreen(errorMessage = "") {
         >
 
         <label class="registration-field-label" for="registration-game-uid">
-          รหัสตัวละคร
+          UID ตัวละคร
           <span class="registration-field-status required">จำเป็นต้องกรอก</span>
         </label>
 
@@ -531,7 +531,7 @@ function showRegistrationScreen(errorMessage = "") {
         >
 
         <label class="registration-field-label" for="registration-class">
-          อาชีพ
+          Class อาชีพ
           <span class="registration-field-status required">จำเป็นต้องกรอก</span>
         </label>
 
