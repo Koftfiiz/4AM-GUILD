@@ -535,21 +535,16 @@ function showRegistrationScreen(errorMessage = "") {
           <span class="registration-field-status required">Required / จำเป็นต้องกรอก</span>
         </label>
 
-        <input
+        <select
           id="registration-class"
           name="game_class"
-          type="text"
-          list="guild-class-options"
-          placeholder="Select your class / เลือกอาชีพ"
           required
-          autocomplete="off"
         >
-
-        <datalist id="guild-class-options">
+          <option value="" disabled selected>Select your class / เลือกอาชีพ</option>
           ${CLASS_DATA.map(item => `
-            <option value="${escapeHTML(item.name)}"></option>
+            <option value="${escapeHTML(item.name)}">${escapeHTML(item.name)}</option>
           `).join("")}
-        </datalist>
+        </select>
 
         <label class="registration-field-label" for="registration-nickname">
           Nickname / ชื่อเล่น
