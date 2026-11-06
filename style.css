@@ -1840,3 +1840,53 @@ a { color: inherit; text-decoration: none; }
     letter-spacing: .8px;
   }
 }
+
+
+/* Registration form refinements: make the neon energy visibly travel and align status badges to field edges. */
+#registration-screen.login-card::before,
+#registration-screen.login-card::after {
+  background-size: 220% 220%, 220% 220%;
+  will-change: background-position, filter;
+}
+
+#registration-screen.login-card::before {
+  animation:
+    registration-plasma-travel 3.2s linear infinite,
+    registration-plasma-flicker 1.15s ease-in-out infinite alternate;
+}
+
+#registration-screen.login-card::after {
+  animation: registration-plasma-travel 6s linear infinite reverse;
+}
+
+@keyframes registration-plasma-travel {
+  0% {
+    background-position: 0% 0%, 100% 100%;
+  }
+  50% {
+    background-position: 100% 100%, 0% 0%;
+  }
+  100% {
+    background-position: 0% 0%, 100% 100%;
+  }
+}
+
+@keyframes registration-plasma-flicker {
+  from { filter: brightness(.9) saturate(1.25) drop-shadow(0 0 3px #ff2448) drop-shadow(0 0 7px #287bff); }
+  to { filter: brightness(1.55) saturate(2) drop-shadow(0 0 5px #fff) drop-shadow(0 0 12px #ff2448) drop-shadow(0 0 14px #287bff); }
+}
+
+/* Required / Optional badges sit at the far right, flush with the input edge. */
+#registration-screen .registration-field-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+}
+
+#registration-screen .registration-field-status {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
