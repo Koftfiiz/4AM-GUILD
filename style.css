@@ -1814,3 +1814,29 @@ a { color: inherit; text-decoration: none; }
   content: none !important;
   display: none !important;
 }
+
+
+/* Make both entry buttons bold, large, and easy to read. */
+#login-screen .login-submit,
+#login-form .login-submit,
+#login-screen button[type="submit"] {
+  min-height: 60px;
+  height: auto;
+  padding: 15px 20px;
+  font-size: 20px;
+  line-height: 1.3;
+  font-weight: 800;
+  letter-spacing: 1.2px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .65);
+}
+
+@media (max-width: 520px) {
+  #login-screen .login-submit,
+  #login-form .login-submit,
+  #login-screen button[type="submit"] {
+    min-height: 58px;
+    padding: 14px 16px;
+    font-size: 18px;
+    letter-spacing: .8px;
+  }
+}
