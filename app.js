@@ -1,4 +1,3 @@
-
 // ==========================================
 // 4AM GUILD - SUPABASE CONFIGURATION
 // ==========================================
@@ -44,6 +43,24 @@ const CLASS_DATA = [
   { name: "Sylph", color: "#dfa6ce", icon: "❀" },
   { name: "Nightwaker", color: "#9ce8ea", icon: "☾" },
   { name: "Dragonsvelte", color: "#42c98e", icon: "♢" }
+];
+
+// ตำแหน่งภายในกิลด์ 4AM เรียงจากสูงสุดไปต่ำสุด
+// ฝ่ายบริหารเท่านั้นที่สามารถกำหนดตำแหน่งให้สมาชิกได้
+const GUILD_POSITIONS = [
+  "หัวหน้าใหญ่ช่างฝีมือ",
+  "หัวหน้ารอง",
+  "หัวหน้าคนที่สาม",
+  "หัวหน้าสี่",
+  "หอเฟิงหัวหน้าสำนัก",
+  "หอถู่หัวหน้าสำนัก",
+  "หอฮั่วหัวหน้าสำนัก",
+  "หอสุ่ยหัวหน้าสำนัก",
+  "กุนซือ",
+  "ผู้จัดงานเลี้ยง",
+  "ที่ปรึกษา",
+  "สมาชิกแก๊ง",
+  "ศิษย์ฝึกหัด"
 ];
 
 const PAGE_TITLES = {
@@ -250,7 +267,6 @@ function showEmpty(container, title, description) {
 // AUTHENTICATION
 // ==========================================
 
-
 async function login(event) {
   event?.preventDefault();
 
@@ -299,7 +315,6 @@ async function login(event) {
     }
   }
 }
-
 
 async function logout() {
   try {
@@ -814,6 +829,10 @@ async function renderDashboardProfile() {
             </dd>
           </div>
           <div>
+            <dt>ตำแหน่งในกิลด์ :</dt>
+            <dd>${escapeHTML(currentMember.guild_position || "ยังไม่ได้กำหนดตำแหน่ง")}</dd>
+          </div>
+          <div>
             <dt>Discord :</dt>
             <dd>
               <svg class="icon icon-fill"><use href="#i-discord"/></svg>
@@ -861,6 +880,8 @@ function renderMembers(members) {
     return;
   }
 
+  const canManagePositions = isManagement();
+
   container.innerHTML = members.map((member) => {
     const name = getMemberName(member);
     const role = roleLabel(member.role);
@@ -868,6 +889,14 @@ function renderMembers(members) {
     const userId = member.user_id || "";
     const classInfo = getClassInfo(className);
     const classColor = classInfo?.color || "#a9a9a9";
+    const guildPosition = member.guild_position || "";
+
+    const positionOptions = GUILD_POSITIONS.map((position) => `
+      <option value="${escapeHTML(position)}"
+        ${guildPosition === position ? "selected" : ""}>
+        ${escapeHTML(position)}
+      </option>
+    `).join("");
 
     return `
       <article class="member-card">
@@ -878,11 +907,39 @@ function renderMembers(members) {
         <div class="member-details">
           <h4>${escapeHTML(name)}</h4>
           <span>${escapeHTML(role)}</span>
+          <small class="member-guild-position">
+            ตำแหน่งกิลด์: ${escapeHTML(guildPosition || "ยังไม่ได้กำหนดตำแหน่ง")}
+          </small>
         </div>
 
         <div class="member-class" style="--class-color:${classColor}">
           ${escapeHTML(className)}
         </div>
+
+        ${canManagePositions ? `
+          <div class="member-position-management">
+            <label for="guild-position-${escapeHTML(userId)}">กำหนดตำแหน่ง</label>
+            <select
+              id="guild-position-${escapeHTML(userId)}"
+              class="guild-position-select"
+              data-action="assign-guild-position"
+              data-user-id="${escapeHTML(userId)}"
+              aria-label="กำหนดตำแหน่งกิลด์ให้ ${escapeHTML(name)}"
+              style="
+                max-width: 220px;
+                padding: 8px 10px;
+                border: 1px solid rgba(255,255,255,.16);
+                border-radius: 8px;
+                background: rgba(20,20,24,.92);
+                color: inherit;
+              "
+            >
+              <option value="">ยังไม่ได้กำหนดตำแหน่ง</option>
+              ${positionOptions}
+            </select>
+            <small class="guild-position-save-status" aria-live="polite"></small>
+          </div>
+        ` : ""}
 
         <button
           class="btn btn-outline copy-member-id"
@@ -895,6 +952,84 @@ function renderMembers(members) {
       </article>
     `;
   }).join("");
+}
+
+// ฝ่ายบริหารเท่านั้นที่กำหนดตำแหน่งกิลด์ให้สมาชิกได้
+async function assignGuildPosition(selectElement) {
+  if (!selectElement || !isManagement()) {
+    alert("คุณไม่มีสิทธิ์กำหนดตำแหน่งกิลด์");
+    return;
+  }
+
+  const userId = selectElement.dataset.userId;
+  const newPosition = selectElement.value || null;
+  const member = allMembers.find((item) => item.user_id === userId);
+
+  if (!userId || !member) {
+    alert("ไม่พบข้อมูลสมาชิกที่ต้องการแก้ไข");
+    return;
+  }
+
+  if (newPosition && !GUILD_POSITIONS.includes(newPosition)) {
+    alert("ตำแหน่งที่เลือกไม่ถูกต้อง");
+    selectElement.value = member.guild_position || "";
+    return;
+  }
+
+  const previousPosition = member.guild_position || "";
+  const status = selectElement.parentElement?.querySelector(
+    ".guild-position-save-status"
+  );
+
+  selectElement.disabled = true;
+  if (status) status.textContent = "กำลังบันทึก...";
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("guild_members")
+      .update({ guild_position: newPosition })
+      .eq("user_id", userId)
+      .select("user_id, guild_position")
+      .single();
+
+    if (error) throw error;
+
+    member.guild_position = data.guild_position;
+
+    if (currentMember?.user_id === userId) {
+      currentMember.guild_position = data.guild_position;
+      renderDashboardProfile();
+    }
+
+    if (status) {
+      status.textContent = "บันทึกตำแหน่งแล้ว";
+      status.style.color = "#42c98e";
+    }
+
+    const memberDetails = selectElement.closest(".member-card")
+      ?.querySelector(".member-guild-position");
+
+    if (memberDetails) {
+      memberDetails.textContent =
+        "ตำแหน่งกิลด์: " + (data.guild_position || "ยังไม่ได้กำหนดตำแหน่ง");
+    }
+
+  } catch (error) {
+    console.error("Guild position update error:", error);
+    selectElement.value = previousPosition;
+
+    if (status) {
+      status.textContent = "บันทึกไม่สำเร็จ";
+      status.style.color = "#e54858";
+    }
+
+    alert(
+      "ไม่สามารถบันทึกตำแหน่งได้: " +
+      (error.message || "เกิดข้อผิดพลาด")
+    );
+  } finally {
+    selectElement.disabled = false;
+  }
 }
 
 function filterMembers() {
@@ -1590,6 +1725,15 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Copy failed:", error);
       alert("Unable to copy ID.");
     }
+  });
+
+  $("members-list")?.addEventListener("change", async (event) => {
+    const select = event.target.closest(
+      "select[data-action='assign-guild-position']"
+    );
+
+    if (!select) return;
+    await assignGuildPosition(select);
   });
 
   initializeAuth();
