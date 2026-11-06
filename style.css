@@ -1836,18 +1836,19 @@ body #registration-screen.login-card::after {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  width: fit-content;
+  width: max-content;
+  min-width: 0;
   min-height: 38px;
   align-self: center;
-  padding: 7px 14px;
+  padding: 7px 10px;
   font-size: 14px;
+  line-height: 1.2;
+  text-align: center;
   white-space: nowrap;
 }
 
 .profile-avatar-upload-btn .icon {
-  width: 16px;
-  height: 16px;
+  display: none;
 }
 
 .profile-avatar-upload-btn:disabled {
@@ -1869,9 +1870,11 @@ body #registration-screen.login-card::after {
   }
 
   .profile-avatar-upload-btn {
-    width: fit-content;
+    width: max-content;
     min-width: 0;
     align-self: center;
+    padding-left: 10px;
+    padding-right: 10px;
   }
 
   .profile-avatar-upload-status {
