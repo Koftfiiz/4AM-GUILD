@@ -1326,14 +1326,11 @@ function openAvatarCropper(file) {
         const y = (size - height) / 2 + offsetY;
         previewCtx.drawImage(image, x, y, width, height);
 
-        previewCtx.save();
-        previewCtx.fillStyle = "rgba(0, 0, 0, .58)";
-        previewCtx.fillRect(0, 0, size, size);
-        previewCtx.globalCompositeOperation = "destination-out";
         previewCtx.beginPath();
+        previewCtx.rect(0, 0, size, size);
         previewCtx.arc(size / 2, size / 2, size / 2 - 3, 0, Math.PI * 2);
-        previewCtx.fill();
-        previewCtx.restore();
+        previewCtx.fillStyle = "rgba(0, 0, 0, .58)";
+        previewCtx.fill("evenodd");
 
         previewCtx.beginPath();
         previewCtx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
