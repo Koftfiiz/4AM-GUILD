@@ -794,6 +794,32 @@ a { color: inherit; text-decoration: none; }
   box-shadow: 0 0 10px var(--class-color, #e03545);
 }
 
+/* Original profession icons: no frame, background, or shadow */
+.profile-class-icon {
+  display: inline-block;
+  width: 25px;
+  height: 25px;
+  flex: none;
+  object-fit: contain;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  vertical-align: middle;
+}
+
+.class-item .class-icon-image {
+  display: block;
+  width: 25px;
+  height: 25px;
+  flex: none;
+  object-fit: contain;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .profile-note { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
 
 /* การ์ดที่แคบ (จอเล็ก/แล็ปท็อป) ให้จัดเรียงตามความกว้างของการ์ดเอง */
