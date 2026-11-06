@@ -1456,3 +1456,38 @@ a { color: inherit; text-decoration: none; }
   margin-top: 0;
   margin-bottom: 14px;
 }
+
+/* Registration is a clean standalone form: hide inherited login-card corner marks. */
+#registration-screen.login-card::before,
+#registration-screen.login-card::after {
+  content: none;
+  display: none;
+}
+
+/* The Class field is a real select menu; Age remains a normal number input. */
+#registration-screen select {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  height: 45px;
+  padding: 0 13px;
+  color: #fff;
+  background: rgba(7, 4, 5, .92);
+  border: 1px solid rgba(191, 145, 116, .3);
+  border-radius: 4px;
+  outline: none;
+  font: inherit;
+  cursor: pointer;
+  transition: .2s ease;
+}
+
+#registration-screen select:focus {
+  border-color: var(--red-bright);
+  box-shadow: 0 0 12px rgba(220, 40, 55, .25);
+}
+
+#registration-screen select option {
+  color: #fff;
+  background: #160c0f;
+}
+
