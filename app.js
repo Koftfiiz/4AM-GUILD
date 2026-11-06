@@ -829,7 +829,7 @@ async function renderDashboardProfile() {
             </dd>
           </div>
           <div>
-            <dt>ตำแหน่งในกิลด์ :</dt>
+            <dt>ตำแหน่ง :</dt>
             <dd>${escapeHTML(currentMember.guild_position || "ยังไม่ได้กำหนดตำแหน่ง")}</dd>
           </div>
           <div>
