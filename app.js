@@ -872,7 +872,6 @@ async function renderDashboardProfile() {
         </div>
         <input type="file" id="profile-avatar-input" accept="image/*" hidden>
         <button type="button" class="btn btn-outline profile-avatar-upload-btn">
-          <svg class="icon"><use href="#i-camera"/></svg>
           เปลี่ยนรูปโปรไฟล์
         </button>
         <small class="profile-avatar-upload-status" aria-live="polite">
