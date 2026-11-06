@@ -1326,8 +1326,10 @@ a { color: inherit; text-decoration: none; }
    REGISTRATION FORM — CLEAR LABELS & BUTTON LAYOUT
 ========================================== */
 #registration-screen {
+  box-sizing: border-box;
   width: min(100%, 480px);
   max-height: calc(100vh - 32px);
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   text-align: left;
