@@ -1781,3 +1781,22 @@ a { color: inherit; text-decoration: none; }
     animation: none;
   }
 }
+
+/* Keep Required / Optional badges on the same line as each field heading. */
+#registration-screen .registration-field-label {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 9px;
+  row-gap: 3px;
+}
+
+#registration-screen .registration-field-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: fit-content;
+  white-space: nowrap;
+  margin: 0;
+}
+
