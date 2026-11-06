@@ -1491,3 +1491,72 @@ a { color: inherit; text-decoration: none; }
   background: #160c0f;
 }
 
+
+
+/* ==========================================
+   REGISTRATION FORM — ACCESSIBLE TYPOGRAPHY
+   ========================================== */
+#registration-screen .registration-field-label {
+  font-size: 16px;
+  line-height: 1.55;
+  gap: 5px;
+  margin: 18px 0 8px;
+  letter-spacing: .2px;
+}
+
+#registration-screen .registration-field-status {
+  font-size: 12px;
+  padding: 3px 9px;
+  line-height: 1.5;
+}
+
+#registration-screen input,
+#registration-screen select {
+  min-height: 50px;
+  height: 50px;
+  padding: 0 15px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+#registration-screen input::placeholder {
+  font-size: 15px;
+  color: #a3929a;
+  opacity: 1;
+}
+
+#registration-screen select option {
+  font-size: 16px;
+}
+
+#registration-screen > .login-description,
+#registration-screen .registration-discord-info {
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+#registration-screen .registration-actions .btn {
+  font-size: 16px;
+  line-height: 1.45;
+  min-height: 52px;
+}
+
+#registration-screen .message {
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+@media (max-width: 520px) {
+  #registration-screen .registration-field-label {
+    font-size: 15px;
+  }
+
+  #registration-screen input,
+  #registration-screen select {
+    font-size: 16px;
+  }
+
+  #registration-screen .registration-actions .btn {
+    font-size: 15px;
+  }
+}
