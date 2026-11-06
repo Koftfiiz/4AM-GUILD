@@ -499,7 +499,7 @@ function showRegistrationScreen(errorMessage = "") {
 
         <label class="registration-field-label" for="registration-character">
           Character Name / ชื่อตัวละคร
-          <span class="registration-field-status required">Required / จำเป็นต้องกรอก</span>
+          <span class="registration-field-status required">จำเป็นต้องกรอก</span>
         </label>
 
         <input
@@ -514,7 +514,7 @@ function showRegistrationScreen(errorMessage = "") {
 
         <label class="registration-field-label" for="registration-game-uid">
           Character UID / UID ตัวละคร
-          <span class="registration-field-status required">Required / จำเป็นต้องกรอก</span>
+          <span class="registration-field-status required">จำเป็นต้องกรอก</span>
         </label>
 
         <input
@@ -532,7 +532,7 @@ function showRegistrationScreen(errorMessage = "") {
 
         <label class="registration-field-label" for="registration-class">
           Class / อาชีพ
-          <span class="registration-field-status required">Required / จำเป็นต้องกรอก</span>
+          <span class="registration-field-status required">จำเป็นต้องกรอก</span>
         </label>
 
         <select
@@ -548,7 +548,7 @@ function showRegistrationScreen(errorMessage = "") {
 
         <label class="registration-field-label" for="registration-nickname">
           Nickname / ชื่อเล่น
-          <span class="registration-field-status required">Required / จำเป็นต้องกรอก</span>
+          <span class="registration-field-status required">จำเป็นต้องกรอก</span>
         </label>
 
         <input
@@ -563,7 +563,7 @@ function showRegistrationScreen(errorMessage = "") {
 
         <label class="registration-field-label" for="registration-age">
           Age / อายุ
-          <span class="registration-field-status optional">Optional / ไม่บังคับ</span>
+          <span class="registration-field-status optional">ไม่บังคับ</span>
         </label>
 
         <input
