@@ -746,16 +746,18 @@ async function loadDashboard() {
     $("stat-members").textContent = activeMembers.length;
   }
 
-  const { count, error: discordError } = await supabaseClient
-    .from("discord_accounts")
-    .select("*", { count: "exact", head: true });
+  // ใช้ RPC ที่คืนเฉพาะยอดรวม ไม่เปิดเผยข้อมูลบัญชี Discord ของสมาชิกคนอื่น
+  const { data: discordCount, error: discordError } = await supabaseClient
+    .rpc("get_guild_discord_account_count");
 
   if (discordError) {
-    console.error("Discord count error:", discordError);
+    console.error("Guild Discord count error:", discordError);
   }
 
   if ($("stat-discord")) {
-    $("stat-discord").textContent = discordError ? "--" : (count ?? 0);
+    $("stat-discord").textContent = discordError
+      ? "--"
+      : (Number(discordCount) || 0);
   }
 
   // แสดงตำแหน่ง ไม่ใช่ Role ภายใน
