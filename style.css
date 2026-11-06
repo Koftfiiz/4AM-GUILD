@@ -917,11 +917,18 @@ a { color: inherit; text-decoration: none; }
   place-items: center;
   width: 46px;
   height: 46px;
+  overflow: hidden;
   border-radius: 50%;
   border: 2px solid #b92a39;
   background: #1d0e12;
-  color: var(--gold-light);
-  font: 700 19px var(--display);
+}
+
+.member-avatar-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
 }
 .member-details h4 { margin: 0; font-size: 16px; font-weight: 500; color: var(--gold-light); overflow-wrap: anywhere; }
 .member-details span { font-size: 12px; color: var(--muted); }
