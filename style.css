@@ -1427,3 +1427,32 @@ a { color: inherit; text-decoration: none; }
     font-size: 13px;
   }
 }
+
+
+/* Registration header: use the official 4AM guild emblem and tighten spacing. */
+#registration-screen .registration-guild-logo {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 8px;
+  line-height: 0;
+}
+
+#registration-screen .registration-guild-logo img {
+  display: block;
+  width: 90px;
+  height: 90px;
+  max-width: 100%;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+#registration-screen > h2 {
+  margin-top: 0;
+  margin-bottom: 4px;
+}
+
+#registration-screen > .login-description {
+  margin-top: 0;
+  margin-bottom: 14px;
+}
