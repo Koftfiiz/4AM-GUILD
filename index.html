@@ -12,8 +12,49 @@
 
   <link rel="stylesheet" href="style.css">
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" onerror="this.onerror=null;this.src='https://unpkg.com/@supabase/supabase-js@2'"></script>
-  <script src="app.js?v=20261107-login-fix" defer></script>
+  <script>
+    (function loadGuildApp() {
+      const sources = [
+        "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2",
+        "https://unpkg.com/@supabase/supabase-js@2"
+      ];
+
+      function loadSupabase(index) {
+        if (index >= sources.length) {
+          const message = document.getElementById("login-message");
+          if (message) {
+            message.textContent = "Unable to load the login service. Please refresh and try again.";
+            message.className = "message error";
+          }
+          return;
+        }
+
+        const library = document.createElement("script");
+        library.src = sources[index];
+        library.onload = () => {
+          if (!window.supabase) {
+            loadSupabase(index + 1);
+            return;
+          }
+
+          const app = document.createElement("script");
+          app.src = "app.js?v=20261107-login-fix-2";
+          app.onerror = () => {
+            const message = document.getElementById("login-message");
+            if (message) {
+              message.textContent = "Unable to load the guild application. Please refresh and try again.";
+              message.className = "message error";
+            }
+          };
+          document.head.appendChild(app);
+        };
+        library.onerror = () => loadSupabase(index + 1);
+        document.head.appendChild(library);
+      }
+
+      loadSupabase(0);
+    })();
+  </script>
 </head>
 
 <body>
