@@ -490,6 +490,23 @@ function showRegistrationScreen(errorMessage = "") {
           required
         >
 
+        <label for="registration-game-uid">
+          Game UID * (ตัวเลข 10 หลัก)
+        </label>
+
+        <input
+          id="registration-game-uid"
+          name="game_uid"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]{10}"
+          minlength="10"
+          maxlength="10"
+          placeholder="3166503500"
+          autocomplete="off"
+          required
+        >
+
         <label for="registration-class">
           Class *
         </label>
@@ -605,6 +622,10 @@ async function registerGuildMember(event) {
     formData.get("game_class") || ""
   ).trim();
 
+  const gameUID = String(
+    formData.get("game_uid") || ""
+  ).trim();
+
   const nickname = String(
     formData.get("nickname") || ""
   ).trim();
@@ -617,6 +638,14 @@ async function registerGuildMember(event) {
     showMessage(
       "registration-message",
       "กรุณากรอก Character Name"
+    );
+    return;
+  }
+
+  if (!/^[0-9]{10}$/.test(gameUID)) {
+    showMessage(
+      "registration-message",
+      "Game UID ต้องเป็นตัวเลข 10 หลักเท่านั้น"
     );
     return;
   }
@@ -661,6 +690,7 @@ async function registerGuildMember(event) {
         body: {
           character_name: characterName,
           game_class: gameClass,
+          game_uid: gameUID,
           nickname,
           age: age || null
         }
@@ -832,6 +862,13 @@ async function renderDashboardProfile() {
             </dd>
           </div>
           <div>
+            <dt>Game UID :</dt>
+            <dd class="profile-game-uid">
+              <span>${escapeHTML(currentMember.game_uid || "ยังไม่ได้กรอก UID")}</span>
+              ${currentMember.game_uid ? `<button type="button" class="btn btn-outline copy-own-game-uid" data-game-uid="${escapeHTML(currentMember.game_uid)}">Copy UID</button>` : ""}
+            </dd>
+          </div>
+          <div>
             <dt>ตำแหน่ง :</dt>
             <dd>${escapeHTML(currentMember.guild_position || "ยังไม่ได้กำหนดตำแหน่ง")}</dd>
           </div>
@@ -893,6 +930,7 @@ function renderMembers(members) {
     const classInfo = getClassInfo(className);
     const classColor = classInfo?.color || "#a9a9a9";
     const guildPosition = member.guild_position || "";
+    const gameUID = String(member.game_uid || "");
 
     const positionOptions = GUILD_POSITIONS.map((position) => `
       <option value="${escapeHTML(position)}"
@@ -917,6 +955,12 @@ function renderMembers(members) {
 
         <div class="member-class" style="--class-color:${classColor}">
           ${escapeHTML(className)}
+        </div>
+
+        <div class="member-game-uid">
+          <span>Game UID</span>
+          <strong>${escapeHTML(gameUID || "ยังไม่ได้กรอก UID")}</strong>
+          ${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">Copy UID</button>` : ""}
         </div>
 
         ${canManagePositions ? `
@@ -1046,7 +1090,8 @@ function filterMembers() {
       member.role,
       member.display_position,
       getMemberClass(member),
-      member.user_id
+      member.user_id,
+      member.game_uid
     ].join(" ").toLowerCase();
 
     return searchable.includes(search);
@@ -1610,6 +1655,76 @@ function openGuildPage(pageName) {
   if (pageName === "war") loadWarEvents();
 }
 
+async function copyGameUID(button) {
+  const uid = String(button?.dataset.gameUid || "");
+  if (!/^[0-9]{10}$/.test(uid)) return;
+
+  try {
+    await navigator.clipboard.writeText(uid);
+    const original = button.textContent;
+    button.textContent = "Copied!";
+    button.disabled = true;
+    setTimeout(() => {
+      button.textContent = original;
+      button.disabled = false;
+    }, 1400);
+  } catch (error) {
+    console.error("Copy Game UID failed:", error);
+    alert("ไม่สามารถคัดลอก Game UID ได้");
+  }
+}
+
+async function saveOwnGameUID(form) {
+  if (!currentUser || !currentMember || !form) return;
+
+  const input = form.querySelector("[name='game_uid']");
+  const button = form.querySelector("button[type='submit']");
+  const uid = String(input?.value || "").trim();
+
+  if (!/^[0-9]{10}$/.test(uid)) {
+    showMessage("game-uid-message", "Game UID ต้องเป็นตัวเลข 10 หลักเท่านั้น");
+    return;
+  }
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "กำลังบันทึก...";
+  }
+
+  showMessage("game-uid-message", "กำลังบันทึก Game UID...", "info");
+
+  try {
+    const { data, error } = await supabaseClient
+      .from("guild_members")
+      .update({ game_uid: uid })
+      .eq("user_id", currentUser.id)
+      .select("user_id, game_uid")
+      .single();
+
+    if (error) throw error;
+
+    currentMember.game_uid = data.game_uid;
+    const cachedMember = allMembers.find((member) => member.user_id === currentUser.id);
+    if (cachedMember) cachedMember.game_uid = data.game_uid;
+
+    showMessage("game-uid-message", "บันทึก Game UID สำเร็จ", "success");
+    renderAccountDetails();
+    renderDashboardProfile();
+    renderMembers(allMembers);
+  } catch (error) {
+    console.error("Game UID update error:", error);
+    showMessage(
+      "game-uid-message",
+      "บันทึกไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด")
+    );
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.textContent = "บันทึก Game UID";
+    }
+  }
+}
+
 // ==========================================
 // ACCOUNT SETTINGS
 // ==========================================
@@ -1635,6 +1750,29 @@ function renderAccountDetails() {
       <span>Email Address</span>
       <strong>${escapeHTML(currentUser?.email || "-")}</strong>
     </div>
+
+    <div class="settings-detail">
+      <span>Game UID</span>
+      <strong>${escapeHTML(currentMember?.game_uid || "ยังไม่ได้กรอก UID")}</strong>
+    </div>
+
+    <form id="game-uid-form" class="game-uid-settings-form">
+      <label for="account-game-uid">แก้ไข Game UID (ตัวเลข 10 หลัก)</label>
+      <input
+        id="account-game-uid"
+        name="game_uid"
+        type="text"
+        inputmode="numeric"
+        pattern="[0-9]{10}"
+        minlength="10"
+        maxlength="10"
+        placeholder="กรอก Game UID 10 หลัก"
+        value="${escapeHTML(currentMember?.game_uid || "")}"
+        required
+      >
+      <button type="submit" class="btn btn-primary">บันทึก Game UID</button>
+      <p id="game-uid-message" class="message" aria-live="polite"></p>
+    </form>
 
     <div class="settings-detail">
       <span>Display Position</span>
@@ -1711,6 +1849,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   $("members-list")?.addEventListener("click", async (event) => {
+    const uidButton = event.target.closest(".copy-member-game-uid");
+    if (uidButton) {
+      await copyGameUID(uidButton);
+      return;
+    }
+
     const button = event.target.closest(".copy-member-id");
     if (!button) return;
 
@@ -1728,6 +1872,17 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Copy failed:", error);
       alert("Unable to copy ID.");
     }
+  });
+
+  $("dashboard-profile")?.addEventListener("click", async (event) => {
+    const button = event.target.closest(".copy-own-game-uid");
+    if (button) await copyGameUID(button);
+  });
+
+  $("account-details")?.addEventListener("submit", async (event) => {
+    if (event.target.id !== "game-uid-form") return;
+    event.preventDefault();
+    await saveOwnGameUID(event.target);
   });
 
   $("members-list")?.addEventListener("change", async (event) => {
