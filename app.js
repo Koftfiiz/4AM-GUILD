@@ -865,9 +865,19 @@ async function renderDashboardProfile() {
 
   container.innerHTML = `
     <div class="profile-card-body">
-      <div class="profile-avatar-ring">
-        <img src="${escapeHTML(avatar)}" alt=""
-          onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'">
+      <div class="profile-avatar-column">
+        <div class="profile-avatar-ring">
+          <img src="${escapeHTML(avatar)}" alt="รูปโปรไฟล์"
+            onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'">
+        </div>
+        <input type="file" id="profile-avatar-input" accept="image/*" hidden>
+        <button type="button" class="btn btn-outline profile-avatar-upload-btn">
+          <svg class="icon"><use href="#i-camera"/></svg>
+          เปลี่ยนรูปโปรไฟล์
+        </button>
+        <small class="profile-avatar-upload-status" aria-live="polite">
+          รองรับไฟล์รูปภาพ ขนาดไม่เกิน 5 MB
+        </small>
       </div>
 
       <div class="profile-meta">
@@ -1270,6 +1280,10 @@ async function uploadMemberAvatar(file) {
 
   if (!file || !file.type.startsWith("image/")) {
     throw new Error("กรุณาเลือกไฟล์รูปภาพ");
+  }
+
+  if (file.size > 5 * 1024 * 1024) {
+    throw new Error("รูปภาพต้องมีขนาดไม่เกิน 5 MB");
   }
 
   const extension = file.name.split(".").pop().toLowerCase();
@@ -1899,8 +1913,45 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   $("dashboard-profile")?.addEventListener("click", async (event) => {
+    const uploadButton = event.target.closest(".profile-avatar-upload-btn");
+    if (uploadButton) {
+      $("profile-avatar-input")?.click();
+      return;
+    }
+
     const button = event.target.closest(".copy-own-game-uid");
     if (button) await copyGameUID(button);
+  });
+
+  $("dashboard-profile")?.addEventListener("change", async (event) => {
+    if (event.target.id !== "profile-avatar-input") return;
+
+    const input = event.target;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const uploadButton = $("dashboard-profile")?.querySelector(".profile-avatar-upload-btn");
+    const status = $("dashboard-profile")?.querySelector(".profile-avatar-upload-status");
+
+    if (uploadButton) {
+      uploadButton.disabled = true;
+      uploadButton.textContent = "กำลังอัปโหลด...";
+    }
+    if (status) status.textContent = "กำลังบันทึกรูปโปรไฟล์...";
+
+    try {
+      await uploadMemberAvatar(file);
+    } catch (error) {
+      console.error("Profile avatar upload error:", error);
+      if (status) status.textContent = error.message || "อัปโหลดรูปไม่สำเร็จ";
+      if (uploadButton) {
+        uploadButton.disabled = false;
+        uploadButton.innerHTML = '<svg class="icon"><use href="#i-camera"/></svg> เปลี่ยนรูปโปรไฟล์';
+      }
+      alert(error.message || "อัปโหลดรูปโปรไฟล์ไม่สำเร็จ กรุณาลองอีกครั้ง");
+    } finally {
+      input.value = "";
+    }
   });
 
   $("account-details")?.addEventListener("submit", async (event) => {
