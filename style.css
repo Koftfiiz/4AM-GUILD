@@ -1890,3 +1890,36 @@ a { color: inherit; text-decoration: none; }
   flex: 0 0 auto;
   margin-left: auto;
 }
+
+
+/* Restore the registration card to the same simple red frame used by the Discord login card. */
+#registration-screen.login-card {
+  isolation: auto;
+  border: 1px solid var(--red-line);
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(29, 14, 18, .95), rgba(8, 5, 6, .96));
+  background-clip: border-box;
+  box-shadow: 0 0 55px rgba(170, 20, 36, .32), inset 0 0 35px rgba(115, 24, 37, .14);
+}
+
+#registration-screen.login-card::before,
+#registration-screen.login-card::after {
+  content: none !important;
+  display: none !important;
+  animation: none !important;
+}
+
+/* Keep the Thai status badge aligned with the right edge of each input. */
+#registration-screen .registration-field-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 10px;
+}
+
+#registration-screen .registration-field-status {
+  flex: 0 0 auto;
+  margin-left: auto;
+}
