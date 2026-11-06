@@ -498,7 +498,7 @@ function showRegistrationScreen(errorMessage = "") {
       <form id="registration-form">
 
         <label class="registration-field-label" for="registration-character">
-          Character Name / ชื่อตัวละคร
+          ชื่อตัวละคร
           <span class="registration-field-status required">จำเป็นต้องกรอก</span>
         </label>
 
@@ -507,13 +507,13 @@ function showRegistrationScreen(errorMessage = "") {
           name="character_name"
           type="text"
           maxlength="40"
-          placeholder="Enter your character name / กรอกชื่อตัวละคร"
+          placeholder="Enter character name"
           autocomplete="off"
           required
         >
 
         <label class="registration-field-label" for="registration-game-uid">
-          Character UID / UID ตัวละคร
+          รหัสตัวละคร
           <span class="registration-field-status required">จำเป็นต้องกรอก</span>
         </label>
 
@@ -525,13 +525,13 @@ function showRegistrationScreen(errorMessage = "") {
           pattern="[0-9]{10}"
           minlength="10"
           maxlength="10"
-          placeholder="Enter 10-digit UID / กรอก UID 10 หลัก"
+          placeholder="Enter 10-digit UID"
           autocomplete="off"
           required
         >
 
         <label class="registration-field-label" for="registration-class">
-          Class / อาชีพ
+          อาชีพ
           <span class="registration-field-status required">จำเป็นต้องกรอก</span>
         </label>
 
@@ -540,14 +540,14 @@ function showRegistrationScreen(errorMessage = "") {
           name="game_class"
           required
         >
-          <option value="" disabled selected>Select your class / เลือกอาชีพ</option>
+          <option value="" disabled selected>Select your class</option>
           ${CLASS_DATA.map(item => `
             <option value="${escapeHTML(item.name)}">${escapeHTML(item.name)}</option>
           `).join("")}
         </select>
 
         <label class="registration-field-label" for="registration-nickname">
-          Nickname / ชื่อเล่น
+          ชื่อเล่น
           <span class="registration-field-status required">จำเป็นต้องกรอก</span>
         </label>
 
@@ -556,23 +556,25 @@ function showRegistrationScreen(errorMessage = "") {
           name="nickname"
           type="text"
           maxlength="40"
-          placeholder="Enter your nickname / กรอกชื่อเล่น"
+          placeholder="Enter nickname"
           autocomplete="nickname"
           required
         >
 
         <label class="registration-field-label" for="registration-age">
-          Age / อายุ
+          อายุ
           <span class="registration-field-status optional">ไม่บังคับ</span>
         </label>
 
         <input
           id="registration-age"
           name="age"
-          type="number"
-          min="1"
-          max="120"
-          placeholder="Enter your age / กรอกอายุ"
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]{1,3}"
+          maxlength="3"
+          placeholder="Enter your age"
+          autocomplete="off"
         >
 
         <div class="registration-discord-info">
@@ -685,7 +687,7 @@ async function registerGuildMember(event) {
   if (!nickname) {
     showMessage(
       "registration-message",
-      "กรุณากรอก Nickname / ชื่อเล่น"
+      "กรุณากรอก ชื่อเล่น"
     );
     return;
   }
