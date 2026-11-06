@@ -1878,3 +1878,38 @@ body #registration-screen.login-card::after {
     text-align: left;
   }
 }
+
+
+/* ==========================================
+   SIDEBAR + QUICK MENU TYPOGRAPHY
+   ========================================== */
+
+.sidebar .nav-item {
+  font-size: 19px;
+}
+
+.sidebar .sidebar-divider {
+  font-size: 14px;
+}
+
+.quick-grid .quick-tile {
+  font-size: 17px;
+}
+
+@media (max-width: 1050px) {
+  .sidebar .nav-item {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 850px) {
+  .sidebar .nav-item {
+    font-size: 18px;
+  }
+}
+
+@media (max-width: 520px) {
+  .quick-grid .quick-tile {
+    font-size: 16px;
+  }
+}
