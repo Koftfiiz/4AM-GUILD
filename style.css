@@ -1806,3 +1806,11 @@ a { color: inherit; text-decoration: none; }
   margin: 0;
 }
 
+
+
+/* Remove the decorative L-shaped corner marks from the Discord login card only. */
+#login-screen .login-card::before,
+#login-screen .login-card::after {
+  content: none !important;
+  display: none !important;
+}
