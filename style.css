@@ -1925,13 +1925,17 @@ a { color: inherit; text-decoration: none; }
 }
 
 
-/* Animated red/blue neon border for the registration card. */
+/* Animated red/blue neon border: keep every colored layer clipped to the card's outer ring. */
 #registration-screen.login-card {
   position: relative;
   isolation: isolate;
   overflow: visible;
   border: 1px solid transparent;
   background-clip: padding-box;
+  box-shadow:
+    0 0 10px rgba(255, 25, 65, .24),
+    0 0 18px rgba(0, 112, 255, .18),
+    inset 0 0 35px rgba(115, 24, 37, .14);
 }
 
 #registration-screen.login-card::before,
@@ -1939,16 +1943,10 @@ a { color: inherit; text-decoration: none; }
   content: "" !important;
   display: block !important;
   position: absolute;
-  inset: -2px;
   border-radius: inherit;
   pointer-events: none;
-  opacity: 1;
-  animation: none;
-}
-
-#registration-screen.login-card::before {
-  z-index: 2;
-  padding: 2px;
+  width: auto;
+  height: auto;
   background: conic-gradient(
     from 0deg,
     transparent 0deg 24deg,
@@ -1966,28 +1964,25 @@ a { color: inherit; text-decoration: none; }
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
-  filter: saturate(1.5) brightness(1.35);
   animation: guild-neon-border-spin 3.8s linear infinite;
 }
 
+/* Sharp, narrow neon stroke sits on the outside edge only. */
+#registration-screen.login-card::before {
+  z-index: 2;
+  inset: -1px;
+  padding: 2px;
+  filter: saturate(1.8) brightness(1.5);
+}
+
+/* The soft halo uses the SAME ring mask, never a full-card gradient. */
 #registration-screen.login-card::after {
   z-index: 1;
-  inset: -5px;
-  background: conic-gradient(
-    from 0deg,
-    transparent 0deg 24deg,
-    rgba(255, 18, 58, .95) 42deg,
-    rgba(255, 65, 96, .8) 58deg,
-    transparent 82deg 154deg,
-    rgba(0, 112, 255, .95) 174deg,
-    rgba(65, 190, 255, .85) 194deg,
-    transparent 218deg 294deg,
-    rgba(255, 18, 58, .95) 318deg,
-    rgba(255, 65, 96, .8) 336deg,
-    transparent 360deg
-  );
-  filter: blur(11px) saturate(1.8);
-  animation: guild-neon-border-spin 3.8s linear infinite;
+  inset: -7px;
+  padding: 7px;
+  opacity: .72;
+  filter: blur(3px) saturate(1.8);
+  animation-direction: reverse;
 }
 
 @keyframes guild-neon-border-spin {
@@ -2000,11 +1995,4 @@ a { color: inherit; text-decoration: none; }
     animation-duration: 12s;
   }
 }
-
-
-/* Fix neon border pseudo-elements: reset the 34px corner-mark dimensions from .login-card. */
-#registration-screen.login-card::before,
-#registration-screen.login-card::after {
-  width: auto;
-  height: auto;
-}
+ 
