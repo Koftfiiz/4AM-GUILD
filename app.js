@@ -578,10 +578,8 @@ function showRegistrationScreen(errorMessage = "") {
         >
 
         <div class="registration-discord-info">
-          <p>
-            <strong>Discord Account</strong>
-          </p>
-          <p>${escapeHTML(currentUser?.email || "Discord Connected")}</p>
+          <strong>Discord Account :</strong>
+          <span>${escapeHTML(currentUser?.email || "Discord Connected")}</span>
         </div>
 
         <p id="registration-message" class="message">
