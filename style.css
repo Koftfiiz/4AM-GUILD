@@ -1410,9 +1410,18 @@ a { color: inherit; text-decoration: none; }
 }
 
 #registration-screen .registration-discord-info {
-  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 9px;
   padding: 12px 14px;
   overflow-wrap: anywhere;
+}
+
+#registration-screen .registration-discord-info strong,
+#registration-screen .registration-discord-info span {
+  margin: 0;
 }
 
 @media (max-width: 520px) {
