@@ -1457,13 +1457,6 @@ a { color: inherit; text-decoration: none; }
   margin-bottom: 14px;
 }
 
-/* Registration is a clean standalone form: hide inherited login-card corner marks. */
-#registration-screen.login-card::before,
-#registration-screen.login-card::after {
-  content: none;
-  display: none;
-}
-
 /* The Class field is a real select menu; Age remains a normal number input. */
 #registration-screen select {
   display: block;
@@ -1562,131 +1555,6 @@ a { color: inherit; text-decoration: none; }
 }
 
 
-/* ==========================================
-   4AM REGISTRATION — CYBERPUNK NEON FIRE BORDER
-   Thick red/blue plasma flames with a soft, glowing outer bloom.
-   All animated layers are masked to the outside frame, away from form content.
-   ========================================== */
-@property --registration-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
-#registration-screen.login-card {
-  position: relative;
-  isolation: isolate;
-  border: 6px solid transparent;
-  background:
-    linear-gradient(180deg, rgba(8, 7, 13, .995), rgba(5, 6, 12, .998)) padding-box,
-    linear-gradient(125deg,
-      #ff263f 0%,
-      #ff5268 15%,
-      #541d73 34%,
-      #174bce 58%,
-      #36a5ff 72%,
-      #202b91 84%,
-      #ff263f 100%
-    ) border-box;
-  background-clip: padding-box, border-box;
-  box-shadow:
-    0 0 7px rgba(255, 35, 62, .95),
-    0 0 17px rgba(255, 25, 58, .62),
-    0 0 30px rgba(255, 25, 58, .32),
-    0 0 9px rgba(35, 105, 255, .95),
-    0 0 22px rgba(35, 105, 255, .62),
-    0 0 38px rgba(35, 105, 255, .3),
-    inset 0 0 18px rgba(25, 65, 150, .12);
-}
-
-/* Re-enable the registration plasma layers (legacy login-card corner marks are not used here). */
-#registration-screen.login-card::before,
-#registration-screen.login-card::after {
-  display: block;
-  content: "";
-}
-
-/* Crackling plasma core: irregular, lightning-like red and blue energy on the frame. */
-#registration-screen.login-card::before {
-  content: "";
-  display: block;
-  position: absolute;
-  z-index: 0;
-  pointer-events: none;
-  inset: -9px;
-  padding: 14px;
-  border-radius: 19px;
-  background:
-    conic-gradient(
-      from var(--registration-angle),
-      #ff1838 0deg, #fff0f3 5deg, #ff2947 10deg,
-      #ff7186 15deg, #ff1c3c 22deg, transparent 34deg,
-      transparent 46deg, #174fff 58deg, #e2f2ff 64deg,
-      #328dff 70deg, #72c2ff 76deg, #174fff 84deg,
-      transparent 101deg, transparent 119deg,
-      #ff1838 133deg, #fff0f3 139deg, #ff2947 146deg,
-      #ff7186 153deg, transparent 169deg,
-      transparent 190deg, #174fff 205deg, #e2f2ff 212deg,
-      #328dff 219deg, #72c2ff 226deg, transparent 245deg,
-      transparent 264deg, #ff1838 281deg, #fff0f3 288deg,
-      #ff2947 296deg, #ff7186 304deg, transparent 322deg,
-      transparent 340deg, #174fff 350deg, #e2f2ff 356deg
-    ),
-    repeating-conic-gradient(
-      from calc(var(--registration-angle) * -1),
-      rgba(255,255,255,.0) 0deg 3deg,
-      rgba(255,255,255,.8) 3.3deg 3.8deg,
-      rgba(255,255,255,0) 4.2deg 9deg
-    );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  filter:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='plasma'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.035 .22' numOctaves='2' seed='8' result='noise'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='noise' scale='7' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/svg%3E#plasma")
-    drop-shadow(0 0 2px #fff)
-    drop-shadow(0 0 5px #ff2448)
-    drop-shadow(0 0 8px #287bff);
-  opacity: .98;
-  animation: registration-smoke-drift 5.5s linear infinite;
-}
-
-/* Broad red/blue bloom sits outside the sharp electric edge. */
-#registration-screen.login-card::after {
-  content: "";
-  display: block;
-  position: absolute;
-  z-index: -1;
-  pointer-events: none;
-  inset: -23px;
-  padding: 29px;
-  border-radius: 31px;
-  background:
-    conic-gradient(
-      from calc(var(--registration-angle) - 40deg),
-      transparent 0deg,
-      rgba(255, 25, 55, .96) 35deg,
-      rgba(255, 95, 120, .38) 75deg,
-      transparent 120deg,
-      rgba(30, 90, 255, .96) 170deg,
-      rgba(100, 175, 255, .42) 215deg,
-      transparent 260deg,
-      rgba(255, 25, 55, .9) 305deg,
-      transparent 360deg
-    );
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  mask-composite: exclude;
-  filter: blur(17px) saturate(1.7);
-  opacity: .82;
-  animation: registration-smoke-drift 9s linear infinite reverse;
-}
-
-@keyframes registration-smoke-drift {
-  to { --registration-angle: 360deg; }
-}
-
 /* Make the Class control unmistakably visible as a dropdown. */
 #registration-screen label[for="registration-class"] {
   margin-bottom: 9px;
@@ -1781,13 +1649,6 @@ a { color: inherit; text-decoration: none; }
   #registration-screen .registration-actions .btn { font-size: 16px; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  #registration-screen.login-card::before,
-  #registration-screen.login-card::after {
-    animation: none;
-  }
-}
-
 /* Keep Required / Optional badges on the same line as each field heading. */
 #registration-screen .registration-field-label {
   display: flex;
@@ -1842,40 +1703,6 @@ a { color: inherit; text-decoration: none; }
 }
 
 
-/* Registration form refinements: make the neon energy visibly travel and align status badges to field edges. */
-#registration-screen.login-card::before,
-#registration-screen.login-card::after {
-  background-size: 220% 220%, 220% 220%;
-  will-change: background-position, filter;
-}
-
-#registration-screen.login-card::before {
-  animation:
-    registration-plasma-travel 3.2s linear infinite,
-    registration-plasma-flicker 1.15s ease-in-out infinite alternate;
-}
-
-#registration-screen.login-card::after {
-  animation: registration-plasma-travel 6s linear infinite reverse;
-}
-
-@keyframes registration-plasma-travel {
-  0% {
-    background-position: 0% 0%, 100% 100%;
-  }
-  50% {
-    background-position: 100% 100%, 0% 0%;
-  }
-  100% {
-    background-position: 0% 0%, 100% 100%;
-  }
-}
-
-@keyframes registration-plasma-flicker {
-  from { filter: brightness(.9) saturate(1.25) drop-shadow(0 0 3px #ff2448) drop-shadow(0 0 7px #287bff); }
-  to { filter: brightness(1.55) saturate(2) drop-shadow(0 0 5px #fff) drop-shadow(0 0 12px #ff2448) drop-shadow(0 0 14px #287bff); }
-}
-
 /* Required / Optional badges sit at the far right, flush with the input edge. */
 #registration-screen .registration-field-label {
   display: flex;
@@ -1891,23 +1718,6 @@ a { color: inherit; text-decoration: none; }
   margin-left: auto;
 }
 
-
-/* Restore the registration card to the same simple red frame used by the Discord login card. */
-#registration-screen.login-card {
-  isolation: auto;
-  border: 1px solid var(--red-line);
-  border-radius: 8px;
-  background: linear-gradient(145deg, rgba(29, 14, 18, .95), rgba(8, 5, 6, .96));
-  background-clip: border-box;
-  box-shadow: 0 0 55px rgba(170, 20, 36, .32), inset 0 0 35px rgba(115, 24, 37, .14);
-}
-
-#registration-screen.login-card::before,
-#registration-screen.login-card::after {
-  content: none !important;
-  display: none !important;
-  animation: none !important;
-}
 
 /* Keep the Thai status badge aligned with the right edge of each input. */
 #registration-screen .registration-field-label {
@@ -1925,7 +1735,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 /* =====================================================
-   NEON BORDER - Registration card (วางไว้ท้ายสุดของไฟล์)
+   NEON BORDER - Registration card
    ===================================================== */
 @property --neon-angle {
   syntax: "<angle>";
@@ -1941,26 +1751,27 @@ body #registration-screen.login-card {
     0 0 40px rgba(255, 30, 60, .16);
 }
 
-/* ขอบคม (::before) + แสงฟุ้ง (::after) ใช้ gradient ชุดเดียวกัน */
+/* Sharp ring (::before) + soft glow (::after) share one gradient. */
 body #registration-screen.login-card::before,
 body #registration-screen.login-card::after {
   content: "" !important;
   display: block !important;
   position: absolute;
+  /* reset the 34x34 corner-mark styles inherited from .login-card::before/::after */
+  width: auto;
+  height: auto;
+  border: 0;
+  top: auto; right: auto; bottom: auto; left: auto;
   pointer-events: none;
   background:
-    /* ดาวหางสีน้ำเงิน + สีแดง วิ่งวนตรงข้ามกัน */
     conic-gradient(from var(--neon-angle),
       transparent 0deg, #1e6bff 40deg, #7fd4ff 80deg, #fff 88deg, transparent 90deg,
       transparent 180deg, #ff1f3d 220deg, #ff8a9a 260deg, #fff 268deg, transparent 270deg,
       transparent 360deg),
-    /* ขอบพื้นฐาน น้ำเงินซ้าย → แดงขวา เหมือนในรูป */
     linear-gradient(90deg,
       rgba(0, 212, 255, .75),
       rgba(110, 40, 170, .45) 50%,
       rgba(255, 30, 60, .75));
-  background-size: auto;
-  background-position: 0 0;
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
@@ -1971,10 +1782,9 @@ body #registration-screen.login-card::after {
 body #registration-screen.login-card::before {
   z-index: 2;
   inset: -1px;
-  padding: 2px;               /* ความหนาเส้นขอบ */
+  padding: 2px;
   border-radius: 8px;
   opacity: 1;
-  /* ทำให้ขอบขรุขระเหมือนประกายไฟ (ถ้ากระตุกบนมือถือ ลบบรรทัด filter นี้ได้) */
   filter:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='neon' x='-5%25' y='-5%25' width='110%25' height='110%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.03 .18' numOctaves='2' seed='4' result='n'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='n' scale='5' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/svg%3E#neon")
     drop-shadow(0 0 3px rgba(255, 255, 255, .55));
@@ -1983,7 +1793,7 @@ body #registration-screen.login-card::before {
 body #registration-screen.login-card::after {
   z-index: -1;
   inset: -5px;
-  padding: 7px;               /* ความกว้างของแสงฟุ้ง */
+  padding: 7px;
   border-radius: 12px;
   opacity: .85;
   filter: blur(12px) saturate(1.6);
