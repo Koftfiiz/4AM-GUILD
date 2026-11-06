@@ -603,7 +603,7 @@ function showRegistrationScreen(errorMessage = "") {
             class="btn btn-primary login-submit"
             id="registration-submit"
           >
-            REGISTER CHARACTER / สมัครสมาชิก
+            REGISTER / สมัครสมาชิก
           </button>
 
           <button
@@ -624,6 +624,9 @@ function showRegistrationScreen(errorMessage = "") {
       "submit",
       registerGuildMember
     );
+
+    // Bind Logout directly to the dynamically-created registration screen.
+    $("registration-logout")?.addEventListener("click", logout);
 
   } else {
     screen.classList.remove("hidden");
@@ -1835,11 +1838,6 @@ function renderAccountDetails() {
 document.addEventListener("DOMContentLoaded", () => {
   $("login-form")?.addEventListener("submit", login);
   $("logout-btn")?.addEventListener("click", logout);
-
-  // Delegated handler supports the dynamically-created registration screen.
-  document.addEventListener("click", (event) => {
-    if (event.target.closest("#registration-logout")) logout(event);
-  });
 
   $("member-search")?.addEventListener("input", filterMembers);
   $("refresh-members")?.addEventListener("click", loadMembers);
