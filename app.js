@@ -988,14 +988,6 @@ function renderMembers(members) {
           </div>
         ` : ""}
 
-        <button
-          class="btn btn-outline copy-member-id"
-          data-user-id="${escapeHTML(userId)}"
-          type="button"
-          ${userId ? "" : "disabled"}
-        >
-          Copy ID
-        </button>
       </article>
     `;
   }).join("");
