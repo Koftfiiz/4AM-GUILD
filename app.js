@@ -481,24 +481,18 @@ function showRegistrationScreen(errorMessage = "") {
     screen.className = "login-card";
 
     screen.innerHTML = `
-      <div class="login-logo">
+      <div class="login-logo registration-guild-logo">
         <img
-          src="${DEFAULT_AVATAR}"
-          alt="Default Avatar"
+          src="assets/4am-guild-logo.png"
+          alt="4AM GUILD Logo"
           onerror="this.style.display='none'"
-          style="
-            width: 90px;
-            height: 90px;
-            object-fit: cover;
-            border-radius: 50%;
-          "
         >
       </div>
 
-      <h2>CHARACTER REGISTRATION</h2>
+      <h2>4AM REGISTRATION</h2>
 
       <p class="login-description">
-        Register your character to join 4AM GUILD.
+        Register your character to join 4AM GUILD
       </p>
 
       <form id="registration-form">
