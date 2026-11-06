@@ -1987,7 +1987,7 @@ function renderAccountDetails() {
 // EVENT LISTENERS
 // ==========================================
 
-document.addEventListener("DOMContentLoaded", () => {
+function registerAppEventListeners() {
   $("login-form")?.addEventListener("submit", login);
   $("logout-btn")?.addEventListener("click", logout);
 
@@ -2132,7 +2132,13 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   initializeAuth();
-});
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", registerAppEventListeners, { once: true });
+} else {
+  registerAppEventListeners();
+}
 
 // ==========================================
 // AUTH SESSION INITIALIZATION
