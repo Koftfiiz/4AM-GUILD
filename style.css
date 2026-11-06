@@ -1925,13 +1925,20 @@ a { color: inherit; text-decoration: none; }
 }
 
 
-/* Animated red/blue neon border: keep every colored layer clipped to the card's outer ring. */
+/* Animated red/blue neon border: animate the gradient angle while the ring mask stays still. */
+@property --guild-neon-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
 #registration-screen.login-card {
   position: relative;
   isolation: isolate;
   overflow: visible;
-  border: 1px solid transparent;
-  background-clip: padding-box;
+  border: 0 !important;
+  outline: none !important;
+  background-clip: border-box;
   box-shadow:
     0 0 10px rgba(255, 25, 65, .24),
     0 0 18px rgba(0, 112, 255, .18),
@@ -1947,8 +1954,9 @@ a { color: inherit; text-decoration: none; }
   pointer-events: none;
   width: auto;
   height: auto;
+  --guild-neon-angle: 0deg;
   background: conic-gradient(
-    from 0deg,
+    from var(--guild-neon-angle),
     transparent 0deg 24deg,
     #ff173d 42deg,
     #ff526e 58deg,
@@ -1964,29 +1972,31 @@ a { color: inherit; text-decoration: none; }
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
-  animation: guild-neon-border-spin 3.8s linear infinite;
+  animation: guild-neon-angle-flow 2.8s linear infinite;
 }
 
-/* Sharp, narrow neon stroke sits on the outside edge only. */
+/* Bright, narrow color stays confined to the card's perimeter. */
 #registration-screen.login-card::before {
   z-index: 2;
-  inset: -1px;
+  inset: 0;
   padding: 2px;
-  filter: saturate(1.8) brightness(1.5);
+  filter: saturate(2) brightness(1.65);
 }
 
-/* The soft halo uses the SAME ring mask, never a full-card gradient. */
+/* Soft outer glow repeats the same perimeter mask; no color fills the card. */
 #registration-screen.login-card::after {
   z-index: 1;
-  inset: -7px;
+  inset: -6px;
   padding: 7px;
-  opacity: .72;
+  opacity: .65;
   filter: blur(3px) saturate(1.8);
+  animation-duration: 3.6s;
   animation-direction: reverse;
 }
 
-@keyframes guild-neon-border-spin {
-  to { transform: rotate(360deg); }
+@keyframes guild-neon-angle-flow {
+  from { --guild-neon-angle: 0deg; }
+  to { --guild-neon-angle: 360deg; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1995,4 +2005,3 @@ a { color: inherit; text-decoration: none; }
     animation-duration: 12s;
   }
 }
- 
