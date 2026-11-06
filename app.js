@@ -36,13 +36,14 @@ const AVATAR_BUCKET = "character-avatars";
 const PORTFOLIO_BUCKET = "portfolio-images";
 
 const CLASS_DATA = [
-  { name: "Ironclad", color: "#e6b84f", icon: "🛡" },
-  { name: "Bloodstrom", color: "#e54858", icon: "⚔" },
-  { name: "Celestune", color: "#477be8", icon: "✦" },
-  { name: "Numina", color: "#e7a3bd", icon: "✧" },
-  { name: "Sylph", color: "#dfa6ce", icon: "❀" },
-  { name: "Nightwaker", color: "#9ce8ea", icon: "☾" },
-  { name: "Dragonsvelte", color: "#42c98e", icon: "♢" }
+  { name: "Ironclad", color: "#e6b84f", iconPath: "assets/class-icon/Ironclad.png" },
+  { name: "Bloodstrom", color: "#e54858", iconPath: "assets/class-icon/Bloodstrom.png" },
+  { name: "Celestune", color: "#477be8", iconPath: "assets/class-icon/Celestune.png" },
+  { name: "Numina", color: "#e7a3bd", iconPath: "assets/class-icon/Numina.png" },
+  { name: "Sylph", color: "#dfa6ce", iconPath: "assets/class-icon/Sylph.png" },
+  { name: "Nightwaker", color: "#9ce8ea", iconPath: "assets/class-icon/Nightwaker.png" },
+  { name: "Dragonsvelte", color: "#42c98e", iconPath: "assets/class-icon/Dragonsvelte.png" },
+  { name: "Mystech", color: "#9b83df", iconPath: "assets/class-icon/Mystech.png" }
 ];
 
 // ตำแหน่งภายในกิลด์ 4AM เรียงจากสูงสุดไปต่ำสุด
@@ -824,7 +825,7 @@ async function renderDashboardProfile() {
           <div>
             <dt>Class :</dt>
             <dd>
-              <i class="class-diamond" style="--class-color:${classColor}"></i>
+              ${classInfo?.iconPath ? `<img class="profile-class-icon" src="${escapeHTML(classInfo.iconPath)}" alt="${escapeHTML(className)} icon">` : ""}
               ${escapeHTML(className)}
             </dd>
           </div>
@@ -1564,7 +1565,7 @@ function renderClassLegend() {
 
   container.innerHTML = CLASS_DATA.map((item) => `
     <div class="class-item" style="--class-color:${item.color}">
-      <span class="class-icon">${item.icon}</span>
+      <img class="class-icon-image" src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
       <strong>${escapeHTML(item.name)}</strong>
     </div>
   `).join("");
