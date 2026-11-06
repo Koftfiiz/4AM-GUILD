@@ -317,9 +317,21 @@ async function login(event) {
   }
 }
 
-async function logout() {
+let logoutInProgress = false;
+
+async function logout(event) {
+  event?.preventDefault();
+  if (logoutInProgress) return;
+  logoutInProgress = true;
+
+  const registrationLogout = $("registration-logout");
+  const menuLogout = $("logout-btn");
+  if (registrationLogout) registrationLogout.disabled = true;
+  if (menuLogout) menuLogout.disabled = true;
+
   try {
-    const { error } = await supabaseClient.auth.signOut();
+    // Clear only this application's Supabase session.
+    const { error } = await supabaseClient.auth.signOut({ scope: "local" });
     if (error) throw error;
 
     currentUser = null;
@@ -328,9 +340,14 @@ async function logout() {
     discordAccount = null;
     allPortfolios = [];
     allWarEvents = [];
+    registrationBusy = false;
 
     $("app-layout")?.classList.add("hidden");
+    $("registration-screen")?.remove();
     $("login-screen")?.classList.remove("hidden");
+
+    // Restore the original Discord login card hidden by showRegistrationScreen().
+    $("login-form")?.closest(".login-card")?.classList.remove("hidden");
 
     closeUserMenu();
     updateUserChip();
@@ -338,10 +355,19 @@ async function logout() {
     setConnectionStatus("ยังไม่ได้เชื่อมต่อ", false);
 
     $("login-form")?.reset();
+    const loginButton = document.querySelector("#login-form button[type='submit']");
+    if (loginButton) {
+      loginButton.disabled = false;
+      loginButton.textContent = "ENTER THE GUILD";
+    }
     showMessage("login-message", "");
   } catch (error) {
     console.error("Logout error:", error);
-    alert("Unable to sign out: " + error.message);
+    alert("Unable to sign out: " + (error?.message || "Unknown error"));
+  } finally {
+    logoutInProgress = false;
+    if (registrationLogout) registrationLogout.disabled = false;
+    if (menuLogout) menuLogout.disabled = false;
   }
 }
 
@@ -477,8 +503,9 @@ function showRegistrationScreen(errorMessage = "") {
 
       <form id="registration-form">
 
-        <label for="registration-character">
-          Character Name *
+        <label class="registration-field-label" for="registration-character">
+          Character Name / ชื่อตัวละคร
+          <span class="registration-field-status required">Required / จำเป็นต้องกรอก</span>
         </label>
 
         <input
@@ -486,12 +513,14 @@ function showRegistrationScreen(errorMessage = "") {
           name="character_name"
           type="text"
           maxlength="40"
-          placeholder="Enter your character name"
+          placeholder="Enter your character name / กรอกชื่อตัวละคร"
+          autocomplete="off"
           required
         >
 
-        <label for="registration-game-uid">
-          Game UID * (ตัวเลข 10 หลัก)
+        <label class="registration-field-label" for="registration-game-uid">
+          Character UID / UID ตัวละคร
+          <span class="registration-field-status required">Required / จำเป็นต้องกรอก</span>
         </label>
 
         <input
@@ -502,13 +531,14 @@ function showRegistrationScreen(errorMessage = "") {
           pattern="[0-9]{10}"
           minlength="10"
           maxlength="10"
-          placeholder="3166503500"
+          placeholder="Enter 10-digit UID / กรอก UID 10 หลัก"
           autocomplete="off"
           required
         >
 
-        <label for="registration-class">
-          Class *
+        <label class="registration-field-label" for="registration-class">
+          Class / อาชีพ
+          <span class="registration-field-status required">Required / จำเป็นต้องกรอก</span>
         </label>
 
         <input
@@ -516,7 +546,7 @@ function showRegistrationScreen(errorMessage = "") {
           name="game_class"
           type="text"
           list="guild-class-options"
-          placeholder="Select your class"
+          placeholder="Select your class / เลือกอาชีพ"
           required
           autocomplete="off"
         >
@@ -527,8 +557,9 @@ function showRegistrationScreen(errorMessage = "") {
           `).join("")}
         </datalist>
 
-        <label for="registration-nickname">
-          Nickname (Optional)
+        <label class="registration-field-label" for="registration-nickname">
+          Nickname / ชื่อเล่น
+          <span class="registration-field-status required">Required / จำเป็นต้องกรอก</span>
         </label>
 
         <input
@@ -536,11 +567,14 @@ function showRegistrationScreen(errorMessage = "") {
           name="nickname"
           type="text"
           maxlength="40"
-          placeholder="Enter your nickname"
+          placeholder="Enter your nickname / กรอกชื่อเล่น"
+          autocomplete="nickname"
+          required
         >
 
-        <label for="registration-age">
-          Age (Optional)
+        <label class="registration-field-label" for="registration-age">
+          Age / อายุ
+          <span class="registration-field-status optional">Optional / ไม่บังคับ</span>
         </label>
 
         <input
@@ -549,7 +583,7 @@ function showRegistrationScreen(errorMessage = "") {
           type="number"
           min="1"
           max="120"
-          placeholder="Enter your age"
+          placeholder="Enter your age / กรอกอายุ"
         >
 
         <div class="registration-discord-info">
@@ -563,23 +597,25 @@ function showRegistrationScreen(errorMessage = "") {
           ${escapeHTML(errorMessage)}
         </p>
 
-        <button
-          type="submit"
-          class="btn btn-primary login-submit"
-          id="registration-submit"
-        >
-          REGISTER CHARACTER
-        </button>
+        <div class="registration-actions">
+          <button
+            type="submit"
+            class="btn btn-primary login-submit"
+            id="registration-submit"
+          >
+            REGISTER CHARACTER / สมัครสมาชิก
+          </button>
+
+          <button
+            type="button"
+            id="registration-logout"
+            class="btn btn-outline registration-logout"
+          >
+            LOG OUT / ออกจากระบบ
+          </button>
+        </div>
 
       </form>
-
-      <button
-        type="button"
-        id="registration-logout"
-        class="btn btn-outline"
-      >
-        LOG OUT
-      </button>
     `;
 
     loginScreen.appendChild(screen);
@@ -589,10 +625,6 @@ function showRegistrationScreen(errorMessage = "") {
       registerGuildMember
     );
 
-    $("registration-logout")?.addEventListener(
-      "click",
-      logout
-    );
   } else {
     screen.classList.remove("hidden");
 
@@ -1795,6 +1827,11 @@ function renderAccountDetails() {
 document.addEventListener("DOMContentLoaded", () => {
   $("login-form")?.addEventListener("submit", login);
   $("logout-btn")?.addEventListener("click", logout);
+
+  // Delegated handler supports the dynamically-created registration screen.
+  document.addEventListener("click", (event) => {
+    if (event.target.closest("#registration-logout")) logout(event);
+  });
 
   $("member-search")?.addEventListener("input", filterMembers);
   $("refresh-members")?.addEventListener("click", loadMembers);
