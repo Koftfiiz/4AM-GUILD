@@ -690,6 +690,14 @@ async function registerGuildMember(event) {
     return;
   }
 
+  if (!nickname) {
+    showMessage(
+      "registration-message",
+      "กรุณากรอก Nickname / ชื่อเล่น"
+    );
+    return;
+  }
+
   if (age && (
     !Number.isInteger(Number(age)) ||
     Number(age) < 1 ||
