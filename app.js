@@ -998,14 +998,14 @@ function renderMembers(members) {
         <div class="member-info">
           <div class="member-details">
             <h4>${escapeHTML(name)}</h4>
-            <span>${escapeHTML(role)}</span>
+            <span class="member-role ${String(member.role || "").toLowerCase() === "developer" ? "is-developer" : ""}">${escapeHTML(role)}</span>
             <small class="member-guild-position">
               ตำแหน่งกิลด์: ${escapeHTML(guildPosition || "ยังไม่ได้กำหนดตำแหน่ง")}
             </small>
           </div>
 
           <div class="member-game-uid">
-            <span>UID ตัวละคร</span>
+            <span class="member-uid-label">UID ตัวละคร</span>
             <strong>${escapeHTML(gameUID || "ยังไม่ได้กรอก UID")}</strong>
             ${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">Copy UID</button>` : ""}
           </div>
