@@ -2456,3 +2456,57 @@ body #registration-screen.login-card::after {
   .members-list .member-game-uid .member-uid-label { font-size: 12px; }
   .members-list .member-game-uid strong { font-size: 11px; }
 }
+
+ 
+/* Dashboard profile: position badge shares the name row and aligns to the right */
+.profile-name {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-width: 0;
+  gap: 10px;
+}
+
+.profile-name > strong {
+  min-width: 0;
+  flex: 0 1 auto;
+}
+
+.profile-name > .role-badge {
+  flex: 0 0 auto;
+  margin: 0 18px 0 auto;
+  padding: 7px 18px;
+  font-size: 19px;
+  line-height: 1.25;
+  font-weight: 750;
+  white-space: nowrap;
+  box-shadow: 0 3px 14px rgba(200, 140, 50, .32);
+}
+
+.profile-name > .role-badge .icon {
+  font-size: 20px;
+}
+
+@media (max-width: 470px) {
+  .profile-name { gap: 7px; }
+  .profile-name > strong { font-size: 21px; }
+  .profile-name > .role-badge {
+    margin-right: 12px;
+    padding: 6px 12px;
+    font-size: 16px;
+  }
+  .profile-name > .role-badge .icon { font-size: 17px; }
+}
+
+/* UID number stays readable but smaller than its label */
+.members-list .member-game-uid strong {
+  font-size: 13px;
+}
+
+@media (max-width: 850px) {
+  .members-list .member-game-uid strong { font-size: 12px; }
+}
+
+@media (max-width: 520px) {
+  .members-list .member-game-uid strong { font-size: 12px; }
+}
