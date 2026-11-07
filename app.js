@@ -885,12 +885,11 @@ async function renderDashboardProfile() {
         <div class="profile-name">
           <strong>${escapeHTML(name)}</strong>
           <svg class="icon icon-fill is-stroke"><use href="#i-crown"/></svg>
+          <span class="role-badge">
+            <svg class="icon icon-fill is-stroke"><use href="#i-crown"/></svg>
+            ${escapeHTML(role)}
+          </span>
         </div>
-
-        <span class="role-badge">
-          <svg class="icon icon-fill is-stroke"><use href="#i-crown"/></svg>
-          ${escapeHTML(role)}
-        </span>
 
         <dl class="profile-list">
           <div>
