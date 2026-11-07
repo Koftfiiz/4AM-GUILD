@@ -1497,7 +1497,8 @@ async function loadPortfolios() {
     .from("portfolios")
     .select(`
       id, member_id, title, description, game_class, created_at, updated_at,
-      portfolio_images ( id, image_url, image_type, caption, created_at, sort_order )
+      portfolio_images ( id, image_url, image_type, caption, created_at, sort_order ),
+      portfolio_reviews ( status, reason, reviewer_user_id, reviewed_at )
     `)
     .order("created_at", { ascending: false });
 
@@ -1590,6 +1591,23 @@ function resetPortfolioForm() {
   if (status) status.textContent = "";
 }
 
+function isPortfolioReviewer() {
+  return isManagement();
+}
+
+function getPortfolioReview(portfolio) {
+  const value = portfolio?.portfolio_reviews;
+  return Array.isArray(value) ? (value[0] || null) : (value || null);
+}
+
+function portfolioReviewStatusLabel(status) {
+  return ({
+    pending: "รอตรวจสอบ",
+    approved: "ตรวจสอบแล้ว · ผ่าน",
+    rejected: "ยังไม่ผ่าน"
+  })[status] || "รอตรวจสอบ";
+}
+
 async function renderPortfolios() {
   const container = $("portfolio-grid");
   if (!container) return;
@@ -1598,6 +1616,7 @@ async function renderPortfolios() {
     return;
   }
 
+  const reviewer = isPortfolioReviewer();
   const cards = await Promise.all(allPortfolios.map(async (portfolio) => {
     const images = portfolio.portfolio_images || [];
     const firstImage = images[0];
@@ -1608,10 +1627,51 @@ async function renderPortfolios() {
     const firstClass = getClassInfo(classes[0]);
     const color = firstClass?.color || "";
     const isOwner = currentUser?.id === portfolio.member_id;
+    const review = getPortfolioReview(portfolio) || { status: "pending" };
+    const canSeeReview = reviewer || isOwner;
     const classTags = classes.map((className) => {
       const info = getClassInfo(className);
       return `<span class="portfolio-card-tag" ${info ? `style="--class-color:${info.color}"` : ""}>${escapeHTML(className)}</span>`;
     }).join("");
+
+    const reviewPanel = canSeeReview ? `
+      <div class="portfolio-review-summary">
+        <span class="portfolio-review-badge is-${escapeHTML(review.status || "pending")}">
+          ${escapeHTML(portfolioReviewStatusLabel(review.status))}
+        </span>
+        ${review.status === "rejected" && review.reason ? `
+          <div class="portfolio-review-reason">
+            <strong>เหตุผลที่ยังไม่ผ่าน</strong>
+            <p>${escapeHTML(review.reason)}</p>
+          </div>
+        ` : ""}
+        ${review.reviewed_at ? `<small class="portfolio-review-meta">ตรวจล่าสุด ${escapeHTML(formatDate(review.reviewed_at))}</small>` : ""}
+      </div>
+    ` : "";
+
+    const reviewControls = reviewer ? `
+      <div class="portfolio-review-controls" data-portfolio-review="${escapeHTML(portfolio.id)}">
+        <div class="portfolio-review-actions">
+          <button type="button" class="portfolio-review-approve" data-review-action="approve" data-portfolio-id="${escapeHTML(portfolio.id)}">
+            ✓ ตรวจแล้ว · ผ่าน
+          </button>
+          <button type="button" class="portfolio-review-reject" data-review-action="toggle-reject" data-portfolio-id="${escapeHTML(portfolio.id)}">
+            ✕ ยังไม่ผ่าน
+          </button>
+        </div>
+        <div class="portfolio-review-reject-form hidden" data-reject-form="${escapeHTML(portfolio.id)}">
+          <label>
+            <span>เหตุผลที่ไม่ผ่าน <i>*</i></span>
+            <textarea rows="3" maxlength="1000" data-rejection-reason="${escapeHTML(portfolio.id)}" placeholder="ระบุสิ่งที่สมาชิกต้องแก้ไข..."></textarea>
+          </label>
+          <div class="portfolio-review-reject-footer">
+            <small>สมาชิกเจ้าของแฟ้มผลงานจะเห็นเหตุผลนี้</small>
+            <button type="button" class="portfolio-review-submit-reject" data-review-action="submit-rejection" data-portfolio-id="${escapeHTML(portfolio.id)}">ยืนยันไม่ผ่าน</button>
+          </div>
+        </div>
+        <p class="portfolio-review-feedback" data-review-feedback="${escapeHTML(portfolio.id)}" aria-live="polite"></p>
+      </div>
+    ` : "";
 
     return `
       <article class="portfolio-card" ${color ? `style="--class-color:${color}"` : ""}>
@@ -1625,11 +1685,78 @@ async function renderPortfolios() {
             <small>${images.length} รูป · ${formatDate(portfolio.created_at)}</small>
             ${isOwner ? '<span class="portfolio-owner-label">ผลงานของคุณ</span>' : ""}
           </div>
+          ${reviewPanel}
+          ${reviewControls}
         </div>
       </article>
     `;
   }));
   container.innerHTML = cards.join("");
+}
+
+async function savePortfolioReview(portfolioId, status, reason = "") {
+  if (!isPortfolioReviewer()) {
+    alert("เฉพาะ Leader และ Management เท่านั้นที่ตรวจ Portfolio ได้");
+    return;
+  }
+
+  const feedback = document.querySelector(`[data-review-feedback="${CSS.escape(portfolioId)}"]`);
+  const buttons = document.querySelectorAll(`[data-portfolio-review="${CSS.escape(portfolioId)}"] button`);
+  buttons.forEach((button) => { button.disabled = true; });
+  if (feedback) feedback.textContent = "กำลังบันทึกผลตรวจ...";
+
+  try {
+    const { error } = await supabaseClient.rpc("set_portfolio_review", {
+      target_portfolio_id: portfolioId,
+      new_status: status,
+      rejection_reason: status === "rejected" ? reason.trim() : null
+    });
+    if (error) throw error;
+    await loadPortfolios();
+  } catch (error) {
+    console.error("Portfolio review error:", error);
+    if (feedback) feedback.textContent = error.message || "บันทึกผลตรวจไม่สำเร็จ";
+    buttons.forEach((button) => { button.disabled = false; });
+  }
+}
+
+function handlePortfolioReviewAction(event) {
+  const button = event.target.closest("[data-review-action]");
+  if (!button || !isPortfolioReviewer()) return;
+
+  const action = button.dataset.reviewAction;
+  const portfolioId = button.dataset.portfolioId;
+  if (!portfolioId) return;
+
+  if (action === "toggle-reject") {
+    const form = document.querySelector(`[data-reject-form="${CSS.escape(portfolioId)}"]`);
+    form?.classList.toggle("hidden");
+    return;
+  }
+
+  if (action === "approve") {
+    if (window.confirm("ยืนยันว่าแฟ้มผลงานนี้ตรวจสอบแล้วและผ่านใช่หรือไม่?")) {
+      savePortfolioReview(portfolioId, "approved");
+    }
+    return;
+  }
+
+  if (action === "submit-rejection") {
+    const input = document.querySelector(`[data-rejection-reason="${CSS.escape(portfolioId)}"]`);
+    const reason = input?.value.trim() || "";
+    if (!reason) {
+      if (input) {
+        input.focus();
+        input.setCustomValidity("กรุณาระบุเหตุผลที่ยังไม่ผ่าน");
+        input.reportValidity();
+        input.addEventListener("input", () => input.setCustomValidity(""), { once: true });
+      }
+      return;
+    }
+    if (window.confirm("ยืนยันส่งผลตรวจว่าแฟ้มผลงานนี้ยังไม่ผ่านใช่หรือไม่?")) {
+      savePortfolioReview(portfolioId, "rejected", reason);
+    }
+  }
 }
 
 async function uploadPortfolioImage(file, portfolioId, caption = "", sortOrder = 0) {
@@ -1813,6 +1940,8 @@ function registerPortfolioEvents() {
     draggingIndex = null;
     $("portfolio-image-preview")?.querySelectorAll(".is-dragging").forEach((item) => item.classList.remove("is-dragging"));
   });
+
+  $("portfolio-grid")?.addEventListener("click", handlePortfolioReviewAction);
 }
 
 // ==========================================
