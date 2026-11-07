@@ -2935,22 +2935,3 @@ body #registration-screen.login-card::after {
 }
 
 
-/* Portfolio class tags: compact, content-sized controls */
-.class-legend {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 8px;
-}
-.class-item {
-  flex: 0 0 auto;
-  width: max-content;
-  max-width: 100%;
-  box-sizing: border-box;
-  padding: 7px 11px;
-  gap: 7px;
-  white-space: nowrap;
-}
-.class-item strong {
-  line-height: 1.2;
-}
