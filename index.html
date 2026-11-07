@@ -494,20 +494,23 @@
               </select>
             </div>
             <div class="war-event-fields">
-              <div class="form-group">
-                <label>ชื่อคู่แข่ง</label>
-                <div class="war-vs-field">
-                  <span>4AM</span><b>vs</b>
-                  <input id="war-opponent" name="opponent" type="text" maxlength="60" placeholder="ชื่อกิลด์คู่แข่ง" required>
+              <div class="war-schedule-fields">
+                <div class="form-group">
+                  <label for="war-event-date">วันที่เริ่มวอร์</label>
+                  <input id="war-event-date" name="event-date" type="date" required>
+                </div>
+                <div class="form-group">
+                  <label for="war-start-time">เวลาเริ่มวอร์</label>
+                  <input id="war-start-time" name="start-time" type="time" lang="en-GB" step="60" required aria-label="เวลาเริ่มวอร์ รูปแบบ 24 ชั่วโมง">
                 </div>
               </div>
-              <div class="form-group">
-                <label for="war-event-date">วันที่เริ่มวอร์</label>
-                <input id="war-event-date" name="event-date" type="date" required>
-              </div>
-              <div class="form-group">
-                <label for="war-start-time">เวลาเริ่มวอร์</label>
-                <input id="war-start-time" name="start-time" type="time" lang="en-GB" step="60" required aria-label="เวลาเริ่มวอร์ รูปแบบ 24 ชั่วโมง">
+              <div class="form-group war-opponent-row">
+                <label for="war-opponent">คู่แข่งขัน</label>
+                <div class="war-vs-field">
+                  <span class="war-team-name">4AM</span>
+                  <b class="war-versus-mark" aria-label="versus">VS</b>
+                  <input id="war-opponent" name="opponent" type="text" maxlength="60" placeholder="ชื่อกิลด์คู่แข่ง" required>
+                </div>
               </div>
             </div>
             <div class="war-create-capacity" id="war-create-capacity">วอร์จริง: 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน</div>
