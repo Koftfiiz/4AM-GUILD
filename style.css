@@ -2409,3 +2409,50 @@ body #registration-screen.login-card::after {
   .members-list .member-game-uid .member-uid-label { font-size: 12px; }
   .members-list .member-game-uid strong { font-size: 14px; }
 }
+
+/* Member directory: readable role labels for every member and clearer UID hierarchy */
+.members-list .member-details .member-role {
+  display: inline-block;
+  width: fit-content;
+  margin-top: 3px;
+  color: #eee4e7;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.members-list .member-details .member-role.is-developer {
+  color: #ff8b9b;
+  font-size: 16px;
+  font-weight: 750;
+  text-shadow: 0 0 10px rgba(255, 91, 119, .22);
+}
+
+.members-list .member-game-uid .member-uid-label {
+  color: #e9dfe2;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.members-list .member-game-uid strong {
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .02em;
+  text-shadow: none;
+}
+
+@media (max-width: 850px) {
+  .members-list .member-details .member-role { font-size: 14px; }
+  .members-list .member-details .member-role.is-developer { font-size: 15px; }
+  .members-list .member-game-uid .member-uid-label { font-size: 13px; }
+  .members-list .member-game-uid strong { font-size: 12px; }
+}
+
+@media (max-width: 520px) {
+  .members-list .member-details .member-role { font-size: 13px; }
+  .members-list .member-details .member-role.is-developer { font-size: 14px; }
+  .members-list .member-game-uid .member-uid-label { font-size: 12px; }
+  .members-list .member-game-uid strong { font-size: 11px; }
+}
