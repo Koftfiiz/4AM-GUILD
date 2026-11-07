@@ -1996,7 +1996,6 @@ async function deletePortfolio(portfolioId) {
   }
   const portfolio = allPortfolios.find((item) => item.id === portfolioId);
   if (!portfolio) return;
-  if (!window.confirm(`ยืนยันลบแฟ้มผลงาน "${portfolio.title || "Untitled"}" ใช่หรือไม่?\n\nข้อมูลและรูปภาพทั้งหมดของแฟ้มนี้จะถูกลบ และไม่สามารถกู้คืนได้`)) return;
   try {
     const paths = (portfolio.portfolio_images || []).map((image) => image.image_url)
       .filter((path) => path && !/^https?:\/\//i.test(path));
@@ -2019,8 +2018,24 @@ async function handlePortfolioCardAction(event) {
   if (!button) return;
   const portfolioId = button.dataset.portfolioId;
   if (!portfolioId) return;
-  if (button.dataset.portfolioAction === "edit") await startPortfolioEdit(portfolioId);
-  if (button.dataset.portfolioAction === "delete") await deletePortfolio(portfolioId);
+  if (button.dataset.portfolioAction === "edit") {
+    await startPortfolioEdit(portfolioId);
+    return;
+  }
+  if (button.dataset.portfolioAction === "delete") {
+    // Use an in-page two-click confirmation instead of window.confirm(),
+    // which may be suppressed by some browser/event-handler contexts.
+    if (button.dataset.confirmDelete !== "true") {
+      button.dataset.confirmDelete = "true";
+      button.classList.add("is-confirming");
+      button.textContent = "ยืนยันลบ?";
+      button.setAttribute("aria-label", "คลิกอีกครั้งเพื่อยืนยันการลบแฟ้มผลงาน");
+      return;
+    }
+    button.disabled = true;
+    button.textContent = "กำลังลบ...";
+    await deletePortfolio(portfolioId);
+  }
 }
 
 function registerPortfolioEvents() {
