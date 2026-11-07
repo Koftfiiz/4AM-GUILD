@@ -1504,6 +1504,7 @@ async function loadPortfolios() {
   }
 
   allPortfolios = data || [];
+  renderClassLegend();
   renderPortfolios();
 }
 
