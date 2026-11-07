@@ -455,6 +455,7 @@ async function loadCurrentMember() {
   }
 
   currentMember = data;
+  syncManagementMenuVisibility();
 }
 
 // ==========================================
@@ -1816,7 +1817,19 @@ function renderClassLegend() {
 // PAGE NAVIGATION
 // ==========================================
 
+function syncManagementMenuVisibility() {
+  const statsMenuItem = document.querySelector("[data-management-only]");
+  if (!statsMenuItem) return;
+
+  const allowed = isManagement();
+  statsMenuItem.classList.toggle("is-role-hidden", !allowed);
+  statsMenuItem.setAttribute("aria-hidden", String(!allowed));
+}
+
 function openGuildPage(pageName) {
+  if (pageName === "war-stats" && !isManagement()) {
+    pageName = "war";
+  }
   document.querySelectorAll(".page").forEach((page) => {
     page.classList.add("hidden");
   });
