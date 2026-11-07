@@ -3366,3 +3366,33 @@ body #registration-screen.login-card::after {
   background: rgba(190, 35, 55, .82);
   font-weight: 800;
 }
+
+
+/* Guild War creation */
+.war-create-toolbar { display:flex; justify-content:space-between; align-items:center; gap:18px; margin: 8px 0 22px; padding:18px 20px; background:rgba(12,7,9,.78); border:1px solid var(--line); border-radius:8px; }
+.war-create-toolbar h2 { margin:3px 0 4px; color:var(--gold-light); font:600 20px var(--display); }
+.war-create-toolbar p { margin:0; color:var(--muted); font-size:12px; }
+.war-create-panel { margin-bottom:22px; padding:20px; }
+.war-mode-options { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-bottom:18px; }
+.war-mode-option { display:flex; align-items:center; gap:12px; padding:15px; border:1px solid var(--line); border-radius:7px; background:rgba(255,255,255,.025); cursor:pointer; }
+.war-mode-option:has(input:checked) { border-color:var(--gold); background:rgba(190,145,65,.09); box-shadow:inset 0 0 14px rgba(190,145,65,.08); }
+.war-mode-option input { accent-color:var(--gold); width:17px; height:17px; }
+.war-mode-option span { display:grid; gap:4px; }
+.war-mode-option strong { color:var(--gold-light); }
+.war-mode-option small { color:var(--muted); font-size:11px; }
+.war-create-panel .form-group { display:grid; gap:7px; margin-bottom:16px; }
+.war-create-panel .form-group > label { color:var(--muted); font-size:12px; }
+.war-create-panel input:not([type=radio]), .war-create-panel select { width:100%; min-height:42px; padding:9px 12px; color:var(--text); background:rgba(0,0,0,.35); border:1px solid var(--line); border-radius:5px; }
+.war-vs-field { display:grid; grid-template-columns:auto auto minmax(0,1fr); align-items:center; gap:10px; }
+.war-vs-field span { color:var(--gold-light); font-weight:700; }
+.war-vs-field b { color:#d65a62; letter-spacing:1px; }
+.war-event-fields { display:grid; grid-template-columns:2fr 1fr 1fr; gap:14px; }
+.war-create-capacity { margin:5px 0 16px; padding:11px 13px; color:var(--gold-light); background:rgba(190,145,65,.08); border-left:3px solid var(--gold); font-size:12px; }
+.war-create-actions { display:flex; justify-content:flex-end; gap:10px; }
+.war-summary-name { overflow-wrap:anywhere; }
+.war-summary-name strong { font-size:clamp(15px,1.5vw,21px); }
+@media(max-width:700px) {
+  .war-create-toolbar { align-items:flex-start; flex-direction:column; }
+  .war-mode-options, .war-event-fields { grid-template-columns:1fr; }
+  .war-vs-field { grid-template-columns:auto auto minmax(0,1fr); }
+}
