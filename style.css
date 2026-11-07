@@ -3275,3 +3275,49 @@ body #registration-screen.login-card::after {
 .portfolio-review-reject-footer small { color: var(--muted); font-size: 10px; }
 .portfolio-review-feedback { min-height: 0; margin: 0; color: #ffb0b8; font-size: 11px; }
 .portfolio-review-feedback:empty { display: none; }
+
+
+/* Portfolio card owner and reviewer actions */
+.portfolio-card-management {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.portfolio-card-management button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid rgba(205,160,120,.3);
+  border-radius: 5px;
+  color: #eadbd6;
+  background: rgba(255,255,255,.04);
+  font: 600 12px var(--font);
+  cursor: pointer;
+  transition: .18s ease;
+}
+.portfolio-card-management button:hover { filter: brightness(1.25); transform: translateY(-1px); }
+.portfolio-card-management svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.portfolio-card-management .portfolio-edit-button {
+  color: #f2d28a;
+  border-color: rgba(230,184,79,.42);
+  background: rgba(230,184,79,.09);
+}
+.portfolio-card-management .portfolio-delete-button {
+  color: #ff9da7;
+  border-color: rgba(230,75,95,.42);
+  background: rgba(170,30,48,.12);
+}
+.portfolio-card-management button:disabled { opacity: .5; cursor: wait; }
+.portfolio-form-status { white-space: pre-wrap; }
