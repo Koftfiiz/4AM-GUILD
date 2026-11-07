@@ -73,7 +73,8 @@ const PAGE_TITLES = {
   rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
   activities: "กิจกรรมกิลด์",
-  settings: "ตั้งค่าบัญชี"
+  settings: "ตั้งค่าบัญชี",
+  "system-management": "System Management"
 };
 
 // ==========================================
@@ -1984,22 +1985,251 @@ function renderClassLegend() {
     </div>
   `).join("");
 }
+
+// ==========================================
+// DEVELOPER — SYSTEM ROLE MANAGEMENT
+// ==========================================
+
+const SYSTEM_ROLE_OPTIONS = [
+  { value: "member", label: "Member" },
+  { value: "management", label: "Management" },
+  { value: "leader", label: "Leader" }
+];
+
+let systemRoleMembers = [];
+let systemRoleFilter = "all";
+
+function systemRoleLabel(role) {
+  const labels = {
+    developer: "4AM Dev",
+    leader: "Leader",
+    management: "Management",
+    admin: "Admin (Legacy)",
+    member: "Member"
+  };
+  return labels[String(role || "member").toLowerCase()] || "Member";
+}
+
+function renderSystemRoleSummary(members) {
+  const counts = {
+    total: members.length,
+    management: members.filter(m => ["management", "admin"].includes(String(m.role || "").toLowerCase())).length,
+    leaders: members.filter(m => String(m.role || "").toLowerCase() === "leader").length,
+    pending: members.filter(m => m.active === false).length
+  };
+
+  const set = (id, value) => {
+    const element = $(id);
+    if (element) element.textContent = String(value);
+  };
+  set("system-role-total", counts.total);
+  set("system-role-management", counts.management);
+  set("system-role-leaders", counts.leaders);
+  set("system-role-pending", counts.pending);
+}
+
+function getFilteredSystemRoleMembers() {
+  const query = String($("system-role-search")?.value || "").trim().toLowerCase();
+  return systemRoleMembers.filter(member => {
+    const role = String(member.role || "member").toLowerCase();
+    const matchesRole = systemRoleFilter === "all"
+      || (systemRoleFilter === "management" && ["management", "admin"].includes(role))
+      || role === systemRoleFilter;
+    const searchable = [
+      getMemberName(member),
+      member.character_name,
+      member.nickname,
+      member.user_id,
+      member.game_uid
+    ].join(" ").toLowerCase();
+    return matchesRole && (!query || searchable.includes(query));
+  });
+}
+
+function renderSystemRoleMembers() {
+  const container = $("system-role-list");
+  if (!container) return;
+
+  const members = getFilteredSystemRoleMembers();
+  renderSystemRoleSummary(systemRoleMembers);
+
+  if (!members.length) {
+    container.innerHTML = '<div class="system-role-empty">ไม่พบสมาชิกที่ตรงกับการค้นหา</div>';
+    return;
+  }
+
+  container.innerHTML = members.map(member => {
+    const role = String(member.role || "member").toLowerCase();
+    const isProtected = role === "developer";
+    const isSelf = member.user_id === currentUser?.id;
+    const locked = isProtected || isSelf;
+    const options = SYSTEM_ROLE_OPTIONS.map(option => `
+      <option value="${option.value}" ${role === option.value ? "selected" : ""}>
+        ${option.label}
+      </option>
+    `).join("");
+    const status = member.active === false ? "รอตรวจสอบ / ไม่ Active" : "Active";
+    const createdAt = member.created_at
+      ? new Date(member.created_at).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })
+      : "ไม่ระบุวันที่";
+
+    return `
+      <article class="system-role-row" data-system-role-user="${escapeHTML(member.user_id)}">
+        <div class="system-role-person">
+          <strong>${escapeHTML(getMemberName(member))}</strong>
+          <span>${escapeHTML(member.user_id || "-")}</span>
+          <small>${escapeHTML(status)} · สมัครเมื่อ ${escapeHTML(createdAt)}</small>
+        </div>
+        <div class="system-role-current">
+          <span class="system-role-caption">CURRENT ROLE</span>
+          <strong class="system-role-badge role-${escapeHTML(role)}">${escapeHTML(systemRoleLabel(role))}</strong>
+        </div>
+        <div class="system-role-action">
+          <label for="system-role-select-${escapeHTML(member.user_id)}">เปลี่ยน System Role</label>
+          <select
+            id="system-role-select-${escapeHTML(member.user_id)}"
+            data-action="change-system-role"
+            data-user-id="${escapeHTML(member.user_id)}"
+            data-original-role="${escapeHTML(role)}"
+            ${locked ? "disabled" : ""}
+            aria-label="เปลี่ยน System Role ของ ${escapeHTML(getMemberName(member))}"
+          >
+            ${isProtected ? '<option selected>Developer (Protected)</option>' : options}
+          </select>
+          <small class="system-role-status" aria-live="polite">${isProtected ? "บัญชี Developer ถูกป้องกัน" : (isSelf ? "ไม่สามารถเปลี่ยน Role ของบัญชีตัวเอง" : "")}</small>
+        </div>
+      </article>
+    `;
+  }).join("");
+}
+
+async function loadSystemRoleMembers() {
+  if (!isDeveloper()) {
+    alert("หน้านี้อนุญาตเฉพาะ Developer");
+    openGuildPage("dashboard");
+    return;
+  }
+
+  const container = $("system-role-list");
+  if (container) container.innerHTML = '<p class="muted">กำลังโหลดข้อมูลสมาชิก...</p>';
+
+  const { data, error } = await supabaseClient
+    .from("guild_members")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("System role member loading error:", error);
+    if (container) {
+      container.innerHTML = `<div class="system-role-error">โหลดข้อมูลไม่สำเร็จ: ${escapeHTML(error.message)}</div>`;
+    }
+    return;
+  }
+
+  systemRoleMembers = data || [];
+  renderSystemRoleMembers();
+}
+
+async function saveSystemRole(selectElement) {
+  if (!isDeveloper()) {
+    alert("เฉพาะ Developer เท่านั้นที่เปลี่ยน System Role ได้");
+    return;
+  }
+
+  const userId = selectElement?.dataset.userId;
+  const newRole = selectElement?.value;
+  const member = systemRoleMembers.find(item => item.user_id === userId);
+  const status = selectElement?.parentElement?.querySelector(".system-role-status");
+
+  if (!userId || !member || !SYSTEM_ROLE_OPTIONS.some(option => option.value === newRole)) {
+    if (status) status.textContent = "ข้อมูล Role ไม่ถูกต้อง";
+    return;
+  }
+  if (member.user_id === currentUser?.id || String(member.role || "").toLowerCase() === "developer") {
+    selectElement.value = selectElement.dataset.originalRole || member.role;
+    if (status) status.textContent = "บัญชีนี้ถูกป้องกันไม่ให้เปลี่ยน Role";
+    return;
+  }
+
+  const previousRole = String(member.role || "member").toLowerCase();
+  if (newRole === previousRole) return;
+
+  const confirmed = window.confirm(
+    `ยืนยันเปลี่ยน System Role ของ "${getMemberName(member)}" จาก ${systemRoleLabel(previousRole)} เป็น ${systemRoleLabel(newRole)} หรือไม่?\n\nการเปลี่ยนนี้มีผลกับสิทธิ์ใช้งานในระบบ`
+  );
+  if (!confirmed) {
+    selectElement.value = previousRole;
+    return;
+  }
+
+  selectElement.disabled = true;
+  if (status) status.textContent = "กำลังบันทึก Role...";
+
+  try {
+    const { data, error } = await supabaseClient.rpc("set_member_system_role", {
+      target_user_id: userId,
+      new_role: newRole
+    });
+    if (error) throw error;
+    if (data && data.success === false) throw new Error(data.message || "ไม่สามารถเปลี่ยน Role ได้");
+
+    member.role = newRole;
+    selectElement.dataset.originalRole = newRole;
+    if (status) {
+      status.textContent = "บันทึกสำเร็จ";
+      status.classList.add("is-success");
+    }
+    renderSystemRoleMembers();
+  } catch (error) {
+    console.error("System role update error:", error);
+    selectElement.value = previousRole;
+    selectElement.disabled = false;
+    if (status) {
+      status.textContent = error.message || "บันทึกไม่สำเร็จ";
+      status.classList.remove("is-success");
+    }
+  }
+}
+
+function registerSystemRoleEvents() {
+  $("system-role-search")?.addEventListener("input", renderSystemRoleMembers);
+  $("system-role-filter")?.addEventListener("change", event => {
+    systemRoleFilter = event.target.value;
+    renderSystemRoleMembers();
+  });
+  $("system-role-refresh")?.addEventListener("click", loadSystemRoleMembers);
+  $("system-role-list")?.addEventListener("change", event => {
+    const select = event.target.closest('select[data-action="change-system-role"]');
+    if (select) saveSystemRole(select);
+  });
+}
+
 // ==========================================
 // PAGE NAVIGATION
 // ==========================================
 
 function syncManagementMenuVisibility() {
   const statsMenuItem = document.querySelector("[data-management-only]");
-  if (!statsMenuItem) return;
+  if (statsMenuItem) {
+    const allowed = isManagement();
+    statsMenuItem.classList.toggle("is-role-hidden", !allowed);
+    statsMenuItem.setAttribute("aria-hidden", String(!allowed));
+  }
 
-  const allowed = isManagement();
-  statsMenuItem.classList.toggle("is-role-hidden", !allowed);
-  statsMenuItem.setAttribute("aria-hidden", String(!allowed));
+  const devMenuItem = document.querySelector("[data-developer-only]");
+  if (devMenuItem) {
+    const allowed = isDeveloper();
+    devMenuItem.classList.toggle("is-role-hidden", !allowed);
+    devMenuItem.setAttribute("aria-hidden", String(!allowed));
+  }
 }
 
 function openGuildPage(pageName) {
   if (pageName === "war-stats" && !isManagement()) {
     pageName = "war";
+  }
+  if (pageName === "system-management" && !isDeveloper()) {
+    pageName = "dashboard";
   }
   document.querySelectorAll(".page").forEach((page) => {
     page.classList.add("hidden");
@@ -2026,6 +2256,7 @@ function openGuildPage(pageName) {
   window.scrollTo({ top: 0 });
 
   if (pageName === "members") loadMembers();
+  if (pageName === "system-management") loadSystemRoleMembers();
 
   if (pageName === "settings") {
     renderAccountDetails();
@@ -2318,6 +2549,7 @@ function registerAppEventListeners() {
   });
 
   registerPortfolioEvents();
+  registerSystemRoleEvents();
 
   $("account-details")?.addEventListener("submit", async (event) => {
     if (event.target.id !== "game-uid-form") return;
