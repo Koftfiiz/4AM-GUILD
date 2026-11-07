@@ -556,13 +556,67 @@
               <h3>Character Classes</h3>
             </div>
           </div>
-
           <div id="class-legend" class="class-legend"></div>
+        </section>
 
-          <div class="empty-state">
-            <span>▤</span>
-            <h3>Portfolio Gallery</h3>
-            <p>แฟ้มผลงานของตัวละครจะแสดงที่นี่เมื่อเชื่อมต่อข้อมูลแล้ว</p>
+        <section class="panel portfolio-create-section">
+          <div class="portfolio-section-heading">
+            <div>
+              <span class="panel-kicker">YOUR CHARACTER BUILDS</span>
+              <h3>Portfolio Gallery</h3>
+              <p>แฟ้มผลงานจะแยกตามตัวละครและบัญชีสมาชิก</p>
+            </div>
+            <button type="button" id="portfolio-add-button" class="btn btn-primary" aria-expanded="false">
+              + Add Portfolio
+            </button>
+          </div>
+
+          <div id="portfolio-create-panel" class="portfolio-create-panel hidden">
+            <form id="portfolio-create-form" class="portfolio-form">
+              <div class="portfolio-form-heading">
+                <h3>สร้างแฟ้มผลงานใหม่</h3>
+                <p>ผลงานนี้จะถูกบันทึกไว้ในบัญชีและตัวละครของคุณ</p>
+              </div>
+              <label class="portfolio-field">
+                <span>Portfolio Title <i>*</i></span>
+                <input id="portfolio-title" name="title" type="text" maxlength="100" placeholder="ตั้งชื่อผลงาน / Build" required>
+              </label>
+              <label class="portfolio-field">
+                <span>Description</span>
+                <textarea id="portfolio-description" name="description" rows="4" maxlength="1500" placeholder="อธิบายรายละเอียดผลงาน บิลด์ หรือแนวทางการเล่น..."></textarea>
+              </label>
+              <div class="portfolio-field">
+                <span>Class Tags <i>*</i></span>
+                <p class="portfolio-field-hint">เลือกคลาสที่เกี่ยวข้องได้มากกว่าหนึ่งคลาส</p>
+                <div id="portfolio-class-tags" class="portfolio-class-tags"></div>
+              </div>
+              <div class="portfolio-field">
+                <span>Upload Images <i>*</i></span>
+                <p class="portfolio-field-hint">เลือกได้สูงสุด 12 รูป · ไม่เกิน 12 MB ต่อรูป · รูปแรกเป็นภาพหน้าปก</p>
+                <label class="portfolio-file-picker" for="portfolio-image-input">
+                  <span>＋</span>
+                  <strong>เลือกรูปภาพ</strong>
+                  <small>รองรับ JPG, PNG, WEBP และไฟล์ภาพทั่วไป</small>
+                </label>
+                <input id="portfolio-image-input" type="file" accept="image/*" multiple hidden>
+                <div id="portfolio-image-preview" class="portfolio-image-preview">
+                  <p class="portfolio-upload-empty">ยังไม่ได้เลือกรูปภาพ</p>
+                </div>
+              </div>
+              <p id="portfolio-form-status" class="portfolio-form-status" role="status" aria-live="polite"></p>
+              <div class="portfolio-form-actions">
+                <button type="button" class="btn btn-outline" id="portfolio-cancel-button" onclick="document.getElementById('portfolio-create-panel').classList.add('hidden'); document.getElementById('portfolio-add-button').setAttribute('aria-expanded','false');">ยกเลิก</button>
+                <button type="submit" id="portfolio-create-submit" class="btn btn-primary">บันทึก Portfolio</button>
+              </div>
+            </form>
+          </div>
+
+          <div id="portfolio-grid" class="portfolio-grid">
+            <div class="empty-state">
+              <span>▤</span>
+              <h3>Portfolio Gallery</h3>
+              <p>กำลังโหลดแฟ้มผลงาน...</p>
+            </div>
           </div>
         </section>
       </section>
