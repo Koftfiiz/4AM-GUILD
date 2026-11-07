@@ -3179,10 +3179,10 @@ body #registration-screen.login-card::after {
   gap: 9px;
 }
 .portfolio-review-status-label {
-  color: #f1d7a2;
-  font-size: 13px;
-  font-weight: 800;
-  text-shadow: 0 0 8px rgba(230,184,79,.18);
+  color: #fff4cf;
+  font-size: 14px;
+  font-weight: 900;
+  text-shadow: 0 1px 2px rgba(0,0,0,.9), 0 0 10px rgba(255,220,140,.32);
 }
 .portfolio-review-badge {
   display: inline-flex;
@@ -3285,7 +3285,23 @@ body #registration-screen.login-card::after {
   gap: 8px;
 }
 .portfolio-review-reject-footer small { color: var(--muted); font-size: 10px; }
-.portfolio-review-feedback { min-height: 0; margin: 0; color: #ffb0b8; font-size: 11px; }
+.portfolio-review-feedback {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  color: #ffd6a0;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+.portfolio-review-feedback:not(:empty) {
+  margin-top: 8px;
+  padding: 9px 11px;
+  border: 1px solid rgba(241, 190, 105, .32);
+  border-radius: 5px;
+  background: rgba(70, 43, 16, .42);
+}
 .portfolio-review-feedback:empty { display: none; }
 
 
