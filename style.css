@@ -2653,3 +2653,18 @@ body #registration-screen.login-card::after {
     font-size: 15px !important;
   }
 }
+
+
+/* Align the dashboard role badge with the right edge of the Edit button */
+#page-dashboard .profile-content {
+  padding-right: 14px !important;
+}
+
+#page-dashboard .profile-content .profile-name {
+  width: 100%;
+}
+
+#page-dashboard .profile-content .profile-name > .role-badge {
+  margin-left: auto !important;
+  margin-right: 0 !important;
+}
