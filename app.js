@@ -1543,8 +1543,13 @@ async function renderPortfolios() {
       ? await getPortfolioImageUrl(firstImage.image_url)
       : "";
 
+    const portfolioClass = String(portfolio.game_class || "").trim();
+    const portfolioClassColor = ["Numina", "Mystech"].includes(portfolioClass)
+      ? (getClassInfo(portfolioClass)?.color || "")
+      : "";
+
     return `
-      <article class="portfolio-card">
+      <article class="portfolio-card" ${portfolioClassColor ? `style="--class-color:${portfolioClassColor}"` : ""}>
         ${imageUrl ? `
           <img src="${escapeHTML(imageUrl)}" alt=""
             onerror="this.style.display='none'">
