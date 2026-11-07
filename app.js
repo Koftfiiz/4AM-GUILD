@@ -113,15 +113,29 @@ function isDeveloper() {
   return String(currentMember?.role || "").toLowerCase() === "developer";
 }
 
-// ตรวจสอบสิทธิ์ Management
+// ตรวจสอบสิทธิ์จัดการระบบกิลด์
+// Developer, Leader และ Management มีสิทธิ์จัดการระบบกิลด์
+// Admin เป็น Role แยกและไม่มีสิทธิ์ระดับ Management
 function isManagement() {
   const role = String(currentMember?.role || "").toLowerCase();
 
   return [
     "developer",
     "leader",
-    "admin",
     "management"
+  ].includes(role);
+}
+
+// ตรวจสอบสิทธิ์ Admin (ระดับรองจาก Management)
+// แยก helper ไว้สำหรับกำหนดสิทธิ์งานทั่วไปในอนาคต
+function isGuildAdmin() {
+  const role = String(currentMember?.role || "").toLowerCase();
+
+  return [
+    "developer",
+    "leader",
+    "management",
+    "admin"
   ].includes(role);
 }
 
