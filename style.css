@@ -2001,65 +2001,162 @@ body #registration-screen.login-card::after {
   .avatar-crop-actions .btn { width: 100%; }
 }
 
-/* Guild member cards: oversized avatars with clear inset spacing */
+/* Guild member cards: compact layout with clearer member typography */
 .members-list > .member-card {
-  grid-template-columns: 104px minmax(0, 1fr) auto;
-  column-gap: 26px;
-  row-gap: 12px;
-  padding: 24px 26px;
-  min-height: 156px;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  column-gap: 18px;
+  row-gap: 8px;
+  padding: 16px 20px;
+  min-height: 0;
 }
+
 .members-list .member-avatar {
-  width: 104px;
-  height: 104px;
+  width: 88px;
+  height: 88px;
   margin: 0;
   flex-shrink: 0;
 }
+
 .members-list .member-details {
-  margin-left: 12px;
+  margin-left: 0;
   align-self: center;
+  min-width: 0;
 }
-.members-list .member-details h4 { font-size: 22px; line-height: 1.3; font-weight: 600; }
-.members-list .member-details span { display: inline-block; margin-top: 4px; font-size: 15px; line-height: 1.45; }
-.members-list .member-details .member-guild-position { display: block; margin-top: 6px; font-size: 14px; line-height: 1.5; }
-.members-list .member-class { padding: 6px 15px; font-size: 14px; }
-.members-list .member-game-uid { margin-left: 12px; gap: 8px 12px; font-size: 14px; }
-.members-list .member-game-uid span { font-size: 12px; }
-.members-list .member-game-uid strong { font-size: 15px; }
-.members-list .member-game-uid .copy-member-game-uid { padding: 6px 10px; font-size: 12px; }
+
+.members-list .member-details h4 {
+  margin: 0 0 4px;
+  font-size: 23px;
+  line-height: 1.3;
+  font-weight: 650;
+}
+
+.members-list .member-details span {
+  display: inline-block;
+  margin-top: 2px;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.members-list .member-details .member-guild-position {
+  display: block;
+  margin-top: 5px;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.members-list .member-class {
+  padding: 5px 13px;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.members-list .member-game-uid {
+  margin-left: 0;
+  gap: 6px 10px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.members-list .member-game-uid span {
+  font-size: 13px;
+}
+
+.members-list .member-game-uid strong {
+  font-size: 16px;
+}
+
+.members-list .member-game-uid .copy-member-game-uid {
+  padding: 5px 9px;
+  font-size: 13px;
+}
+
 .members-list .member-position-management label,
-.members-list .member-position-management select { font-size: 13px; }
+.members-list .member-position-management select {
+  font-size: 13px;
+}
 
 @media (max-width: 850px) {
   .members-list > .member-card {
-    grid-template-columns: 92px minmax(0, 1fr);
-    column-gap: 22px;
-    row-gap: 10px;
-    padding: 20px 22px;
-    min-height: 136px;
+    grid-template-columns: 80px minmax(0, 1fr);
+    column-gap: 16px;
+    row-gap: 8px;
+    padding: 14px 16px;
   }
-  .members-list .member-avatar { width: 92px; height: 92px; }
+
+  .members-list .member-avatar {
+    width: 80px;
+    height: 80px;
+  }
+
   .members-list .member-details,
-  .members-list .member-game-uid { margin-left: 10px; }
+  .members-list .member-game-uid {
+    margin-left: 0;
+  }
+
   .members-list .member-class,
   .members-list .member-game-uid,
-  .members-list .member-position-management { justify-self: start; }
+  .members-list .member-position-management {
+    justify-self: start;
+  }
+
+  .members-list .member-details h4 {
+    font-size: 21px;
+  }
+
+  .members-list .member-details span {
+    font-size: 15px;
+  }
+
+  .members-list .member-details .member-guild-position {
+    font-size: 14px;
+  }
 }
 
 @media (max-width: 520px) {
   .members-list > .member-card {
-    grid-template-columns: 76px minmax(0, 1fr);
-    column-gap: 16px;
-    row-gap: 9px;
-    padding: 16px 16px;
-    min-height: 112px;
+    grid-template-columns: 68px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 7px;
+    padding: 12px;
   }
-  .members-list .member-avatar { width: 76px; height: 76px; }
+
+  .members-list .member-avatar {
+    width: 68px;
+    height: 68px;
+  }
+
   .members-list .member-details,
-  .members-list .member-game-uid { margin-left: 6px; }
-  .members-list .member-details h4 { font-size: 18px; }
-  .members-list .member-details span { font-size: 13px; }
-  .members-list .member-details .member-guild-position { font-size: 12px; }
-  .members-list .member-class { font-size: 13px; }
-  .members-list .member-game-uid strong { font-size: 13px; }
+  .members-list .member-game-uid {
+    margin-left: 0;
+  }
+
+  .members-list .member-details h4 {
+    font-size: 19px;
+  }
+
+  .members-list .member-details span {
+    font-size: 14px;
+  }
+
+  .members-list .member-details .member-guild-position {
+    margin-top: 4px;
+    font-size: 13px;
+  }
+
+  .members-list .member-class {
+    padding: 4px 11px;
+    font-size: 13px;
+  }
+
+  .members-list .member-game-uid {
+    font-size: 13px;
+  }
+
+  .members-list .member-game-uid span {
+    font-size: 12px;
+  }
+
+  .members-list .member-game-uid strong {
+    font-size: 14px;
+  }
 }
