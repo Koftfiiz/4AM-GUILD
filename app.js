@@ -27,6 +27,9 @@ let allMembers = [];
 let discordAccount = null;
 let allPortfolios = [];
 let allWarEvents = [];
+let currentWarParties = [];
+let currentWarPartyAssignments = [];
+let currentWarAssignmentEventId = null;
 let registrationBusy = false;
 
 const $ = (id) => document.getElementById(id);
@@ -2256,6 +2259,7 @@ function renderWarLayout() {
 }
 
 async function loadSelectedWarEvent(eventId) {
+  currentWarAssignmentEventId = eventId;
   const { data: parties, error } = await supabaseClient
     .from("war_parties")
     .select(`
@@ -2275,64 +2279,190 @@ async function loadSelectedWarEvent(eventId) {
 
   if (error) {
     console.error("War party loading error:", error);
-    renderRaid("raid-a", "A", []);
-    renderRaid("raid-b", "B", []);
+    currentWarParties = [];
+    currentWarPartyAssignments = [];
+    renderWarLayout();
     return;
   }
 
-  const allParties = parties || [];
-  const event = allWarEvents.find(item => item.id === eventId);
+  currentWarParties = parties || [];
+  currentWarPartyAssignments = currentWarParties.flatMap(party =>
+    (party.war_party_members || []).map(member => ({
+      ...member,
+      party_id: party.id,
+      raid: party.raid,
+      party_number: party.party_number
+    }))
+  );
+  renderAllWarParties();
+}
+
+function renderAllWarParties() {
+  const event = allWarEvents.find(item => item.id === currentWarAssignmentEventId) || allWarEvents[0];
   const config = getWarEventConfig(event);
   ["A", "B", "C", "D"].slice(0, config.raidCount).forEach(letter => {
     renderRaid(
       `raid-${letter.toLowerCase()}`,
       letter,
-      allParties.filter(party => party.raid === letter)
+      currentWarParties.filter(party => party.raid === letter)
     );
   });
+}
+
+function getAssignedWarMemberIds(exceptAssignmentId = null) {
+  return new Set(currentWarPartyAssignments
+    .filter(item => item.id !== exceptAssignmentId)
+    .map(item => item.member_id));
+}
+
+function getWarMemberOptions(className, selectedMemberId = "") {
+  const assigned = getAssignedWarMemberIds();
+  return allMembers
+    .filter(member => member.active === true)
+    .filter(member => String(getMemberClass(member)).toLowerCase() === String(className).toLowerCase())
+    .filter(member => !assigned.has(member.user_id) || member.user_id === selectedMemberId)
+    .sort((a, b) => getMemberName(a).localeCompare(getMemberName(b), "th"))
+    .map(member => `<option value="${escapeHTML(member.user_id)}" ${member.user_id === selectedMemberId ? "selected" : ""}>${escapeHTML(getMemberName(member))}</option>`)
+    .join("");
 }
 
 function renderRaid(containerId, raidName, parties = []) {
   const container = $(containerId);
   if (!container) return;
+  const canArrange = isManagement();
 
   container.innerHTML = Array.from({ length: 5 }, (_, index) => {
     const partyNumber = index + 1;
-    const party = parties.find((item) => Number(item.party_number) === partyNumber);
+    const party = parties.find(item => Number(item.party_number) === partyNumber);
     const members = party?.war_party_members || [];
 
     return `
       <article class="party-card">
         <div class="party-header">
-          <div>
-            <h3>${raidName}${partyNumber}</h3>
-          </div>
+          <div><h3>${raidName}${partyNumber}</h3></div>
           <span class="party-count">${members.length} / 6</span>
         </div>
-
         <div class="party-slots">
           ${Array.from({ length: 6 }, (_, slotIndex) => {
-            const slot = members.find(
-              (item) => Number(item.position) === slotIndex + 1
-            );
+            const position = slotIndex + 1;
+            const slot = members.find(item => Number(item.position) === position);
+            const member = allMembers.find(item => item.user_id === slot?.member_id);
+            if (slot && member) {
+              const info = getClassInfo(getMemberClass(member));
+              return `
+                <div class="party-slot party-slot-filled">
+                  <span class="slot-number">${position}</span>
+                  <img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath || "")}" alt="${escapeHTML(info?.name || "")}" title="${escapeHTML(info?.name || "")}">
+                  <span class="slot-member-name">${escapeHTML(getMemberName(member))}</span>
+                  ${canArrange ? `<button class="war-slot-remove" type="button" data-war-remove="${escapeHTML(slot.id)}" aria-label="นำสมาชิกออก" title="นำสมาชิกออก">×</button>` : ""}
+                </div>`;
+            }
 
-            const member = allMembers.find(
-              (item) => item.user_id === slot?.member_id
-            );
+            if (!canArrange || !party) {
+              return `<div class="party-slot"><span class="slot-number">${position}</span><span class="slot-empty">Empty Slot</span></div>`;
+            }
 
+            const classOptions = CLASS_DATA.map(info =>
+              `<option value="${escapeHTML(info.name)}">${escapeHTML(info.name)}</option>`
+            ).join("");
             return `
-              <div class="party-slot">
-                <span class="slot-number">${slotIndex + 1}</span>
-                <span class="slot-empty">
-                  ${escapeHTML(member ? getMemberName(member) : "Empty Slot")}
-                </span>
-              </div>
-            `;
+              <div class="party-slot party-slot-editor" data-war-slot>
+                <span class="slot-number">${position}</span>
+                <select class="war-slot-class" aria-label="เลือกอาชีพช่อง ${position}" data-party-id="${escapeHTML(party.id)}" data-position="${position}">
+                  <option value="">อาชีพ</option>${classOptions}
+                </select>
+                <img class="war-slot-class-icon hidden" alt="" data-war-class-icon>
+                <select class="war-slot-member" aria-label="เลือกสมาชิกช่อง ${position}" disabled data-party-id="${escapeHTML(party.id)}" data-position="${position}">
+                  <option value="">เลือกสมาชิก</option>
+                </select>
+              </div>`;
           }).join("")}
         </div>
-      </article>
-    `;
+      </article>`;
   }).join("");
+}
+
+async function handleWarSlotChange(event) {
+  const classSelect = event.target.closest(".war-slot-class");
+  if (classSelect) {
+    const slot = classSelect.closest("[data-war-slot]");
+    const memberSelect = slot?.querySelector(".war-slot-member");
+    const icon = slot?.querySelector("[data-war-class-icon]");
+    const info = getClassInfo(classSelect.value);
+    if (icon) {
+      icon.src = info?.iconPath || "";
+      icon.alt = info?.name || "";
+      icon.classList.toggle("hidden", !info);
+    }
+    if (memberSelect) {
+      memberSelect.innerHTML = `<option value="">เลือกสมาชิก</option>${info ? getWarMemberOptions(info.name) : ""}`;
+      memberSelect.disabled = !info;
+    }
+    return;
+  }
+
+  const memberSelect = event.target.closest(".war-slot-member");
+  if (!memberSelect || !memberSelect.value) return;
+  if (!isManagement()) return;
+
+  const memberId = memberSelect.value;
+  const partyId = memberSelect.dataset.partyId;
+  const position = Number(memberSelect.dataset.position);
+  const party = currentWarParties.find(item => item.id === partyId);
+  if (!party) return;
+
+  if (getAssignedWarMemberIds().has(memberId)) {
+    memberSelect.value = "";
+    alert("สมาชิกคนนี้ถูกจัดลงปาร์ตี้อื่นในวอร์รอบนี้แล้ว");
+    return;
+  }
+  if ((party.war_party_members || []).length >= 6) {
+    memberSelect.value = "";
+    alert("ปาร์ตี้นี้เต็มแล้ว");
+    return;
+  }
+
+  memberSelect.disabled = true;
+  try {
+    const { data, error } = await supabaseClient
+      .from("war_party_members")
+      .insert({ party_id: partyId, member_id: memberId, position })
+      .select()
+      .single();
+    if (error) throw error;
+
+    party.war_party_members = [...(party.war_party_members || []), data];
+    currentWarPartyAssignments.push({ ...data, party_id: partyId, raid: party.raid, party_number: party.party_number });
+    renderAllWarParties();
+  } catch (error) {
+    console.error("War member assignment failed:", error);
+    alert("จัดสมาชิกไม่สำเร็จ: " + (error.message || "กรุณาลองใหม่"));
+    memberSelect.disabled = false;
+    memberSelect.value = "";
+  }
+}
+
+async function removeWarPartyMember(assignmentId, button) {
+  if (!isManagement()) return;
+  if (!assignmentId) return;
+  button.disabled = true;
+  try {
+    const { error } = await supabaseClient
+      .from("war_party_members")
+      .delete()
+      .eq("id", assignmentId);
+    if (error) throw error;
+
+    currentWarParties.forEach(party => {
+      party.war_party_members = (party.war_party_members || []).filter(item => item.id !== assignmentId);
+    });
+    currentWarPartyAssignments = currentWarPartyAssignments.filter(item => item.id !== assignmentId);
+    renderAllWarParties();
+  } catch (error) {
+    console.error("War member removal failed:", error);
+    alert("นำสมาชิกออกไม่สำเร็จ: " + (error.message || "กรุณาลองใหม่"));
+    button.disabled = false;
+  }
 }
 
 // ==========================================
@@ -2439,6 +2569,11 @@ async function handleWarCreate(event) {
 }
 
 function registerWarCreationEvents() {
+  $("war-raid-boards")?.addEventListener("change", handleWarSlotChange);
+  $("war-raid-boards")?.addEventListener("click", event => {
+    const removeButton = event.target.closest("[data-war-remove]");
+    if (removeButton) removeWarPartyMember(removeButton.dataset.warRemove, removeButton);
+  });
   $("war-create-open")?.addEventListener("click", () => {
     if (!isManagement()) {
       alert("เฉพาะ Developer, Leader และ Management เท่านั้นที่สร้างตี้วอร์ได้");
