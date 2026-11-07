@@ -2510,3 +2510,8 @@ body #registration-screen.login-card::after {
 @media (max-width: 520px) {
   .members-list .member-game-uid strong { font-size: 12px; }
 }
+
+@media (max-width: 520px) {
+  .members-list .member-game-uid .member-uid-label { font-size: 13px; }
+  .members-list .member-game-uid strong { font-size: 12px; }
+}
