@@ -216,6 +216,15 @@
         </button>
       </nav>
 
+      <div class="sidebar-divider developer-only is-role-hidden" data-developer-only aria-hidden="true"><span>DEVELOPER</span></div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item developer-only is-role-hidden" data-page="system-management" data-developer-only aria-hidden="true">
+          <svg class="icon"><use href="#i-gear"/></svg>
+          <span>System Management</span>
+        </button>
+      </nav>
+
       <div class="sidebar-divider"><span>ACCOUNT</span></div>
 
       <nav class="sidebar-nav">
@@ -696,6 +705,65 @@
             </div>
           </section>
         </div>
+      </section>
+
+
+      <!-- ============ DEVELOPER SYSTEM MANAGEMENT ============ -->
+      <section id="page-system-management" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">DEVELOPER CONTROL CENTER</span>
+          <h1>System Management</h1>
+          <p>จัดการ System Role ของสมาชิกและบัญชีที่สมัครเข้ามาใน 4AM GUILD</p>
+        </div>
+
+        <div class="system-role-summary">
+          <article class="system-role-stat">
+            <span>สมาชิกทั้งหมด</span>
+            <strong id="system-role-total">0</strong>
+          </article>
+          <article class="system-role-stat">
+            <span>ฝ่ายบริหาร</span>
+            <strong id="system-role-management">0</strong>
+          </article>
+          <article class="system-role-stat">
+            <span>หัวหน้ากิลด์</span>
+            <strong id="system-role-leaders">0</strong>
+          </article>
+          <article class="system-role-stat">
+            <span>บัญชีไม่ Active</span>
+            <strong id="system-role-pending">0</strong>
+          </article>
+        </div>
+
+        <section class="panel system-role-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">ACCESS CONTROL</span>
+              <h3>จัดการสิทธิ์สมาชิก</h3>
+            </div>
+            <button id="system-role-refresh" class="btn btn-outline" type="button">↻ รีเฟรช</button>
+          </div>
+
+          <div class="system-role-toolbar">
+            <input id="system-role-search" type="search" placeholder="ค้นหาชื่อตัวละคร, UID หรือ User ID...">
+            <select id="system-role-filter" aria-label="กรองตาม System Role">
+              <option value="all">ทุก Role</option>
+              <option value="member">Member</option>
+              <option value="management">Management / Admin เดิม</option>
+              <option value="leader">Leader</option>
+              <option value="developer">Developer</option>
+            </select>
+          </div>
+
+          <div class="system-role-notice">
+            <strong>Developer protected</strong>
+            <span>หน้านี้เปลี่ยนได้เฉพาะ Member, Management และ Leader เท่านั้น บัญชี Developer และบัญชีของคุณจะถูกล็อกไว้</span>
+          </div>
+
+          <div id="system-role-list" class="system-role-list" aria-live="polite">
+            <p class="muted">กำลังโหลดข้อมูลสมาชิก...</p>
+          </div>
+        </section>
       </section>
 
       <!-- ============ SETTINGS ============ -->
