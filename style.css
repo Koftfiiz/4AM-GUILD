@@ -3420,3 +3420,22 @@ body #registration-screen.login-card::after {
   .party-slot-editor { grid-template-columns:18px minmax(62px,.8fr) 20px minmax(78px,1.2fr); gap:4px; }
   .party-slot-editor select { font-size:9px; }
 }
+
+
+/* Guild War creation: high-contrast close and cancel actions */
+#war-create-panel #war-create-close,
+#war-create-panel #war-create-cancel {
+  color: #fff1d6 !important;
+  background: linear-gradient(180deg, rgba(112, 25, 34, .96), rgba(48, 12, 18, .98)) !important;
+  border: 1px solid rgba(231, 174, 125, .78) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, .95);
+  font-weight: 600;
+  letter-spacing: .3px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 220, 190, .12);
+}
+#war-create-panel #war-create-close:hover,
+#war-create-panel #war-create-cancel:hover {
+  color: #fff !important;
+  background: linear-gradient(180deg, #a82a38, #681722) !important;
+  border-color: #f0c58c !important;
+}
