@@ -1593,7 +1593,7 @@ function resetPortfolioForm() {
 
 function isPortfolioReviewer() {
   const role = String(currentMember?.role || "").toLowerCase();
-  return ["leader", "management"].includes(role);
+  return ["developer", "leader", "management"].includes(role);
 }
 
 function getPortfolioReview(portfolio) {
