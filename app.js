@@ -2068,6 +2068,9 @@ function renderSystemRoleMembers() {
         ${option.label}
       </option>
     `).join("");
+    const legacyRoleOption = role === "admin"
+      ? '<option value="" selected disabled>Admin (Legacy) — เลือก Role ใหม่</option>'
+      : "";
     const status = member.active === false ? "รอตรวจสอบ / ไม่ Active" : "Active";
     const createdAt = member.created_at
       ? new Date(member.created_at).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })
@@ -2094,7 +2097,7 @@ function renderSystemRoleMembers() {
             ${locked ? "disabled" : ""}
             aria-label="เปลี่ยน System Role ของ ${escapeHTML(getMemberName(member))}"
           >
-            ${isProtected ? '<option selected>Developer (Protected)</option>' : options}
+            ${isProtected ? '<option selected>Developer (Protected)</option>' : legacyRoleOption + options}
           </select>
           <small class="system-role-status" aria-live="polite">${isProtected ? "บัญชี Developer ถูกป้องกัน" : (isSelf ? "ไม่สามารถเปลี่ยน Role ของบัญชีตัวเอง" : "")}</small>
         </div>
@@ -2216,12 +2219,12 @@ function syncManagementMenuVisibility() {
     statsMenuItem.setAttribute("aria-hidden", String(!allowed));
   }
 
-  const devMenuItem = document.querySelector("[data-developer-only]");
-  if (devMenuItem) {
-    const allowed = isDeveloper();
-    devMenuItem.classList.toggle("is-role-hidden", !allowed);
-    devMenuItem.setAttribute("aria-hidden", String(!allowed));
-  }
+  const devMenuItems = document.querySelectorAll("[data-developer-only]");
+  const developerAllowed = isDeveloper();
+  devMenuItems.forEach((item) => {
+    item.classList.toggle("is-role-hidden", !developerAllowed);
+    item.setAttribute("aria-hidden", String(!developerAllowed));
+  });
 }
 
 function openGuildPage(pageName) {
