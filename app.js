@@ -67,7 +67,8 @@ const GUILD_POSITIONS = [
 const PAGE_TITLES = {
   dashboard: "ภาพรวมกิลด์",
   members: "สมาชิกกิลด์",
-  war: "Guild War",
+  war: "เช็คชื่อวอร์",
+  rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
   activities: "กิจกรรมกิลด์",
   settings: "ตั้งค่าบัญชี"
