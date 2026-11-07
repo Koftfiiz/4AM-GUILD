@@ -2627,3 +2627,29 @@ body #registration-screen.login-card::after {
     letter-spacing: .15px;
   }
 }
+
+/* Correct dashboard scope: the actual dashboard page is #page-dashboard */
+#page-dashboard .profile-content .profile-name > .role-badge {
+  background: linear-gradient(135deg, #650b18 0%, #a80f25 48%, #d51e37 100%) !important;
+  border: 1px solid #ff7183 !important;
+  color: #fff !important;
+  font-family: Arial, Helvetica, sans-serif !important;
+  font-size: 17px !important;
+  font-weight: 700 !important;
+  letter-spacing: .25px;
+  line-height: 1.25;
+  text-shadow: 0 1px 2px rgba(20, 0, 4, .7);
+  box-shadow: 0 0 12px rgba(210, 20, 45, .38), inset 0 1px 0 rgba(255, 220, 225, .14) !important;
+}
+
+#page-dashboard .profile-content .profile-name > .role-badge .icon {
+  color: #ffe0a0 !important;
+  font-size: 19px !important;
+  filter: drop-shadow(0 0 3px rgba(255, 210, 130, .35));
+}
+
+@media (max-width: 700px) {
+  #page-dashboard .profile-content .profile-name > .role-badge {
+    font-size: 15px !important;
+  }
+}
