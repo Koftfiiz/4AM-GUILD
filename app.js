@@ -2256,8 +2256,7 @@ function renderRaid(containerId, raidName, parties = []) {
       <article class="party-card">
         <div class="party-header">
           <div>
-            <span class="party-kicker">RAID ${raidName}</span>
-            <h3>${escapeHTML(party?.party_name || `Party ${partyNumber}`)}</h3>
+            <h3>${raidName}${partyNumber}</h3>
           </div>
           <span class="party-count">${members.length} / 6</span>
         </div>
