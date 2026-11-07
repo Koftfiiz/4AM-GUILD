@@ -1722,15 +1722,7 @@ async function renderPortfolios() {
   }));
   container.innerHTML = cards.join("");
 
-  // Bind review actions directly to the freshly rendered buttons.
-  // This avoids relying on document-level event delegation for review controls.
-  container.querySelectorAll("[data-review-action]").forEach((button) => {
-    button.addEventListener("click", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      handlePortfolioReviewAction({ target: button });
-    });
-  });
+  // Review clicks are handled at window capture phase in registerPortfolioEvents().
 }
 
 async function savePortfolioReview(portfolioId, status, reason = "") {
@@ -1760,22 +1752,46 @@ async function savePortfolioReview(portfolioId, status, reason = "") {
 }
 
 function handlePortfolioReviewAction(event) {
-  const button = event.target.closest("[data-review-action]");
-  if (!button || !isPortfolioReviewer()) return;
+  const button = event.target instanceof Element
+    ? event.target.closest("[data-review-action]")
+    : null;
+  if (!button) return;
+
+  const portfolioId = button.dataset.portfolioId;
+  const feedback = portfolioId
+    ? document.querySelector(`[data-review-feedback="${CSS.escape(portfolioId)}"]`)
+    : null;
+
+  if (!isPortfolioReviewer()) {
+    if (feedback) feedback.textContent = "บัญชีนี้ไม่มีสิทธิ์ตรวจ Portfolio (ต้องเป็น Developer, Leader หรือ Management)";
+    else alert("บัญชีนี้ไม่มีสิทธิ์ตรวจ Portfolio");
+    return;
+  }
+  if (!portfolioId) {
+    if (feedback) feedback.textContent = "ไม่พบรหัส Portfolio กรุณารีเฟรชหน้าเว็บ";
+    return;
+  }
 
   const action = button.dataset.reviewAction;
-  const portfolioId = button.dataset.portfolioId;
-  if (!portfolioId) return;
-
   if (action === "toggle-reject") {
     const form = document.querySelector(`[data-reject-form="${CSS.escape(portfolioId)}"]`);
-    form?.classList.toggle("hidden");
+    if (!form) {
+      if (feedback) feedback.textContent = "ไม่พบแบบฟอร์มระบุเหตุผล กรุณารีเฟรชหน้าเว็บ";
+      return;
+    }
+    form.classList.toggle("hidden");
+    if (feedback) feedback.textContent = form.classList.contains("hidden")
+      ? ""
+      : "กรุณากรอกเหตุผลที่ยังไม่ผ่าน แล้วกด “ยืนยันไม่ผ่าน”";
+    if (!form.classList.contains("hidden")) {
+      form.querySelector("textarea")?.focus();
+    }
     return;
   }
 
   if (action === "approve") {
     if (window.confirm("ยืนยันว่าแฟ้มผลงานนี้ตรวจสอบแล้วและผ่านใช่หรือไม่?")) {
-      savePortfolioReview(portfolioId, "approved");
+      void savePortfolioReview(portfolioId, "approved");
     }
     return;
   }
@@ -1784,6 +1800,7 @@ function handlePortfolioReviewAction(event) {
     const input = document.querySelector(`[data-rejection-reason="${CSS.escape(portfolioId)}"]`);
     const reason = input?.value.trim() || "";
     if (!reason) {
+      if (feedback) feedback.textContent = "กรุณาระบุเหตุผลก่อนยืนยัน";
       if (input) {
         input.focus();
         input.setCustomValidity("กรุณาระบุเหตุผลที่ยังไม่ผ่าน");
@@ -1793,7 +1810,7 @@ function handlePortfolioReviewAction(event) {
       return;
     }
     if (window.confirm("ยืนยันส่งผลตรวจว่าแฟ้มผลงานนี้ยังไม่ผ่านใช่หรือไม่?")) {
-      savePortfolioReview(portfolioId, "rejected", reason);
+      void savePortfolioReview(portfolioId, "rejected", reason);
     }
   }
 }
@@ -2091,8 +2108,19 @@ function registerPortfolioEvents() {
     $("portfolio-image-preview")?.querySelectorAll(".is-dragging").forEach((item) => item.classList.remove("is-dragging"));
   });
 
-  // Capture clicks before nested card handlers can stop propagation.
-  // This also survives portfolio-grid re-renders.
+  // Handle review actions at window capture phase, before document/card listeners.
+  // This remains active across every portfolio-grid re-render.
+  window.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    const reviewButton = target?.closest("[data-review-action]");
+    if (!reviewButton) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    handlePortfolioReviewAction({ target: reviewButton });
+  }, true);
+
+  // Keep portfolio edit/delete actions on the existing document capture handler.
   document.addEventListener("click", async (event) => {
     const target = event.target instanceof Element ? event.target : event.target?.parentElement;
     if (!target) return;
