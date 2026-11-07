@@ -1592,7 +1592,8 @@ function resetPortfolioForm() {
 }
 
 function isPortfolioReviewer() {
-  return isManagement();
+  const role = String(currentMember?.role || "").toLowerCase();
+  return ["leader", "management"].includes(role);
 }
 
 function getPortfolioReview(portfolio) {
