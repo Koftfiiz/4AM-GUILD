@@ -178,10 +178,27 @@
           <span>สมาชิกกิลด์</span>
         </button>
 
-        <button class="nav-item" data-page="war">
-          <svg class="icon"><use href="#i-swords"/></svg>
-          <span>เช็คชื่อวอร์</span>
-        </button>
+        <div class="nav-group">
+          <button class="nav-item nav-parent" type="button" data-toggle-submenu="war-submenu" aria-expanded="true">
+            <svg class="icon"><use href="#i-swords"/></svg>
+            <span>Guild War</span>
+            <svg class="nav-chevron icon"><use href="#i-chevron-down"/></svg>
+          </button>
+          <div class="nav-submenu" id="war-submenu">
+            <button class="nav-subitem" data-page="war">
+              <span class="nav-subitem-dot"></span>
+              <span>จัดตี้วอร์</span>
+            </button>
+            <button class="nav-subitem" data-page="war-attendance">
+              <span class="nav-subitem-dot"></span>
+              <span>เช็คชื่อวอร์</span>
+            </button>
+            <button class="nav-subitem" data-page="war-stats">
+              <span class="nav-subitem-dot"></span>
+              <span>สถิติการวอร์</span>
+            </button>
+          </div>
+        </div>
 
         <button class="nav-item" data-page="rules">
           <svg class="icon"><use href="#i-shield"/></svg>
@@ -424,7 +441,7 @@
       <section id="page-war" class="page page-padded hidden">
         <div class="page-intro">
           <span class="section-kicker">BATTLE MANAGEMENT</span>
-          <h1>Guild War</h1>
+          <h1>จัดตี้วอร์</h1>
           <p>จัดสมาชิกกิลด์เข้าปาร์ตี้ Raid</p>
         </div>
 
@@ -478,6 +495,50 @@
           </div>
           <div id="raid-b" class="raid-grid"></div>
         </div>
+      </section>
+
+      <!-- ============ WAR ATTENDANCE ============ -->
+      <section id="page-war-attendance" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">WAR ATTENDANCE</span>
+          <h1>เช็คชื่อวอร์</h1>
+          <p>ตรวจสอบรายชื่อสมาชิกที่เข้าร่วม Guild War และสถานะการเข้าร่วม</p>
+        </div>
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">PARTICIPATION</span>
+              <h3>รายชื่อและสถานะการเข้าร่วม</h3>
+            </div>
+          </div>
+          <div class="empty-state">
+            <span>◷</span>
+            <h3>ระบบเช็คชื่อวอร์</h3>
+            <p>หน้านี้เตรียมไว้สำหรับแสดงรายชื่อผู้สมัคร สถานะ JOIN WAR, NOT ATTENDING และ CHANGE RAID</p>
+          </div>
+        </section>
+      </section>
+
+      <!-- ============ WAR STATISTICS ============ -->
+      <section id="page-war-stats" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">WAR PERFORMANCE</span>
+          <h1>สถิติการวอร์</h1>
+          <p>ภาพรวมและประวัติการเข้าร่วม Guild War ของสมาชิก</p>
+        </div>
+        <section class="panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">GUILD WAR RECORD</span>
+              <h3>สถิติการเข้าร่วม</h3>
+            </div>
+          </div>
+          <div class="empty-state">
+            <span>▥</span>
+            <h3>ยังไม่มีข้อมูลสถิติ</h3>
+            <p>สถิติการเข้าร่วมและประวัติ Guild War จะแสดงที่นี่เมื่อเชื่อมต่อระบบบันทึกผลวอร์</p>
+          </div>
+        </section>
       </section>
 
       <!-- ============ PORTFOLIO ============ -->
