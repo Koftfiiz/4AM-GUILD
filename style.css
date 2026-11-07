@@ -2668,3 +2668,53 @@ body #registration-screen.login-card::after {
   margin-left: auto !important;
   margin-right: 0 !important;
 }
+
+
+/* Dashboard statistics: improve readability across all three summary cards */
+#page-dashboard .stats-grid .stat-label {
+  font-size: 20px !important;
+  font-weight: 650 !important;
+  line-height: 1.4;
+  color: #fff3ed !important;
+}
+
+#page-dashboard .stats-grid .stat-value strong {
+  font-size: 50px !important;
+  line-height: 1.15;
+}
+
+#page-dashboard .stats-grid .stat-value em {
+  font-size: 25px !important;
+}
+
+#page-dashboard .stats-grid .stat-value.is-text strong {
+  font-size: 40px !important;
+}
+
+#page-dashboard .stats-grid .stat-info small {
+  font-size: 15px !important;
+  line-height: 1.4;
+  color: #f0dfd9 !important;
+}
+
+@media (max-width: 700px) {
+  #page-dashboard .stats-grid .stat-label {
+    font-size: 16px !important;
+  }
+
+  #page-dashboard .stats-grid .stat-value strong {
+    font-size: 39px !important;
+  }
+
+  #page-dashboard .stats-grid .stat-value em {
+    font-size: 19px !important;
+  }
+
+  #page-dashboard .stats-grid .stat-value.is-text strong {
+    font-size: 30px !important;
+  }
+
+  #page-dashboard .stats-grid .stat-info small {
+    font-size: 13px !important;
+  }
+}
