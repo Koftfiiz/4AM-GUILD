@@ -1583,10 +1583,21 @@ function renderPortfolioSelectedFiles() {
 function resetPortfolioForm() {
   const form = $("portfolio-create-form");
   if (form) form.reset();
-  (window.portfolioDraftFiles || []).forEach((item) => URL.revokeObjectURL(item.preview));
+  (window.portfolioDraftFiles || []).forEach((item) => {
+    if (item.preview && item.preview.startsWith("blob:")) URL.revokeObjectURL(item.preview);
+  });
   window.portfolioDraftFiles = [];
+  window.editingPortfolioId = null;
+  window.portfolioOriginalImages = [];
   renderPortfolioClassChoices();
   renderPortfolioSelectedFiles();
+  const heading = $("portfolio-form-heading");
+  if (heading) {
+    heading.querySelector("h3").textContent = "สร้างแฟ้มผลงานใหม่";
+    heading.querySelector("p").textContent = "ผลงานนี้จะถูกบันทึกไว้ในบัญชีและตัวละครของคุณ";
+  }
+  const submit = $("portfolio-create-submit");
+  if (submit) submit.textContent = "บันทึก Portfolio";
   const status = $("portfolio-form-status");
   if (status) status.textContent = "";
 }
@@ -1685,6 +1696,20 @@ async function renderPortfolios() {
           <div class="portfolio-card-footer">
             <small>${images.length} รูป · ${formatDate(portfolio.created_at)}</small>
             ${isOwner ? '<span class="portfolio-owner-label">ผลงานของคุณ</span>' : ""}
+          </div>
+          <div class="portfolio-card-management">
+            ${isOwner ? `
+              <button type="button" class="portfolio-edit-button" data-portfolio-action="edit" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="แก้ไขแฟ้มผลงาน" title="แก้ไขแฟ้มผลงาน">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
+                <span>แก้ไข</span>
+              </button>
+            ` : ""}
+            ${reviewer ? `
+              <button type="button" class="portfolio-delete-button" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงาน" title="ลบแฟ้มผลงาน">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>
+                <span>ลบ</span>
+              </button>
+            ` : ""}
           </div>
           ${reviewPanel}
           ${reviewControls}
@@ -1810,7 +1835,6 @@ async function createPortfolio({ title, description = "", gameClasses = [] }) {
 
 async function handlePortfolioCreate(event) {
   event.preventDefault();
-  const form = event.currentTarget;
   const title = $("portfolio-title")?.value.trim();
   const description = $("portfolio-description")?.value.trim() || "";
   const files = window.portfolioDraftFiles || [];
@@ -1818,6 +1842,7 @@ async function handlePortfolioCreate(event) {
     .map((button) => button.dataset.class);
   const status = $("portfolio-form-status");
   const submit = $("portfolio-create-submit");
+  const editingId = window.editingPortfolioId || null;
 
   if (!title) {
     if (status) status.textContent = "กรุณากรอกชื่อผลงาน";
@@ -1825,42 +1850,148 @@ async function handlePortfolioCreate(event) {
     return;
   }
   if (!files.length) {
-    if (status) status.textContent = "กรุณาเลือกรูปภาพอย่างน้อย 1 รูป";
+    if (status) status.textContent = "กรุณาเก็บรูปภาพไว้อย่างน้อย 1 รูป";
     return;
   }
   if (!selectedClasses.length) {
     if (status) status.textContent = "กรุณาเลือก Class Tags อย่างน้อย 1 คลาส";
     return;
   }
-  if (files.some((item) => item.file.size > 12 * 1024 * 1024)) {
+  if (files.some((item) => item.file && item.file.size > 12 * 1024 * 1024)) {
     if (status) status.textContent = "รูปภาพแต่ละไฟล์ต้องมีขนาดไม่เกิน 12 MB";
     return;
   }
 
   submit.disabled = true;
-  submit.textContent = "กำลังบันทึกผลงาน...";
-  if (status) status.textContent = "กำลังสร้างแฟ้มผลงานและอัปโหลดรูปภาพ...";
+  submit.textContent = editingId ? "กำลังบันทึกการแก้ไข..." : "กำลังบันทึกผลงาน...";
+  if (status) status.textContent = editingId ? "กำลังอัปเดตข้อมูลและรูปภาพ..." : "กำลังสร้างแฟ้มผลงานและอัปโหลดรูปภาพ...";
   let createdPortfolio = null;
   try {
-    createdPortfolio = await createPortfolio({ title, description, gameClasses: selectedClasses });
-    for (let index = 0; index < files.length; index++) {
-      await uploadPortfolioImage(files[index].file, createdPortfolio.id, "", index);
-      if (status) status.textContent = `กำลังอัปโหลดรูปภาพ ${index + 1}/${files.length}...`;
+    if (editingId) {
+      const { data: existing, error: fetchError } = await supabaseClient
+        .from("portfolios").select("id, member_id").eq("id", editingId).single();
+      if (fetchError) throw fetchError;
+      if (existing.member_id !== currentUser?.id) throw new Error("คุณแก้ไขได้เฉพาะแฟ้มผลงานของตัวเองเท่านั้น");
+
+      const { error: updateError } = await supabaseClient.from("portfolios")
+        .update({ title, description, game_class: selectedClasses.join(", ") }).eq("id", editingId);
+      if (updateError) throw updateError;
+
+      const keptIds = new Set(files.filter((item) => item.existing).map((item) => item.imageId));
+      const removedImages = (window.portfolioOriginalImages || []).filter((item) => !keptIds.has(item.id));
+      const removedPaths = removedImages.map((item) => item.path).filter((path) => path && !/^https?:\/\//i.test(path));
+      if (removedPaths.length) {
+        const { error } = await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove(removedPaths);
+        if (error) throw error;
+      }
+      for (const image of removedImages) {
+        const { error } = await supabaseClient.from("portfolio_images").delete().eq("id", image.id);
+        if (error) throw error;
+      }
+      for (let index = 0; index < files.length; index++) {
+        const item = files[index];
+        if (item.existing) {
+          const { error } = await supabaseClient.from("portfolio_images")
+            .update({ sort_order: index }).eq("id", item.imageId);
+          if (error) throw error;
+        } else {
+          await uploadPortfolioImage(item.file, editingId, "", index);
+        }
+        if (status) status.textContent = `กำลังบันทึกรูปภาพ ${index + 1}/${files.length}...`;
+      }
+    } else {
+      createdPortfolio = await createPortfolio({ title, description, gameClasses: selectedClasses });
+      for (let index = 0; index < files.length; index++) {
+        await uploadPortfolioImage(files[index].file, createdPortfolio.id, "", index);
+        if (status) status.textContent = `กำลังอัปโหลดรูปภาพ ${index + 1}/${files.length}...`;
+      }
     }
-    if (status) status.textContent = "บันทึกผลงานสำเร็จ";
+
     await loadPortfolios();
     resetPortfolioForm();
+    const savedAt = new Intl.DateTimeFormat("th-TH", {
+      dateStyle: "medium", timeStyle: "medium", timeZone: "Asia/Bangkok"
+    }).format(new Date());
+    if (status) status.textContent = `บันทึกข้อมูลแฟ้มผลงานสำเร็จ · ${savedAt} น. (เวลาไทย)`;
   } catch (error) {
-    console.error("Portfolio create error:", error);
-    if (createdPortfolio) {
-      if (status) status.textContent = "สร้างแฟ้มแล้ว แต่มีรูปบางส่วนอัปโหลดไม่สำเร็จ: " + (error.message || "Unknown error");
-    } else if (status) {
-      status.textContent = error.message || "ไม่สามารถบันทึกผลงานได้";
-    }
+    console.error("Portfolio save error:", error);
+    if (status) status.textContent = (createdPortfolio ? "สร้างแฟ้มแล้ว แต่บันทึกรูปภาพไม่ครบ: " : "บันทึกไม่สำเร็จ: ") + (error.message || "Unknown error");
   } finally {
     submit.disabled = false;
-    submit.textContent = "บันทึก Portfolio";
+    submit.textContent = window.editingPortfolioId ? "บันทึกการแก้ไข" : "บันทึก Portfolio";
   }
+}
+
+async function startPortfolioEdit(portfolioId) {
+  const portfolio = allPortfolios.find((item) => item.id === portfolioId);
+  if (!portfolio || portfolio.member_id !== currentUser?.id) {
+    alert("คุณแก้ไขได้เฉพาะแฟ้มผลงานของตัวเองเท่านั้น");
+    return;
+  }
+  resetPortfolioForm();
+  window.editingPortfolioId = portfolio.id;
+  window.portfolioOriginalImages = (portfolio.portfolio_images || []).map((image) => ({ id: image.id, path: image.image_url }));
+  $("portfolio-title").value = portfolio.title || "";
+  $("portfolio-description").value = portfolio.description || "";
+  renderPortfolioClassChoices();
+  const selected = new Set(getPortfolioClasses(portfolio.game_class));
+  document.querySelectorAll(".portfolio-class-tag").forEach((button) => {
+    const active = selected.has(button.dataset.class);
+    button.classList.toggle("is-selected", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  const imageItems = await Promise.all((portfolio.portfolio_images || []).map(async (image) => ({
+    file: null, preview: await getPortfolioImageUrl(image.image_url), existing: true,
+    imageId: image.id, path: image.image_url
+  })));
+  window.portfolioDraftFiles = imageItems.filter((item) => item.preview);
+  renderPortfolioSelectedFiles();
+  const heading = $("portfolio-form-heading");
+  if (heading) {
+    heading.querySelector("h3").textContent = "แก้ไขแฟ้มผลงาน";
+    heading.querySelector("p").textContent = "แก้ไขได้เฉพาะแฟ้มผลงานที่อยู่ในบัญชีของคุณ";
+  }
+  const submit = $("portfolio-create-submit");
+  if (submit) submit.textContent = "บันทึกการแก้ไข";
+  const status = $("portfolio-form-status");
+  if (status) status.textContent = "";
+  $("portfolio-create-panel")?.classList.remove("hidden");
+  $("portfolio-add-button")?.setAttribute("aria-expanded", "true");
+  $("portfolio-create-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function deletePortfolio(portfolioId) {
+  if (!isPortfolioReviewer()) {
+    alert("เฉพาะ Developer, Leader และ Management เท่านั้นที่ลบแฟ้มผลงานได้");
+    return;
+  }
+  const portfolio = allPortfolios.find((item) => item.id === portfolioId);
+  if (!portfolio) return;
+  if (!window.confirm(`ยืนยันลบแฟ้มผลงาน "${portfolio.title || "Untitled"}" ใช่หรือไม่?\n\nข้อมูลและรูปภาพทั้งหมดของแฟ้มนี้จะถูกลบ และไม่สามารถกู้คืนได้`)) return;
+  try {
+    const paths = (portfolio.portfolio_images || []).map((image) => image.image_url)
+      .filter((path) => path && !/^https?:\/\//i.test(path));
+    if (paths.length) {
+      const { error } = await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove(paths);
+      if (error) throw error;
+    }
+    const { error } = await supabaseClient.from("portfolios").delete().eq("id", portfolioId);
+    if (error) throw error;
+    await loadPortfolios();
+    alert("ลบแฟ้มผลงานและรูปภาพเรียบร้อยแล้ว");
+  } catch (error) {
+    console.error("Portfolio delete error:", error);
+    alert("ลบแฟ้มผลงานไม่สำเร็จ: " + (error.message || "Unknown error"));
+  }
+}
+
+async function handlePortfolioCardAction(event) {
+  const button = event.target.closest("[data-portfolio-action]");
+  if (!button) return;
+  const portfolioId = button.dataset.portfolioId;
+  if (!portfolioId) return;
+  if (button.dataset.portfolioAction === "edit") await startPortfolioEdit(portfolioId);
+  if (button.dataset.portfolioAction === "delete") await deletePortfolio(portfolioId);
 }
 
 function registerPortfolioEvents() {
@@ -1874,6 +2005,11 @@ function registerPortfolioEvents() {
   });
 
   $("portfolio-create-form")?.addEventListener("submit", handlePortfolioCreate);
+  $("portfolio-cancel-button")?.addEventListener("click", () => {
+    resetPortfolioForm();
+    $("portfolio-create-panel")?.classList.add("hidden");
+    $("portfolio-add-button")?.setAttribute("aria-expanded", "false");
+  });
   $("portfolio-class-tags")?.addEventListener("click", (event) => {
     const button = event.target.closest(".portfolio-class-tag");
     if (!button) return;
@@ -1942,7 +2078,10 @@ function registerPortfolioEvents() {
     $("portfolio-image-preview")?.querySelectorAll(".is-dragging").forEach((item) => item.classList.remove("is-dragging"));
   });
 
-  $("portfolio-grid")?.addEventListener("click", handlePortfolioReviewAction);
+  $("portfolio-grid")?.addEventListener("click", async (event) => {
+    await handlePortfolioCardAction(event);
+    handlePortfolioReviewAction(event);
+  });
 }
 
 // ==========================================
