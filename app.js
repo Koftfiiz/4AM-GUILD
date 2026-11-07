@@ -1505,7 +1505,7 @@ async function loadPortfolios() {
 
 async function getPortfolioImageUrl(path) {
   if (!path) return "";
-  if (/^https?:\\/\\//i.test(path)) return path;
+  if (/^https?:\/\//i.test(path)) return path;
   const { data, error } = await supabaseClient.storage
     .from(PORTFOLIO_BUCKET)
     .createSignedUrl(path, 3600);
