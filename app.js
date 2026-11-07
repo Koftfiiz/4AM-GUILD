@@ -1697,7 +1697,7 @@ async function renderPortfolios() {
 
 async function savePortfolioReview(portfolioId, status, reason = "") {
   if (!isPortfolioReviewer()) {
-    alert("เฉพาะ Leader และ Management เท่านั้นที่ตรวจ Portfolio ได้");
+    alert("เฉพาะ Developer, Leader และ Management เท่านั้นที่ตรวจ Portfolio ได้");
     return;
   }
 
@@ -1777,7 +1777,7 @@ async function uploadPortfolioImage(file, portfolioId, caption = "", sortOrder =
     .insert({
       portfolio_id: portfolioId,
       image_url: path,
-      image_type: "image",
+      image_type: "other",
       caption,
       sort_order: sortOrder
     })
