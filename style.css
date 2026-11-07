@@ -3359,3 +3359,11 @@ body #registration-screen.login-card::after {
 }
 .portfolio-card-management button:disabled { opacity: .5; cursor: wait; }
 .portfolio-form-status { white-space: pre-wrap; }
+
+
+.portfolio-delete-button.is-confirming {
+  color: #fff;
+  border-color: rgba(255, 105, 120, .9);
+  background: rgba(190, 35, 55, .82);
+  font-weight: 800;
+}
