@@ -1790,9 +1790,9 @@ function handlePortfolioReviewAction(event) {
   }
 
   if (action === "approve") {
-    if (window.confirm("ยืนยันว่าแฟ้มผลงานนี้ตรวจสอบแล้วและผ่านใช่หรือไม่?")) {
-      void savePortfolioReview(portfolioId, "approved");
-    }
+    // Submit directly instead of relying on browser confirm dialogs,
+    // which may be suppressed by the browser and look like a dead button.
+    void savePortfolioReview(portfolioId, "approved");
     return;
   }
 
@@ -1809,9 +1809,8 @@ function handlePortfolioReviewAction(event) {
       }
       return;
     }
-    if (window.confirm("ยืนยันส่งผลตรวจว่าแฟ้มผลงานนี้ยังไม่ผ่านใช่หรือไม่?")) {
-      void savePortfolioReview(portfolioId, "rejected", reason);
-    }
+    // The required reason has already been validated; submit directly.
+    void savePortfolioReview(portfolioId, "rejected", reason);
   }
 }
 
