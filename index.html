@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=20261107-war-party-labels-1";
+          app.src = "app.js?v=20261107-war-event-creator-1";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -454,56 +454,73 @@
           <p>จัดสมาชิกกิลด์เข้าปาร์ตี้ Raid</p>
         </div>
 
-        <div class="war-summary">
-          <article class="stat-card stat-card-sm">
-            <div class="stat-icon"><svg class="icon"><use href="#i-swords"/></svg></div>
-            <div class="stat-info">
-              <span class="stat-label">TOTAL CAPACITY</span>
-              <div class="stat-value"><strong>60</strong></div>
-              <small>War Participants</small>
-            </div>
-          </article>
-
-          <article class="stat-card stat-card-sm">
-            <div class="stat-icon letter">A</div>
-            <div class="stat-info">
-              <span class="stat-label">RAID A</span>
-              <div class="stat-value"><strong>30</strong></div>
-              <small>5 Parties · 6 Players</small>
-            </div>
-          </article>
-
-          <article class="stat-card stat-card-sm">
-            <div class="stat-icon letter">B</div>
-            <div class="stat-info">
-              <span class="stat-label">RAID B</span>
-              <div class="stat-value"><strong>30</strong></div>
-              <small>5 Parties · 6 Players</small>
-            </div>
-          </article>
-        </div>
-
-        <div class="raid-section">
-          <div class="raid-title">
-            <span class="raid-badge">A</span>
-            <div>
-              <h2>Raid A</h2>
-              <p>First battle formation</p>
-            </div>
+        <div class="war-create-toolbar">
+          <div>
+            <span class="panel-kicker">WAR SETUP</span>
+            <h2>จัดการตี้วอร์</h2>
+            <p>สร้างรูปแบบวอร์จริงหรือวอร์ซ้อม และกำหนดเวลาเริ่มต้น</p>
           </div>
-          <div id="raid-a" class="raid-grid"></div>
+          <button id="war-create-open" class="btn btn-primary" type="button">
+            <span aria-hidden="true">＋</span> สร้างตี้วอร์
+          </button>
         </div>
 
-        <div class="raid-section">
-          <div class="raid-title">
-            <span class="raid-badge raid-b">B</span>
+        <section id="war-create-panel" class="panel war-create-panel hidden">
+          <div class="panel-heading">
             <div>
-              <h2>Raid B</h2>
-              <p>Second battle formation</p>
+              <span class="panel-kicker">CREATE WAR EVENT</span>
+              <h3>ตั้งค่าตี้วอร์ใหม่</h3>
             </div>
+            <button id="war-create-close" class="btn btn-ghost btn-sm" type="button">ปิด</button>
           </div>
-          <div id="raid-b" class="raid-grid"></div>
-        </div>
+          <form id="war-create-form">
+            <div class="war-mode-options">
+              <label class="war-mode-option">
+                <input type="radio" name="war-mode" value="official" checked>
+                <span><strong>วอร์จริง</strong><small>2 Raid · 10 ปาร์ตี้ · 60 คน</small></span>
+              </label>
+              <label class="war-mode-option">
+                <input type="radio" name="war-mode" value="practice">
+                <span><strong>ซ้อมวอร์</strong><small>เลือกได้ 1–4 Raid · สูงสุด 120 คน</small></span>
+              </label>
+            </div>
+            <div id="war-raid-count-wrap" class="form-group hidden">
+              <label for="war-raid-count">จำนวน Raid สำหรับซ้อม</label>
+              <select id="war-raid-count" name="raid-count">
+                <option value="1">1 Raid · 30 คน</option>
+                <option value="2">2 Raid · 60 คน</option>
+                <option value="3">3 Raid · 90 คน</option>
+                <option value="4" selected>4 Raid · 120 คน</option>
+              </select>
+            </div>
+            <div class="war-event-fields">
+              <div class="form-group">
+                <label>ชื่อคู่แข่ง</label>
+                <div class="war-vs-field">
+                  <span>4AM</span><b>vs</b>
+                  <input id="war-opponent" name="opponent" type="text" maxlength="60" placeholder="ชื่อกิลด์คู่แข่ง" required>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="war-event-date">วันที่เริ่มวอร์</label>
+                <input id="war-event-date" name="event-date" type="date" required>
+              </div>
+              <div class="form-group">
+                <label for="war-start-time">เวลาเริ่มวอร์</label>
+                <input id="war-start-time" name="start-time" type="time" required>
+              </div>
+            </div>
+            <div class="war-create-capacity" id="war-create-capacity">วอร์จริง: 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน</div>
+            <div id="war-create-message" class="message hidden" role="status"></div>
+            <div class="war-create-actions">
+              <button id="war-create-cancel" class="btn btn-ghost" type="button">ยกเลิก</button>
+              <button id="war-create-submit" class="btn btn-primary" type="submit">สร้างตี้วอร์</button>
+            </div>
+          </form>
+        </section>
+
+        <div id="war-summary" class="war-summary"></div>
+        <div id="war-raid-boards"></div>
       </section>
 
       <!-- ============ WAR ATTENDANCE ============ -->
