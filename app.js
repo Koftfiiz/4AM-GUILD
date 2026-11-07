@@ -26,6 +26,7 @@ let currentMember = null;
 let allMembers = [];
 let discordAccount = null;
 let allPortfolios = [];
+let activePortfolioClass = "all";
 let allWarEvents = [];
 let registrationBusy = false;
 
@@ -1524,19 +1525,26 @@ async function getPortfolioImageUrl(path) {
 }
 
 async function renderPortfolios() {
-  const container =
-    $("portfolio-list") ||
-    $("portfolios-list") ||
-    $("portfolio-grid");
-
+  const container = $("portfolio-grid");
   if (!container) return;
 
+  const filteredPortfolios = activePortfolioClass === "all"
+    ? allPortfolios
+    : allPortfolios.filter((portfolio) =>
+        String(portfolio.game_class || "").trim().toLowerCase() === activePortfolioClass.toLowerCase()
+      );
+
   if (!allPortfolios.length) {
-    showEmpty(container, "No Portfolio Yet", "ยังไม่มีผลงานในระบบ");
+    showEmpty(container, "No Portfolio Yet", "ยังไม่มีแฟ้มผลงานในระบบ");
     return;
   }
 
-  const cards = await Promise.all(allPortfolios.map(async (portfolio) => {
+  if (!filteredPortfolios.length) {
+    showEmpty(container, "No Builds Yet", "ยังไม่มีแฟ้มผลงานของอาชีพนี้");
+    return;
+  }
+
+  const cards = await Promise.all(filteredPortfolios.map(async (portfolio) => {
     const images = portfolio.portfolio_images || [];
     const firstImage = images[0];
     const imageUrl = firstImage
@@ -1551,11 +1559,11 @@ async function renderPortfolios() {
     return `
       <article class="portfolio-card" ${portfolioClassColor ? `style="--class-color:${portfolioClassColor}"` : ""}>
         ${imageUrl ? `
-          <img src="${escapeHTML(imageUrl)}" alt=""
+          <img class="portfolio-card-image" src="${escapeHTML(imageUrl)}" alt=""
             onerror="this.style.display='none'">
         ` : ""}
         <div class="portfolio-card-content">
-          <span>${escapeHTML(portfolio.game_class || "Unassigned")}</span>
+          <span class="portfolio-card-class">${escapeHTML(portfolio.game_class || "Unassigned")}</span>
           <h3>${escapeHTML(portfolio.title || "Untitled")}</h3>
           <p>${escapeHTML(portfolio.description || "")}</p>
           <small>${formatDate(portfolio.created_at)}</small>
@@ -1566,7 +1574,6 @@ async function renderPortfolios() {
 
   container.innerHTML = cards.join("");
 }
-
 // ==========================================
 // PORTFOLIO IMAGE UPLOAD
 // ==========================================
@@ -1810,12 +1817,31 @@ function renderClassLegend() {
   const container = $("class-legend");
   if (!container) return;
 
-  container.innerHTML = CLASS_DATA.map((item) => `
-    <div class="class-item" style="--class-color:${item.color}">
-      <img class="class-icon-image" src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
-      <strong>${escapeHTML(item.name)}</strong>
-    </div>
-  `).join("");
+  const totalCount = allPortfolios.length;
+  const allActive = activePortfolioClass === "all";
+  const allButton = `
+    <button type="button" class="class-item class-filter-button ${allActive ? "active" : ""}"
+      data-portfolio-class="all" aria-pressed="${allActive}">
+      <strong>ทุกอาชีพ</strong><span class="class-filter-count">${totalCount}</span>
+    </button>
+  `;
+
+  container.innerHTML = allButton + CLASS_DATA.map((item) => {
+    const count = allPortfolios.filter((portfolio) =>
+      String(portfolio.game_class || "").trim().toLowerCase() === item.name.toLowerCase()
+    ).length;
+    const active = activePortfolioClass.toLowerCase() === item.name.toLowerCase();
+
+    return `
+      <button type="button" class="class-item class-filter-button ${active ? "active" : ""}"
+        style="--class-color:${item.color}" data-portfolio-class="${escapeHTML(item.name)}"
+        aria-pressed="${active}" ${count === 0 ? "disabled" : ""}>
+        <img class="class-icon-image" src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
+        <strong>${escapeHTML(item.name)}</strong>
+        <span class="class-filter-count">${count}</span>
+      </button>
+    `;
+  }).join("");
 }
 
 // ==========================================
@@ -2021,6 +2047,15 @@ function registerAppEventListeners() {
   $("member-search")?.addEventListener("input", filterMembers);
   $("refresh-members")?.addEventListener("click", loadMembers);
   $("connect-discord")?.addEventListener("click", connectDiscord);
+
+  $("class-legend")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-portfolio-class]");
+    if (!button || button.disabled) return;
+
+    activePortfolioClass = button.dataset.portfolioClass || "all";
+    renderClassLegend();
+    renderPortfolios();
+  });
 
   document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
     button.addEventListener("click", () => {
