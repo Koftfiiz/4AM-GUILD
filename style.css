@@ -3016,3 +3016,16 @@ body #registration-screen.login-card::after {
   .portfolio-section-heading { align-items:flex-start; }
   .portfolio-form-actions > button { flex:1; }
 }
+
+
+/* Improve Thai readability on the Add Portfolio button only */
+#portfolio-add-button {
+  font-family: Arial, "Noto Sans Thai", Tahoma, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.55;
+  letter-spacing: 0;
+  text-transform: none;
+  min-height: 44px;
+  padding: 9px 18px;
+}
