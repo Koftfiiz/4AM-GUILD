@@ -1648,9 +1648,12 @@ async function renderPortfolios() {
 
     const reviewPanel = canSeeReview ? `
       <div class="portfolio-review-summary">
-        <span class="portfolio-review-badge is-${escapeHTML(review.status || "pending")}">
-          ${escapeHTML(portfolioReviewStatusLabel(review.status))}
-        </span>
+        <div class="portfolio-review-status-line">
+          <span class="portfolio-review-status-label">สถานะ</span>
+          <span class="portfolio-review-badge is-${escapeHTML(review.status || "pending")}">
+            ${escapeHTML(portfolioReviewStatusLabel(review.status))}
+          </span>
+        </div>
         ${review.status === "rejected" && review.reason ? `
           <div class="portfolio-review-reason">
             <strong>เหตุผลที่ยังไม่ผ่าน</strong>
@@ -2078,21 +2081,22 @@ function registerPortfolioEvents() {
     $("portfolio-image-preview")?.querySelectorAll(".is-dragging").forEach((item) => item.classList.remove("is-dragging"));
   });
 
-  // Delegate portfolio actions from document so clicks keep working after grid re-renders.
+  // Capture clicks before nested card handlers can stop propagation.
+  // This also survives portfolio-grid re-renders.
   document.addEventListener("click", async (event) => {
     const target = event.target instanceof Element ? event.target : event.target?.parentElement;
     if (!target) return;
     const actionButton = target.closest("[data-portfolio-action]");
     const reviewButton = target.closest("[data-review-action]");
     if (!actionButton && !reviewButton) return;
+    event.preventDefault();
+    event.stopPropagation();
     if (actionButton) {
-      event.preventDefault();
-      event.stopPropagation();
       await handlePortfolioCardAction({ target });
       return;
     }
     handlePortfolioReviewAction({ target });
-  });
+  }, true);
 }
 
 // ==========================================
