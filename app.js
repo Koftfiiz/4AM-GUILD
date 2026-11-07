@@ -897,17 +897,17 @@ async function renderDashboardProfile() {
             <dd>${escapeHTML(characterName)}</dd>
           </div>
           <div>
-            <dt>Class อาชีพ :</dt>
-            <dd>
-              ${classInfo?.iconPath ? `<img class="profile-class-icon" src="${escapeHTML(classInfo.iconPath)}" alt="${escapeHTML(className)} icon">` : ""}
-              ${escapeHTML(className)}
-            </dd>
-          </div>
-          <div>
             <dt>UID ตัวละคร :</dt>
             <dd class="profile-game-uid">
               <span>${escapeHTML(currentMember.game_uid || "ยังไม่ได้กรอก UID")}</span>
               ${currentMember.game_uid ? `<button type="button" class="btn btn-outline copy-own-game-uid" data-game-uid="${escapeHTML(currentMember.game_uid)}">Copy UID</button>` : ""}
+            </dd>
+          </div>
+          <div>
+            <dt>Class อาชีพ :</dt>
+            <dd>
+              ${classInfo?.iconPath ? `<img class="profile-class-icon" src="${escapeHTML(classInfo.iconPath)}" alt="${escapeHTML(className)} icon">` : ""}
+              ${escapeHTML(className)}
             </dd>
           </div>
           <div>
