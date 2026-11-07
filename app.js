@@ -2079,8 +2079,16 @@ function registerPortfolioEvents() {
   });
 
   $("portfolio-grid")?.addEventListener("click", async (event) => {
-    await handlePortfolioCardAction(event);
-    handlePortfolioReviewAction(event);
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    if (!target) return;
+    const actionButton = target.closest("[data-portfolio-action]");
+    if (actionButton) {
+      event.preventDefault();
+      event.stopPropagation();
+      await handlePortfolioCardAction({ target });
+      return;
+    }
+    handlePortfolioReviewAction({ target });
   });
 }
 
