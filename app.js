@@ -2495,9 +2495,16 @@ function registerSystemRoleEvents() {
     renderSystemRoleMembers();
   });
   $("system-role-refresh")?.addEventListener("click", loadSystemRoleMembers);
-  $("system-role-list")?.addEventListener("change", event => {
-    const select = event.target.closest('select[data-action="change-system-role"]');
-    if (select) saveSystemRole(select);
+  // Delegate at document level so role changes are still detected
+  // even if the member list is re-rendered or replaced.
+  document.addEventListener("change", event => {
+    const target = event.target instanceof Element
+      ? event.target
+      : event.target?.parentElement;
+    const select = target?.closest('select[data-action="change-system-role"]');
+    if (select) {
+      void saveSystemRole(select);
+    }
   });
 }
 
