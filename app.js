@@ -425,6 +425,8 @@ async function loadApplication() {
       loadWarEvents()
     ]);
 
+    // Re-render after member records are available so each portfolio shows its owner.
+    await renderPortfolios();
     renderClassLegend();
     renderWarLayout();
     openGuildPage("dashboard");
