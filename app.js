@@ -995,23 +995,25 @@ function renderMembers(members) {
           >
         </div>
 
-        <div class="member-details">
-          <h4>${escapeHTML(name)}</h4>
-          <span>${escapeHTML(role)}</span>
-          <small class="member-guild-position">
-            ตำแหน่งกิลด์: ${escapeHTML(guildPosition || "ยังไม่ได้กำหนดตำแหน่ง")}
-          </small>
+        <div class="member-info">
+          <div class="member-details">
+            <h4>${escapeHTML(name)}</h4>
+            <span>${escapeHTML(role)}</span>
+            <small class="member-guild-position">
+              ตำแหน่งกิลด์: ${escapeHTML(guildPosition || "ยังไม่ได้กำหนดตำแหน่ง")}
+            </small>
+          </div>
+
+          <div class="member-game-uid">
+            <span>UID ตัวละคร</span>
+            <strong>${escapeHTML(gameUID || "ยังไม่ได้กรอก UID")}</strong>
+            ${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">Copy UID</button>` : ""}
+          </div>
         </div>
 
         <div class="member-class" style="--class-color:${classColor}">
           ${classInfo?.iconPath ? `<img class="member-class-icon" src="${classInfo.iconPath}" alt="${escapeHTML(className)}" loading="lazy" onerror="this.style.display=\'none\'">` : ""}
           <span>${escapeHTML(className)}</span>
-        </div>
-
-        <div class="member-game-uid">
-          <span>UID ตัวละคร</span>
-          <strong>${escapeHTML(gameUID || "ยังไม่ได้กรอก UID")}</strong>
-          ${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">Copy UID</button>` : ""}
         </div>
 
         ${canManagePositions ? `
