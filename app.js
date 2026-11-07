@@ -2434,6 +2434,14 @@ function renderSystemRoleMembers() {
       </article>
     `;
   }).join("");
+
+  // Bind directly to each freshly rendered dropdown. This avoids relying on
+  // document-level delegation for controls inside the re-rendered list.
+  container.querySelectorAll('select[data-action="change-system-role"]').forEach(select => {
+    select.addEventListener("change", () => {
+      void saveSystemRole(select);
+    });
+  });
 }
 
 async function loadSystemRoleMembers() {
@@ -2487,16 +2495,13 @@ async function saveSystemRole(selectElement) {
   const previousRole = String(member.role || "member").toLowerCase();
   if (newRole === previousRole) return;
 
-  const confirmed = window.confirm(
-    `ยืนยันเปลี่ยน System Role ของ "${getMemberName(member)}" จาก ${systemRoleLabel(previousRole)} เป็น ${systemRoleLabel(newRole)} หรือไม่?\n\nการเปลี่ยนนี้มีผลกับสิทธิ์ใช้งานในระบบ`
-  );
-  if (!confirmed) {
-    selectElement.value = previousRole;
-    return;
-  }
-
+  // Save immediately after the dropdown changes; do not depend on a
+  // browser confirmation dialog that may be suppressed.
   selectElement.disabled = true;
-  if (status) status.textContent = "กำลังบันทึก Role...";
+  if (status) {
+    status.classList.remove("is-success");
+    status.textContent = `กำลังเปลี่ยนเป็น ${systemRoleLabel(newRole)}...`;
+  }
 
   try {
     const { data, error } = await supabaseClient.rpc("set_member_system_role", {
@@ -2504,7 +2509,7 @@ async function saveSystemRole(selectElement) {
       new_role: newRole
     });
     if (error) throw error;
-    if (data && data.success === false) throw new Error(data.message || "ไม่สามารถเปลี่ยน Role ได้");
+    if (!data || data.success !== true) throw new Error(data?.message || "ระบบไม่ได้ยืนยันการเปลี่ยน Role");
 
     member.role = newRole;
     selectElement.dataset.originalRole = newRole;
@@ -2531,17 +2536,7 @@ function registerSystemRoleEvents() {
     renderSystemRoleMembers();
   });
   $("system-role-refresh")?.addEventListener("click", loadSystemRoleMembers);
-  // Delegate at document level so role changes are still detected
-  // even if the member list is re-rendered or replaced.
-  document.addEventListener("change", event => {
-    const target = event.target instanceof Element
-      ? event.target
-      : event.target?.parentElement;
-    const select = target?.closest('select[data-action="change-system-role"]');
-    if (select) {
-      void saveSystemRole(select);
-    }
-  });
+  // System Role dropdowns receive direct listeners after each list render.
 }
 
 // ==========================================
