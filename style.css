@@ -2254,3 +2254,119 @@ body #registration-screen.login-card::after {
     flex-basis: 23px;
   }
 }
+
+
+/* Member directory: narrower cards and vertically centered information group */
+.members-list {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 560px), 660px));
+  justify-content: center;
+  align-items: stretch;
+  gap: 14px;
+}
+
+.members-list > .member-card {
+  width: 100%;
+  max-width: 660px;
+  box-sizing: border-box;
+  grid-template-columns: 116px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "avatar info class"
+    "avatar info management";
+  column-gap: 18px;
+  row-gap: 6px;
+  padding: 14px 16px;
+}
+
+.members-list .member-avatar {
+  grid-area: avatar;
+  align-self: center;
+}
+
+.members-list .member-info {
+  grid-area: info;
+  align-self: center;
+  justify-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.members-list .member-details {
+  align-self: auto;
+  margin: 0;
+}
+
+.members-list .member-game-uid {
+  align-self: flex-start;
+  margin: 0;
+  width: auto;
+  max-width: 100%;
+}
+
+.members-list .member-class {
+  grid-area: class;
+  align-self: center;
+}
+
+.members-list .member-position-management {
+  grid-area: management;
+  align-self: center;
+  justify-self: end;
+}
+
+@media (max-width: 850px) {
+  .members-list {
+    grid-template-columns: minmax(0, 660px);
+    justify-content: center;
+  }
+
+  .members-list > .member-card {
+    grid-template-columns: 98px minmax(0, 1fr);
+    grid-template-areas:
+      "avatar info"
+      "class class"
+      "management management";
+    column-gap: 16px;
+    row-gap: 9px;
+    padding: 14px 16px;
+  }
+
+  .members-list .member-avatar {
+    width: 98px;
+    height: 98px;
+  }
+
+  .members-list .member-info {
+    align-self: center;
+    gap: 7px;
+  }
+
+  .members-list .member-class,
+  .members-list .member-position-management {
+    justify-self: start;
+  }
+}
+
+@media (max-width: 520px) {
+  .members-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .members-list > .member-card {
+    grid-template-columns: 82px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 8px;
+    padding: 12px;
+  }
+
+  .members-list .member-avatar {
+    width: 82px;
+    height: 82px;
+  }
+
+  .members-list .member-info {
+    gap: 6px;
+  }
+}
