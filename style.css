@@ -3160,3 +3160,118 @@ body #registration-screen.login-card::after {
   .system-role-stat { padding: 14px; }
   .system-role-stat strong { font-size: 25px; }
 }
+
+
+/* ==========================================
+   PORTFOLIO REVIEW - LEADER & MANAGEMENT
+   ========================================== */
+.portfolio-review-summary {
+  display: grid;
+  gap: 9px;
+  margin-top: 14px;
+  padding-top: 13px;
+  border-top: 1px solid rgba(205,160,120,.18);
+}
+.portfolio-review-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 6px 10px;
+  border: 1px solid rgba(205,160,120,.28);
+  border-radius: 4px;
+  color: #f1d7a2;
+  background: rgba(205,160,120,.08);
+  font-size: 12px;
+  font-weight: 700;
+}
+.portfolio-review-badge.is-approved {
+  color: #91e2b4;
+  border-color: rgba(88,205,140,.42);
+  background: rgba(48,150,92,.12);
+}
+.portfolio-review-badge.is-rejected {
+  color: #ff9ba6;
+  border-color: rgba(230,75,95,.45);
+  background: rgba(170,30,48,.14);
+}
+.portfolio-review-reason {
+  padding: 11px 12px;
+  border-left: 3px solid #d94b5d;
+  border-radius: 3px;
+  background: rgba(170,30,48,.09);
+}
+.portfolio-review-reason strong { color: #ffb0b8; font-size: 12px; }
+.portfolio-review-reason p {
+  margin: 5px 0 0;
+  color: #ead7d8;
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.portfolio-review-meta { color: var(--muted); font-size: 11px; }
+.portfolio-review-controls {
+  display: grid;
+  gap: 10px;
+  margin-top: 13px;
+  padding-top: 13px;
+  border-top: 1px solid rgba(205,160,120,.18);
+}
+.portfolio-review-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.portfolio-review-actions button,
+.portfolio-review-submit-reject {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid;
+  border-radius: 5px;
+  font: 600 12px var(--font);
+  cursor: pointer;
+  transition: .18s ease;
+}
+.portfolio-review-approve {
+  color: #a2ebc1;
+  border-color: rgba(88,205,140,.4) !important;
+  background: rgba(48,150,92,.13);
+}
+.portfolio-review-reject,
+.portfolio-review-submit-reject {
+  color: #ffabb4;
+  border-color: rgba(230,75,95,.42) !important;
+  background: rgba(170,30,48,.14);
+}
+.portfolio-review-actions button:hover,
+.portfolio-review-submit-reject:hover { filter: brightness(1.2); }
+.portfolio-review-actions button:disabled,
+.portfolio-review-submit-reject:disabled { opacity: .5; cursor: wait; }
+.portfolio-review-reject-form {
+  display: grid;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid rgba(230,75,95,.25);
+  border-radius: 5px;
+  background: rgba(30,12,16,.72);
+}
+.portfolio-review-reject-form label { display: grid; gap: 7px; color: #f1e5df; font-size: 12px; }
+.portfolio-review-reject-form label i { color: #ff8795; font-style: normal; }
+.portfolio-review-reject-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 78px;
+  padding: 10px 11px;
+  resize: vertical;
+  color: var(--cream);
+  background: rgba(7,6,8,.8);
+  border: 1px solid rgba(205,160,120,.28);
+  border-radius: 5px;
+  font: 13px/1.55 var(--font);
+}
+.portfolio-review-reject-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.portfolio-review-reject-footer small { color: var(--muted); font-size: 10px; }
+.portfolio-review-feedback { min-height: 0; margin: 0; color: #ffb0b8; font-size: 11px; }
+.portfolio-review-feedback:empty { display: none; }
