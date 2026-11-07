@@ -447,7 +447,9 @@ async function loadApplication() {
     await renderPortfolios();
     renderClassLegend();
     renderWarLayout();
-    openGuildPage("dashboard");
+
+    // Restore the last page after authentication and member permissions are ready.
+    openGuildPage(getLastGuildPage());
 
     await handleDiscordCallback();
 
@@ -2885,6 +2887,18 @@ function syncManagementMenuVisibility() {
   });
 }
 
+const LAST_GUILD_PAGE_KEY = "4am-guild:last-page";
+
+function getLastGuildPage() {
+  try {
+    const savedPage = window.localStorage.getItem(LAST_GUILD_PAGE_KEY);
+    return savedPage && PAGE_TITLES[savedPage] ? savedPage : "dashboard";
+  } catch (error) {
+    console.warn("Unable to restore last page:", error);
+    return "dashboard";
+  }
+}
+
 function openGuildPage(pageName) {
   if (pageName === "war-stats" && !isManagement()) {
     pageName = "war";
@@ -2892,6 +2906,14 @@ function openGuildPage(pageName) {
   if (pageName === "system-management" && !isDeveloper()) {
     pageName = "dashboard";
   }
+
+  // Remember the current section so a hard refresh returns to the same page.
+  try {
+    window.localStorage.setItem(LAST_GUILD_PAGE_KEY, pageName);
+  } catch (error) {
+    console.warn("Unable to save current page:", error);
+  }
+
   document.querySelectorAll(".page").forEach((page) => {
     page.classList.add("hidden");
   });
