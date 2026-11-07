@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=20261107-war-party-class-filter-1";
+          app.src = "app.js?v=20261108-war-time-24h-1";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -507,7 +507,7 @@
               </div>
               <div class="form-group">
                 <label for="war-start-time">เวลาเริ่มวอร์</label>
-                <input id="war-start-time" name="start-time" type="time" required>
+                <input id="war-start-time" name="start-time" type="time" lang="en-GB" step="60" required aria-label="เวลาเริ่มวอร์ รูปแบบ 24 ชั่วโมง">
               </div>
             </div>
             <div class="war-create-capacity" id="war-create-capacity">วอร์จริง: 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน</div>
