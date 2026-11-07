@@ -2160,3 +2160,97 @@ body #registration-screen.login-card::after {
     font-size: 14px;
   }
 }
+
+
+/* Guild member directory: larger profile portraits and class emblems */
+.members-list > .member-card {
+  grid-template-columns: 116px minmax(0, 1fr) auto;
+  grid-template-areas:
+    "avatar details class"
+    "avatar uid management";
+  column-gap: 18px;
+  row-gap: 8px;
+  padding: 14px 18px;
+  min-height: 0;
+}
+
+.members-list .member-avatar {
+  grid-area: avatar;
+  width: 116px;
+  height: 116px;
+  align-self: center;
+}
+
+.members-list .member-details { grid-area: details; }
+.members-list .member-class {
+  grid-area: class;
+  display: inline-flex;
+  align-items: center;
+  justify-self: end;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.members-list .member-class-icon {
+  display: block;
+  width: 27px;
+  height: 27px;
+  flex: 0 0 27px;
+  object-fit: contain;
+}
+
+.members-list .member-class > span {
+  display: inline-block;
+  line-height: 1.3;
+}
+
+.members-list .member-game-uid { grid-area: uid; }
+
+@media (max-width: 850px) {
+  .members-list > .member-card {
+    grid-template-columns: 98px minmax(0, 1fr);
+    grid-template-areas:
+      "avatar details"
+      "avatar class"
+      "uid uid"
+      "management management";
+    column-gap: 16px;
+    row-gap: 8px;
+    padding: 14px 16px;
+  }
+
+  .members-list .member-avatar {
+    width: 98px;
+    height: 98px;
+  }
+
+  .members-list .member-class {
+    justify-self: start;
+  }
+
+  .members-list .member-class-icon {
+    width: 25px;
+    height: 25px;
+    flex-basis: 25px;
+  }
+}
+
+@media (max-width: 520px) {
+  .members-list > .member-card {
+    grid-template-columns: 82px minmax(0, 1fr);
+    column-gap: 12px;
+    row-gap: 7px;
+    padding: 12px;
+  }
+
+  .members-list .member-avatar {
+    width: 82px;
+    height: 82px;
+  }
+
+  .members-list .member-class-icon {
+    width: 23px;
+    height: 23px;
+    flex-basis: 23px;
+  }
+}
