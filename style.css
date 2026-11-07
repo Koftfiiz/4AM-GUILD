@@ -3179,9 +3179,10 @@ body #registration-screen.login-card::after {
   gap: 9px;
 }
 .portfolio-review-status-label {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 700;
+  color: #f1d7a2;
+  font-size: 13px;
+  font-weight: 800;
+  text-shadow: 0 0 8px rgba(230,184,79,.18);
 }
 .portfolio-review-badge {
   display: inline-flex;
