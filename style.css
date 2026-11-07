@@ -3396,3 +3396,20 @@ body #registration-screen.login-card::after {
   .war-mode-options, .war-event-fields { grid-template-columns:1fr; }
   .war-vs-field { grid-template-columns:auto auto minmax(0,1fr); }
 }
+
+
+/* Guild War slot assignment controls */
+.party-slot-editor { display:grid; grid-template-columns:18px minmax(70px,.8fr) 22px minmax(90px,1.2fr); gap:5px; padding:5px; }
+.party-slot-editor select { min-width:0; width:100%; height:30px; padding:3px 5px; color:var(--text); background:rgba(0,0,0,.48); border:1px solid rgba(205,160,120,.24); border-radius:4px; font-size:10px; }
+.party-slot-editor select:disabled { opacity:.45; cursor:not-allowed; }
+.party-slot-editor option { color:#21191b; background:#f2e9df; }
+.war-slot-class-icon { width:21px; height:21px; object-fit:contain; }
+.party-slot-filled { min-height:35px; }
+.war-slot-class-icon:not([src]), .war-slot-class-icon[src=""] { display:none; }
+.slot-member-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text); }
+.war-slot-remove { flex:0 0 22px; width:22px; height:22px; padding:0; color:#f18b91; background:rgba(180,35,48,.15); border:1px solid rgba(220,80,90,.3); border-radius:4px; cursor:pointer; font-size:17px; line-height:1; }
+.war-slot-remove:hover { background:rgba(180,35,48,.35); }
+@media (max-width: 680px) {
+  .party-slot-editor { grid-template-columns:18px minmax(62px,.8fr) 20px minmax(78px,1.2fr); gap:4px; }
+  .party-slot-editor select { font-size:9px; }
+}
