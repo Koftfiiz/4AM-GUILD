@@ -1004,11 +1004,12 @@ function renderMembers(members) {
         </div>
 
         <div class="member-class" style="--class-color:${classColor}">
-          ${escapeHTML(className)}
+          ${classInfo?.iconPath ? `<img class="member-class-icon" src="${classInfo.iconPath}" alt="${escapeHTML(className)}" loading="lazy" onerror="this.style.display=\'none\'">` : ""}
+          <span>${escapeHTML(className)}</span>
         </div>
 
         <div class="member-game-uid">
-          <span>Game UID</span>
+          <span>UID ตัวละคร</span>
           <strong>${escapeHTML(gameUID || "ยังไม่ได้กรอก UID")}</strong>
           ${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">Copy UID</button>` : ""}
         </div>
