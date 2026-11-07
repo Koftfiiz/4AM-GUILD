@@ -2742,3 +2742,10 @@ body #registration-screen.login-card::after {
     letter-spacing: 1.8px;
   }
 }
+
+
+/* Keep Guild Directory labels regular-weight, not bold */
+#page-members .page-intro > .section-kicker,
+#page-members .panel-heading .panel-kicker {
+  font-weight: 400 !important;
+}
