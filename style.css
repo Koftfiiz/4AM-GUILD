@@ -2837,3 +2837,10 @@ body #registration-screen.login-card::after {
     letter-spacing: 1.5px;
   }
 }
+
+
+/* Portfolio card frames match the Numina and Mystech profession icon colors */
+.portfolio-card[style*="--class-color"] {
+  border-color: var(--class-color) !important;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--class-color) 22%, transparent);
+}
