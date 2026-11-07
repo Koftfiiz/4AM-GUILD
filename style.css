@@ -3380,21 +3380,28 @@ body #registration-screen.login-card::after {
 .war-mode-option span { display:grid; gap:4px; }
 .war-mode-option strong { color:var(--gold-light); }
 .war-mode-option small { color:var(--muted); font-size:11px; }
-.war-create-panel .form-group { display:grid; gap:7px; margin-bottom:16px; }
-.war-create-panel .form-group > label { color:var(--muted); font-size:12px; }
-.war-create-panel input:not([type=radio]), .war-create-panel select { width:100%; min-height:42px; padding:9px 12px; color:var(--text); background:rgba(0,0,0,.35); border:1px solid var(--line); border-radius:5px; }
-.war-vs-field { display:grid; grid-template-columns:auto auto minmax(0,1fr); align-items:center; gap:10px; }
-.war-vs-field span { color:var(--gold-light); font-weight:700; }
-.war-vs-field b { color:#d65a62; letter-spacing:1px; }
-.war-event-fields { display:grid; grid-template-columns:2fr 1fr 1fr; gap:14px; }
+.war-create-panel .form-group { display:grid; gap:9px; margin-bottom:18px; }
+.war-create-panel .form-group > label { color:var(--muted); font-size:15px; font-weight:600; }
+.war-create-panel input:not([type=radio]), .war-create-panel select { width:100%; min-height:50px; padding:10px 14px; color:var(--text); background:rgba(0,0,0,.35); border:1px solid var(--line); border-radius:6px; font-size:17px; }
+.war-event-fields { display:grid; grid-template-columns:1fr; gap:8px; }
+.war-schedule-fields { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.war-schedule-fields .form-group { min-width:0; }
+.war-opponent-row { justify-items:center; text-align:center; margin-top:3px; }
+.war-opponent-row > label { text-align:center; }
+.war-vs-field { display:flex; align-items:center; justify-content:center; gap:18px; width:100%; }
+.war-vs-field .war-team-name { color:var(--gold-light); font-size:clamp(32px,4vw,44px); line-height:1; font-weight:900; letter-spacing:2px; text-shadow:0 0 18px rgba(220,174,91,.32); }
+.war-vs-field .war-versus-mark { display:inline-flex; align-items:center; justify-content:center; min-width:48px; height:34px; padding:0 10px; color:#fff; font-size:16px; font-weight:900; font-style:italic; letter-spacing:2px; background:linear-gradient(135deg,#a82d39,#e45b63 52%,#8e1e2a); border:1px solid rgba(255,190,190,.45); border-radius:5px; transform:skew(-12deg); box-shadow:0 3px 14px rgba(190,45,58,.3); }
+.war-opponent-row .war-vs-field input { width:50%; max-width:360px; min-width:180px; }
 .war-create-capacity { margin:5px 0 16px; padding:11px 13px; color:var(--gold-light); background:rgba(190,145,65,.08); border-left:3px solid var(--gold); font-size:12px; }
 .war-create-actions { display:flex; justify-content:flex-end; gap:10px; }
 .war-summary-name { overflow-wrap:anywhere; }
 .war-summary-name strong { font-size:clamp(15px,1.5vw,21px); }
 @media(max-width:700px) {
   .war-create-toolbar { align-items:flex-start; flex-direction:column; }
-  .war-mode-options, .war-event-fields { grid-template-columns:1fr; }
-  .war-vs-field { grid-template-columns:auto auto minmax(0,1fr); }
+  .war-mode-options { grid-template-columns:1fr; }
+  .war-schedule-fields { grid-template-columns:1fr; gap:0; }
+  .war-vs-field { gap:10px; }
+  .war-opponent-row .war-vs-field input { width:55%; min-width:0; }
 }
 
 
