@@ -2844,3 +2844,92 @@ body #registration-screen.login-card::after {
   border-color: var(--class-color) !important;
   box-shadow: 0 0 12px color-mix(in srgb, var(--class-color) 22%, transparent);
 }
+
+
+/* Portfolio gallery class filters and build cards */
+.portfolio-filter-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 4px 0 12px;
+  color: #f0e6e0;
+  font-size: 15px;
+}
+.portfolio-filter-heading small { color: var(--muted); font-size: 12px; }
+.portfolio-filters { gap: 10px; }
+.class-filter-button {
+  cursor: pointer;
+  color: var(--cream);
+  font: inherit;
+  min-height: 48px;
+}
+.class-filter-button .class-filter-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.09);
+  color: #eadbd6;
+  font-size: 11px;
+}
+.class-filter-button.active {
+  border-color: var(--class-color, var(--gold));
+  background: color-mix(in srgb, var(--class-color, var(--gold)) 14%, rgba(20,12,14,.95));
+  box-shadow: 0 0 14px color-mix(in srgb, var(--class-color, var(--gold)) 24%, transparent);
+}
+.class-filter-button:disabled {
+  opacity: .42;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 18px;
+  margin-top: 20px;
+}
+.portfolio-card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgba(205,160,120,.2);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(31,20,22,.96), rgba(15,10,12,.98));
+  transition: border-color .2s, box-shadow .2s, transform .2s;
+}
+.portfolio-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(230,184,79,.65);
+  box-shadow: 0 8px 24px rgba(0,0,0,.24);
+}
+.portfolio-card[style*="--class-color"] {
+  border-color: var(--class-color) !important;
+  box-shadow: 0 0 12px color-mix(in srgb, var(--class-color) 22%, transparent);
+}
+.portfolio-card-image {
+  display: block;
+  width: 100%;
+  max-height: 240px;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: rgba(0,0,0,.25);
+}
+.portfolio-card-content { padding: 16px 18px 18px; }
+.portfolio-card-class {
+  display: inline-block;
+  margin-bottom: 8px;
+  color: var(--class-color, var(--gold));
+  font-size: 12px;
+  letter-spacing: .8px;
+  text-transform: uppercase;
+}
+.portfolio-card-content h3 { margin: 0 0 8px; color: var(--cream); font-size: 19px; }
+.portfolio-card-content p { margin: 0 0 12px; color: #cbbab5; font-size: 14px; line-height: 1.6; }
+.portfolio-card-content small { color: var(--muted); font-size: 11px; }
+@media (max-width: 600px) {
+  .portfolio-grid { grid-template-columns: 1fr; }
+  .class-filter-button { min-height: 44px; padding: 7px 10px; }
+}
