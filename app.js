@@ -2078,10 +2078,13 @@ function registerPortfolioEvents() {
     $("portfolio-image-preview")?.querySelectorAll(".is-dragging").forEach((item) => item.classList.remove("is-dragging"));
   });
 
-  $("portfolio-grid")?.addEventListener("click", async (event) => {
+  // Delegate portfolio actions from document so clicks keep working after grid re-renders.
+  document.addEventListener("click", async (event) => {
     const target = event.target instanceof Element ? event.target : event.target?.parentElement;
     if (!target) return;
     const actionButton = target.closest("[data-portfolio-action]");
+    const reviewButton = target.closest("[data-review-action]");
+    if (!actionButton && !reviewButton) return;
     if (actionButton) {
       event.preventDefault();
       event.stopPropagation();
