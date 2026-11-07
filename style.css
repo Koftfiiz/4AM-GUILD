@@ -3172,6 +3172,17 @@ body #registration-screen.login-card::after {
   padding-top: 13px;
   border-top: 1px solid rgba(205,160,120,.18);
 }
+.portfolio-review-status-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.portfolio-review-status-label {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
 .portfolio-review-badge {
   display: inline-flex;
   align-items: center;
