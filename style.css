@@ -3118,8 +3118,18 @@ body #registration-screen.login-card::after {
   color: #a99aa0;
   font: 11px/1.45 monospace;
 }
-.system-role-person small,
-.system-role-status { color: var(--muted); font-size: 11px; }
+.system-role-person small { color: #c8b8bd; font-size: 11px; }
+.system-role-status {
+  display: block;
+  min-height: 17px;
+  margin-top: 6px;
+  color: #ffe0a6;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.system-role-status.is-success { color: #9be7b5; }
 .system-role-caption,
 .system-role-action label {
   color: var(--gold);
