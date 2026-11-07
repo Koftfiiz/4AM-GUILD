@@ -1721,6 +1721,16 @@ async function renderPortfolios() {
     `;
   }));
   container.innerHTML = cards.join("");
+
+  // Bind review actions directly to the freshly rendered buttons.
+  // This avoids relying on document-level event delegation for review controls.
+  container.querySelectorAll("[data-review-action]").forEach((button) => {
+    button.addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      handlePortfolioReviewAction({ target: button });
+    });
+  });
 }
 
 async function savePortfolioReview(portfolioId, status, reason = "") {
@@ -2087,15 +2097,10 @@ function registerPortfolioEvents() {
     const target = event.target instanceof Element ? event.target : event.target?.parentElement;
     if (!target) return;
     const actionButton = target.closest("[data-portfolio-action]");
-    const reviewButton = target.closest("[data-review-action]");
-    if (!actionButton && !reviewButton) return;
+    if (!actionButton) return;
     event.preventDefault();
     event.stopPropagation();
-    if (actionButton) {
-      await handlePortfolioCardAction({ target });
-      return;
-    }
-    handlePortfolioReviewAction({ target });
+    await handlePortfolioCardAction({ target });
   }, true);
 }
 
