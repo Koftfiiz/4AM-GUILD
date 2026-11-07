@@ -2808,3 +2808,32 @@ body #registration-screen.login-card::after {
   .nav-subitem-dot { display: none; }
   .nav-parent .nav-chevron { display: none; }
 }
+
+
+/* Improve readability of Guild War submenu and Guild Rules section labels */
+.nav-parent {
+  font-size: 20px !important;
+  font-weight: 500;
+}
+.nav-subitem {
+  min-height: 44px;
+  font-size: 18px !important;
+  line-height: 1.45;
+}
+.nav-subitem.is-role-hidden,
+.is-role-hidden {
+  display: none !important;
+}
+#page-rules .panel-heading .panel-kicker {
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  line-height: 1.5;
+  letter-spacing: 2px;
+}
+@media (max-width: 700px) {
+  .nav-subitem { font-size: 16px !important; }
+  #page-rules .panel-heading .panel-kicker {
+    font-size: 14px !important;
+    letter-spacing: 1.5px;
+  }
+}
