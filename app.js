@@ -2195,7 +2195,7 @@ function renderWarEvents() {
 
 function getWarEventConfig(event) {
   const description = String(event?.description || "");
-  const match = description.match(/\\[\\[WAR_CONFIG:(\\{.*?\\})\\]\\]/);
+  const match = description.match(/\[\[WAR_CONFIG:(\{.*?\})\]\]/);
   if (!match) return { mode: "official", raidCount: 2 };
   try {
     const config = JSON.parse(match[1]);
