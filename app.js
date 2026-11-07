@@ -67,7 +67,9 @@ const GUILD_POSITIONS = [
 const PAGE_TITLES = {
   dashboard: "ภาพรวมกิลด์",
   members: "สมาชิกกิลด์",
-  war: "เช็คชื่อวอร์",
+  war: "จัดตี้วอร์",
+  "war-attendance": "เช็คชื่อวอร์",
+  "war-stats": "สถิติการวอร์",
   rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
   activities: "กิจกรรมกิลด์",
@@ -1824,12 +1826,15 @@ function openGuildPage(pageName) {
     targetPage.classList.remove("hidden");
   }
 
-  document.querySelectorAll(".nav-item").forEach((button) => {
-    button.classList.toggle(
-      "active",
-      button.dataset.page === pageName
-    );
+  document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
+    button.classList.toggle("active", button.dataset.page === pageName);
   });
+
+  const warPage = ["war", "war-attendance", "war-stats"].includes(pageName);
+  const warParent = document.querySelector('[data-toggle-submenu="war-submenu"]');
+  const warSubmenu = $("war-submenu");
+  warParent?.classList.toggle("active", warPage);
+  if (warPage && warSubmenu) warSubmenu.classList.add("is-open");
 
   document.title = `${PAGE_TITLES[pageName] || "4AM GUILD"} | 4AM GUILD`;
 
@@ -1999,9 +2004,17 @@ function registerAppEventListeners() {
   $("refresh-members")?.addEventListener("click", loadMembers);
   $("connect-discord")?.addEventListener("click", connectDiscord);
 
-  document.querySelectorAll(".nav-item").forEach((button) => {
+  document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
     button.addEventListener("click", () => {
       openGuildPage(button.dataset.page);
+    });
+  });
+
+  document.querySelectorAll("[data-toggle-submenu]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const submenu = $(button.dataset.toggleSubmenu);
+      const isOpen = submenu?.classList.toggle("is-open") ?? false;
+      button.setAttribute("aria-expanded", String(isOpen));
     });
   });
 
