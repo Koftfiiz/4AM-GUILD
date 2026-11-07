@@ -2515,3 +2515,88 @@ body #registration-screen.login-card::after {
   .members-list .member-game-uid .member-uid-label { font-size: 13px; }
   .members-list .member-game-uid strong { font-size: 12px; }
 }
+
+/* Dashboard readability: larger welcome statistics, stronger edit action, red role badge */
+#dashboard-screen .stats-grid .stat-label {
+  font-size: 19px;
+  font-weight: 600;
+  color: #fff3ed;
+  letter-spacing: .2px;
+}
+
+#dashboard-screen .stats-grid .stat-value strong {
+  font-size: 49px;
+  line-height: 1.12;
+}
+
+#dashboard-screen .stats-grid .stat-value em {
+  font-size: 24px;
+}
+
+#dashboard-screen .stats-grid .stat-value.is-text strong {
+  font-size: 39px;
+}
+
+#dashboard-screen .stats-grid .stat-info small {
+  font-size: 15px;
+  color: #f0dfd9;
+}
+
+#dashboard-screen .profile-card .head-btn {
+  min-height: 40px;
+  padding: 8px 18px;
+  border: 1px solid rgba(255, 105, 120, .85);
+  border-radius: 6px;
+  background: linear-gradient(135deg, #8f1425, #d52c42);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  box-shadow: 0 0 14px rgba(210, 35, 55, .28);
+}
+
+#dashboard-screen .profile-card .head-btn .icon {
+  width: 19px;
+  height: 19px;
+}
+
+#dashboard-screen .profile-card .head-btn:hover {
+  border-color: #ffb0b8;
+  background: linear-gradient(135deg, #b51d32, #ed4055);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(230, 45, 65, .48);
+  transform: translateY(-1px);
+}
+
+#dashboard-screen .profile-name > .role-badge {
+  background: linear-gradient(135deg, #8f1425 0%, #d52c42 55%, #f04b5e 100%);
+  border: 1px solid rgba(255, 150, 160, .75);
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
+  padding: 6px 17px;
+  text-shadow: 0 1px 3px rgba(30, 0, 5, .65);
+  box-shadow: 0 0 15px rgba(220, 35, 55, .38), inset 0 1px 0 rgba(255, 220, 225, .16);
+}
+
+#dashboard-screen .profile-name > .role-badge .icon {
+  color: #fff;
+  font-size: 19px;
+}
+
+@media (max-width: 700px) {
+  #dashboard-screen .stats-grid .stat-label { font-size: 16px; }
+  #dashboard-screen .stats-grid .stat-value strong { font-size: 39px; }
+  #dashboard-screen .stats-grid .stat-value em { font-size: 19px; }
+  #dashboard-screen .stats-grid .stat-value.is-text strong { font-size: 30px; }
+  #dashboard-screen .stats-grid .stat-info small { font-size: 13px; }
+  #dashboard-screen .profile-card .head-btn {
+    min-height: 38px;
+    padding: 7px 13px;
+    font-size: 15px;
+  }
+  #dashboard-screen .profile-name > .role-badge {
+    font-size: 15px;
+    padding: 5px 12px;
+  }
+}
