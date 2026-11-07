@@ -1479,158 +1479,323 @@ async function loadPortfolios() {
   const { data, error } = await supabaseClient
     .from("portfolios")
     .select(`
-      id,
-      member_id,
-      title,
-      description,
-      game_class,
-      created_at,
-      updated_at,
-      portfolio_images (
-        id,
-        image_url,
-        image_type,
-        caption,
-        created_at
-      )
+      id, member_id, title, description, game_class, created_at, updated_at,
+      portfolio_images ( id, image_url, image_type, caption, created_at, sort_order )
     `)
     .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Portfolio loading error:", error);
     allPortfolios = [];
+    renderPortfolios();
     return;
   }
 
-  allPortfolios = data || [];
+  allPortfolios = (data || []).map((portfolio) => ({
+    ...portfolio,
+    portfolio_images: (portfolio.portfolio_images || []).sort((a, b) =>
+      (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0) ||
+      new Date(a.created_at) - new Date(b.created_at)
+    )
+  }));
   renderPortfolios();
 }
 
 async function getPortfolioImageUrl(path) {
   if (!path) return "";
-
-  if (/^https?:\/\//i.test(path)) return path;
-
+  if (/^https?:\\/\\//i.test(path)) return path;
   const { data, error } = await supabaseClient.storage
     .from(PORTFOLIO_BUCKET)
     .createSignedUrl(path, 3600);
-
   if (error) {
     console.error("Portfolio image URL error:", error);
     return "";
   }
-
   return data?.signedUrl || "";
 }
 
-async function renderPortfolios() {
-  const container =
-    $("portfolio-list") ||
-    $("portfolios-list") ||
-    $("portfolio-grid");
+function getPortfolioClasses(value) {
+  return String(value || "")
+    .split(/[,|]/)
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
 
+function renderPortfolioClassChoices() {
+  const container = $("portfolio-class-tags");
   if (!container) return;
+  const selected = new Set(
+    [...container.querySelectorAll(".portfolio-class-tag.is-selected")]
+      .map((button) => button.dataset.class)
+  );
+  container.innerHTML = CLASS_DATA.map((item) => `
+    <button type="button"
+      class="portfolio-class-tag ${selected.has(item.name) ? "is-selected" : ""}"
+      data-class="${escapeHTML(item.name)}"
+      style="--class-color:${item.color}"
+      aria-pressed="${selected.has(item.name)}">
+      <img src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
+      <span>${escapeHTML(item.name)}</span>
+    </button>
+  `).join("");
+}
 
+function renderPortfolioSelectedFiles() {
+  const container = $("portfolio-image-preview");
+  const files = window.portfolioDraftFiles || [];
+  if (!container) return;
+  if (!files.length) {
+    container.innerHTML = '<p class="portfolio-upload-empty">ยังไม่ได้เลือกรูปภาพ</p>';
+    return;
+  }
+  container.innerHTML = files.map((item, index) => `
+    <article class="portfolio-preview-item" draggable="true" data-index="${index}">
+      <img src="${item.preview}" alt="Preview ${index + 1}">
+      <div class="portfolio-preview-actions">
+        <button type="button" class="portfolio-cover-button ${index === 0 ? "is-cover" : ""}" data-cover-index="${index}">
+          ${index === 0 ? "ภาพหน้าปก" : "ตั้งเป็นหน้าปก"}
+        </button>
+        <button type="button" class="portfolio-remove-image" data-remove-index="${index}" aria-label="ลบรูป">×</button>
+      </div>
+      <small>ลากเพื่อจัดลำดับ · ${index + 1}</small>
+    </article>
+  `).join("");
+}
+
+function resetPortfolioForm() {
+  const form = $("portfolio-create-form");
+  if (form) form.reset();
+  (window.portfolioDraftFiles || []).forEach((item) => URL.revokeObjectURL(item.preview));
+  window.portfolioDraftFiles = [];
+  renderPortfolioClassChoices();
+  renderPortfolioSelectedFiles();
+  const status = $("portfolio-form-status");
+  if (status) status.textContent = "";
+}
+
+async function renderPortfolios() {
+  const container = $("portfolio-grid");
+  if (!container) return;
   if (!allPortfolios.length) {
-    showEmpty(container, "No Portfolio Yet", "ยังไม่มีผลงานในระบบ");
+    showEmpty(container, "No Portfolio Yet", "ยังไม่มีผลงานในระบบ · กด Add Portfolio เพื่อสร้างแฟ้มแรกของคุณ");
     return;
   }
 
   const cards = await Promise.all(allPortfolios.map(async (portfolio) => {
     const images = portfolio.portfolio_images || [];
     const firstImage = images[0];
-    const imageUrl = firstImage
-      ? await getPortfolioImageUrl(firstImage.image_url)
-      : "";
-
-    const portfolioClass = String(portfolio.game_class || "").trim();
-    const portfolioClassColor = ["Numina", "Mystech"].includes(portfolioClass)
-      ? (getClassInfo(portfolioClass)?.color || "")
-      : "";
+    const imageUrl = firstImage ? await getPortfolioImageUrl(firstImage.image_url) : "";
+    const owner = allMembers.find((member) => member.user_id === portfolio.member_id);
+    const ownerName = owner ? getMemberName(owner) : "Guild Member";
+    const classes = getPortfolioClasses(portfolio.game_class);
+    const firstClass = getClassInfo(classes[0]);
+    const color = firstClass?.color || "";
+    const isOwner = currentUser?.id === portfolio.member_id;
+    const classTags = classes.map((className) => {
+      const info = getClassInfo(className);
+      return `<span class="portfolio-card-tag" ${info ? `style="--class-color:${info.color}"` : ""}>${escapeHTML(className)}</span>`;
+    }).join("");
 
     return `
-      <article class="portfolio-card" ${portfolioClassColor ? `style="--class-color:${portfolioClassColor}"` : ""}>
-        ${imageUrl ? `
-          <img src="${escapeHTML(imageUrl)}" alt=""
-            onerror="this.style.display='none'">
-        ` : ""}
+      <article class="portfolio-card" ${color ? `style="--class-color:${color}"` : ""}>
+        ${imageUrl ? `<img class="portfolio-card-image" src="${escapeHTML(imageUrl)}" alt="${escapeHTML(portfolio.title)}" loading="lazy">` : '<div class="portfolio-card-no-image">4AM GUILD</div>'}
         <div class="portfolio-card-content">
-          <span>${escapeHTML(portfolio.game_class || "Unassigned")}</span>
+          <div class="portfolio-card-owner">${escapeHTML(ownerName)}</div>
+          <div class="portfolio-card-tags">${classTags || '<span class="portfolio-card-tag">Unassigned</span>'}</div>
           <h3>${escapeHTML(portfolio.title || "Untitled")}</h3>
           <p>${escapeHTML(portfolio.description || "")}</p>
-          <small>${formatDate(portfolio.created_at)}</small>
+          <div class="portfolio-card-footer">
+            <small>${images.length} รูป · ${formatDate(portfolio.created_at)}</small>
+            ${isOwner ? '<span class="portfolio-owner-label">ผลงานของคุณ</span>' : ""}
+          </div>
         </div>
       </article>
     `;
   }));
-
   container.innerHTML = cards.join("");
 }
 
-// ==========================================
-// PORTFOLIO IMAGE UPLOAD
-// ==========================================
-
-async function uploadPortfolioImage(file, portfolioId, caption = "") {
+async function uploadPortfolioImage(file, portfolioId, caption = "", sortOrder = 0) {
   if (!currentUser) throw new Error("กรุณาเข้าสู่ระบบก่อน");
-
-  if (!file || !file.type.startsWith("image/")) {
-    throw new Error("กรุณาเลือกไฟล์รูปภาพ");
-  }
-
+  if (!file || !file.type.startsWith("image/")) throw new Error("กรุณาเลือกไฟล์รูปภาพ");
   const extension = file.name.split(".").pop().toLowerCase();
   const safeExtension = /^[a-z0-9]+$/.test(extension) ? extension : "jpg";
-  const path = `${currentUser.id}/${portfolioId}/${Date.now()}.${safeExtension}`;
+  const path = `${currentUser.id}/${portfolioId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExtension}`;
 
   const { error: uploadError } = await supabaseClient.storage
     .from(PORTFOLIO_BUCKET)
-    .upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-      contentType: file.type
-    });
-
+    .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
   if (uploadError) throw uploadError;
 
-  const { error: insertError } = await supabaseClient
+  const { data, error: insertError } = await supabaseClient
     .from("portfolio_images")
     .insert({
       portfolio_id: portfolioId,
       image_url: path,
       image_type: "image",
-      caption
-    });
+      caption,
+      sort_order: sortOrder
+    })
+    .select("id")
+    .single();
 
-  if (insertError) throw insertError;
-
-  await loadPortfolios();
-  return path;
+  if (insertError) {
+    await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove([path]);
+    throw insertError;
+  }
+  return data;
 }
 
-// ==========================================
-// CREATE PORTFOLIO
-// ==========================================
-
-async function createPortfolio({ title, description = "", gameClass = "" }) {
-  if (!currentUser || !currentMember) {
-    throw new Error("ไม่พบข้อมูลสมาชิก");
-  }
-
+async function createPortfolio({ title, description = "", gameClasses = [] }) {
+  if (!currentUser || !currentMember) throw new Error("ไม่พบข้อมูลสมาชิก");
+  const selectedClasses = gameClasses.length ? gameClasses : [getMemberClass(currentMember)];
   const { data, error } = await supabaseClient
     .from("portfolios")
     .insert({
       member_id: currentMember.user_id,
       title,
       description,
-      game_class: gameClass || getMemberClass(currentMember)
+      game_class: selectedClasses.join(", ")
     })
     .select()
     .single();
-
   if (error) throw error;
-
-  await loadPortfolios();
   return data;
+}
+
+async function handlePortfolioCreate(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const title = $("portfolio-title")?.value.trim();
+  const description = $("portfolio-description")?.value.trim() || "";
+  const files = window.portfolioDraftFiles || [];
+  const selectedClasses = [...document.querySelectorAll(".portfolio-class-tag.is-selected")]
+    .map((button) => button.dataset.class);
+  const status = $("portfolio-form-status");
+  const submit = $("portfolio-create-submit");
+
+  if (!title) {
+    if (status) status.textContent = "กรุณากรอกชื่อผลงาน";
+    $("portfolio-title")?.focus();
+    return;
+  }
+  if (!files.length) {
+    if (status) status.textContent = "กรุณาเลือกรูปภาพอย่างน้อย 1 รูป";
+    return;
+  }
+  if (!selectedClasses.length) {
+    if (status) status.textContent = "กรุณาเลือก Class Tags อย่างน้อย 1 คลาส";
+    return;
+  }
+  if (files.some((item) => item.file.size > 12 * 1024 * 1024)) {
+    if (status) status.textContent = "รูปภาพแต่ละไฟล์ต้องมีขนาดไม่เกิน 12 MB";
+    return;
+  }
+
+  submit.disabled = true;
+  submit.textContent = "กำลังบันทึกผลงาน...";
+  if (status) status.textContent = "กำลังสร้างแฟ้มผลงานและอัปโหลดรูปภาพ...";
+  let createdPortfolio = null;
+  try {
+    createdPortfolio = await createPortfolio({ title, description, gameClasses: selectedClasses });
+    for (let index = 0; index < files.length; index++) {
+      await uploadPortfolioImage(files[index].file, createdPortfolio.id, "", index);
+      if (status) status.textContent = `กำลังอัปโหลดรูปภาพ ${index + 1}/${files.length}...`;
+    }
+    if (status) status.textContent = "บันทึกผลงานสำเร็จ";
+    await loadPortfolios();
+    resetPortfolioForm();
+  } catch (error) {
+    console.error("Portfolio create error:", error);
+    if (createdPortfolio) {
+      if (status) status.textContent = "สร้างแฟ้มแล้ว แต่มีรูปบางส่วนอัปโหลดไม่สำเร็จ: " + (error.message || "Unknown error");
+    } else if (status) {
+      status.textContent = error.message || "ไม่สามารถบันทึกผลงานได้";
+    }
+  } finally {
+    submit.disabled = false;
+    submit.textContent = "บันทึก Portfolio";
+  }
+}
+
+function registerPortfolioEvents() {
+  window.portfolioDraftFiles = [];
+  renderPortfolioClassChoices();
+  renderPortfolioSelectedFiles();
+
+  $("portfolio-add-button")?.addEventListener("click", () => {
+    $("portfolio-create-panel")?.classList.toggle("hidden");
+    $("portfolio-add-button").setAttribute("aria-expanded", String(!$("portfolio-create-panel")?.classList.contains("hidden")));
+  });
+
+  $("portfolio-create-form")?.addEventListener("submit", handlePortfolioCreate);
+  $("portfolio-class-tags")?.addEventListener("click", (event) => {
+    const button = event.target.closest(".portfolio-class-tag");
+    if (!button) return;
+    button.classList.toggle("is-selected");
+    button.setAttribute("aria-pressed", String(button.classList.contains("is-selected")));
+  });
+
+  $("portfolio-image-input")?.addEventListener("change", (event) => {
+    const chosen = [...(event.target.files || [])];
+    const existing = window.portfolioDraftFiles || [];
+    const combined = [...existing, ...chosen].slice(0, 12);
+    if (chosen.length + existing.length > 12) {
+      const status = $("portfolio-form-status");
+      if (status) status.textContent = "เพิ่มรูปได้สูงสุด 12 รูปต่อ Portfolio";
+    }
+    window.portfolioDraftFiles = combined.map((file) => ({
+      file: file instanceof File ? file : file.file,
+      preview: file instanceof File ? URL.createObjectURL(file) : file.preview
+    }));
+    renderPortfolioSelectedFiles();
+    event.target.value = "";
+  });
+
+  $("portfolio-image-preview")?.addEventListener("click", (event) => {
+    const cover = event.target.closest("[data-cover-index]");
+    const remove = event.target.closest("[data-remove-index]");
+    let files = window.portfolioDraftFiles || [];
+    if (cover) {
+      const index = Number(cover.dataset.coverIndex);
+      files = [files[index], ...files.filter((_, i) => i !== index)];
+    } else if (remove) {
+      const index = Number(remove.dataset.removeIndex);
+      URL.revokeObjectURL(files[index]?.preview);
+      files = files.filter((_, i) => i !== index);
+    } else return;
+    window.portfolioDraftFiles = files;
+    renderPortfolioSelectedFiles();
+  });
+
+  let draggingIndex = null;
+  $("portfolio-image-preview")?.addEventListener("dragstart", (event) => {
+    const item = event.target.closest(".portfolio-preview-item");
+    if (!item) return;
+    draggingIndex = Number(item.dataset.index);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", String(draggingIndex));
+    item.classList.add("is-dragging");
+  });
+  $("portfolio-image-preview")?.addEventListener("dragover", (event) => {
+    if (event.target.closest(".portfolio-preview-item")) event.preventDefault();
+  });
+  $("portfolio-image-preview")?.addEventListener("drop", (event) => {
+    const target = event.target.closest(".portfolio-preview-item");
+    if (!target || draggingIndex === null) return;
+    event.preventDefault();
+    const targetIndex = Number(target.dataset.index);
+    const files = [...(window.portfolioDraftFiles || [])];
+    const [moved] = files.splice(draggingIndex, 1);
+    files.splice(targetIndex, 0, moved);
+    window.portfolioDraftFiles = files;
+    draggingIndex = null;
+    renderPortfolioSelectedFiles();
+  });
+  $("portfolio-image-preview")?.addEventListener("dragend", () => {
+    draggingIndex = null;
+    $("portfolio-image-preview")?.querySelectorAll(".is-dragging").forEach((item) => item.classList.remove("is-dragging"));
+  });
 }
 
 // ==========================================
@@ -2149,6 +2314,8 @@ function registerAppEventListeners() {
       input.value = "";
     }
   });
+
+  registerPortfolioEvents();
 
   $("account-details")?.addEventListener("submit", async (event) => {
     if (event.target.id !== "game-uid-form") return;
