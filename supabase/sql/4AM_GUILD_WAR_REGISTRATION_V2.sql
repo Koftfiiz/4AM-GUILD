@@ -229,7 +229,10 @@ begin
 
   return query
   select v_next_position,
-         case when v_next_position <= 60 then 'signed_up'::text else 'standby'::text;
+         case
+           when v_next_position <= 60 then 'signed_up'::text
+           else 'standby'::text
+         end;
 end;
 $$;
 
