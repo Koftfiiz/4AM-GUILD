@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=20261108-war-attendance-copy-2";
+          app.src = "app.js?v=20261108-guild-war-stats-label-3";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -195,7 +195,7 @@
             </button>
             <button class="nav-subitem management-only" data-page="war-stats" data-management-only>
               <span class="nav-subitem-dot"></span>
-              <span>สถิติการวอร์</span>
+              <span>สถิติกิลด์วอร์</span>
             </button>
             <button class="nav-subitem management-only" data-page="war-attendance-stats" data-management-only>
               <span class="nav-subitem-dot"></span>
@@ -469,7 +469,7 @@
       <!-- ============ WAR ATTENDANCE ============ -->
       <section id="page-war-attendance" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">WAR ATTENDANCE</span><h1>เช็คชื่อวอร์</h1><p>ตรวจสอบรายชื่อและปาร์ตี้ของ Guild War</p></div><section class="panel"><div class="panel-heading"><div><span class="panel-kicker">PUBLISHED WAR ROSTER</span><h3>รายชื่อสมาชิกในแต่ละ Raid</h3></div></div><div id="war-attendance-content"><div class="empty-state"><span>◷</span><h3>กำลังโหลดรายการวอร์</h3><p>รายชื่อปาร์ตี้วอร์จะแสดงที่นี่เมื่อจัดตี้กิลด์วอร์เสร็จแล้ว</p></div></div></section></section>
 
-<section id="page-war-stats" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">WAR PERFORMANCE</span><h1>สถิติการวอร์</h1><p>บันทึกผลการแข่งขันย้อนหลัง พร้อมสรุปสถิติแพ้ชนะรายกิลด์และภาพรวมทั้งหมด</p></div>
+<section id="page-war-stats" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">WAR PERFORMANCE</span><h1>สถิติกิลด์วอร์</h1><p>บันทึกผลการแข่งขันย้อนหลัง พร้อมสรุปสถิติแพ้ชนะรายกิลด์และภาพรวมทั้งหมด</p></div>
 <section class="panel"><div class="panel-heading"><h3>บันทึกผลวอร์</h3></div><form id="war-record-form" class="war-record-form"><div class="war-record-form-grid"><div class="form-group"><label for="war-record-opponent">ชื่อกิลด์คู่แข่ง</label><input id="war-record-opponent" maxlength="80" required></div><div class="form-group"><label for="war-record-date">วันที่วอร์</label><input id="war-record-date" type="date" required></div><div class="form-group"><label for="war-record-result">ผลการแข่งขัน</label><select id="war-record-result" required><option value="">เลือกผลวอร์</option><option value="win">ชนะ</option><option value="loss">แพ้</option></select></div></div><div class="form-group"><label for="war-record-images">รูปภาพผลวอร์ในเกม (เลือกได้หลายรูป)</label><input id="war-record-images" type="file" accept="image/*" multiple required><small>สูงสุด 10 รูป ขนาดไม่เกิน 10 MB ต่อรูป</small></div><div id="war-record-message" class="message hidden"></div><div class="war-record-submit-row"><span>กดยืนยันเพื่อบันทึกผลวอร์เป็น Record</span><button id="war-record-submit" class="btn btn-primary" type="submit">ยืนยันและบันทึกผลวอร์</button></div></form></section>
 <section class="war-record-overview"><div class="war-record-stat-card"><span>แข่งทั้งหมด</span><strong id="war-record-total">0</strong></div><div class="war-record-stat-card is-win"><span>ชนะ</span><strong id="war-record-wins">0</strong><small id="war-record-win-rate">0% Win Rate</small></div><div class="war-record-stat-card is-loss"><span>แพ้</span><strong id="war-record-losses">0</strong><small id="war-record-loss-rate">0% Loss Rate</small></div></section>
 <section class="panel"><div class="panel-heading"><h3>สถิติแยกตามกิลด์คู่แข่ง</h3></div><div id="war-record-opponent-stats"></div></section><section class="panel"><div class="panel-heading"><h3>ประวัติผลวอร์ทั้งหมด</h3></div><div id="war-record-history"></div></section></section>
