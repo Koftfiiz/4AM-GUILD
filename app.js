@@ -1954,7 +1954,11 @@ async function handlePortfolioCreate(event) {
       }
     }
 
+    // Return to the complete gallery after saving so a previously selected
+    // class filter cannot make the other existing portfolios appear missing.
+    portfolioClassFilter = "all";
     await loadPortfolios();
+    renderClassLegend();
     resetPortfolioForm();
     const savedAt = new Intl.DateTimeFormat("th-TH", {
       dateStyle: "medium", timeStyle: "medium", timeZone: "Asia/Bangkok"
