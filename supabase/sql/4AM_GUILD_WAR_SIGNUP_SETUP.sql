@@ -36,8 +36,8 @@ BEGIN
     RAISE EXCEPTION
       'war_signups schema does not match the expected existing schema. No changes were made.';
   END IF;
-END
-$$;
+END;
+$;
 
 -- Keep row-level security enabled and grant the table operations used by the app.
 -- Existing policies remain untouched and continue to control who can do each action.
