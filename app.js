@@ -3997,33 +3997,22 @@ async function saveOwnCharacterProfile(form) {
 function renderAccountDetails() {
   const container = $("account-details");
   if (!container) return;
-
-  const name = currentMember
-    ? getMemberName(currentMember)
-    : "Guild Member";
-
+  const name = currentMember ? getMemberName(currentMember) : "Guild Member";
   const displayPosition = getAccountDisplayPosition();
   const permission = getAccountPermissionLabel();
   const currentClass = getClassInfo(currentMember?.game_class);
   const classIcon = currentClass?.iconPath || "";
   const classColor = currentClass?.color || "#d8b878";
-
   container.innerHTML = `
     <div class="settings-detail"><span>Display Name</span><strong>${escapeHTML(name)}</strong></div>
     <div class="settings-detail"><span>Email Address</span><strong>${escapeHTML(currentUser?.email || "-")}</strong></div>
-    <div class="settings-detail">
-      <span>อาชีพปัจจุบัน</span>
-      <strong class="account-class-display" style="--class-color:${classColor}">
-        ${classIcon ? '<img src="' + escapeHTML(classIcon) + '" alt="" class="account-class-icon" onerror="this.style.display=\'none\'">' : ''}
-        <span>${escapeHTML(currentMember?.game_class || "ยังไม่ได้เลือกอาชีพ")}</span>
-      </strong>
-    </div>
+    <div class="settings-detail"><span>อาชีพปัจจุบัน</span><strong class="account-class-display" style="--class-color:${classColor}"><img class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'"><span>${escapeHTML(currentMember?.game_class || "ยังไม่ได้เลือกอาชีพ")}</span></strong></div>
     <form id="character-profile-form" class="game-uid-settings-form account-character-form">
       <label for="account-character-name">แก้ไขชื่อตัวละคร</label>
       <input id="account-character-name" name="character_name" type="text" maxlength="40" autocomplete="off" placeholder="กรอกชื่อตัวละครใหม่" value="${escapeHTML(currentMember?.character_name || "")}" required>
       <label for="account-game-class">เปลี่ยนอาชีพ (Class)</label>
       <div class="account-class-select-wrap">
-        <img class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'">
+        <img id="account-class-preview" class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'">
         <select id="account-game-class" name="game_class" required>
           ${CLASS_DATA.map(item => '<option value="' + escapeHTML(item.name) + '" ' + (item.name === currentMember?.game_class ? 'selected' : '') + '>' + escapeHTML(item.name) + '</option>').join("")}
         </select>
@@ -4033,50 +4022,18 @@ function renderAccountDetails() {
       </div>
       <button type="submit" class="btn btn-primary">บันทึกข้อมูลตัวละคร</button>
       <p id="character-profile-message" class="message" aria-live="polite"></p>
-    </form>`;
-
-    <div class="settings-detail">
-      <span>Game UID</span>
-      <strong>${escapeHTML(currentMember?.game_uid || "ยังไม่ได้กรอก UID")}</strong>
-    </div>
-
+    </form>
+    <div class="settings-detail"><span>Game UID</span><strong>${escapeHTML(currentMember?.game_uid || "ยังไม่ได้กรอก UID")}</strong></div>
     <form id="game-uid-form" class="game-uid-settings-form">
       <label for="account-game-uid">แก้ไข Game UID (ตัวเลข 10 หลัก)</label>
-      <input
-        id="account-game-uid"
-        name="game_uid"
-        type="text"
-        inputmode="numeric"
-        pattern="[0-9]{10}"
-        minlength="10"
-        maxlength="10"
-        placeholder="กรอก Game UID 10 หลัก"
-        value="${escapeHTML(currentMember?.game_uid || "")}"
-        required
-      >
+      <input id="account-game-uid" name="game_uid" type="text" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="กรอก Game UID 10 หลัก" value="${escapeHTML(currentMember?.game_uid || "")}" required>
       <button type="submit" class="btn btn-primary">บันทึก Game UID</button>
       <p id="game-uid-message" class="message" aria-live="polite"></p>
     </form>
-
-    <div class="settings-detail">
-      <span>Display Position</span>
-      <strong>${escapeHTML(displayPosition)}</strong>
-    </div>
-
-    <div class="settings-detail">
-      <span>System Permission</span>
-      <strong>${escapeHTML(permission)}</strong>
-    </div>
-
-    <div class="settings-detail">
-      <span>Guild</span>
-      <strong>4AM GUILD</strong>
-    </div>
-
-    <div class="settings-detail">
-      <span>Server</span>
-      <strong>Tideborn Dreams</strong>
-    </div>
+    <div class="settings-detail"><span>Display Position</span><strong>${escapeHTML(displayPosition)}</strong></div>
+    <div class="settings-detail"><span>System Permission</span><strong>${escapeHTML(permission)}</strong></div>
+    <div class="settings-detail"><span>Guild</span><strong>4AM GUILD</strong></div>
+    <div class="settings-detail"><span>Server</span><strong>Tideborn Dreams</strong></div>
   `;
 }
 
@@ -4228,6 +4185,16 @@ function registerAppEventListeners() {
   initializeGuildRichTextEnhancements();
   registerGuildRuleEvents();
   registerFeedbackEvents();
+
+  $("account-details")?.addEventListener("change", (event) => {
+    if (event.target.id !== "account-game-class") return;
+    const selected = getClassInfo(event.target.value);
+    const preview = $("account-class-preview");
+    if (preview) {
+      preview.src = selected?.iconPath || "";
+      preview.style.display = selected ? "" : "none";
+    }
+  });
 
   $("account-details")?.addEventListener("submit", async (event) => {
     if (event.target.id === "game-uid-form") {
