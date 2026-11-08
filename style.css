@@ -3501,3 +3501,43 @@ body #registration-screen.login-card::after {
   .party-heading-fields { flex-wrap: wrap; gap: 6px; }
   .war-party-role { width: 100%; }
 }
+
+
+/* Global typography: use the same Kanit typeface as the portfolio action button */
+:root { --display: var(--font); }
+html, body, body *,
+body *::before, body *::after {
+  font-family: var(--font) !important;
+}
+
+/* System Role colors in Guild Members */
+.system-role-badge.role-management {
+  color: #65aaff !important;
+  border-color: rgba(75, 155, 255, .58) !important;
+}
+.system-role-badge.role-admin {
+  color: #55e58b !important;
+  border-color: rgba(70, 220, 130, .58) !important;
+}
+.system-role-badge.role-leader {
+  color: #ff334d !important;
+  border-color: rgba(255, 45, 75, .68) !important;
+}
+
+/* Match War section kickers to Guild Members page heading scale */
+#page-war .page-intro > .section-kicker,
+#page-war .panel-heading .panel-kicker,
+#page-war .war-create-panel .panel-kicker {
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  letter-spacing: 2.4px !important;
+}
+@media (max-width: 700px) {
+  #page-war .page-intro > .section-kicker,
+  #page-war .panel-heading .panel-kicker,
+  #page-war .war-create-panel .panel-kicker {
+    font-size: 14px !important;
+    letter-spacing: 1.8px !important;
+  }
+}
