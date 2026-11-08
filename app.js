@@ -4046,7 +4046,7 @@ function renderAccountDetails() {
       <input id="account-game-uid" name="game_uid" type="text" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="กรอก UID ตัวละคร 10 หลัก" value="${escapeHTML(currentMember?.game_uid || "")}" required>
       <div class="account-profile-actions">
         <button type="button" class="btn btn-outline" id="account-edit-cancel">ยกเลิก</button>
-        <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
+        <button type="submit" class="btn btn-primary">ยืนยันข้อมูล</button>
       </div>
     </form>
     <p id="account-profile-status" class="message" aria-live="polite"></p>
