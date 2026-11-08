@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=20261108-war-draft-publish-1";
+          app.src = "app.js?v=20261108-remove-war-time-confirm-1";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -501,11 +501,9 @@
                 </div>
                 <div class="form-group">
                   <label for="war-start-time">เวลาเริ่มวอร์ (24 ชั่วโมง)</label>
-                  <div class="war-time-confirm-row">
+                  <div class="war-time-input-wrap">
                     <input id="war-start-time" name="start-time" type="time" lang="en-GB" step="60" required aria-label="เวลาเริ่มวอร์ รูปแบบ 24 ชั่วโมง">
-                    <button id="war-time-confirm" class="btn btn-outline" type="button">ยืนยันเวลา</button>
                   </div>
-                  <small id="war-time-confirm-status" class="war-time-confirm-status">ยังไม่ได้ยืนยันเวลา</small>
                 </div>
               </div>
               <div class="form-group war-opponent-row">
