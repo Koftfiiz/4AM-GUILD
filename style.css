@@ -3650,3 +3650,30 @@ body { font-size: var(--type-body); }
 }
 .btn-danger:hover:not(:disabled){filter:brightness(1.18);transform:translateY(-1px);box-shadow:0 0 18px rgba(220,40,55,.3)}
 .btn-danger:disabled{opacity:.55;cursor:wait}
+
+
+/* 4AM GUILD — readable War party cards and black/red controls */
+html, body, body *, body *::before, body *::after { font-family:"Kanit",sans-serif !important; }
+body { font-size:16px; }
+.raid-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px; align-items:stretch; }
+.party-card { min-width:0; min-height:330px; padding:20px; border-color:rgba(190,35,52,.62); background:linear-gradient(155deg,rgba(31,9,14,.98),rgba(7,5,7,.98)); box-shadow:0 0 18px rgba(190,25,40,.22),inset 0 0 28px rgba(120,10,22,.13); }
+.party-card:hover { border-color:#e23b4c; }
+.party-header { align-items:center; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid rgba(205,45,60,.3); }
+.party-header h3 { font-family:"Kanit",sans-serif !important; font-size:25px; font-weight:700; letter-spacing:.3px; }
+.party-count { color:#f3c5c9; font-size:16px; font-weight:600; }
+.party-slots { gap:10px; }
+.party-slot { min-height:48px; gap:10px; padding:8px 10px; font-size:15px; border-color:rgba(205,65,78,.24); border-radius:6px; background:rgba(255,255,255,.035); }
+.slot-number { width:25px; height:25px; flex:0 0 25px; font-size:13px; font-weight:700; background:rgba(175,25,42,.55); }
+.slot-empty { color:#b7a6aa; font-size:14px; }
+.slot-member-name { font-size:16px; font-weight:500; }
+.war-slot-class-icon { width:27px; height:27px; flex:0 0 27px; }
+.party-slot-editor { grid-template-columns:26px minmax(105px,.9fr) 28px minmax(125px,1.2fr); gap:8px; min-height:58px; padding:7px 8px; }
+.party-slot-editor select { min-width:0; width:100%; height:42px; padding:5px 9px; color:#fff; background-color:#10090c; border:1px solid rgba(190,45,60,.62); border-radius:5px; font-family:"Kanit",sans-serif !important; font-size:14px; font-weight:500; line-height:1.3; color-scheme:dark; }
+.party-slot-editor select:hover,.party-slot-editor select:focus { color:#fff; background-color:#1a080d; border-color:#e33146; outline:none; box-shadow:0 0 0 2px rgba(220,35,55,.18); }
+.party-slot-editor select:disabled { color:#a99b9e; background-color:#0b0809; opacity:.65; }
+.party-slot-editor option { color:#fff; background:#10090c; font-family:"Kanit",sans-serif !important; font-size:14px; }
+.party-slot-editor option:hover,.party-slot-editor option:focus,.party-slot-editor option:checked { color:#fff !important; background:#b51f32 !important; }
+.party-slot-editor option:checked { box-shadow:inset 0 0 0 100px #b51f32; }
+.war-slot-remove { width:28px; height:28px; flex-basis:28px; font-size:20px; }
+@media(max-width:1100px) { .raid-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:680px) { .raid-grid { grid-template-columns:minmax(0,1fr); gap:14px; } .party-card { min-height:0; padding:16px; } .party-slot-editor { grid-template-columns:25px minmax(0,1fr) 26px minmax(0,1.2fr); gap:6px; } .party-slot-editor select { height:42px; font-size:13px; } }
