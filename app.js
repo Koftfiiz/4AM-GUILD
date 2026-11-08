@@ -2840,12 +2840,21 @@ function registerSystemRoleEvents() {
   // System Role dropdowns receive direct listeners after each list render.
 }
 
+
+let activeGuildRichEditor=null,savedGuildRichRange=null;
+function rememberGuildRichSelection(editor){if(editor)activeGuildRichEditor=editor;const s=window.getSelection();if(activeGuildRichEditor&&s&&s.rangeCount&&activeGuildRichEditor.contains(s.anchorNode))savedGuildRichRange=s.getRangeAt(0).cloneRange();}
+function restoreGuildRichSelection(){if(!activeGuildRichEditor)return false;activeGuildRichEditor.focus();const s=window.getSelection();if(s&&savedGuildRichRange){s.removeAllRanges();s.addRange(savedGuildRichRange);}return true;}
+function addGuildRichToolbarControls(){document.querySelectorAll(".rule-editor-toolbar").forEach(toolbar=>{if(toolbar.dataset.richEnhanced==="true")return;toolbar.dataset.richEnhanced="true";const box=document.createElement("div");box.className="rich-extra-controls";box.innerHTML='<label class="rich-control-label">รูปแบบ <select data-rich-select="format"><option value="p">ย่อหน้า</option><option value="h1">หัวข้อ 1</option><option value="h2">หัวข้อ 2</option><option value="h3">หัวข้อ 3</option><option value="h4">หัวข้อ 4</option><option value="blockquote">อ้างอิง</option></select></label><label class="rich-control-label">ขนาด <select data-rich-select="size"><option value="">ขนาดอักษร</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option><option value="24px">24</option><option value="28px">28</option><option value="32px">32</option><option value="36px">36</option></select></label><label class="rich-control-label">ฟอนต์ <select data-rich-select="font"><option value="">ฟอนต์เดิม</option><option value="Arial">Arial</option><option value="Tahoma">Tahoma</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="monospace">Monospace</option></select></label><label class="rich-color-control">A <input type="color" data-rich-color="text" value="#f4e9e7" title="สีตัวอักษร"></label><label class="rich-color-control">▰ <input type="color" data-rich-color="highlight" value="#7d1824" title="สีพื้นหลังข้อความ"></label><button type="button" data-rich-command="strikeThrough" title="ขีดฆ่า"><s>S</s></button><button type="button" data-rich-command="superscript" title="ตัวยก">x²</button><button type="button" data-rich-command="subscript" title="ตัวห้อย">x₂</button><button type="button" data-rich-command="indent" title="เพิ่มระยะเยื้อง">⇥</button><button type="button" data-rich-command="outdent" title="ลดระยะเยื้อง">⇤</button><button type="button" data-rich-command="insertHorizontalRule" title="เส้นคั่น">―</button><button type="button" data-rich-action="link">🔗 ลิงก์</button><button type="button" data-rich-action="table">▦ ตาราง</button><button type="button" data-rich-command="removeFormat" title="ล้างรูปแบบ">Tx</button>';toolbar.appendChild(box);});document.querySelectorAll('[contenteditable="true"]').forEach(e=>{e.addEventListener("focus",()=>rememberGuildRichSelection(e));e.addEventListener("keyup",()=>rememberGuildRichSelection(e));e.addEventListener("mouseup",()=>rememberGuildRichSelection(e));});}
+function applyGuildRichStyle(prop,value){if(!restoreGuildRichSelection())return;if(!savedGuildRichRange||savedGuildRichRange.collapsed){alert("กรุณาลากเลือกข้อความก่อนจัดรูปแบบ");return;}const span=document.createElement("span");span.style[prop]=value;try{savedGuildRichRange.surroundContents(span);}catch(_){const f=savedGuildRichRange.extractContents();span.appendChild(f);savedGuildRichRange.insertNode(span);}const s=window.getSelection(),r=document.createRange();r.selectNodeContents(span);s.removeAllRanges();s.addRange(r);rememberGuildRichSelection(activeGuildRichEditor);}
+function handleGuildRichControl(event){const b=event.target.closest("[data-rich-command],[data-rich-action]");if(b){event.preventDefault();if(b.dataset.richCommand&&restoreGuildRichSelection())document.execCommand(b.dataset.richCommand,false,null);if(b.dataset.richAction==="link"&&restoreGuildRichSelection()){const url=prompt("ใส่ URL ของลิงก์","https://");if(url&&/^https?:\/\//i.test(url))document.execCommand("createLink",false,url);}if(b.dataset.richAction==="table"&&restoreGuildRichSelection()){const rows=Math.min(10,Math.max(1,Number(prompt("จำนวนแถว","2"))||2)),cols=Math.min(8,Math.max(1,Number(prompt("จำนวนคอลัมน์","2"))||2));let t='<table class="guild-rich-table"><tbody>';for(let r=0;r<rows;r++){t+="<tr>";for(let c=0;c<cols;c++)t+="<td><br></td>";t+="</tr>";}document.execCommand("insertHTML",false,t+"</tbody></table><p><br></p>");}return;}const s=event.target.closest("[data-rich-select]");if(s){if(!restoreGuildRichSelection())return;if(s.dataset.richSelect==="format")document.execCommand("formatBlock",false,s.value);if(s.dataset.richSelect==="size"&&s.value)applyGuildRichStyle("fontSize",s.value);if(s.dataset.richSelect==="font"&&s.value)applyGuildRichStyle("fontFamily",s.value);s.value="";return;}const color=event.target.closest("[data-rich-color]");if(color)applyGuildRichStyle(color.dataset.richColor==="text"?"color":"backgroundColor",color.value);}
+function initializeGuildRichTextEnhancements(){addGuildRichToolbarControls();document.addEventListener("mousedown",e=>{if(e.target.closest(".rich-extra-controls button"))e.preventDefault();});document.addEventListener("click",handleGuildRichControl);document.addEventListener("change",handleGuildRichControl);document.addEventListener("selectionchange",()=>{const e=document.activeElement?.closest?.('[contenteditable="true"]');if(e)rememberGuildRichSelection(e);});}
+
 // GUILD ACTIVITIES
 const GUILD_ACTIVITY_BUCKET="guild-activity-images";
 let guildActivitiesCache=[];
 function sanitizeGuildActivityHTML(html){
  const parsed=new DOMParser().parseFromString(String(html||""),"text/html");
- const allowed=new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","H2","H3","H4","BLOCKQUOTE","SPAN","IMG"]);
+ const allowed=new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","H2","H3","H4","BLOCKQUOTE","SPAN","IMG","S","STRIKE","TABLE","TBODY","TR","TD","TH","HR"]);
  const prefix=SUPABASE_URL+"/storage/v1/object/public/"+GUILD_ACTIVITY_BUCKET+"/";
  const clean=node=>{
   if(node.nodeType===Node.TEXT_NODE)return document.createTextNode(node.textContent||"");
@@ -2854,7 +2863,7 @@ function sanitizeGuildActivityHTML(html){
   if(!allowed.has(tag)){const f=document.createDocumentFragment();[...node.childNodes].forEach(n=>f.appendChild(clean(n)));return f;}
   const el=parsed.createElement(tag.toLowerCase());
   if(tag==="IMG"){const src=node.getAttribute("src")||"";if(!src.startsWith(prefix))return document.createTextNode("");el.src=src;el.alt=(node.alt||"Guild activity image").slice(0,120);el.loading="lazy";el.className="guild-activity-image";return el;}
-  if(["DIV","P","SPAN"].includes(tag)&&["left","center","right","justify"].includes(node.style?.textAlign))el.style.textAlign=node.style.textAlign;
+  if(["DIV","P","SPAN","TD","TH"].includes(tag)){const st=node.style||{};if(["left","center","right","justify"].includes(st.textAlign))el.style.textAlign=st.textAlign;if(/^\\d{1,2}px$/.test(st.fontSize||"")&&parseInt(st.fontSize)<=72)el.style.fontSize=st.fontSize;if(/^(Arial|Tahoma|Georgia|Verdana|monospace)$/i.test(st.fontFamily||""))el.style.fontFamily=st.fontFamily;if(/^#[0-9a-f]{6}$/i.test(st.color||""))el.style.color=st.color;if(/^#[0-9a-f]{6}$/i.test(st.backgroundColor||""))el.style.backgroundColor=st.backgroundColor;}if(tag==="TABLE")el.className="guild-rich-table";
   [...node.childNodes].forEach(n=>el.appendChild(clean(n)));return el;
  };
  const out=parsed.createElement("div");[...parsed.body.childNodes].forEach(n=>out.appendChild(clean(n)));return out.innerHTML;
@@ -2976,7 +2985,7 @@ let feedbackRealtimeChannel = null;
 
 function sanitizeFeedbackHTML(html) {
   const parsed = new DOMParser().parseFromString(String(html || ""), "text/html");
-  const allowed = new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","BLOCKQUOTE","SPAN"]);
+  const allowed = new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","BLOCKQUOTE","SPAN","S","STRIKE","TABLE","TBODY","TR","TD","TH","HR"]);
   const clean = node => {
     if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent || "");
     if (node.nodeType !== Node.ELEMENT_NODE) return document.createDocumentFragment();
@@ -2987,7 +2996,7 @@ function sanitizeFeedbackHTML(html) {
       return fragment;
     }
     const element = parsed.createElement(tag.toLowerCase());
-    if (["DIV","P","SPAN"].includes(tag) && ["left","center","right","justify"].includes(node.style?.textAlign)) element.style.textAlign = node.style.textAlign;
+    if (["DIV","P","SPAN","TD","TH"].includes(tag)) { const st=node.style||{}; if(["left","center","right","justify"].includes(st.textAlign)) element.style.textAlign=st.textAlign; if(/^\\d{1,2}px$/.test(st.fontSize||"")&&parseInt(st.fontSize)<=72)element.style.fontSize=st.fontSize; if(/^(Arial|Tahoma|Georgia|Verdana|monospace)$/i.test(st.fontFamily||""))element.style.fontFamily=st.fontFamily; if(/^#[0-9a-f]{6}$/i.test(st.color||""))element.style.color=st.color; if(/^#[0-9a-f]{6}$/i.test(st.backgroundColor||""))element.style.backgroundColor=st.backgroundColor; } if(tag==="TABLE")element.className="guild-rich-table";
     [...node.childNodes].forEach(child => element.appendChild(clean(child)));
     return element;
   };
@@ -3286,7 +3295,7 @@ const GUILD_RULE_BUCKET="guild-rule-images";
 let guildRulesCache={};
 function sanitizeGuildRuleHTML(html){
  const parsed=new DOMParser().parseFromString(String(html||""),"text/html");
- const allowed=new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","H2","H3","H4","BLOCKQUOTE","SPAN","IMG"]);
+ const allowed=new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","H2","H3","H4","BLOCKQUOTE","SPAN","IMG","S","STRIKE","TABLE","TBODY","TR","TD","TH","HR"]);
  const prefix=SUPABASE_URL+"/storage/v1/object/public/"+GUILD_RULE_BUCKET+"/";
  const clean=node=>{
   if(node.nodeType===Node.TEXT_NODE)return document.createTextNode(node.textContent||"");
@@ -3295,7 +3304,7 @@ function sanitizeGuildRuleHTML(html){
   if(!allowed.has(tag)){const f=document.createDocumentFragment();[...node.childNodes].forEach(n=>f.appendChild(clean(n)));return f;}
   const el=parsed.createElement(tag.toLowerCase());
   if(tag==="IMG"){const src=node.getAttribute("src")||"";if(!src.startsWith(prefix))return document.createTextNode("");el.src=src;el.alt=(node.alt||"Guild rule image").slice(0,120);el.loading="lazy";el.className="guild-rule-image";return el;}
-  if(["DIV","P","SPAN"].includes(tag)&&["left","center","right","justify"].includes(node.style?.textAlign))el.style.textAlign=node.style.textAlign;
+  if(["DIV","P","SPAN","TD","TH"].includes(tag)){const st=node.style||{};if(["left","center","right","justify"].includes(st.textAlign))el.style.textAlign=st.textAlign;if(/^\\d{1,2}px$/.test(st.fontSize||"")&&parseInt(st.fontSize)<=72)el.style.fontSize=st.fontSize;if(/^(Arial|Tahoma|Georgia|Verdana|monospace)$/i.test(st.fontFamily||""))el.style.fontFamily=st.fontFamily;if(/^#[0-9a-f]{6}$/i.test(st.color||""))el.style.color=st.color;if(/^#[0-9a-f]{6}$/i.test(st.backgroundColor||""))el.style.backgroundColor=st.backgroundColor;}if(tag==="TABLE")el.className="guild-rich-table";
   [...node.childNodes].forEach(n=>el.appendChild(clean(n)));return el;
  };
  const out=parsed.createElement("div");[...parsed.body.childNodes].forEach(n=>out.appendChild(clean(n)));return out.innerHTML;
@@ -3721,6 +3730,7 @@ function registerAppEventListeners() {
   registerSystemRoleEvents();
   registerWarCreationEvents();
   registerWarRecordAndAttendanceEvents();
+  initializeGuildRichTextEnhancements();
   registerGuildRuleEvents();
   registerFeedbackEvents();
 

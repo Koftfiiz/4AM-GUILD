@@ -3758,3 +3758,13 @@ body { font-size:16px; }
 .feedback-status-control{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12px}
 .feedback-status-control select{min-height:36px;padding:6px 10px;color:#fff;background:#10090c;border:1px solid rgba(190,45,60,.55);border-radius:5px;color-scheme:dark}
 @media(max-width:760px){.feedback-form-grid,.feedback-management-filters{grid-template-columns:1fr}.feedback-submit-row{align-items:stretch;flex-direction:column}.feedback-submit-row .btn{width:100%}.feedback-ticket-card{padding:14px}.feedback-ticket-management{justify-content:stretch}.feedback-status-control{width:100%;justify-content:space-between}.feedback-status-control select{flex:1;max-width:210px}.topbar-right{gap:8px}}
+
+/* Unified expanded rich-text toolbar */
+.rich-extra-controls{display:flex;align-items:center;gap:6px;flex-wrap:wrap;width:100%;padding-top:10px;margin-top:4px;border-top:1px solid rgba(205,160,120,.16)}
+.rich-extra-controls button,.rich-extra-controls select{min-height:34px;padding:5px 9px;color:#f7e9e7;background:#160b0f;border:1px solid rgba(190,45,60,.48);border-radius:5px;font:inherit;font-size:12px}
+.rich-extra-controls button{cursor:pointer;min-width:34px}.rich-extra-controls button:hover,.rich-extra-controls select:focus{background:#7d1824;border-color:var(--gold)}
+.rich-control-label{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:11px}.rich-control-label select{max-width:135px}
+.rich-color-control{display:flex;align-items:center;gap:4px;min-height:34px;padding:3px 7px;color:#f7e9e7;background:#160b0f;border:1px solid rgba(190,45,60,.48);border-radius:5px;font-size:12px}
+.rich-color-control input{width:22px;height:22px;padding:0;border:0;background:transparent;cursor:pointer}
+.guild-rich-table{width:100%;border-collapse:collapse;margin:12px 0}.guild-rich-table td,.guild-rich-table th{min-width:55px;padding:8px;border:1px solid rgba(205,160,120,.45)}
+@media(max-width:600px){.rich-extra-controls{gap:4px}.rich-control-label{font-size:10px}.rich-control-label select{max-width:100px}.rich-extra-controls button{min-width:30px;padding:4px 6px}}
