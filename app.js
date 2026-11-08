@@ -2832,6 +2832,127 @@ function registerSystemRoleEvents() {
   // System Role dropdowns receive direct listeners after each list render.
 }
 
+// GUILD ACTIVITIES
+const GUILD_ACTIVITY_BUCKET="guild-activity-images";
+let guildActivitiesCache=[];
+function sanitizeGuildActivityHTML(html){
+ const parsed=new DOMParser().parseFromString(String(html||""),"text/html");
+ const allowed=new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","H2","H3","H4","BLOCKQUOTE","SPAN","IMG"]);
+ const prefix=SUPABASE_URL+"/storage/v1/object/public/"+GUILD_ACTIVITY_BUCKET+"/";
+ const clean=node=>{
+  if(node.nodeType===Node.TEXT_NODE)return document.createTextNode(node.textContent||"");
+  if(node.nodeType!==Node.ELEMENT_NODE)return document.createDocumentFragment();
+  const tag=node.tagName;
+  if(!allowed.has(tag)){const f=document.createDocumentFragment();[...node.childNodes].forEach(n=>f.appendChild(clean(n)));return f;}
+  const el=parsed.createElement(tag.toLowerCase());
+  if(tag==="IMG"){const src=node.getAttribute("src")||"";if(!src.startsWith(prefix))return document.createTextNode("");el.src=src;el.alt=(node.alt||"Guild activity image").slice(0,120);el.loading="lazy";el.className="guild-activity-image";return el;}
+  if(["DIV","P","SPAN"].includes(tag)&&["left","center","right","justify"].includes(node.style?.textAlign))el.style.textAlign=node.style.textAlign;
+  [...node.childNodes].forEach(n=>el.appendChild(clean(n)));return el;
+ };
+ const out=parsed.createElement("div");[...parsed.body.childNodes].forEach(n=>out.appendChild(clean(n)));return out.innerHTML;
+}
+function activityDateLabel(value){
+ if(!value)return "";
+ const date=new Date(value);if(Number.isNaN(date.getTime()))return "";
+ return date.toLocaleString("th-TH",{dateStyle:"medium",timeStyle:"short"});
+}
+function renderGuildActivities(){
+ const list=$("guild-activities-list");if(!list)return;
+ if(!guildActivitiesCache.length){
+  list.innerHTML='<div class="empty-state"><span>◷</span><h3>ยังไม่มีกิจกรรม</h3><p>'+(isManagement()?'กด “เพิ่มกิจกรรม” เพื่อสร้างข่าวสารหรือกิจกรรมแรกของกิลด์':'ขณะนี้ยังไม่มีข่าวสารหรือกิจกรรมที่เผยแพร่')+'</p></div>';
+  return;
+ }
+ list.innerHTML=guildActivitiesCache.map(item=>{
+  const id=escapeHTML(item.id),title=escapeHTML(item.title||"กิจกรรมกิลด์"),date=escapeHTML(activityDateLabel(item.updated_at||item.created_at));
+  const actions=isManagement()?'<div class="activity-card-actions"><button type="button" class="btn btn-outline btn-sm" data-activity-edit="'+id+'"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-activity-delete="'+id+'">ลบ</button></div>':"";
+  return '<article class="activity-card" data-activity-card="'+id+'"><header class="activity-card-header"><div class="activity-card-title-wrap"><span class="panel-kicker">4AM GUILD · COMMUNITY</span><h3>'+title+'</h3><time>'+date+'</time></div>'+actions+'</header><div class="activity-card-content">'+sanitizeGuildActivityHTML(item.content_html||"")+'</div></article>';
+ }).join("");
+}
+async function loadGuildActivities(){
+ const list=$("guild-activities-list");if(list)list.innerHTML='<div class="empty-state"><span>◷</span><h3>กำลังโหลดกิจกรรม</h3><p>กรุณารอสักครู่</p></div>';
+ const {data,error}=await supabaseClient.from("guild_activities").select("id,title,content_html,created_by,updated_by,created_at,updated_at").order("created_at",{ascending:false});
+ if(error){console.error("Load guild activities:",error);if(list)list.innerHTML='<div class="empty-state"><span>!</span><h3>โหลดกิจกรรมไม่สำเร็จ</h3><p>'+escapeHTML(error.message)+'</p></div>';return;}
+ guildActivitiesCache=data||[];renderGuildActivities();
+}
+function openGuildActivityEditor(id=null){
+ if(!isManagement())return;
+ const panel=$("activity-editor"),title=$("activity-title-input"),body=$("activity-editor-body"),msg=$("activity-editor-message");
+ if(!panel||!title||!body)return;
+ const item=id?guildActivitiesCache.find(row=>row.id===id):null;
+ if(id&&!item)return;
+ panel.dataset.editingId=item?.id||"";
+ $("activity-editor-title").textContent=item?"แก้ไขกิจกรรม":"สร้างกิจกรรมใหม่";
+ title.value=item?.title||"";body.innerHTML=sanitizeGuildActivityHTML(item?.content_html||"");
+ if(msg){msg.textContent="";msg.className="message";}
+ $("activity-save-button").textContent=item?"บันทึกการแก้ไข":"บันทึกกิจกรรม";
+ panel.classList.remove("hidden");$("activity-add-button")?.classList.add("hidden");
+ title.focus();
+}
+async function uploadGuildActivityImage(file){
+ if(!isManagement())throw new Error("ไม่มีสิทธิ์อัปโหลดรูป");
+ if(!file||!/^image\/(png|jpeg|webp|gif)$/.test(file.type))throw new Error("รองรับ PNG, JPG, WEBP และ GIF");
+ if(file.size>8*1024*1024)throw new Error("รูปต้องมีขนาดไม่เกิน 8 MB");
+ const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"}[file.type];
+ const path=currentUser.id+"/activities/"+crypto.randomUUID()+"."+ext;
+ const {error}=await supabaseClient.storage.from(GUILD_ACTIVITY_BUCKET).upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});
+ if(error)throw error;
+ return supabaseClient.storage.from(GUILD_ACTIVITY_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+function closeGuildActivityEditor(){
+ $("activity-editor")?.classList.add("hidden");$("activity-editor")?.removeAttribute("data-editing-id");
+ $("activity-title-input").value="";$("activity-editor-body").innerHTML="";
+ $("activity-add-button")?.classList.toggle("hidden",!isManagement());
+}
+function registerGuildActivityEvents(){
+ const page=$("page-activities");if(!page||page.dataset.eventsReady==="true")return;page.dataset.eventsReady="true";
+ page.addEventListener("click",async event=>{
+  const add=event.target.closest("#activity-add-button"),edit=event.target.closest("[data-activity-edit]"),del=event.target.closest("[data-activity-delete]"),cmd=event.target.closest("[data-activity-command]"),emoji=event.target.closest("[data-activity-emoji]"),image=event.target.closest("[data-activity-image]");
+  if(add){openGuildActivityEditor();return;}
+  if(edit){if(!isManagement())return;openGuildActivityEditor(edit.dataset.activityEdit);return;}
+  if(del){
+   if(!isManagement())return;
+   const id=del.dataset.activityDelete,item=guildActivitiesCache.find(row=>row.id===id);if(!item)return;
+   if(!window.confirm('ต้องการลบกิจกรรม “'+item.title+'” ใช่หรือไม่?'))return;
+   del.disabled=true;
+   try{const {error}=await supabaseClient.from("guild_activities").delete().eq("id",id);if(error)throw error;guildActivitiesCache=guildActivitiesCache.filter(row=>row.id!==id);renderGuildActivities();}
+   catch(error){console.error("Delete guild activity:",error);alert("ลบกิจกรรมไม่สำเร็จ: "+error.message);del.disabled=false;}
+   return;
+  }
+  if(cmd){if(!isManagement())return;const body=$("activity-editor-body");body?.focus();document.execCommand(cmd.dataset.activityCommand,false,null);return;}
+  if(emoji){if(!isManagement())return;const value=window.prompt("พิมพ์หรือวางอีโมจิ","✨");if(value){$("activity-editor-body")?.focus();document.execCommand("insertText",false,value);}return;}
+  if(image){if(isManagement())$("activity-image-input")?.click();return;}
+  if(event.target.closest("#activity-cancel-button")){if(isManagement())closeGuildActivityEditor();return;}
+  if(event.target.closest("#activity-save-button")){
+   if(!isManagement())return;
+   const save=$("activity-save-button"),title=$("activity-title-input").value.trim(),body=$("activity-editor-body"),msg=$("activity-editor-message"),panel=$("activity-editor"),id=panel.dataset.editingId||"";
+   if(!title){msg.textContent="กรุณาระบุหัวข้อกิจกรรม";msg.className="message error";$("activity-title-input").focus();return;}
+   const content=sanitizeGuildActivityHTML(body.innerHTML);
+   if(!content.trim()){msg.textContent="กรุณากรอกรายละเอียดกิจกรรม";msg.className="message error";body.focus();return;}
+   save.disabled=true;save.textContent="กำลังบันทึก...";
+   try{
+    const payload={title,content_html:content,updated_by:currentUser.id,updated_at:new Date().toISOString()};
+    let result;
+    if(id)result=await supabaseClient.from("guild_activities").update(payload).eq("id",id).select("id,title,content_html,created_by,updated_by,created_at,updated_at").single();
+    else result=await supabaseClient.from("guild_activities").insert({...payload,created_by:currentUser.id}).select("id,title,content_html,created_by,updated_by,created_at,updated_at").single();
+    if(result.error)throw result.error;
+    const saved=result.data,index=guildActivitiesCache.findIndex(row=>row.id===saved.id);
+    if(index>=0)guildActivitiesCache[index]=saved;else guildActivitiesCache.unshift(saved);
+    guildActivitiesCache.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+    closeGuildActivityEditor();renderGuildActivities();
+   }catch(error){console.error("Save guild activity:",error);msg.textContent="บันทึกไม่สำเร็จ: "+error.message;msg.className="message error";}
+   finally{save.disabled=false;save.textContent=id?"บันทึกการแก้ไข":"บันทึกกิจกรรม";}
+  }
+ });
+ page.addEventListener("change",async event=>{
+  const input=event.target.closest("#activity-image-input");if(!input||!input.files?.length)return;
+  const button=page.querySelector("[data-activity-image]"),body=$("activity-editor-body");
+  try{if(button){button.disabled=true;button.textContent="กำลังอัปโหลด...";}const url=await uploadGuildActivityImage(input.files[0]);body?.focus();document.execCommand("insertHTML",false,'<img src="'+escapeHTML(url)+'" alt="Guild activity image">');}
+  catch(error){alert(error.message||"อัปโหลดรูปไม่สำเร็จ");}
+  finally{input.value="";if(button){button.disabled=false;button.textContent="▧ รูป / GIF";}}
+ });
+}
+registerGuildActivityEvents();
+
 // GUILD RULES
 const GUILD_RULE_KEYS=["regulations","war","discord"];
 const GUILD_RULE_BUCKET="guild-rule-images";
@@ -2984,6 +3105,7 @@ function openGuildPage(pageName) {
   if (pageName === "war-stats") loadWarMatchRecords();
   if (pageName === "war-attendance-stats") loadWarAttendanceStatistics();
   if (pageName === "rules") loadGuildRules();
+  if (pageName === "activities") loadGuildActivities();
 }
 
 async function copyGameUID(button) {

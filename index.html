@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=20261108-guild-rules-1">
+  <link rel="stylesheet" href="style.css?v=20261108-guild-activities-1">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=20261108-guild-war-stats-label-3";
+          app.src = "app.js?v=20261108-guild-activities-1";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -555,26 +555,56 @@
         </section>
       </section>
 
-      <!-- ============ ACTIVITIES ============ -->
+      <!-- ============ GUILD ACTIVITIES ============ -->
       <section id="page-activities" class="page page-padded hidden">
         <div class="page-intro">
           <span class="section-kicker">GUILD COMMUNITY</span>
           <h1>กิจกรรมกิลด์</h1>
-          <p>ประกาศ กิจกรรม และข่าวสารของกิลด์</p>
+          <p>ประกาศข่าวสาร สร้างกิจกรรม และติดตามเรื่องราวภายใน 4AM</p>
         </div>
 
-        <section class="panel">
-          <div class="panel-heading">
+        <section class="panel activities-panel">
+          <div class="panel-heading activities-heading">
             <div>
               <span class="panel-kicker">COMMUNITY BOARD</span>
               <h3>ข่าวสารและกิจกรรม</h3>
+              <p class="muted">สมาชิกทุกคนสามารถอ่านกิจกรรมที่เผยแพร่โดยกิลด์ได้</p>
             </div>
+            <button type="button" class="btn btn-primary management-only is-role-hidden" data-management-only aria-hidden="true" id="activity-add-button">＋ เพิ่มกิจกรรม</button>
           </div>
 
-          <div class="empty-state">
-            <span>◷</span>
-            <h3>ยังไม่มีกิจกรรม</h3>
-            <p>กิจกรรมของกิลด์จะแสดงที่นี่เมื่อเชื่อมต่อฟีดกิจกรรมแล้ว</p>
+          <section id="activity-editor" class="activity-editor hidden" aria-label="ตัวแก้ไขกิจกรรม">
+            <div class="activity-editor-heading">
+              <div><span class="panel-kicker">ACTIVITY EDITOR</span><h3 id="activity-editor-title">สร้างกิจกรรมใหม่</h3></div>
+            </div>
+            <div class="form-group activity-title-field">
+              <label for="activity-title-input">หัวข้อกิจกรรม</label>
+              <input id="activity-title-input" type="text" maxlength="160" placeholder="ระบุชื่อกิจกรรมหรือหัวข้อประกาศ">
+            </div>
+            <div class="rule-editor-toolbar activity-editor-toolbar">
+              <button type="button" data-activity-command="bold" title="ตัวหนา"><b>B</b></button>
+              <button type="button" data-activity-command="italic" title="ตัวเอียง"><i>I</i></button>
+              <button type="button" data-activity-command="underline" title="ขีดเส้นใต้"><u>U</u></button>
+              <span></span>
+              <button type="button" data-activity-command="justifyLeft">ชิดซ้าย</button>
+              <button type="button" data-activity-command="justifyCenter">กึ่งกลาง</button>
+              <button type="button" data-activity-command="justifyRight">ชิดขวา</button>
+              <span></span>
+              <button type="button" data-activity-emoji>😊 Emoji</button>
+              <button type="button" data-activity-image>▧ รูป / GIF</button>
+              <input type="file" class="hidden" id="activity-image-input" accept="image/png,image/jpeg,image/webp,image/gif">
+            </div>
+            <div id="activity-editor-body" class="rule-editor-body activity-editor-body" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="พิมพ์รายละเอียดกิจกรรม ข่าวสาร หรือประกาศของกิลด์ที่นี่..."></div>
+            <small class="activity-editor-hint">รองรับตัวหนา ตัวเอียง ขีดเส้นใต้ การจัดตำแหน่ง อีโมจิ รูปภาพ และ GIF · ไม่เกิน 8 MB ต่อรูป</small>
+            <div class="rule-editor-actions activity-editor-actions">
+              <button type="button" class="btn btn-outline" id="activity-cancel-button">ยกเลิก</button>
+              <button type="button" class="btn btn-primary" id="activity-save-button">บันทึกกิจกรรม</button>
+            </div>
+            <p class="message" id="activity-editor-message"></p>
+          </section>
+
+          <div id="guild-activities-list" class="guild-activities-list">
+            <div class="empty-state"><span>◷</span><h3>กำลังโหลดกิจกรรม</h3><p>กรุณารอสักครู่</p></div>
           </div>
         </section>
       </section>
