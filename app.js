@@ -2601,7 +2601,7 @@ async function loadWarSignups(){
   }
 
   if(!events?.length){
-    box.innerHTML='<div class="empty-state"><h3>ยังไม่มีกิจกรรมวอร์ที่เปิดให้ลงชื่อ</h3><p>รายการจะแสดงเมื่อฝ่ายบริหารยืนยันกิจกรรมวอร์แล้ว และยังไม่ Publish</p></div>';
+    box.innerHTML='<div class="empty-state"><h3>ยังไม่มีกิจกรรมวอร์ที่เปิดให้ลงชื่อ</h3><p>รายการจะแสดงเมื่อมีการเปิด event ให้ลงชื่อ</p></div>';
     return;
   }
 
