@@ -3439,3 +3439,65 @@ body #registration-screen.login-card::after {
   background: linear-gradient(180deg, #a82a38, #681722) !important;
   border-color: #f0c58c !important;
 }
+
+
+/* Guild War: explicit 24-hour time confirmation and party role labels */
+.war-time-confirm-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+}
+.war-time-confirm-row input {
+  min-width: 0;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 1px;
+}
+.war-time-confirm-row button {
+  min-height: 50px;
+  white-space: nowrap;
+}
+.war-time-confirm-status {
+  display: block;
+  min-height: 18px;
+  margin-top: 7px;
+  color: #c7aeb0;
+  font-size: 12px;
+}
+.war-time-confirm-status.is-confirmed { color: #9be7b5; font-weight: 700; }
+.war-time-confirm-status.is-error { color: #ff9da7; font-weight: 700; }
+.party-heading-fields {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  flex: 1;
+}
+.party-heading-fields h3 { flex: 0 0 auto; margin: 0; }
+.war-party-role {
+  min-width: 0;
+  width: min(100%, 240px);
+  min-height: 30px;
+  padding: 5px 8px;
+  color: var(--cream);
+  background: rgba(0,0,0,.34);
+  border: 1px solid rgba(205,160,120,.28);
+  border-radius: 4px;
+  font: 12px var(--font);
+}
+.war-party-role::placeholder { color: #9f8d91; }
+.war-party-role:focus { outline: none; border-color: var(--gold); }
+.war-party-role.is-saved { border-color: #70c99a; }
+.war-party-role-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: #d9bd8a;
+  font-size: 11px;
+}
+.war-no-event { margin-top: 18px; }
+@media (max-width: 600px) {
+  .war-time-confirm-row { grid-template-columns: 1fr; }
+  .war-time-confirm-row button { width: 100%; }
+  .party-heading-fields { flex-wrap: wrap; gap: 6px; }
+  .war-party-role { width: 100%; }
+}
