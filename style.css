@@ -4357,3 +4357,20 @@ button:not(.feedback-notification-button),
 .account-profile-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
 #account-profile-status{font-size:14px;font-weight:650}
 @media(max-width:600px){.account-information-heading{align-items:center}.account-information-kicker{font-size:12px}.account-details-list .settings-detail{font-size:14px;gap:10px}.account-details-list .settings-detail strong{font-size:14px}.account-profile-actions{flex-direction:column-reverse}.account-profile-actions .btn{width:100%}}
+
+
+/* Keep the complete sidebar reachable when navigation items exceed viewport height. */
+.sidebar {
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(190, 75, 85, .65) rgba(12, 6, 8, .8);
+}
+.sidebar::-webkit-scrollbar { width: 7px; }
+.sidebar::-webkit-scrollbar-track { background: rgba(12, 6, 8, .8); }
+.sidebar::-webkit-scrollbar-thumb {
+  background: rgba(190, 75, 85, .65);
+  border-radius: 8px;
+}
+.sidebar > * { flex-shrink: 0; }
