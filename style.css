@@ -2605,7 +2605,6 @@ body #registration-screen.login-card::after {
   background: linear-gradient(135deg, #650b18 0%, #a80f25 48%, #d51e37 100%);
   border: 1px solid rgba(255, 105, 125, .95);
   color: #fff;
-  font-family: Arial, Helvetica, sans-serif;
   font-size: 17px;
   font-weight: 700;
   letter-spacing: .25px;
@@ -2632,7 +2631,6 @@ body #registration-screen.login-card::after {
   background: linear-gradient(135deg, #650b18 0%, #a80f25 48%, #d51e37 100%) !important;
   border: 1px solid #ff7183 !important;
   color: #fff !important;
-  font-family: Arial, Helvetica, sans-serif !important;
   font-size: 17px !important;
   font-weight: 700 !important;
   letter-spacing: .25px;
@@ -3019,7 +3017,7 @@ body #registration-screen.login-card::after {
 
 /* Improve Thai readability on the Add Portfolio button only */
 #portfolio-add-button {
-  font-family: Arial, "Noto Sans Thai", Tahoma, sans-serif;
+  font-family: var(--font) !important;
   font-size: 16px;
   font-weight: 500;
   line-height: 1.55;
@@ -3503,41 +3501,56 @@ body #registration-screen.login-card::after {
 }
 
 
-/* Global typography: use the same Kanit typeface as the portfolio action button */
+/* 4AM GUILD typography and role colors — consolidated overrides */
 :root { --display: var(--font); }
-html, body, body *,
-body *::before, body *::after {
-  font-family: var(--font) !important;
+html, body, body *, body *::before, body *::after {
+  font-family: "Kanit", sans-serif !important;
 }
 
-/* System Role colors in Guild Members */
-.system-role-badge.role-management {
-  color: #65aaff !important;
-  border-color: rgba(75, 155, 255, .58) !important;
-}
-.system-role-badge.role-admin {
-  color: #55e58b !important;
-  border-color: rgba(70, 220, 130, .58) !important;
-}
-.system-role-badge.role-leader {
-  color: #ff334d !important;
-  border-color: rgba(255, 45, 75, .68) !important;
+/* Keep every visible page element, including the portfolio action, on Kanit. */
+#portfolio-add-button,
+#page-dashboard .profile-content .profile-name > .role-badge {
+  font-family: "Kanit", sans-serif !important;
 }
 
-/* Match War section kickers to Guild Members page heading scale */
+/* Match Guild Members section-label scale across all three Guild War headings. */
 #page-war .page-intro > .section-kicker,
-#page-war .panel-heading .panel-kicker,
-#page-war .war-create-panel .panel-kicker {
+#page-war .war-create-toolbar > div > .panel-kicker,
+#page-war .war-create-panel .panel-heading .panel-kicker {
   font-size: 16px !important;
   font-weight: 400 !important;
   line-height: 1.5 !important;
   letter-spacing: 2.4px !important;
 }
+
+/* The explanatory line should match the Guild War page intro description. */
+#page-war .war-create-toolbar > div > p {
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+}
+
 @media (max-width: 700px) {
   #page-war .page-intro > .section-kicker,
-  #page-war .panel-heading .panel-kicker,
-  #page-war .war-create-panel .panel-kicker {
+  #page-war .war-create-toolbar > div > .panel-kicker,
+  #page-war .war-create-panel .panel-heading .panel-kicker {
     font-size: 14px !important;
     letter-spacing: 1.8px !important;
   }
+}
+
+/* System Role colors in the actual Guild Members cards and System Management badges. */
+.members-list .member-details .member-role.role-management,
+.system-role-badge.role-management {
+  color: #65aaff !important;
+  border-color: rgba(75, 155, 255, .58) !important;
+}
+.members-list .member-details .member-role.role-admin,
+.system-role-badge.role-admin {
+  color: #55e58b !important;
+  border-color: rgba(70, 220, 130, .58) !important;
+}
+.members-list .member-details .member-role.role-leader,
+.system-role-badge.role-leader {
+  color: #ff334d !important;
+  border-color: rgba(255, 45, 75, .68) !important;
 }
