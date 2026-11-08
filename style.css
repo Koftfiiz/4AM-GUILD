@@ -16,7 +16,7 @@
   --green: #4cd37f;
   --discord: #6572f2;
   --font: "Kanit", sans-serif;
-  --display: "Cinzel", serif;
+  --display: "Kanit", sans-serif;
   --sidebar-width: 255px;
   --page-pad: 48px;
 }
@@ -3134,7 +3134,7 @@ body #registration-screen.login-card::after {
 .system-role-person > span {
   overflow-wrap: anywhere;
   color: #a99aa0;
-  font: 11px/1.45 monospace;
+  font: 11px/1.45 var(--font);
 }
 .system-role-person small { color: #c8b8bd; font-size: 11px; }
 .system-role-status {
