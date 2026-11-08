@@ -3042,7 +3042,7 @@ function renderGuildFeedback() {
     const discordStatus = management
       ? (row.discord_notified_at
         ? '<span class="feedback-discord-state is-sent">ส่ง Discord แล้ว</span>'
-        : '<span class="feedback-discord-state is-pending">Discord ยังไม่ส่ง</span>') : "";
+        : '<button type="button" class="btn btn-outline btn-sm feedback-discord-retry" data-feedback-discord-retry="' + escapeHTML(row.id) + '">ส่ง Discord อีกครั้ง</button>') : "";
     return '<article class="feedback-ticket-card" data-feedback-id="' + escapeHTML(row.id) + '">' +
       '<div class="feedback-ticket-topline"><span class="feedback-type-badge type-' + escapeHTML(row.type) + '">' +
       escapeHTML(FEEDBACK_TYPE_LABELS[row.type] || row.type) + '</span>' + feedbackStatusBadge(row.status) + '</div>' +
@@ -3181,7 +3181,21 @@ function registerFeedbackEvents() {
     if (!event.target.closest("#feedback-notification-wrap")) closeFeedbackNotificationPanel();
   });
 
-  page.addEventListener("click", event => {
+  page.addEventListener("click", async event => {
+    const retry = event.target.closest("[data-feedback-discord-retry]");
+    if (retry) {
+      if (!isManagement()) return;
+      retry.disabled = true;
+      retry.textContent = "กำลังส่ง...";
+      const { data, error } = await supabaseClient.functions.invoke(
+        "discord-feedback-notify", { body: { feedback_id: retry.dataset.feedbackDiscordRetry } }
+      );
+      if (error || data?.success === false) {
+        alert("ส่ง Discord ไม่สำเร็จ: " + (error?.message || data?.message || "Unknown error"));
+      }
+      await loadGuildFeedback();
+      return;
+    }
     const command = event.target.closest("[data-feedback-command]");
     if (command) {
       $("feedback-editor-body")?.focus();

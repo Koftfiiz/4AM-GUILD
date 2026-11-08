@@ -55,7 +55,10 @@ Deno.serve(async (request) => {
     if (feedback.user_id !== authData.user.id && !isManager) return json({ success: false, message: "Not allowed" }, 403);
     if (feedback.discord_notified_at) return json({ success: true, already_notified: true });
 
-    const memberName = requester.character_name || requester.nickname || requester.discord_name || "สมาชิก 4AM";
+    const { data: author } = await admin.from("guild_members")
+      .select("character_name,nickname,discord_name")
+      .eq("user_id", feedback.user_id).maybeSingle();
+    const memberName = author?.character_name || author?.nickname || author?.discord_name || "สมาชิก 4AM";
     const plainText = String(feedback.content_html || "")
       .replace(/<br\s*\/?>/gi, "\n").replace(/<\/(p|div|li)>/gi, "\n")
       .replace(/<[^>]*>/g, " ").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&")
