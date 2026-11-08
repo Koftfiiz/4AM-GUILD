@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=20261108-war-live-party-roles-1">
+  <link rel="stylesheet" href="style.css?v=20261108-unified-font-role-colors-1">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=20261108-war-live-party-roles-1";
+          app.src = "app.js?v=20261108-native-time-confirm-1";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -502,7 +502,7 @@
                 <div class="form-group">
                   <label for="war-start-time">เวลาเริ่มวอร์ (24 ชั่วโมง)</label>
                   <div class="war-time-confirm-row">
-                    <input id="war-start-time" name="start-time" type="text" inputmode="numeric" maxlength="5" pattern="([01][0-9]|2[0-3]):[0-5][0-9]" placeholder="HH:MM เช่น 20:30" autocomplete="off" required aria-label="เวลาเริ่มวอร์ รูปแบบ 24 ชั่วโมง HH:MM">
+                    <input id="war-start-time" name="start-time" type="time" lang="en-GB" step="60" required aria-label="เวลาเริ่มวอร์ รูปแบบ 24 ชั่วโมง">
                     <button id="war-time-confirm" class="btn btn-outline" type="button">ยืนยันเวลา</button>
                   </div>
                   <small id="war-time-confirm-status" class="war-time-confirm-status">ยังไม่ได้ยืนยันเวลา</small>
