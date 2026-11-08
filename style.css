@@ -4330,3 +4330,10 @@ button:not(.feedback-notification-button),
   .war-leave-review-actions { justify-content: flex-start; }
   .war-leave-form-actions button { width: 100%; }
 }
+
+/* Date/time formats and War management actions */
+.war-date-format-hint{display:block;margin-top:5px;color:var(--text-muted,#b7a7a0);font-size:12px}
+.war-signup-management-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin:8px 0 12px}
+.war-signup-create-form.is-editing{border-top-color:rgba(190,145,65,.55)}
+.war-leave-review-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+@media(max-width:650px){.war-signup-management-actions{justify-content:flex-start}.war-leave-review-actions{width:100%}}
