@@ -15,8 +15,8 @@
   --line: rgba(205, 160, 120, .22);
   --green: #4cd37f;
   --discord: #6572f2;
-  --font: "Kanit", sans-serif;
-  --display: "Kanit", sans-serif;
+  --font: "Noto Sans Thai", sans-serif;
+  --display: "Noto Sans Thai", sans-serif;
   --sidebar-width: 255px;
   --page-pad: 48px;
 }
@@ -60,7 +60,7 @@ body::after {
 
 button, input { font: inherit; }
 
-/* Kanit ทั้งเว็บ: กฎเดียวคุมทุก element (รวม pseudo-element และปุ่ม "Choose file") */
+/* Noto Sans Thai ทั้งเว็บ: กฎเดียวคุมทุก element (รวม pseudo-element และปุ่ม "Choose file") */
 *, *::before, *::after, ::file-selector-button { font-family: var(--font) !important; }
 button { cursor: pointer; }
 a { color: inherit; text-decoration: none; }
