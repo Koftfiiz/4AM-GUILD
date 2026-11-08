@@ -697,7 +697,7 @@ async function registerGuildMember(event) {
   if (!/^[0-9]{10}$/.test(gameUID)) {
     showMessage(
       "registration-message",
-      "Game UID ต้องเป็นตัวเลข 10 หลักเท่านั้น"
+      "UID ตัวละครต้องเป็นตัวเลข 10 หลักเท่านั้น"
     );
     return;
   }
@@ -3913,8 +3913,8 @@ async function copyGameUID(button) {
       button.disabled = false;
     }, 1400);
   } catch (error) {
-    console.error("Copy Game UID failed:", error);
-    alert("ไม่สามารถคัดลอก Game UID ได้");
+    console.error("Copy character UID failed:", error);
+    alert("ไม่สามารถคัดลอก UID ตัวละครได้");
   }
 }
 
@@ -3926,7 +3926,7 @@ async function saveOwnGameUID(form) {
   const uid = String(input?.value || "").trim();
 
   if (!/^[0-9]{10}$/.test(uid)) {
-    showMessage("game-uid-message", "Game UID ต้องเป็นตัวเลข 10 หลักเท่านั้น");
+    showMessage("game-uid-message", "UID ตัวละครต้องเป็นตัวเลข 10 หลักเท่านั้น");
     return;
   }
 
@@ -3935,7 +3935,7 @@ async function saveOwnGameUID(form) {
     button.textContent = "กำลังบันทึก...";
   }
 
-  showMessage("game-uid-message", "กำลังบันทึก Game UID...", "info");
+  showMessage("game-uid-message", "กำลังบันทึก UID ตัวละคร...", "info");
 
   try {
     const { data, error } = await supabaseClient
@@ -3952,11 +3952,11 @@ async function saveOwnGameUID(form) {
     if (cachedMember) cachedMember.game_uid = data.game_uid;
 
     renderAccountDetails();
-    showMessage("game-uid-message", "บันทึก Game UID สำเร็จ", "success");
+    showMessage("game-uid-message", "บันทึก UID ตัวละครสำเร็จ", "success");
     renderDashboardProfile();
     renderMembers(allMembers);
   } catch (error) {
-    console.error("Game UID update error:", error);
+    console.error("Character UID update error:", error);
     showMessage(
       "game-uid-message",
       "บันทึกไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด")
@@ -3964,7 +3964,7 @@ async function saveOwnGameUID(form) {
   } finally {
     if (button) {
       button.disabled = false;
-      button.textContent = "บันทึก Game UID";
+      button.textContent = "บันทึก UID ตัวละคร";
     }
   }
 }
@@ -4023,10 +4023,10 @@ function renderAccountDetails() {
       <button type="submit" class="btn btn-primary">บันทึกข้อมูลตัวละคร</button>
       <p id="character-profile-message" class="message" aria-live="polite"></p>
     </form>
-    <div class="settings-detail"><span>Game UID</span><strong>${escapeHTML(currentMember?.game_uid || "ยังไม่ได้กรอก UID")}</strong></div>
+    <div class="settings-detail"><span>UID ตัวละคร</span><strong>${escapeHTML(currentMember?.game_uid || "ยังไม่ได้กรอก UID")}</strong></div>
     <form id="game-uid-form" class="game-uid-settings-form">
-      <label for="account-game-uid">แก้ไข Game UID (ตัวเลข 10 หลัก)</label>
-      <input id="account-game-uid" name="game_uid" type="text" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="กรอก Game UID 10 หลัก" value="${escapeHTML(currentMember?.game_uid || "")}" required>
+      <label for="account-game-uid">แก้ไข UID ตัวละคร (ตัวเลข 10 หลัก)</label>
+      <input id="account-game-uid" name="game_uid" type="text" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="กรอก UID ตัวละคร 10 หลัก" value="${escapeHTML(currentMember?.game_uid || "")}" required>
       <button type="submit" class="btn btn-primary">บันทึก Game UID</button>
       <p id="game-uid-message" class="message" aria-live="polite"></p>
     </form>
