@@ -30,7 +30,6 @@ let allWarEvents = [];
 let currentWarParties = [];
 let currentWarPartyAssignments = [];
 let currentWarAssignmentEventId = null;
-let warTimeConfirmed = false;
 let warRealtimeChannel = null;
 let registrationBusy = false;
 
@@ -2557,14 +2556,6 @@ async function handleWarCreate(event) {
     setWarCreateMessage("กรุณากรอกชื่อกิลด์คู่แข่ง วันที่ และเวลาเริ่มวอร์ให้ครบ", true);
     return;
   }
-  if (!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(startTime)) {
-    setWarCreateMessage("กรุณากรอกเวลาแบบ 24 ชั่วโมง HH:MM เช่น 20:30", true);
-    return;
-  }
-  if (!warTimeConfirmed) {
-    setWarCreateMessage("กรุณากดปุ่มยืนยันเวลาเริ่มวอร์ก่อนสร้างตี้", true);
-    return;
-  }
   if (!Number.isInteger(raidCount) || raidCount < 1 || raidCount > 4) {
     setWarCreateMessage("จำนวน Raid ต้องอยู่ระหว่าง 1–4", true);
     return;
@@ -2613,8 +2604,6 @@ async function handleWarCreate(event) {
 
     $("war-create-panel")?.classList.add("hidden");
     form.reset();
-    warTimeConfirmed = false;
-    updateWarTimeConfirmation();
     updateWarCreateMode();
     await loadWarEvents();
     setWarCreateMessage("สร้างตี้วอร์สำเร็จแล้ว");
@@ -2626,17 +2615,6 @@ async function handleWarCreate(event) {
     submit.disabled = false;
     submit.textContent = "สร้างตี้วอร์";
   }
-}
-
-function updateWarTimeConfirmation(message = "ยังไม่ได้ยืนยันเวลา", isError = false) {
-  const status = $("war-time-confirm-status");
-  if (status) {
-    status.textContent = message;
-    status.classList.toggle("is-confirmed", warTimeConfirmed && !isError);
-    status.classList.toggle("is-error", isError);
-  }
-  const button = $("war-time-confirm");
-  if (button) button.textContent = warTimeConfirmed ? "ยืนยันแล้ว" : "ยืนยันเวลา";
 }
 
 function subscribeToWarRealtime() {
@@ -2680,20 +2658,6 @@ function registerWarCreationEvents() {
   document.querySelectorAll('input[name="war-mode"]').forEach(input => input.addEventListener("change", updateWarCreateMode));
   $("war-raid-count")?.addEventListener("change", updateWarCreateMode);
   $("war-create-form")?.addEventListener("submit", handleWarCreate);
-  $("war-start-time")?.addEventListener("input", () => {
-    warTimeConfirmed = false;
-    updateWarTimeConfirmation();
-  });
-  $("war-time-confirm")?.addEventListener("click", () => {
-    const time = String($("war-start-time")?.value || "").trim();
-    if (!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(time)) {
-      warTimeConfirmed = false;
-      updateWarTimeConfirmation("กรุณากรอกเวลา HH:MM ให้ถูกต้อง", true);
-      return;
-    }
-    warTimeConfirmed = true;
-    updateWarTimeConfirmation(`ยืนยันเวลาเริ่มวอร์ ${time} แล้ว`);
-  });
   const dateInput = $("war-event-date");
   if (dateInput) {
     const now = new Date();
