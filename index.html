@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/kanit@5.2.6/index.css">
   <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=20261108-war-records-kanit-5">
+  <link rel="stylesheet" href="style.css?v=20261108-guild-rules-1">
 
   <script>
     (function loadGuildApp() {
@@ -39,7 +39,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=20261108-war-records-kanit-5";
+          app.src = "app.js?v=20261108-guild-rules-1";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -468,7 +468,7 @@
       </section>
 
       <!-- ============ WAR ATTENDANCE ============ -->
-      <section id="page-war-attendance" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">WAR ATTENDANCE</span><h1>เช็คชื่อวอร์</h1><p>ตรวจสอบรายชื่อและปาร์ตี้ของ Guild War ที่ฝ่ายบริหารเผยแพร่แล้ว</p></div><section class="panel"><div class="panel-heading"><div><span class="panel-kicker">PUBLISHED WAR ROSTER</span><h3>รายชื่อสมาชิกในแต่ละ Raid</h3></div></div><div id="war-attendance-content"><div class="empty-state"><span>◷</span><h3>กำลังโหลดรายการวอร์</h3><p>รายชื่อจะปรากฏเมื่อฝ่ายบริหาร Publish วอร์</p></div></div></section></section>
+      <section id="page-war-attendance" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">WAR ATTENDANCE</span><h1>เช็คชื่อวอร์</h1><p>ตรวจสอบรายชื่อและปาร์ตี้ของ Guild War</p></div><section class="panel"><div class="panel-heading"><div><span class="panel-kicker">PUBLISHED WAR ROSTER</span><h3>รายชื่อสมาชิกในแต่ละ Raid</h3></div></div><div id="war-attendance-content"><div class="empty-state"><span>◷</span><h3>กำลังโหลดรายการวอร์</h3><p>รายชื่อปาร์ตี้วอร์จะแสดงที่นี่เมื่อจัดตี้กิลด์วอร์เสร็จแล้ว</p></div></div></section></section>
 
 <section id="page-war-stats" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">WAR PERFORMANCE</span><h1>สถิติการวอร์</h1><p>บันทึกผลการแข่งขันย้อนหลัง พร้อมสรุปสถิติแพ้ชนะรายกิลด์และภาพรวมทั้งหมด</p></div>
 <section class="panel"><div class="panel-heading"><h3>บันทึกผลวอร์</h3></div><form id="war-record-form" class="war-record-form"><div class="war-record-form-grid"><div class="form-group"><label for="war-record-opponent">ชื่อกิลด์คู่แข่ง</label><input id="war-record-opponent" maxlength="80" required></div><div class="form-group"><label for="war-record-date">วันที่วอร์</label><input id="war-record-date" type="date" required></div><div class="form-group"><label for="war-record-result">ผลการแข่งขัน</label><select id="war-record-result" required><option value="">เลือกผลวอร์</option><option value="win">ชนะ</option><option value="loss">แพ้</option></select></div></div><div class="form-group"><label for="war-record-images">รูปภาพผลวอร์ในเกม (เลือกได้หลายรูป)</label><input id="war-record-images" type="file" accept="image/*" multiple required><small>สูงสุด 10 รูป ขนาดไม่เกิน 10 MB ต่อรูป</small></div><div id="war-record-message" class="message hidden"></div><div class="war-record-submit-row"><span>กดยืนยันเพื่อบันทึกผลวอร์เป็น Record</span><button id="war-record-submit" class="btn btn-primary" type="submit">ยืนยันและบันทึกผลวอร์</button></div></form></section>
@@ -581,58 +581,36 @@
       </section>
 
       <!-- ============ GUILD RULES ============ -->
-      <section id="page-rules" class="page page-padded hidden">
-        <div class="page-intro">
-          <span class="section-kicker">GUILD GUIDELINES</span>
-          <h1>กฎกิลด์</h1>
-          <p>อ่านข้อกำหนดและแนวทางการอยู่ร่วมกันของสมาชิก 4AM</p>
-        </div>
+<section id="page-rules" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">GUILD GUIDELINES</span><h1>กฎกิลด์</h1><p>อ่านข้อกำหนดและแนวทางการอยู่ร่วมกันของสมาชิก 4AM</p></div><div class="settings-grid rule-cards-grid">
+<section class="panel rule-card" data-rule-card="regulations">
+<div class="panel-heading"><div><span class="panel-kicker">GUILD REGULATIONS</span><h3>กฎระเบียบกิลด์</h3></div><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden" data-rule-edit="regulations" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button></div>
+<div class="rule-content" id="rule-content-regulations"><div class="empty-state"><span>◈</span><h3>ยังไม่มีรายละเอียด</h3><p>รายละเอียดของหัวข้อนี้จะแสดงที่นี่</p></div></div>
+<button type="button" class="btn btn-primary rule-add-btn" data-rule-add="regulations">＋ เพิ่มรายละเอียด</button>
+<div class="rule-editor hidden" id="rule-editor-regulations">
+<div class="rule-editor-toolbar"><button type="button" data-rule-command="bold"><b>B</b></button><button type="button" data-rule-command="italic"><i>I</i></button><button type="button" data-rule-command="underline"><u>U</u></button><span></span><button type="button" data-rule-command="justifyLeft">ชิดซ้าย</button><button type="button" data-rule-command="justifyCenter">กึ่งกลาง</button><button type="button" data-rule-command="justifyRight">ชิดขวา</button><span></span><button type="button" data-rule-emoji>😊 Emoji</button><button type="button" data-rule-image>▧ รูป / GIF</button><input type="file" class="hidden" data-rule-image-input accept="image/png,image/jpeg,image/webp,image/gif"></div>
+<div class="rule-editor-body" contenteditable="true" data-rule-editor="regulations" role="textbox" aria-multiline="true" data-placeholder="พิมพ์รายละเอียดกฎที่นี่..."></div>
+<small>รองรับอีโมจิ รูปภาพ และ GIF · ไม่เกิน 8 MB ต่อรูป</small>
+<div class="rule-editor-actions"><button type="button" class="btn btn-outline" data-rule-cancel="regulations">ยกเลิก</button><button type="button" class="btn btn-primary" data-rule-save="regulations">บันทึกรายละเอียด</button></div><p class="message" data-rule-message="regulations"></p></div></section>
 
-        <div class="settings-grid">
-          <section class="panel">
-            <div class="panel-heading">
-              <div>
-                <span class="panel-kicker">GUILD REGULATIONS</span>
-                <h3>กฎระเบียบกิลด์</h3>
-              </div>
-            </div>
-            <div class="empty-state">
-              <span>◈</span>
-              <h3>ยังไม่มีเนื้อหากฎระเบียบ</h3>
-              <p>ประกาศข้อกำหนดทั่วไปและแนวทางการเป็นสมาชิกกิลด์ที่นี่</p>
-            </div>
-          </section>
+<section class="panel rule-card" data-rule-card="war">
+<div class="panel-heading"><div><span class="panel-kicker">EVENT &amp; GUILD WAR RULES</span><h3>กฎกิจกรรมและกิลด์วอร์</h3></div><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden" data-rule-edit="war" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button></div>
+<div class="rule-content" id="rule-content-war"><div class="empty-state"><span>◈</span><h3>ยังไม่มีรายละเอียด</h3><p>รายละเอียดของหัวข้อนี้จะแสดงที่นี่</p></div></div>
+<button type="button" class="btn btn-primary rule-add-btn" data-rule-add="war">＋ เพิ่มรายละเอียด</button>
+<div class="rule-editor hidden" id="rule-editor-war">
+<div class="rule-editor-toolbar"><button type="button" data-rule-command="bold"><b>B</b></button><button type="button" data-rule-command="italic"><i>I</i></button><button type="button" data-rule-command="underline"><u>U</u></button><span></span><button type="button" data-rule-command="justifyLeft">ชิดซ้าย</button><button type="button" data-rule-command="justifyCenter">กึ่งกลาง</button><button type="button" data-rule-command="justifyRight">ชิดขวา</button><span></span><button type="button" data-rule-emoji>😊 Emoji</button><button type="button" data-rule-image>▧ รูป / GIF</button><input type="file" class="hidden" data-rule-image-input accept="image/png,image/jpeg,image/webp,image/gif"></div>
+<div class="rule-editor-body" contenteditable="true" data-rule-editor="war" role="textbox" aria-multiline="true" data-placeholder="พิมพ์รายละเอียดกฎที่นี่..."></div>
+<small>รองรับอีโมจิ รูปภาพ และ GIF · ไม่เกิน 8 MB ต่อรูป</small>
+<div class="rule-editor-actions"><button type="button" class="btn btn-outline" data-rule-cancel="war">ยกเลิก</button><button type="button" class="btn btn-primary" data-rule-save="war">บันทึกรายละเอียด</button></div><p class="message" data-rule-message="war"></p></div></section>
 
-          <section class="panel">
-            <div class="panel-heading">
-              <div>
-                <span class="panel-kicker">EVENT &amp; GUILD WAR RULES</span>
-                <h3>กฎกิจกรรมและกิลด์วอร์</h3>
-              </div>
-            </div>
-            <div class="empty-state">
-              <span>⚔</span>
-              <h3>ยังไม่มีเนื้อหากฎกิจกรรม</h3>
-              <p>รายละเอียดการเข้าร่วมกิจกรรม การเช็คชื่อ และการจัดทีมวอร์จะแสดงที่นี่</p>
-            </div>
-          </section>
-
-          <section class="panel">
-            <div class="panel-heading">
-              <div>
-                <span class="panel-kicker">DISCORD RULES</span>
-                <h3>กฎ Discord กิลด์</h3>
-              </div>
-            </div>
-            <div class="empty-state">
-              <span>◉</span>
-              <h3>ยังไม่มีเนื้อหากฎ Discord</h3>
-              <p>แนวทางการใช้งานห้องแชตและการสื่อสารภายใน Discord จะแสดงที่นี่</p>
-            </div>
-          </section>
-        </div>
-      </section>
-
+<section class="panel rule-card" data-rule-card="discord">
+<div class="panel-heading"><div><span class="panel-kicker">DISCORD RULES</span><h3>กฎ Discord กิลด์</h3></div><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden" data-rule-edit="discord" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button></div>
+<div class="rule-content" id="rule-content-discord"><div class="empty-state"><span>◈</span><h3>ยังไม่มีรายละเอียด</h3><p>รายละเอียดของหัวข้อนี้จะแสดงที่นี่</p></div></div>
+<button type="button" class="btn btn-primary rule-add-btn" data-rule-add="discord">＋ เพิ่มรายละเอียด</button>
+<div class="rule-editor hidden" id="rule-editor-discord">
+<div class="rule-editor-toolbar"><button type="button" data-rule-command="bold"><b>B</b></button><button type="button" data-rule-command="italic"><i>I</i></button><button type="button" data-rule-command="underline"><u>U</u></button><span></span><button type="button" data-rule-command="justifyLeft">ชิดซ้าย</button><button type="button" data-rule-command="justifyCenter">กึ่งกลาง</button><button type="button" data-rule-command="justifyRight">ชิดขวา</button><span></span><button type="button" data-rule-emoji>😊 Emoji</button><button type="button" data-rule-image>▧ รูป / GIF</button><input type="file" class="hidden" data-rule-image-input accept="image/png,image/jpeg,image/webp,image/gif"></div>
+<div class="rule-editor-body" contenteditable="true" data-rule-editor="discord" role="textbox" aria-multiline="true" data-placeholder="พิมพ์รายละเอียดกฎที่นี่..."></div>
+<small>รองรับอีโมจิ รูปภาพ และ GIF · ไม่เกิน 8 MB ต่อรูป</small>
+<div class="rule-editor-actions"><button type="button" class="btn btn-outline" data-rule-cancel="discord">ยกเลิก</button><button type="button" class="btn btn-primary" data-rule-save="discord">บันทึกรายละเอียด</button></div><p class="message" data-rule-message="discord"></p></div></section></div></section>
 
       <!-- ============ DEVELOPER SYSTEM MANAGEMENT ============ -->
       <section id="page-system-management" class="page page-padded hidden">

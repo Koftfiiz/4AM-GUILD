@@ -2846,6 +2846,75 @@ function registerSystemRoleEvents() {
   // System Role dropdowns receive direct listeners after each list render.
 }
 
+// GUILD RULES
+const GUILD_RULE_KEYS=["regulations","war","discord"];
+const GUILD_RULE_BUCKET="guild-rule-images";
+let guildRulesCache={};
+function sanitizeGuildRuleHTML(html){
+ const parsed=new DOMParser().parseFromString(String(html||""),"text/html");
+ const allowed=new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","H2","H3","H4","BLOCKQUOTE","SPAN","IMG"]);
+ const prefix=SUPABASE_URL+"/storage/v1/object/public/"+GUILD_RULE_BUCKET+"/";
+ const clean=node=>{
+  if(node.nodeType===Node.TEXT_NODE)return document.createTextNode(node.textContent||"");
+  if(node.nodeType!==Node.ELEMENT_NODE)return document.createDocumentFragment();
+  const tag=node.tagName;
+  if(!allowed.has(tag)){const f=document.createDocumentFragment();[...node.childNodes].forEach(n=>f.appendChild(clean(n)));return f;}
+  const el=parsed.createElement(tag.toLowerCase());
+  if(tag==="IMG"){const src=node.getAttribute("src")||"";if(!src.startsWith(prefix))return document.createTextNode("");el.src=src;el.alt=(node.alt||"Guild rule image").slice(0,120);el.loading="lazy";el.className="guild-rule-image";return el;}
+  if(["DIV","P","SPAN"].includes(tag)&&["left","center","right","justify"].includes(node.style?.textAlign))el.style.textAlign=node.style.textAlign;
+  [...node.childNodes].forEach(n=>el.appendChild(clean(n)));return el;
+ };
+ const out=parsed.createElement("div");[...parsed.body.childNodes].forEach(n=>out.appendChild(clean(n)));return out.innerHTML;
+}
+function renderGuildRuleCard(key,html){
+ const content=$("rule-content-"+key),edit=document.querySelector('[data-rule-edit="'+key+'"]'),add=document.querySelector('[data-rule-add="'+key+'"]');
+ const has=Boolean(String(html||"").trim());
+ if(content)content.innerHTML=has?sanitizeGuildRuleHTML(html):'<div class="empty-state"><span>◈</span><h3>ยังไม่มีรายละเอียด</h3><p>ฝ่ายบริหารสามารถเพิ่มรายละเอียดของหัวข้อนี้ได้</p></div>';
+ edit?.classList.toggle("hidden",!has||!isManagement());add?.classList.toggle("hidden",has||!isManagement());
+}
+async function loadGuildRules(){
+ const {data,error}=await supabaseClient.from("guild_rule_details").select("rule_key,content_html,updated_at").in("rule_key",GUILD_RULE_KEYS);
+ if(error){console.error("Load guild rules:",error);GUILD_RULE_KEYS.forEach(k=>{const el=$("rule-content-"+k);if(el)el.textContent="โหลดกฎไม่สำเร็จ: "+error.message;});return;}
+ guildRulesCache={};(data||[]).forEach(row=>guildRulesCache[row.rule_key]=row);
+ GUILD_RULE_KEYS.forEach(k=>renderGuildRuleCard(k,guildRulesCache[k]?.content_html||""));
+}
+function openGuildRuleEditor(key){
+ if(!isManagement()||!GUILD_RULE_KEYS.includes(key))return;
+ const panel=$("rule-editor-"+key),body=document.querySelector('[data-rule-editor="'+key+'"]');if(!panel||!body)return;
+ body.innerHTML=sanitizeGuildRuleHTML(guildRulesCache[key]?.content_html||"");panel.classList.remove("hidden");
+ document.querySelector('[data-rule-add="'+key+'"]')?.classList.add("hidden");document.querySelector('[data-rule-edit="'+key+'"]')?.classList.add("hidden");body.focus();
+}
+async function uploadGuildRuleImage(key,file){
+ if(!isManagement())throw new Error("ไม่มีสิทธิ์อัปโหลดรูป");
+ if(!file||!/^image\/(png|jpeg|webp|gif)$/.test(file.type))throw new Error("รองรับ PNG, JPG, WEBP และ GIF");
+ if(file.size>8*1024*1024)throw new Error("รูปต้องมีขนาดไม่เกิน 8 MB");
+ const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"}[file.type],path=currentUser.id+"/"+key+"/"+crypto.randomUUID()+"."+ext;
+ const {error}=await supabaseClient.storage.from(GUILD_RULE_BUCKET).upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});if(error)throw error;
+ return supabaseClient.storage.from(GUILD_RULE_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+function registerGuildRuleEvents(){
+ const page=$("page-rules");if(!page||page.dataset.eventsReady==="true")return;page.dataset.eventsReady="true";
+ page.addEventListener("click",async event=>{
+  const add=event.target.closest("[data-rule-add]"),edit=event.target.closest("[data-rule-edit]"),cancel=event.target.closest("[data-rule-cancel]"),save=event.target.closest("[data-rule-save]"),cmd=event.target.closest("[data-rule-command]"),emoji=event.target.closest("[data-rule-emoji]"),image=event.target.closest("[data-rule-image]");
+  if(add){openGuildRuleEditor(add.dataset.ruleAdd);return;}if(edit){openGuildRuleEditor(edit.dataset.ruleEdit);return;}
+  if(cancel){const k=cancel.dataset.ruleCancel;$("rule-editor-"+k)?.classList.add("hidden");renderGuildRuleCard(k,guildRulesCache[k]?.content_html||"");return;}
+  if(cmd){const k=cmd.closest(".rule-card")?.dataset.ruleCard,body=document.querySelector('[data-rule-editor="'+k+'"]');if(body){body.focus();document.execCommand(cmd.dataset.ruleCommand,false,null);}return;}
+  if(emoji){const k=emoji.closest(".rule-card")?.dataset.ruleCard,body=document.querySelector('[data-rule-editor="'+k+'"]'),value=window.prompt("พิมพ์หรือวางอีโมจิ","✨");if(body&&value){body.focus();document.execCommand("insertText",false,value);}return;}
+  if(image){image.closest(".rule-card")?.querySelector("[data-rule-image-input]")?.click();return;}
+  if(save){
+   const k=save.dataset.ruleSave;if(!isManagement())return;const body=document.querySelector('[data-rule-editor="'+k+'"]'),msg=document.querySelector('[data-rule-message="'+k+'"]');if(!body)return;save.disabled=true;
+   try{const html=sanitizeGuildRuleHTML(body.innerHTML),{data,error}=await supabaseClient.from("guild_rule_details").upsert({rule_key:k,content_html:html,updated_by:currentUser.id,updated_at:new Date().toISOString()},{onConflict:"rule_key"}).select("rule_key,content_html,updated_at").single();if(error)throw error;guildRulesCache[k]=data;$("rule-editor-"+k)?.classList.add("hidden");renderGuildRuleCard(k,data.content_html);if(msg){msg.textContent="บันทึกรายละเอียดเรียบร้อยแล้ว";msg.className="message success";}}
+   catch(error){console.error("Save rule:",error);if(msg){msg.textContent="บันทึกไม่สำเร็จ: "+error.message;msg.className="message error";}}finally{save.disabled=false;}
+  }
+ });
+ page.addEventListener("change",async event=>{
+  const input=event.target.closest("[data-rule-image-input]");if(!input||!input.files?.length)return;const k=input.closest(".rule-card")?.dataset.ruleCard,body=document.querySelector('[data-rule-editor="'+k+'"]'),btn=input.closest(".rule-editor-toolbar")?.querySelector("[data-rule-image]");
+  try{if(btn){btn.disabled=true;btn.textContent="กำลังอัปโหลด...";}const url=await uploadGuildRuleImage(k,input.files[0]);if(body){body.focus();document.execCommand("insertHTML",false,'<img src="'+escapeHTML(url)+'" alt="Guild rule image">');}}
+  catch(error){alert(error.message||"อัปโหลดรูปไม่สำเร็จ");}finally{input.value="";if(btn){btn.disabled=false;btn.textContent="▧ รูป / GIF";}}
+ });
+}
+registerGuildRuleEvents();
+
 // ==========================================
 // PAGE NAVIGATION
 // ==========================================
@@ -2928,6 +2997,7 @@ function openGuildPage(pageName) {
   if (pageName === "war-attendance") loadWarAttendance();
   if (pageName === "war-stats") loadWarMatchRecords();
   if (pageName === "war-attendance-stats") loadWarAttendanceStatistics();
+  if (pageName === "rules") loadGuildRules();
 }
 
 async function copyGameUID(button) {
@@ -3215,6 +3285,7 @@ function registerAppEventListeners() {
   registerSystemRoleEvents();
   registerWarCreationEvents();
   registerWarRecordAndAttendanceEvents();
+  registerGuildRuleEvents();
 
   $("account-details")?.addEventListener("submit", async (event) => {
     if (event.target.id !== "game-uid-form") return;
