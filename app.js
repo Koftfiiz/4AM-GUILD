@@ -2607,10 +2607,10 @@ function warSignupEventState(event,now=Date.now()){
   if(now>=close)return "closed";
   return "open";
 }
-function warSignupClassSummary(rows){
+function warSignupClassSummary(rows,members=allMembers){
   const classes=new Map();
   (rows||[]).forEach(row=>{
-    const member=allMembers.find(item=>item.user_id===row.member_id);
+    const member=(members||[]).find(item=>item.user_id===row.member_id);
     const name=getMemberClass(member||{});
     const key=name||"ไม่ระบุอาชีพ";
     if(!classes.has(key))classes.set(key,{name:key,total:0,primary:0,reserve:0});
@@ -2619,10 +2619,10 @@ function warSignupClassSummary(rows){
   });
   return [...classes.values()].sort((a,b)=>a.name.localeCompare(b.name,"th"));
 }
-function renderWarSignupSummary(rows){
+function renderWarSignupSummary(rows,members=allMembers){
   const primary=(rows||[]).filter(row=>Number(row.queue_position)>=1&&Number(row.queue_position)<=60);
   const reserve=(rows||[]).filter(row=>Number(row.queue_position)>=61&&Number(row.queue_position)<=80);
-  const summary=warSignupClassSummary(rows);
+  const summary=warSignupClassSummary(rows,members);
   return '<div class="war-signup-summary"><div class="war-signup-summary-head"><strong>REGISTRATION SUMMARY</strong><span>สรุปจำนวนสมาชิกแยกตามอาชีพ</span></div>'+
     '<div class="war-signup-summary-stats"><div><strong>'+rows.length+'</strong><span>ผู้ลงชื่อทั้งหมด</span></div><div><strong>'+primary.length+'</strong><span>ตัวจริง</span></div><div><strong>'+reserve.length+'</strong><span>ตัวสำรอง</span></div></div>'+
     '<div class="war-signup-class-summary">'+(summary.length?summary.map(item=>{
@@ -2659,16 +2659,25 @@ async function loadWarSignups(){
     .eq("active",true).order("character_name");
   if(memberResult.error){box.innerHTML='<div class="system-role-error">'+escapeHTML(memberResult.error.message)+'</div>';return;}
   const rosterMembers=memberResult.data||[];
-  const leaveResults=await Promise.all(events.map(async event=>{
-    const q=await supabaseClient.rpc("get_war_leave_roster",{p_event_id:event.id});
-    return {eventId:event.id,rows:q.error?[]:(q.data||[]),error:q.error||null};
-  }));
+  const [leaveResults,attendanceResults]=await Promise.all([
+    Promise.all(events.map(async event=>{
+      const q=await supabaseClient.rpc("get_war_leave_roster",{p_event_id:event.id});
+      return {eventId:event.id,rows:q.error?[]:(q.data||[]),error:q.error||null};
+    })),
+    Promise.all(events.map(async event=>{
+      const q=await supabaseClient.rpc("get_war_attendance_roster",{p_event_id:event.id});
+      return {eventId:event.id,rows:q.error?[]:(q.data||[]),error:q.error||null};
+    }))
+  ]);
   const leaveByEvent=new Map(leaveResults.map(x=>[x.eventId,x.rows]));
+  const attendanceByEvent=new Map(attendanceResults.map(x=>[x.eventId,x.rows]));
   const leaveRpcUnavailable=leaveResults.some(x=>x.error);
+  const attendanceRpcUnavailable=attendanceResults.some(x=>x.error);
   const allSignups=signups||[],now=Date.now();
   box.innerHTML=events.map(event=>{
     const rows=allSignups.filter(row=>row.event_id===event.id);
     const leaveRows=leaveByEvent.get(event.id)||[];
+    const attendanceRows=attendanceByEvent.get(event.id)||[];
     const state=warSignupEventState(event,now);
     const own=rows.find(row=>row.member_id===currentUser.id);
     const stateLabel=state==="scheduled"?"รอเปิดรับสมัคร":state==="open"?"เปิดรับสมัคร":state==="closed"?"ปิดรับสมัคร":"ข้อมูลเวลาไม่ถูกต้อง";
@@ -2687,19 +2696,17 @@ async function loadWarSignups(){
     }else{
       action='<span class="war-signup-status">ปิดรับสมัครแล้ว</span>';
     }
-    const rosterHtml=renderWarSignupRoster(rows,rosterMembers,leaveRows,state);
-    const summary=state==="closed"?renderWarSignupSummary(rows):"";
+    const rosterHtml=renderWarSignupRoster(rows,rosterMembers,leaveRows,attendanceRows);
+    const summary=renderWarSignupSummary(rows,rosterMembers);
     return '<article class="war-signup-card"><div class="war-signup-card-top"><div class="war-signup-card-heading"><h3>'+escapeHTML(event.event_name)+'</h3><p>'+formatDate(event.event_date)+' · เริ่มวอร์ '+formatTime(event.start_time)+'</p></div><div class="war-signup-badges"><span class="war-signup-state '+stateClass+'">'+stateLabel+'</span><span class="war-signup-type">'+typeLabel+'</span></div></div>'+
       '<div class="war-signup-event-meta"><span>เริ่มลงชื่อ: '+warSignupDateTime(event.signup_opens_at)+'</span><span>ปิดรับ: '+warSignupDateTime(event.signup_closes_at)+'</span><span>ผู้ลงชื่อ: '+capacity+'</span></div>'+
       (event.description?'<p class="war-signup-description">'+escapeHTML(String(event.description).replace(/\[\[WAR_CONFIG:[\s\S]*?\]\]/,"").trim())+'</p>':"")+
-      '<div class="war-signup-card-bottom"><div class="war-signup-action">'+action+'</div></div>'+rosterHtml+(leaveRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดรายชื่อผู้แจ้งลาไม่ได้ กรุณาติดตั้งระบบแจ้งลาวอร์ใน Supabase</p>':"")+summary+'</article>';
+      '<div class="war-signup-card-bottom"><div class="war-signup-action">'+action+'</div></div>'+rosterHtml+(leaveRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดรายชื่อผู้แจ้งลาไม่ได้ กรุณาตรวจสอบ SQL ระบบแจ้งลาวอร์</p>':"")+(attendanceRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดสถานะขาดวอร์ไม่ได้ กรุณาติดตั้ง SQL ระบบสรุปการเข้า war</p>':"")+summary+'</article>';
   }).join("");
 }
-function renderWarSignupRoster(signups,members,leaveRows,eventState){
+function renderWarSignupRoster(signups,members,leaveRows,attendanceRows){
   const memberMap=new Map((members||[]).map(member=>[member.user_id,member]));
-  const signupIds=new Set((signups||[]).map(row=>row.member_id));
-  const validLeaves=(leaveRows||[]).filter(row=>["pending","approved"].includes(row.status));
-  const leaveMap=new Map(validLeaves.map(row=>[row.member_id,row.status]));
+  const leaveMap=new Map((leaveRows||[]).map(row=>[row.member_id,row.status]));
   const primary=(signups||[]).filter(row=>Number(row.queue_position)>=1&&Number(row.queue_position)<=60).sort((a,b)=>Number(a.queue_position)-Number(b.queue_position));
   const reserve=(signups||[]).filter(row=>Number(row.queue_position)>=61&&Number(row.queue_position)<=80).sort((a,b)=>Number(a.queue_position)-Number(b.queue_position));
   const renderSignupList=(items,kind)=>{
@@ -2708,18 +2715,23 @@ function renderWarSignupRoster(signups,members,leaveRows,eventState){
       const member=memberMap.get(row.member_id)||{};
       const className=getMemberClass(member),info=getClassInfo(className);
       const icon=info?.iconPath?'<img class="war-roster-class-icon" src="'+escapeHTML(info.iconPath)+'" alt="'+escapeHTML(className)+'" loading="lazy">':'<span class="war-roster-class-fallback">✦</span>';
-      const leaveStatus=leaveMap.get(row.member_id);
-      return '<div class="war-roster-row"><span class="war-roster-number">#'+Number(row.queue_position||0)+'</span>'+icon+'<strong>'+escapeHTML(getMemberName(member))+'</strong><span class="war-roster-row-note">'+(leaveStatus?'<em class="war-roster-leave-flag">แจ้งลา'+(leaveStatus==="pending"?" · รอตรวจสอบ":"")+'</em>':kind)+'</span></div>';
+      return '<div class="war-roster-row"><span class="war-roster-number">#'+Number(row.queue_position||0)+'</span>'+icon+'<strong>'+escapeHTML(getMemberName(member))+'</strong><span class="war-roster-row-note">'+kind+'</span></div>';
     }).join("")+'</div>';
   };
-  const leaveList=validLeaves.map(row=>memberMap.get(row.member_id)).filter(Boolean);
-  const leaveHtml=leaveList.length?'<div class="war-roster-name-list">'+leaveList.map(member=>'<div class="war-roster-name-row"><span class="war-roster-bullet">◆</span><strong>'+escapeHTML(getMemberName(member))+'</strong><small>'+(leaveMap.get(member.user_id)==="approved"?"รับทราบแล้ว":"รอตรวจสอบ")+'</small></div>').join("")+'</div>':'<div class="war-roster-empty">ยังไม่มีสมาชิกแจ้งลา</div>';
-  const absent=eventState==="closed"?(members||[]).filter(member=>!signupIds.has(member.user_id)&&!leaveMap.has(member.user_id)): [];
-  const absentHtml=eventState==="closed"?(absent.length?'<div class="war-roster-name-list">'+absent.map(member=>'<div class="war-roster-name-row"><span class="war-roster-bullet">◆</span><strong>'+escapeHTML(getMemberName(member))+'</strong></div>').join("")+'</div>':'<div class="war-roster-empty">ไม่มีสมาชิกขาดวอร์</div>'):'<div class="war-roster-empty">ระบบจะสรุปรายชื่อผู้ขาดวอร์หลังปิดรับสมัคร</div>';
+  const leaveList=(leaveRows||[]).map(row=>({row,member:memberMap.get(row.member_id)})).filter(x=>x.member);
+  const leaveStatusLabel=status=>status==="approved"?"รับทราบแล้ว":status==="rejected"?"ไม่อนุมัติ":"รอตรวจสอบ";
+  const leaveHtml=leaveList.length?'<div class="war-roster-name-list">'+leaveList.map(({row,member})=>'<div class="war-roster-name-row"><span class="war-roster-bullet">◆</span><strong>'+escapeHTML(getMemberName(member))+'</strong><small>'+leaveStatusLabel(row.status)+'</small></div>').join("")+'</div>':'<div class="war-roster-empty">ยังไม่มีสมาชิกแจ้งลาในระบบ</div>';
+  const attendanceMap=new Map((attendanceRows||[]).map(row=>[row.member_id,row.attendance_status]));
+  const absent=Array.from(attendanceMap.entries())
+    .filter(([memberId,status])=>status==="absent"&&!leaveMap.has(memberId))
+    .map(([memberId])=>memberMap.get(memberId)).filter(Boolean);
+  const hasAttendanceRecords=(attendanceRows||[]).length>0;
+  const absentHtml=absent.length?'<div class="war-roster-name-list">'+absent.map(member=>'<div class="war-roster-name-row"><span class="war-roster-bullet">◆</span><strong>'+escapeHTML(getMemberName(member))+'</strong></div>').join("")+'</div>':
+    (hasAttendanceRecords?'<div class="war-roster-empty">ไม่มีสมาชิกถูกบันทึกว่าขาดวอร์</div>':'<div class="war-roster-empty">รอฝ่ายจัดการบันทึกผลเช็กชื่อหลังวอร์</div>');
   return '<section class="war-signup-roster-board"><div class="war-roster-section"><div class="war-roster-section-head"><h4>รายชื่อผู้ลงชื่อ · ตัวจริง</h4><span>'+primary.length+'/60</span></div>'+renderSignupList(primary,"ตัวจริง")+'</div>'+
     '<div class="war-roster-section is-reserve"><div class="war-roster-section-head"><h4>รายชื่อผู้ลงชื่อ · ตัวสำรอง</h4><span>'+reserve.length+'/20</span></div>'+renderSignupList(reserve,"ตัวสำรอง")+'</div>'+
     '<div class="war-roster-section is-leave"><div class="war-roster-section-head"><h4>แจ้งลาวอร์</h4><span>'+leaveList.length+' คน</span></div>'+leaveHtml+'</div>'+
-    '<div class="war-roster-section is-absent"><div class="war-roster-section-head"><h4>ขาดวอร์</h4><span>'+(eventState==="closed"?absent.length+" คน":"รอสรุป")+'</span></div>'+absentHtml+'</div></section>';
+    '<div class="war-roster-section is-absent"><div class="war-roster-section-head"><h4>ขาดวอร์ (ไม่แจ้งลาและไม่มาร่วม)</h4><span>'+absent.length+' คน</span></div>'+absentHtml+'</div></section>';
 }
 
 let warLeaveEvents=[];
