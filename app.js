@@ -77,7 +77,7 @@ const PAGE_TITLES = {
   members: "สมาชิกกิลด์",
   war: "จัดตี้วอร์",
   "war-attendance": "เช็คชื่อวอร์",
-  "war-stats": "สถิติกิลด์วอร์",
+  "war-stats": "สถิติการวอร์",
   "war-attendance-stats": "สถิติการเข้าร่วมวอร์",
   rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
@@ -2491,12 +2491,12 @@ async function publishWarEvent(){
   catch(error){alert("Publish วอร์ไม่สำเร็จ: "+error.message);}
   finally{if(button){button.disabled=false;button.textContent="Publish";}}
 }
-let kanitFontCssPromise = null;
-// SVG ที่แปลงเป็นรูปใช้ฟอนต์ของหน้าเว็บไม่ได้ จึงต้องฝัง Kanit (ไทย+ละติน, ปกติ/หนา) ลงในไฟล์ SVG เอง
-function getKanitFontCss() {
-  if (!kanitFontCssPromise) {
-    kanitFontCssPromise = (async () => {
-      const css = await (await fetch("https://fonts.googleapis.com/css2?family=Kanit:wght@400;700&display=swap")).text();
+let thaiFontCssPromise = null;
+// SVG ที่แปลงเป็นรูปใช้ฟอนต์ของหน้าเว็บไม่ได้ จึงต้องฝัง Noto Sans Thai (ไทย+ละติน, ปกติ/หนา) ลงในไฟล์ SVG เอง
+function getThaiFontCss() {
+  if (!thaiFontCssPromise) {
+    thaiFontCssPromise = (async () => {
+      const css = await (await fetch("https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700&display=swap")).text();
       const faces = [...css.matchAll(/\/\*\s*(?:thai|latin)\s*\*\/\s*(@font-face\s*\{[^}]*\})/g)].map((match) => match[1]);
       const toDataUrl = (blob) => new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -2512,18 +2512,18 @@ function getKanitFontCss() {
       }));
       return embedded.join("\n");
     })().catch(() => {
-      kanitFontCssPromise = null;
+      thaiFontCssPromise = null;
       return "";
     });
   }
-  return kanitFontCssPromise;
+  return thaiFontCssPromise;
 }
 async function exportWarImage(){
   const event=allWarEvents.find(item=>item.id===selectedWarEventId);if(!event||!event.is_draft_confirmed)return;
   const config=getWarEventConfig(event),width=1600,height=240+config.raidCount*510,esc=value=>escapeHTML(value);
-  const parts=[`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#100b0d"/><rect x="24" y="24" width="1552" height="${height-48}" rx="22" fill="#1b1114" stroke="#b88b48" stroke-width="3"/><text x="70" y="88" fill="#d6ad68" font-size="48" font-family="Kanit" font-weight="700">4AM GUILD</text><text x="70" y="137" fill="#fff0df" font-size="30" font-family="Kanit" font-weight="700">${esc(event.event_name)}</text><text x="70" y="178" fill="#c9b6a5" font-size="21" font-family="Kanit">${esc(formatDate(event.event_date))} · ${esc(formatTime(event.start_time))}</text>`];
-  let y=220;for(const raid of ["A","B","C","D"].slice(0,config.raidCount)){parts.push(`<text x="70" y="${y}" fill="#d6ad68" font-size="30" font-family="Kanit" font-weight="700">RAID ${raid}</text>`);y+=18;for(let p=1;p<=5;p++){const party=currentWarParties.find(item=>item.raid===raid&&Number(item.party_number)===p),assigned=party?.war_party_members||[],x=70+(p-1)*300;parts.push(`<rect x="${x}" y="${y}" width="280" height="430" rx="12" fill="#25171b" stroke="#74552f" stroke-width="2"/><text x="${x+16}" y="${y+35}" fill="#e3bd7b" font-size="23" font-family="Kanit" font-weight="700">${raid}${p} · ${assigned.length}/6</text>`);for(let slot=1;slot<=6;slot++){const assignment=assigned.find(item=>Number(item.position)===slot),member=allMembers.find(item=>item.user_id===assignment?.member_id);parts.push(`<text x="${x+16}" y="${y+88+(slot-1)*55}" fill="${member?"#fff0df":"#8d7a72"}" font-size="17" font-family="Kanit">${slot}. ${esc(member?getMemberName(member):"Empty Slot")}</text><text x="${x+16}" y="${y+111+(slot-1)*55}" fill="#c9a76d" font-size="12" font-family="Kanit">${esc(member?getMemberClass(member):"")}</text>`);}}y+=470;}
-  parts.push("</svg>");const fontCss=await getKanitFontCss();if(fontCss)parts[0]=parts[0].replace(/^<svg[^>]*>/,tag=>tag+"<style>"+fontCss+"</style>");const svgUrl=URL.createObjectURL(new Blob([parts.join("")],{type:"image/svg+xml;charset=utf-8"}));
+  const parts=[`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#100b0d"/><rect x="24" y="24" width="1552" height="${height-48}" rx="22" fill="#1b1114" stroke="#b88b48" stroke-width="3"/><text x="70" y="88" fill="#d6ad68" font-size="48" font-family="Noto Sans Thai" font-weight="700">4AM GUILD</text><text x="70" y="137" fill="#fff0df" font-size="30" font-family="Noto Sans Thai" font-weight="700">${esc(event.event_name)}</text><text x="70" y="178" fill="#c9b6a5" font-size="21" font-family="Noto Sans Thai">${esc(formatDate(event.event_date))} · ${esc(formatTime(event.start_time))}</text>`];
+  let y=220;for(const raid of ["A","B","C","D"].slice(0,config.raidCount)){parts.push(`<text x="70" y="${y}" fill="#d6ad68" font-size="30" font-family="Noto Sans Thai" font-weight="700">RAID ${raid}</text>`);y+=18;for(let p=1;p<=5;p++){const party=currentWarParties.find(item=>item.raid===raid&&Number(item.party_number)===p),assigned=party?.war_party_members||[],x=70+(p-1)*300;parts.push(`<rect x="${x}" y="${y}" width="280" height="430" rx="12" fill="#25171b" stroke="#74552f" stroke-width="2"/><text x="${x+16}" y="${y+35}" fill="#e3bd7b" font-size="23" font-family="Noto Sans Thai" font-weight="700">${raid}${p} · ${assigned.length}/6</text>`);for(let slot=1;slot<=6;slot++){const assignment=assigned.find(item=>Number(item.position)===slot),member=allMembers.find(item=>item.user_id===assignment?.member_id);parts.push(`<text x="${x+16}" y="${y+88+(slot-1)*55}" fill="${member?"#fff0df":"#8d7a72"}" font-size="17" font-family="Noto Sans Thai">${slot}. ${esc(member?getMemberName(member):"Empty Slot")}</text><text x="${x+16}" y="${y+111+(slot-1)*55}" fill="#c9a76d" font-size="12" font-family="Noto Sans Thai">${esc(member?getMemberClass(member):"")}</text>`);}}y+=470;}
+  parts.push("</svg>");const fontCss=await getThaiFontCss();if(fontCss)parts[0]=parts[0].replace(/^<svg[^>]*>/,tag=>tag+"<style>"+fontCss+"</style>");const svgUrl=URL.createObjectURL(new Blob([parts.join("")],{type:"image/svg+xml;charset=utf-8"}));
   try{const img=new Image();img.src=svgUrl;await img.decode();const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;canvas.getContext("2d").drawImage(img,0,0);const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));if(!png)throw Error("PNG export failed");const url=URL.createObjectURL(png),link=document.createElement("a");link.href=url;link.download=`4AM-War-${event.event_date}.png`;link.click();URL.revokeObjectURL(url);}catch(error){alert("บันทึกรูปไม่สำเร็จ: "+error.message);}finally{URL.revokeObjectURL(svgUrl);}
 }
 async function loadWarAttendance(){
