@@ -2978,10 +2978,24 @@ function registerSystemRoleEvents() {
 let activeGuildRichEditor=null,savedGuildRichRange=null;
 function rememberGuildRichSelection(editor){if(editor)activeGuildRichEditor=editor;const s=window.getSelection();if(activeGuildRichEditor&&s&&s.rangeCount&&activeGuildRichEditor.contains(s.anchorNode))savedGuildRichRange=s.getRangeAt(0).cloneRange();}
 function restoreGuildRichSelection(){if(!activeGuildRichEditor)return false;activeGuildRichEditor.focus();const s=window.getSelection();if(s&&savedGuildRichRange){s.removeAllRanges();s.addRange(savedGuildRichRange);}return true;}
-function addGuildRichToolbarControls(){document.querySelectorAll(".rule-editor-toolbar").forEach(toolbar=>{if(toolbar.dataset.richEnhanced==="true")return;toolbar.dataset.richEnhanced="true";const box=document.createElement("div");box.className="rich-extra-controls";box.innerHTML='<label class="rich-control-label">รูปแบบ <select data-rich-select="format"><option value="p">ย่อหน้า</option><option value="h1">หัวข้อ 1</option><option value="h2">หัวข้อ 2</option><option value="h3">หัวข้อ 3</option><option value="h4">หัวข้อ 4</option><option value="blockquote">อ้างอิง</option></select></label><label class="rich-control-label">ขนาด <select data-rich-select="size"><option value="">ขนาดอักษร</option><option value="12px">12</option><option value="14px">14</option><option value="16px">16</option><option value="18px">18</option><option value="20px">20</option><option value="24px">24</option><option value="28px">28</option><option value="32px">32</option><option value="36px">36</option></select></label><label class="rich-control-label">ฟอนต์ <select data-rich-select="font"><option value="">ฟอนต์เดิม</option><option value="Arial">Arial</option><option value="Tahoma">Tahoma</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="monospace">Monospace</option></select></label><label class="rich-color-control">A <input type="color" data-rich-color="text" value="#f4e9e7" title="สีตัวอักษร"></label><label class="rich-color-control">▰ <input type="color" data-rich-color="highlight" value="#7d1824" title="สีพื้นหลังข้อความ"></label><button type="button" data-rich-command="strikeThrough" title="ขีดฆ่า"><s>S</s></button><button type="button" data-rich-command="superscript" title="ตัวยก">x²</button><button type="button" data-rich-command="subscript" title="ตัวห้อย">x₂</button><button type="button" data-rich-command="indent" title="เพิ่มระยะเยื้อง">⇥</button><button type="button" data-rich-command="outdent" title="ลดระยะเยื้อง">⇤</button><button type="button" data-rich-command="insertHorizontalRule" title="เส้นคั่น">―</button><button type="button" data-rich-action="link">🔗 ลิงก์</button><button type="button" data-rich-action="table">▦ ตาราง</button><button type="button" data-rich-command="removeFormat" title="ล้างรูปแบบ">Tx</button>';toolbar.appendChild(box);});document.querySelectorAll('[contenteditable="true"]').forEach(e=>{e.addEventListener("focus",()=>rememberGuildRichSelection(e));e.addEventListener("keyup",()=>rememberGuildRichSelection(e));e.addEventListener("mouseup",()=>rememberGuildRichSelection(e));});}
-function applyGuildRichStyle(prop,value){if(!restoreGuildRichSelection())return;if(!savedGuildRichRange||savedGuildRichRange.collapsed){alert("กรุณาลากเลือกข้อความก่อนจัดรูปแบบ");return;}const span=document.createElement("span");span.style[prop]=value;try{savedGuildRichRange.surroundContents(span);}catch(_){const f=savedGuildRichRange.extractContents();span.appendChild(f);savedGuildRichRange.insertNode(span);}const s=window.getSelection(),r=document.createRange();r.selectNodeContents(span);s.removeAllRanges();s.addRange(r);rememberGuildRichSelection(activeGuildRichEditor);}
-function handleGuildRichControl(event){const b=event.target.closest("[data-rich-command],[data-rich-action]");if(b){event.preventDefault();if(b.dataset.richCommand&&restoreGuildRichSelection())document.execCommand(b.dataset.richCommand,false,null);if(b.dataset.richAction==="link"&&restoreGuildRichSelection()){const url=prompt("ใส่ URL ของลิงก์","https://");if(url&&/^https?:\/\//i.test(url))document.execCommand("createLink",false,url);}if(b.dataset.richAction==="table"&&restoreGuildRichSelection()){const rows=Math.min(10,Math.max(1,Number(prompt("จำนวนแถว","2"))||2)),cols=Math.min(8,Math.max(1,Number(prompt("จำนวนคอลัมน์","2"))||2));let t='<table class="guild-rich-table"><tbody>';for(let r=0;r<rows;r++){t+="<tr>";for(let c=0;c<cols;c++)t+="<td><br></td>";t+="</tr>";}document.execCommand("insertHTML",false,t+"</tbody></table><p><br></p>");}return;}const s=event.target.closest("[data-rich-select]");if(s){if(!restoreGuildRichSelection())return;if(s.dataset.richSelect==="format")document.execCommand("formatBlock",false,s.value);if(s.dataset.richSelect==="size"&&s.value)applyGuildRichStyle("fontSize",s.value);if(s.dataset.richSelect==="font"&&s.value)applyGuildRichStyle("fontFamily",s.value);s.value="";return;}const color=event.target.closest("[data-rich-color]");if(color)applyGuildRichStyle(color.dataset.richColor==="text"?"color":"backgroundColor",color.value);}
-function initializeGuildRichTextEnhancements(){addGuildRichToolbarControls();document.addEventListener("mousedown",e=>{if(e.target.closest(".rich-extra-controls button"))e.preventDefault();});document.addEventListener("click",handleGuildRichControl);document.addEventListener("change",handleGuildRichControl);document.addEventListener("selectionchange",()=>{const e=document.activeElement?.closest?.('[contenteditable="true"]');if(e)rememberGuildRichSelection(e);});}
+function addGuildRichToolbarControls(){
+ document.querySelectorAll('[contenteditable="true"]').forEach(editor=>{
+  if(editor.dataset.richSelectionReady==="true")return;
+  editor.dataset.richSelectionReady="true";
+  editor.addEventListener("focus",()=>rememberGuildRichSelection(editor));
+  editor.addEventListener("keyup",()=>rememberGuildRichSelection(editor));
+  editor.addEventListener("mouseup",()=>rememberGuildRichSelection(editor));
+ });
+}
+function initializeGuildRichTextEnhancements(){
+ addGuildRichToolbarControls();
+ document.addEventListener("mousedown",event=>{if(event.target.closest(".rule-editor-toolbar button"))event.preventDefault();});
+ document.addEventListener("selectionchange",()=>{
+  const editor=document.activeElement?.closest?.('[contenteditable="true"]');
+  if(editor)rememberGuildRichSelection(editor);
+ });
+}
+
 
 // GUILD ACTIVITIES
 const GUILD_ACTIVITY_BUCKET="guild-activity-images";
@@ -3119,7 +3133,8 @@ let feedbackRealtimeChannel = null;
 
 function sanitizeFeedbackHTML(html) {
   const parsed = new DOMParser().parseFromString(String(html || ""), "text/html");
-  const allowed = new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","BLOCKQUOTE","SPAN","S","STRIKE","TABLE","TBODY","TR","TD","TH","HR"]);
+  const allowed = new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","BLOCKQUOTE","SPAN","IMG","S","STRIKE","TABLE","TBODY","TR","TD","TH","HR"]);
+  const imagePrefix = SUPABASE_URL + "/storage/v1/object/public/" + GUILD_ACTIVITY_BUCKET + "/";
   const clean = node => {
     if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent || "");
     if (node.nodeType !== Node.ELEMENT_NODE) return document.createDocumentFragment();
@@ -3137,6 +3152,17 @@ function sanitizeFeedbackHTML(html) {
   const output = document.createElement("div");
   [...parsed.body.childNodes].forEach(node => output.appendChild(clean(node)));
   return output.innerHTML;
+}
+
+async function uploadGuildFeedbackImage(file){
+ if(!currentUser)throw new Error("กรุณาเข้าสู่ระบบก่อน");
+ if(!file||!/^image\/(png|jpeg|webp|gif)$/.test(file.type))throw new Error("รองรับ PNG, JPG, WEBP และ GIF");
+ if(file.size>8*1024*1024)throw new Error("รูปต้องมีขนาดไม่เกิน 8 MB");
+ const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"}[file.type];
+ const path=currentUser.id+"/feedback/"+crypto.randomUUID()+"."+ext;
+ const {error}=await supabaseClient.storage.from(GUILD_ACTIVITY_BUCKET).upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});
+ if(error)throw error;
+ return supabaseClient.storage.from(GUILD_ACTIVITY_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
 function feedbackStatusBadge(status) {
@@ -3339,6 +3365,7 @@ function registerFeedbackEvents() {
       await loadGuildFeedback();
       return;
     }
+    if(event.target.closest("[data-feedback-image]")){$("feedback-image-input")?.click();return;}
     const command = event.target.closest("[data-feedback-command]");
     if (command) {
       $("feedback-editor-body")?.focus();
@@ -3404,6 +3431,18 @@ function registerFeedbackEvents() {
   });
 
   page.addEventListener("change", async event => {
+    const imageInput=event.target.closest("#feedback-image-input");
+    if(imageInput?.files?.length){
+      const button=page.querySelector("[data-feedback-image]");
+      try{
+        if(button){button.disabled=true;button.textContent="กำลังอัปโหลด...";}
+        const url=await uploadGuildFeedbackImage(imageInput.files[0]);
+        const editor=$("feedback-editor-body");
+        if(editor){editor.focus();document.execCommand("insertHTML",false,'<img src="'+escapeHTML(url)+'" alt="Feedback image">');}
+      }catch(error){alert(error.message||"อัปโหลดรูปไม่สำเร็จ");}
+      finally{imageInput.value="";if(button){button.disabled=false;button.textContent="▧ รูปภาพ";}}
+      return;
+    }
     const select = event.target.closest("[data-feedback-status]");
     if (!select || !isManagement()) return;
     const id = select.dataset.feedbackStatus;
