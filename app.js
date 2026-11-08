@@ -2619,6 +2619,7 @@ function renderWarSignupSummary(rows){
 async function loadWarSignups(){
   const box=$("war-signup-content");
   if(!box||!currentUser)return;
+  if(!window.__warSignupRefreshTimer){window.__warSignupRefreshTimer=window.setInterval(()=>{if(!$("page-war-signup")?.classList.contains("hidden"))loadWarSignups();},30000);}
   $("war-signup-management")?.classList.toggle("hidden",!isManagement());
   $("war-signup-add")?.classList.toggle("hidden",!isManagement());
   box.innerHTML='<p class="muted">กำลังโหลดกิจกรรมวอร์...</p>';
