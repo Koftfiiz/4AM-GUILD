@@ -2212,7 +2212,7 @@ function renderWarEvents() {
   if (!allWarEvents.length) { showEmpty(container,"No War Events","ยังไม่มีกิจกรรม Guild War · กด “สร้างตี้วอร์” เพื่อเริ่มต้น"); return; }
   container.innerHTML = allWarEvents.map(event => {
     const config=getWarEventConfig(event), stage=getWarEventStage(event);
-    const description=String(event.description||"").replace(/\\[\\[WAR_CONFIG:.*?\\]\\]/,"").trim();
+    const description=String(event.description||"").replace(/\[\[WAR_CONFIG:\s*\{.*?\}\s*\]\]/g,"").trim();
     const label=stage==="published"?"PUBLISHED":stage==="draft"?"DRAFT":"กำลังจัดตี้";
     return `<article class="war-event-card war-event-card-selectable"><div class="war-event-main"><h3>${escapeHTML(event.event_name)}</h3><p>${formatDate(event.event_date)} · ${formatTime(event.start_time)} · ${config.mode==="practice"?"Practice War":"Official War"} · ${config.raidCount} Raid</p>${description?`<small>${escapeHTML(description)}</small>`:""}</div><div class="war-event-actions"><span class="war-stage-badge war-stage-${stage}">${label}</span><button class="btn btn-outline btn-sm" type="button" data-war-open="${escapeHTML(event.id)}">${stage==="published"?"ดูรายละเอียด":"จัดการตี้"}</button>${stage==="published"?`<button class="btn btn-danger btn-sm" type="button" data-war-delete="${escapeHTML(event.id)}">ลบวอร์</button>`:""}</div></article>`;
   }).join("");
