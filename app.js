@@ -3973,22 +3973,36 @@ async function saveOwnCharacterProfile(form) {
   if (!currentUser || !currentMember || !form) return;
   const characterName = String(form.querySelector("[name='character_name']")?.value || "").trim();
   const gameClass = String(form.querySelector("[name='game_class']")?.value || "").trim();
+  const gameUID = String(form.querySelector("[name='game_uid']")?.value || "").trim();
   const button = form.querySelector("button[type='submit']");
-  if (!characterName) { showMessage("character-profile-message", "กรุณากรอกชื่อตัวละคร"); return; }
-  if (characterName.length > 40) { showMessage("character-profile-message", "ชื่อตัวละครต้องไม่เกิน 40 ตัวอักษร"); return; }
-  if (!CLASS_DATA.some(item => item.name === gameClass)) { showMessage("character-profile-message", "กรุณาเลือกอาชีพจากรายการ"); return; }
+  if (!characterName) { showMessage("account-profile-status", "กรุณากรอกชื่อตัวละคร"); return; }
+  if (characterName.length > 40) { showMessage("account-profile-status", "ชื่อตัวละครต้องไม่เกิน 40 ตัวอักษร"); return; }
+  if (!CLASS_DATA.some(item => item.name === gameClass)) { showMessage("account-profile-status", "กรุณาเลือกอาชีพจากรายการ"); return; }
+  if (!/^[0-9]{10}$/.test(gameUID)) { showMessage("account-profile-status", "UID ตัวละครต้องเป็นตัวเลข 10 หลักเท่านั้น"); return; }
   if (button) { button.disabled = true; button.textContent = "กำลังบันทึก..."; }
-  showMessage("character-profile-message", "กำลังบันทึกข้อมูลตัวละคร...", "info");
+  showMessage("account-profile-status", "กำลังบันทึกข้อมูลบัญชี...", "info");
   try {
-    const { data, error } = await supabaseClient.from("guild_members").update({ character_name: characterName, game_class: gameClass }).eq("user_id", currentUser.id).select("user_id, character_name, game_class").single();
+    const { data, error } = await supabaseClient.from("guild_members")
+      .update({ character_name: characterName, game_class: gameClass, game_uid: gameUID })
+      .eq("user_id", currentUser.id)
+      .select("user_id, character_name, game_class, game_uid")
+      .single();
     if (error) throw error;
-    Object.assign(currentMember, { character_name: data.character_name, game_class: data.game_class });
+    Object.assign(currentMember, { character_name: data.character_name, game_class: data.game_class, game_uid: data.game_uid });
     const cachedMember = allMembers.find(member => member.user_id === currentUser.id);
-    if (cachedMember) Object.assign(cachedMember, { character_name: data.character_name, game_class: data.game_class });
-    renderAccountDetails(); updateUserChip(); renderDashboardProfile(); renderMembers(allMembers); renderWarLayout();
-    showMessage("character-profile-message", "บันทึกชื่อตัวละครและอาชีพสำเร็จ", "success");
-  } catch (error) { console.error("Character profile update error:", error); showMessage("character-profile-message", "บันทึกไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด")); }
-  finally { if (button) { button.disabled = false; button.textContent = "บันทึกข้อมูลตัวละคร"; } }
+    if (cachedMember) Object.assign(cachedMember, { character_name: data.character_name, game_class: data.game_class, game_uid: data.game_uid });
+    renderAccountDetails();
+    updateUserChip();
+    renderDashboardProfile();
+    renderMembers(allMembers);
+    renderWarLayout();
+    showMessage("account-profile-status", "บันทึกข้อมูลบัญชีสำเร็จ", "success");
+  } catch (error) {
+    console.error("Account profile update error:", error);
+    showMessage("account-profile-status", "บันทึกไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด"));
+  } finally {
+    if (button) { button.disabled = false; button.textContent = "บันทึกข้อมูล"; }
+  }
 }
 // ==========================================
 // ACCOUNT SETTINGS
@@ -4004,36 +4018,38 @@ function renderAccountDetails() {
   const classIcon = currentClass?.iconPath || "";
   const classColor = currentClass?.color || "#d8b878";
   container.innerHTML = `
-    <div class="settings-detail"><span>Display Name</span><strong>${escapeHTML(name)}</strong></div>
-    <div class="settings-detail"><span>Email Address</span><strong>${escapeHTML(currentUser?.email || "-")}</strong></div>
-    <div class="settings-detail"><span>อาชีพปัจจุบัน</span><strong class="account-class-display" style="--class-color:${classColor}"><img class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'"><span>${escapeHTML(currentMember?.game_class || "ยังไม่ได้เลือกอาชีพ")}</span></strong></div>
-    <form id="character-profile-form" class="game-uid-settings-form account-character-form">
-      <label for="account-character-name">แก้ไขชื่อตัวละคร</label>
-      <input id="account-character-name" name="character_name" type="text" maxlength="40" autocomplete="off" placeholder="กรอกชื่อตัวละครใหม่" value="${escapeHTML(currentMember?.character_name || "")}" required>
-      <label for="account-game-class">เปลี่ยนอาชีพ (Class)</label>
+    <div class="account-information-heading">
+      <div class="account-information-kicker">ACCOUNT INFORMATION</div>
+      <button type="button" class="btn btn-outline btn-sm account-edit-button" id="account-edit-toggle" aria-expanded="false">✎ แก้ไข</button>
+    </div>
+    <div class="account-details-list">
+      <div class="settings-detail"><span>Character Name</span><strong>${escapeHTML(name)}</strong></div>
+      <div class="settings-detail"><span>Email</span><strong>${escapeHTML(currentUser?.email || "-")}</strong></div>
+      <div class="settings-detail"><span>Class อาชีพ</span><strong class="account-class-display" style="--class-color:${classColor}"><img class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'"><span>${escapeHTML(currentMember?.game_class || "ยังไม่ได้เลือกอาชีพ")}</span></strong></div>
+      <div class="settings-detail"><span>UID ตัวละคร</span><strong>${escapeHTML(currentMember?.game_uid || "ยังไม่ได้กรอก UID")}</strong></div>
+      <div class="settings-detail"><span>Display Position</span><strong>${escapeHTML(displayPosition)}</strong></div>
+      <div class="settings-detail"><span>System Permission</span><strong>${escapeHTML(permission)}</strong></div>
+      <div class="settings-detail"><span>Guild</span><strong>4AM GUILD</strong></div>
+      <div class="settings-detail"><span>Server</span><strong>Tideborn Dreams</strong></div>
+    </div>
+    <form id="account-profile-form" class="game-uid-settings-form account-character-form hidden">
+      <label for="account-character-name">Character Name / ชื่อตัวละคร</label>
+      <input id="account-character-name" name="character_name" type="text" maxlength="40" autocomplete="off" placeholder="กรอกชื่อตัวละคร" value="${escapeHTML(currentMember?.character_name || "")}" required>
+      <label for="account-game-class">Class อาชีพ</label>
       <div class="account-class-select-wrap">
         <img id="account-class-preview" class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'">
         <select id="account-game-class" name="game_class" required>
           ${CLASS_DATA.map(item => '<option value="' + escapeHTML(item.name) + '" ' + (item.name === currentMember?.game_class ? 'selected' : '') + '>' + escapeHTML(item.name) + '</option>').join("")}
         </select>
       </div>
-      <div class="account-class-legend" aria-label="รายการอาชีพ">
-        ${CLASS_DATA.map(item => '<span class="account-class-option" style="--class-color:' + item.color + '"><img src="' + escapeHTML(item.iconPath) + '" alt="" onerror="this.style.display=\'none\'">' + escapeHTML(item.name) + '</span>').join("")}
-      </div>
-      <button type="submit" class="btn btn-primary">บันทึกข้อมูลตัวละคร</button>
-      <p id="character-profile-message" class="message" aria-live="polite"></p>
-    </form>
-    <div class="settings-detail"><span>UID ตัวละคร</span><strong>${escapeHTML(currentMember?.game_uid || "ยังไม่ได้กรอก UID")}</strong></div>
-    <form id="game-uid-form" class="game-uid-settings-form">
-      <label for="account-game-uid">แก้ไข UID ตัวละคร (ตัวเลข 10 หลัก)</label>
+      <label for="account-game-uid">UID ตัวละคร (ตัวเลข 10 หลัก)</label>
       <input id="account-game-uid" name="game_uid" type="text" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="กรอก UID ตัวละคร 10 หลัก" value="${escapeHTML(currentMember?.game_uid || "")}" required>
-      <button type="submit" class="btn btn-primary">บันทึก UID ตัวละคร</button>
-      <p id="game-uid-message" class="message" aria-live="polite"></p>
+      <div class="account-profile-actions">
+        <button type="button" class="btn btn-outline" id="account-edit-cancel">ยกเลิก</button>
+        <button type="submit" class="btn btn-primary">บันทึกข้อมูล</button>
+      </div>
     </form>
-    <div class="settings-detail"><span>Display Position</span><strong>${escapeHTML(displayPosition)}</strong></div>
-    <div class="settings-detail"><span>System Permission</span><strong>${escapeHTML(permission)}</strong></div>
-    <div class="settings-detail"><span>Guild</span><strong>4AM GUILD</strong></div>
-    <div class="settings-detail"><span>Server</span><strong>Tideborn Dreams</strong></div>
+    <p id="account-profile-status" class="message" aria-live="polite"></p>
   `;
 }
 
@@ -4185,6 +4201,27 @@ function registerAppEventListeners() {
   initializeGuildRichTextEnhancements();
   registerGuildRuleEvents();
   registerFeedbackEvents();
+
+  $("account-details")?.addEventListener("click", (event) => {
+    if (event.target.closest("#account-edit-toggle")) {
+      const form = $("account-profile-form");
+      const button = $("account-edit-toggle");
+      const opening = form?.classList.contains("hidden");
+      form?.classList.toggle("hidden", !opening);
+      if (button) {
+        button.textContent = opening ? "ยกเลิกการแก้ไข" : "✎ แก้ไข";
+        button.setAttribute("aria-expanded", String(Boolean(opening)));
+      }
+      $("account-profile-status")?.replaceChildren();
+      return;
+    }
+    if (event.target.closest("#account-edit-cancel")) {
+      $("account-profile-form")?.classList.add("hidden");
+      const button = $("account-edit-toggle");
+      if (button) { button.textContent = "✎ แก้ไข"; button.setAttribute("aria-expanded", "false"); }
+      $("account-profile-status")?.replaceChildren();
+    }
+  });
 
   $("account-details")?.addEventListener("change", (event) => {
     if (event.target.id !== "account-game-class") return;
