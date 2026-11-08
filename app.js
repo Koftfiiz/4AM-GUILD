@@ -2728,10 +2728,10 @@ function renderWarSignupRoster(signups,members,leaveRows,attendanceRows){
   const hasAttendanceRecords=(attendanceRows||[]).length>0;
   const absentHtml=absent.length?'<div class="war-roster-name-list">'+absent.map(member=>'<div class="war-roster-name-row"><span class="war-roster-bullet">◆</span><strong>'+escapeHTML(getMemberName(member))+'</strong></div>').join("")+'</div>':
     (hasAttendanceRecords?'<div class="war-roster-empty">ไม่มีสมาชิกถูกบันทึกว่าขาดวอร์</div>':'<div class="war-roster-empty">รอฝ่ายจัดการบันทึกผลเช็กชื่อหลังวอร์</div>');
-  return '<section class="war-signup-roster-board"><div class="war-roster-section"><div class="war-roster-section-head"><h4>รายชื่อผู้ลงชื่อ · ตัวจริง</h4><span>'+primary.length+'/60</span></div>'+renderSignupList(primary,"ตัวจริง")+'</div>'+
-    '<div class="war-roster-section is-reserve"><div class="war-roster-section-head"><h4>รายชื่อผู้ลงชื่อ · ตัวสำรอง</h4><span>'+reserve.length+'/20</span></div>'+renderSignupList(reserve,"ตัวสำรอง")+'</div>'+
-    '<div class="war-roster-section is-leave"><div class="war-roster-section-head"><h4>แจ้งลาวอร์</h4><span>'+leaveList.length+' คน</span></div>'+leaveHtml+'</div>'+
-    '<div class="war-roster-section is-absent"><div class="war-roster-section-head"><h4>ขาดวอร์ (ไม่แจ้งลาและไม่มาร่วม)</h4><span>'+absent.length+' คน</span></div>'+absentHtml+'</div></section>';
+  return '<section class="war-signup-roster-board"><div class="war-roster-section"><div class="war-roster-section-head"><h4>ตัวจริง</h4><span>'+primary.length+'/60</span></div>'+renderSignupList(primary,"ตัวจริง")+'</div>'+
+    '<div class="war-roster-section is-reserve"><div class="war-roster-section-head"><h4>สำรอง</h4><span>'+reserve.length+'/20</span></div>'+renderSignupList(reserve,"ตัวสำรอง")+'</div>'+
+    '<div class="war-roster-section is-leave"><div class="war-roster-section-head"><h4>ลาวอร์</h4><span>'+leaveList.length+' คน</span></div>'+leaveHtml+'</div>'+
+    '<div class="war-roster-section is-absent"><div class="war-roster-section-head"><h4>ขาดวอร์</h4><span>'+absent.length+' คน</span></div>'+absentHtml+'</div></section>';
 }
 
 let warLeaveEvents=[];
