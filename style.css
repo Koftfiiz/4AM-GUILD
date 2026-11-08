@@ -3917,3 +3917,58 @@ button:not(.feedback-notification-button),
 
 /* Guild War statistics overview and attendance rate summary */
 .attendance-overview-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 18px}.attendance-overview-grid>div{display:flex;flex-direction:column;gap:5px;padding:14px;border:1px solid rgba(190,145,65,.2);border-radius:8px;background:rgba(190,145,65,.055)}.attendance-overview-grid span{color:var(--muted);font-size:12px}.attendance-overview-grid strong{color:var(--cream);font-size:24px;font-weight:800}@media(max-width:700px){.attendance-overview-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* 4AM WAR SIGNUP FORM — dark red / antique gold theme */
+#war-signup-create-form .war-signup-form-grid input,
+#war-signup-create-form .war-signup-form-grid select,
+#war-signup-create-form .war-signup-form-grid textarea {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 13px;
+  color: var(--text, #f3ebe6) !important;
+  background-color: #10090c !important;
+  border: 1px solid rgba(190, 45, 60, .58) !important;
+  border-radius: 6px;
+  outline: none;
+  font: inherit;
+  color-scheme: dark;
+  box-shadow: inset 0 1px 4px rgba(0, 0, 0, .35);
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+#war-signup-create-form .war-signup-form-grid input:hover,
+#war-signup-create-form .war-signup-form-grid select:hover,
+#war-signup-create-form .war-signup-form-grid textarea:hover {
+  background-color: #160b0f !important;
+  border-color: rgba(216, 176, 106, .62) !important;
+}
+#war-signup-create-form .war-signup-form-grid input:focus,
+#war-signup-create-form .war-signup-form-grid select:focus,
+#war-signup-create-form .war-signup-form-grid textarea:focus {
+  background-color: #180b10 !important;
+  border-color: var(--gold, #d8b06a) !important;
+  box-shadow: 0 0 0 2px rgba(216, 176, 106, .13), 0 0 14px rgba(179, 32, 46, .14);
+}
+#war-signup-create-form .war-signup-form-grid input::placeholder,
+#war-signup-create-form .war-signup-form-grid textarea::placeholder {
+  color: #927f84;
+  opacity: 1;
+}
+#war-signup-create-form .war-signup-form-grid select option {
+  color: #f3ebe6;
+  background: #160c0f;
+}
+#war-signup-create-form .war-signup-form-grid input[type="date"],
+#war-signup-create-form .war-signup-form-grid input[type="time"],
+#war-signup-create-form .war-signup-form-grid input[type="datetime-local"] {
+  color-scheme: dark;
+}
+#war-signup-create-form .war-signup-form-grid input:disabled,
+#war-signup-create-form .war-signup-form-grid select:disabled,
+#war-signup-create-form .war-signup-form-grid textarea:disabled {
+  color: #897c80 !important;
+  background-color: #0b0809 !important;
+  opacity: .65;
+  cursor: not-allowed;
+}
+
