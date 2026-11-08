@@ -3771,3 +3771,46 @@ body { font-size:16px; }
 
 .war-record-form-buttons,.war-record-row-actions{display:flex;gap:8px;flex-wrap:wrap}.war-record-existing-images{color:var(--muted);font-size:12px}.war-record-existing-images a{color:#e5c37d;text-decoration:underline}
 .war-signup-card{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:18px;margin:12px 0;border:1px solid rgba(190,45,60,.35);border-radius:8px;background:linear-gradient(145deg,rgba(27,13,17,.92),rgba(8,7,8,.94))}.war-signup-card h3{margin:6px 0;color:var(--cream);font-size:19px}.war-signup-card p,.war-signup-card small,.war-signup-roster{color:var(--muted);font-size:12px}.war-signup-roster{margin-top:8px}.war-signup-roster strong{color:#e5c37d}.war-signup-action{display:flex;align-items:center;gap:10px;flex-wrap:wrap}.war-signup-status{color:#8ce0a9;font-size:12px;font-weight:700}@media(max-width:700px){.war-signup-card{align-items:stretch;flex-direction:column}.war-signup-action{justify-content:space-between}}
+
+
+/* =====================================================
+   4AM GUILD — ACCESSIBLE BUTTON TYPOGRAPHY
+   ใช้ Noto Sans Thai และเพิ่มขนาดข้อความปุ่มให้ชัดเจน
+===================================================== */
+button,
+button *,
+[role="button"] {
+  font-family: var(--font) !important;
+}
+
+button:not(.feedback-notification-button),
+[role="button"] {
+  font-size: 15.5px !important;
+  line-height: 1.5;
+}
+
+.btn {
+  min-height: 42px;
+  padding: 10px 18px;
+  font-size: 16px !important;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.nav-item,
+.nav-subitem,
+.dropdown-item {
+  font-size: 15.5px !important;
+}
+
+@media (max-width: 700px) {
+  button:not(.feedback-notification-button),
+  [role="button"] {
+    font-size: 14.5px !important;
+  }
+
+  .btn {
+    min-height: 42px;
+    font-size: 15px !important;
+  }
+}
