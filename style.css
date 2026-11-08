@@ -3972,3 +3972,146 @@ button:not(.feedback-notification-button),
   cursor: not-allowed;
 }
 
+
+
+/* 4AM WAR SIGNUP — clearer status, metadata and queue roster */
+.war-signup-card {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+.war-signup-card-top {
+  align-items: flex-start;
+}
+.war-signup-card-heading {
+  min-width: 0;
+}
+.war-signup-badges {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.war-signup-state {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 6px 13px;
+  border: 1px solid currentColor;
+  border-radius: 6px;
+  font-size: 16px !important;
+  line-height: 1.25;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+.war-signup-type {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 5px 11px;
+  border: 1px solid rgba(216,184,120,.42);
+  border-radius: 6px;
+  background: rgba(216,184,120,.09);
+  color: #e4c77f;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.war-signup-event-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 22px;
+  margin: 2px 0 0;
+  color: #d2c3b8;
+  font-size: 15px;
+  line-height: 1.55;
+}
+.war-signup-event-meta span {
+  font-size: inherit;
+}
+.war-signup-card-bottom {
+  justify-content: flex-start;
+  margin-top: 2px;
+}
+.war-signup-action {
+  width: 100%;
+}
+.war-signup-manager-roster {
+  width: 100%;
+  margin-top: 2px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(190,45,60,.28);
+}
+.war-signup-manager-roster summary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 38px;
+  color: #e5c37d;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
+  list-style-position: inside;
+}
+.war-signup-roster-list {
+  margin-top: 10px;
+}
+.war-signup-roster-row {
+  display: grid;
+  grid-template-columns: 52px 30px minmax(120px,1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 7px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  font-size: 14px;
+}
+.war-signup-roster-queue {
+  color: #e5c37d;
+  font-size: 15px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.war-signup-roster-class-icon {
+  display: block;
+  width: 27px;
+  height: 27px;
+  object-fit: contain;
+}
+.war-signup-roster-class-fallback {
+  color: #d8b878;
+  text-align: center;
+}
+.war-signup-roster-row strong {
+  color: var(--cream,#f3ebe6);
+  font-size: 14px;
+  font-weight: 700;
+}
+.war-signup-roster-row small {
+  color: var(--text-muted,#aaa);
+  font-size: 12px;
+  white-space: nowrap;
+}
+@media(max-width:650px) {
+  .war-signup-card-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .war-signup-badges {
+    justify-content: flex-start;
+  }
+  .war-signup-event-meta {
+    flex-direction: column;
+    gap: 5px;
+    font-size: 14px;
+  }
+  .war-signup-roster-row {
+    grid-template-columns: 42px 27px minmax(0,1fr);
+    gap: 8px;
+  }
+  .war-signup-roster-row small {
+    grid-column: 3;
+  }
+}
