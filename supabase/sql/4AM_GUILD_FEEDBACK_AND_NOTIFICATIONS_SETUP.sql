@@ -8,13 +8,13 @@ begin;
 
 create table if not exists public.guild_feedback (
   id uuid primary key default gen_random_uuid(),
-  user_id uuid not null references public.guild_members(user_id) on delete restrict,
+  user_id uuid not null references auth.users(id) on delete restrict,
   type text not null check (type in ('problem','feedback')),
   title text not null check (char_length(trim(title)) between 1 and 160),
   content_html text not null check (char_length(trim(content_html)) between 1 and 20000),
   status text not null default 'received'
     check (status in ('received','in_progress','resolved')),
-  updated_by uuid null references public.guild_members(user_id) on delete set null,
+  updated_by uuid null references auth.users(id) on delete set null,
   discord_notified_at timestamptz null,
   discord_notification_error text null,
   created_at timestamptz not null default now(),
@@ -60,6 +60,12 @@ create index if not exists guild_notifications_unread_idx
 alter table public.guild_feedback enable row level security;
 alter table public.guild_feedback_status_history enable row level security;
 alter table public.guild_notifications enable row level security;
+
+-- Explicit client privileges; row-level policies below enforce per-user access.
+grant select, insert, update on public.guild_feedback to authenticated;
+grant select on public.guild_feedback_status_history to authenticated;
+grant select, update on public.guild_notifications to authenticated;
+
 
 drop policy if exists "Guild feedback owner and management can read" on public.guild_feedback;
 create policy "Guild feedback owner and management can read"
