@@ -78,6 +78,7 @@ const PAGE_TITLES = {
   war: "จัดตี้วอร์",
   "war-attendance": "เช็คชื่อวอร์",
   "war-stats": "สถิติการวอร์",
+  "war-attendance-stats": "สถิติการเข้าร่วมวอร์",
   rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
   activities: "กิจกรรมกิลด์",
@@ -2457,13 +2458,13 @@ async function handleWarCreate(event) {
   event.preventDefault();if(!isManagement())return;
   const form=event.currentTarget,mode=form.querySelector('input[name="war-mode"]:checked')?.value||"official";
   const raidCount=mode==="practice"?Number($("war-raid-count")?.value||4):2;
-  const opponent=String($("war-opponent")?.value||"").trim(),eventDate=$("war-event-date")?.value,startTime=String($("war-start-time")?.value||"").trim(),description=String($("war-description")?.value||"").trim(),submit=$("war-create-submit");
+  const opponent=String($("war-opponent")?.value||"").trim(),eventDate=$("war-event-date")?.value,startTime=String($("war-start-time")?.value||"").trim(),submit=$("war-create-submit");
   if(!opponent||!eventDate||!startTime){setWarCreateMessage("กรุณากรอกชื่อกิลด์คู่แข่ง วันที่ และเวลาเริ่มวอร์ให้ครบ",true);return;}
   if(!Number.isInteger(raidCount)||raidCount<1||raidCount>4){setWarCreateMessage("จำนวน Raid ต้องอยู่ระหว่าง 1–4",true);return;}
   submit.disabled=true;submit.textContent="กำลังสร้าง...";setWarCreateMessage("กำลังสร้างกิจกรรมและเตรียมช่องปาร์ตี้...");
   try{
     const metadata=`[[WAR_CONFIG:${JSON.stringify({mode,raidCount})}]]`;
-    const {data:createdEvent,error:eventError}=await supabaseClient.from("war_events").insert({event_name:`4AM vs ${opponent}`,event_date:eventDate,start_time:startTime,description:[description,metadata].filter(Boolean).join("\\n"),status:"open",is_draft_confirmed:false,is_published:false}).select().single();
+    const {data:createdEvent,error:eventError}=await supabaseClient.from("war_events").insert({event_name:`4AM vs ${opponent}`,event_date:eventDate,start_time:startTime,description:metadata,status:"open",is_draft_confirmed:false,is_published:false}).select().single();
     if(eventError)throw eventError;
     const rows=[];["A","B","C","D"].slice(0,raidCount).forEach(raid=>{for(let n=1;n<=5;n++)rows.push({event_id:createdEvent.id,raid,party_number:n});});
     const {error:partyError}=await supabaseClient.from("war_parties").insert(rows);if(partyError)throw new Error("สร้างกิจกรรมแล้ว แต่สร้างช่องปาร์ตี้ไม่สำเร็จ: "+partyError.message);
@@ -2530,6 +2531,16 @@ async function renderWarAttendance(){
   $("war-attendance-select")?.addEventListener("change",async event=>{warAttendanceEventId=event.target.value;await renderWarAttendance();});
 }
 
+const WAR_RECORD_BUCKET="war-record-images";let warAttendanceEditEventId=null;
+function showWarRecordMessage(m,bad=false){const e=$("war-record-message");if(!e)return;e.textContent=m;e.classList.remove("hidden","error","success");e.classList.add(bad?"error":"success");}
+async function loadWarMatchRecords(){if(!isManagement())return;const box=$("war-record-history");if(box)box.innerHTML='<p class="muted">กำลังโหลดประวัติผลวอร์...</p>';const q=await supabaseClient.from("war_match_records").select("*").eq("is_confirmed",true).order("war_date",{ascending:false}).order("created_at",{ascending:false});if(q.error){if(box)box.innerHTML='<div class="system-role-error">'+escapeHTML(q.error.message)+'<br>กรุณาติดตั้ง SQL ระบบบันทึกผลวอร์</div>';return;}warMatchRecords=q.data||[];await renderWarMatchRecords();}
+async function renderWarMatchRecords(){const r=warMatchRecords||[],w=r.filter(x=>x.result==="win").length,l=r.filter(x=>x.result==="loss").length,n=w+l,p=x=>n?(x/n*100).toFixed(1):"0.0";if($("war-record-total"))$("war-record-total").textContent=n;if($("war-record-wins"))$("war-record-wins").textContent=w;if($("war-record-losses"))$("war-record-losses").textContent=l;if($("war-record-win-rate"))$("war-record-win-rate").textContent=p(w)+"% Win Rate";if($("war-record-loss-rate"))$("war-record-loss-rate").textContent=p(l)+"% Loss Rate";const g={};r.forEach(x=>{const k=x.opponent_guild;if(!g[k])g[k]={w:0,l:0};g[k][x.result==="win"?"w":"l"]++;});const stats=$("war-record-opponent-stats");if(stats){const names=Object.keys(g).sort((a,b)=>a.localeCompare(b,"th"));stats.innerHTML=names.length?'<div class="war-record-table-wrap"><table class="war-record-table"><thead><tr><th>กิลด์</th><th>แข่ง</th><th>ชนะ</th><th>แพ้</th><th>ชนะ %</th><th>แพ้ %</th></tr></thead><tbody>'+names.map(k=>{const x=g[k],t=x.w+x.l;return "<tr><td>"+escapeHTML(k)+"</td><td>"+t+"</td><td>"+x.w+"</td><td>"+x.l+"</td><td>"+(x.w/t*100).toFixed(1)+"%</td><td>"+(x.l/t*100).toFixed(1)+"%</td></tr>";}).join("")+"</tbody></table></div>":'<div class="empty-state"><h3>ยังไม่มีผลวอร์</h3></div>';}const box=$("war-record-history");if(!box)return;if(!r.length){box.innerHTML='<div class="empty-state"><h3>ยังไม่มีประวัติผลวอร์</h3></div>';return;}const urls=await Promise.all(r.map(async x=>Promise.all((x.image_paths||[]).map(async path=>{const z=await supabaseClient.storage.from(WAR_RECORD_BUCKET).createSignedUrl(path,3600);return z.error?"":z.data.signedUrl;}))));box.innerHTML='<div class="war-record-table-wrap"><table class="war-record-table"><thead><tr><th>วันที่</th><th>คู่แข่ง</th><th>ผล</th><th>รูป</th></tr></thead><tbody>'+r.map((x,i)=>'<tr><td>'+formatDate(x.war_date)+'</td><td>'+escapeHTML(x.opponent_guild)+'</td><td><span class="war-record-result '+x.result+'">'+(x.result==="win"?"ชนะ":"แพ้")+'</span></td><td><div class="war-record-images">'+urls[i].filter(Boolean).map((u,j)=>'<a href="'+escapeHTML(u)+'" target="_blank"><img src="'+escapeHTML(u)+'" alt="หลักฐาน '+(j+1)+'"></a>').join("")+'</div></td></tr>').join("")+'</tbody></table></div>';}
+async function saveWarMatchRecord(form){if(!isManagement())return;const opponent=$("war-record-opponent").value.trim(),date=$("war-record-date").value,result=$("war-record-result").value,files=Array.from($("war-record-images").files||[]),btn=$("war-record-submit");if(!opponent||!date||!["win","loss"].includes(result)||!files.length){showWarRecordMessage("กรุณากรอกชื่อกิลด์ วันที่ เลือกผล และแนบรูปภาพ",true);return;}if(files.length>10||files.some(x=>!x.type.startsWith("image/")||x.size>10485760)){showWarRecordMessage("แนบรูปได้สูงสุด 10 รูป และไม่เกิน 10 MB ต่อรูป",true);return;}btn.disabled=true;btn.textContent="กำลังอัปโหลดและยืนยัน...";const paths=[];try{for(const file of files){const id=window.crypto?.randomUUID?.()||String(Date.now())+Math.random().toString(16).slice(2),path=currentUser.id+"/"+id+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"_"),up=await supabaseClient.storage.from(WAR_RECORD_BUCKET).upload(path,file,{upsert:false,contentType:file.type});if(up.error)throw up.error;paths.push(path);}const q=await supabaseClient.from("war_match_records").insert({opponent_guild:opponent,war_date:date,result,image_paths:paths,is_confirmed:true,confirmed_by:currentUser.id,confirmed_at:new Date().toISOString(),created_by:currentUser.id});if(q.error)throw q.error;form.reset();showWarRecordMessage("ยืนยันและบันทึกผลวอร์เรียบร้อยแล้ว");await loadWarMatchRecords();}catch(e){if(paths.length)await supabaseClient.storage.from(WAR_RECORD_BUCKET).remove(paths);showWarRecordMessage("บันทึกไม่สำเร็จ: "+e.message,true);}finally{btn.disabled=false;btn.textContent="ยืนยันและบันทึกผลวอร์";}}
+async function loadWarAttendanceStatistics(){if(!isManagement())return;const s=$("war-attendance-stats-event"),ev=allWarEvents.filter(x=>x.is_published);if(s)s.innerHTML=ev.length?ev.map(x=>'<option value="'+escapeHTML(x.id)+'">'+escapeHTML(x.event_name)+" · "+formatDate(x.event_date)+"</option>").join(""):'<option value="">ยังไม่มีวอร์ที่ Publish</option>';warAttendanceEditEventId=ev[0]?.id||null;await loadWarAttendanceEditor();await loadWarAttendanceMemberSummary();}
+async function loadWarAttendanceEditor(){const box=$("war-attendance-stats-editor"),btn=$("war-attendance-stats-save");if(!box||!isManagement())return;const id=$("war-attendance-stats-event")?.value||warAttendanceEditEventId;if(!id){box.innerHTML='<div class="empty-state"><h3>ยังไม่มีรอบวอร์ที่เผยแพร่</h3></div>';if(btn)btn.disabled=true;return;}warAttendanceEditEventId=id;const [m,a]=await Promise.all([supabaseClient.from("guild_members").select("user_id,character_name,nickname,active").eq("active",true).order("character_name"),supabaseClient.from("war_attendance_records").select("member_id,attendance_status").eq("war_event_id",id)]);if(m.error||a.error){box.innerHTML='<div class="system-role-error">'+escapeHTML((m.error||a.error).message)+'<br>กรุณาติดตั้ง SQL ระบบสถิติการเข้าร่วมวอร์</div>';if(btn)btn.disabled=true;return;}const old=new Map((a.data||[]).map(x=>[x.member_id,x.attendance_status])),members=m.data||[];box.innerHTML=members.length?'<div class="war-attendance-table-wrap"><table class="war-record-table war-attendance-member-table"><thead><tr><th>สมาชิก</th><th>สถานะ</th></tr></thead><tbody>'+members.map(x=>{const v=old.get(x.user_id)||"present";return '<tr><td>'+escapeHTML(getMemberName(x))+'</td><td><select data-attendance-member="'+escapeHTML(x.user_id)+'"><option value="present" '+(v==="present"?"selected":"")+' >มาตรงเวลา</option><option value="late" '+(v==="late"?"selected":"")+' >มาสาย</option><option value="leave" '+(v==="leave"?"selected":"")+' >ลา</option><option value="absent" '+(v==="absent"?"selected":"")+' >ขาด</option></select></td></tr>';}).join("")+"</tbody></table></div>":'<div class="empty-state"><h3>ไม่พบสมาชิก Active</h3></div>';if(btn)btn.disabled=!members.length;}
+async function saveWarAttendanceStatistics(){if(!isManagement()||!warAttendanceEditEventId)return;const sels=Array.from($("war-attendance-stats-editor")?.querySelectorAll("[data-attendance-member]")||[]),btn=$("war-attendance-stats-save");if(!sels.length)return;btn.disabled=true;const rows=sels.map(x=>({war_event_id:warAttendanceEditEventId,member_id:x.dataset.attendanceMember,attendance_status:x.value,recorded_by:currentUser.id,updated_at:new Date().toISOString()}));try{const q=await supabaseClient.from("war_attendance_records").upsert(rows,{onConflict:"war_event_id,member_id"});if(q.error)throw q.error;await loadWarAttendanceMemberSummary();alert("บันทึกสถิติการเข้าร่วมวอร์เรียบร้อยแล้ว");}catch(e){alert("บันทึกไม่สำเร็จ: "+e.message);}finally{btn.disabled=false;btn.textContent="บันทึกสถานะการเข้าร่วม";}}
+async function loadWarAttendanceMemberSummary(){const box=$("war-attendance-member-summary");if(!box||!isManagement())return;const q=await supabaseClient.from("war_attendance_records").select("member_id,attendance_status");if(q.error){box.textContent=q.error.message;return;}const map=new Map();(q.data||[]).forEach(x=>{if(!map.has(x.member_id))map.set(x.member_id,{present:0,late:0,leave:0,absent:0,total:0});const z=map.get(x.member_id);z[x.attendance_status]++;z.total++;});const ms=allMembers.filter(x=>x.active===true).sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));box.innerHTML=ms.length?'<div class="war-record-table-wrap"><table class="war-record-table"><thead><tr><th>สมาชิก</th><th>ตรงเวลา</th><th>สาย</th><th>ลา</th><th>ขาด</th><th>ทั้งหมด</th></tr></thead><tbody>'+ms.map(x=>{const z=map.get(x.user_id)||{present:0,late:0,leave:0,absent:0,total:0};return "<tr><td>"+escapeHTML(getMemberName(x))+"</td><td>"+z.present+"</td><td>"+z.late+"</td><td>"+z.leave+"</td><td>"+z.absent+"</td><td>"+z.total+"</td></tr>";}).join("")+"</tbody></table></div>":'<div class="empty-state">ยังไม่มีสมาชิก</div>';}
+function registerWarRecordAndAttendanceEvents(){$("war-record-form")?.addEventListener("submit",async e=>{e.preventDefault();await saveWarMatchRecord(e.currentTarget);});$("war-attendance-stats-load")?.addEventListener("click",loadWarAttendanceEditor);$("war-attendance-stats-event")?.addEventListener("change",loadWarAttendanceEditor);$("war-attendance-stats-save")?.addEventListener("click",saveWarAttendanceStatistics);}
 function subscribeToWarRealtime() {
   if (warRealtimeChannel) {
     supabaseClient.removeChannel(warRealtimeChannel);
@@ -2866,7 +2877,7 @@ function getLastGuildPage() {
 }
 
 function openGuildPage(pageName) {
-  if ((pageName === "war" || pageName === "war-stats") && !isManagement()) {
+  if (["war","war-stats","war-attendance-stats"].includes(pageName) && !isManagement()) {
     pageName = "war-attendance";
   }
   if (pageName === "system-management" && !isDeveloper()) {
@@ -2893,7 +2904,7 @@ function openGuildPage(pageName) {
     button.classList.toggle("active", button.dataset.page === pageName);
   });
 
-  const warPage = ["war", "war-attendance", "war-stats"].includes(pageName);
+  const warPage = ["war", "war-attendance", "war-stats", "war-attendance-stats"].includes(pageName);
   const warParent = document.querySelector('[data-toggle-submenu="war-submenu"]');
   const warSubmenu = $("war-submenu");
   warParent?.classList.toggle("active", warPage);
@@ -2915,6 +2926,8 @@ function openGuildPage(pageName) {
   if (pageName === "portfolio") loadPortfolios();
   if (pageName === "war") loadWarEvents();
   if (pageName === "war-attendance") loadWarAttendance();
+  if (pageName === "war-stats") loadWarMatchRecords();
+  if (pageName === "war-attendance-stats") loadWarAttendanceStatistics();
 }
 
 async function copyGameUID(button) {
@@ -3201,6 +3214,7 @@ function registerAppEventListeners() {
   registerPortfolioEvents();
   registerSystemRoleEvents();
   registerWarCreationEvents();
+  registerWarRecordAndAttendanceEvents();
 
   $("account-details")?.addEventListener("submit", async (event) => {
     if (event.target.id !== "game-uid-form") return;

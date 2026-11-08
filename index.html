@@ -8,9 +8,10 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/kanit@5.2.6/index.css">
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=20261108-kanit-global-2">
+  <link rel="stylesheet" href="style.css?v=20261108-war-records-kanit-5">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +39,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=20261108-kanit-global-2";
+          app.src = "app.js?v=20261108-war-records-kanit-5";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -196,6 +197,10 @@
             <button class="nav-subitem management-only" data-page="war-stats" data-management-only>
               <span class="nav-subitem-dot"></span>
               <span>สถิติการวอร์</span>
+            </button>
+            <button class="nav-subitem management-only" data-page="war-attendance-stats" data-management-only>
+              <span class="nav-subitem-dot"></span>
+              <span>สถิติการเข้าร่วมวอร์</span>
             </button>
           </div>
         </div>
@@ -455,7 +460,7 @@
           <form id="war-create-form"><div class="war-mode-options"><label class="war-mode-option"><input type="radio" name="war-mode" value="official" checked><span><strong>วอร์จริง</strong><small>2 Raid · 10 ปาร์ตี้ · 60 คน</small></span></label><label class="war-mode-option"><input type="radio" name="war-mode" value="practice"><span><strong>ซ้อมวอร์</strong><small>เลือกได้ 1–4 Raid · สูงสุด 120 คน</small></span></label></div>
             <div id="war-raid-count-wrap" class="form-group hidden"><label for="war-raid-count">จำนวน Raid สำหรับซ้อม</label><select id="war-raid-count" name="raid-count"><option value="1">1 Raid · 30 คน</option><option value="2">2 Raid · 60 คน</option><option value="3">3 Raid · 90 คน</option><option value="4" selected>4 Raid · 120 คน</option></select></div>
             <div class="war-event-fields"><div class="war-schedule-fields"><div class="form-group"><label for="war-event-date">วันที่เริ่มวอร์</label><input id="war-event-date" name="event-date" type="date" required></div><div class="form-group"><label for="war-start-time">เวลาเริ่มวอร์ (24 ชั่วโมง)</label><div class="war-time-input-wrap"><input id="war-start-time" name="start-time" type="time" lang="en-GB" step="60" required aria-label="เวลาเริ่มวอร์ รูปแบบ 24 ชั่วโมง"></div></div></div>
-              <div class="form-group war-opponent-row"><label for="war-opponent">คู่แข่งขัน</label><div class="war-vs-field"><span class="war-team-name">4AM</span><b class="war-versus-mark">VS</b><input id="war-opponent" name="opponent" type="text" maxlength="60" placeholder="ชื่อกิลด์คู่แข่ง" required></div></div><div class="form-group"><label for="war-description">รายละเอียดเพิ่มเติม (ไม่บังคับ)</label><textarea id="war-description" name="description" rows="3" maxlength="500" placeholder="รายละเอียดหรือหมายเหตุของวอร์"></textarea></div></div>
+              <div class="form-group war-opponent-row"><label for="war-opponent">คู่แข่งขัน</label><div class="war-vs-field"><span class="war-team-name">4AM</span><b class="war-versus-mark">VS</b><input id="war-opponent" name="opponent" type="text" maxlength="60" placeholder="ชื่อกิลด์คู่แข่ง" required></div></div></div>
             <div class="war-create-capacity" id="war-create-capacity">วอร์จริง: 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน</div><div id="war-create-message" class="message hidden" role="status"></div><div class="war-create-actions"><button id="war-create-cancel" class="btn btn-ghost" type="button">ยกเลิก</button><button id="war-create-submit" class="btn btn-primary" type="submit">สร้างตี้วอร์</button></div></form></section>
         <section id="war-detail-stage" class="panel war-detail-stage hidden"><div class="panel-heading war-detail-heading"><div><span class="panel-kicker">PARTY ASSIGNMENT</span><h3>จัดสมาชิกเข้าปาร์ตี้</h3><p id="war-detail-stage-label">กำลังจัดตี้ · ยังไม่ยืนยัน</p></div><button class="btn btn-primary btn-sm" type="button" id="war-back-to-list">กลับไปรายการวอร์</button></div>
           <div id="war-summary" class="war-summary"></div><p id="war-edit-notice" class="war-edit-notice">เลือก Class ก่อน แล้วเลือกสมาชิกที่มี Class ตรงกันในแต่ละช่อง</p><div id="war-raid-boards"></div>
@@ -465,28 +470,12 @@
       <!-- ============ WAR ATTENDANCE ============ -->
       <section id="page-war-attendance" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">WAR ATTENDANCE</span><h1>เช็คชื่อวอร์</h1><p>ตรวจสอบรายชื่อและปาร์ตี้ของ Guild War ที่ฝ่ายบริหารเผยแพร่แล้ว</p></div><section class="panel"><div class="panel-heading"><div><span class="panel-kicker">PUBLISHED WAR ROSTER</span><h3>รายชื่อสมาชิกในแต่ละ Raid</h3></div></div><div id="war-attendance-content"><div class="empty-state"><span>◷</span><h3>กำลังโหลดรายการวอร์</h3><p>รายชื่อจะปรากฏเมื่อฝ่ายบริหาร Publish วอร์</p></div></div></section></section>
 
-      <!-- ============ WAR STATISTICS ============ -->
-      <section id="page-war-stats" class="page page-padded hidden">
-        <div class="page-intro">
-          <span class="section-kicker">WAR PERFORMANCE</span>
-          <h1>สถิติการวอร์</h1>
-          <p>ภาพรวมและประวัติการเข้าร่วม Guild War ของสมาชิก</p>
-        </div>
-        <section class="panel">
-          <div class="panel-heading">
-            <div>
-              <span class="panel-kicker">GUILD WAR RECORD</span>
-              <h3>สถิติการเข้าร่วม</h3>
-            </div>
-          </div>
-          <div class="empty-state">
-            <span>▥</span>
-            <h3>ยังไม่มีข้อมูลสถิติ</h3>
-            <p>สถิติการเข้าร่วมและประวัติ Guild War จะแสดงที่นี่เมื่อเชื่อมต่อระบบบันทึกผลวอร์</p>
-          </div>
-        </section>
-      </section>
-
+<section id="page-war-stats" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">WAR PERFORMANCE</span><h1>สถิติการวอร์</h1><p>บันทึกผลการแข่งขันย้อนหลัง พร้อมสรุปสถิติแพ้ชนะรายกิลด์และภาพรวมทั้งหมด</p></div>
+<section class="panel"><div class="panel-heading"><h3>บันทึกผลวอร์</h3></div><form id="war-record-form" class="war-record-form"><div class="war-record-form-grid"><div class="form-group"><label for="war-record-opponent">ชื่อกิลด์คู่แข่ง</label><input id="war-record-opponent" maxlength="80" required></div><div class="form-group"><label for="war-record-date">วันที่วอร์</label><input id="war-record-date" type="date" required></div><div class="form-group"><label for="war-record-result">ผลการแข่งขัน</label><select id="war-record-result" required><option value="">เลือกผลวอร์</option><option value="win">ชนะ</option><option value="loss">แพ้</option></select></div></div><div class="form-group"><label for="war-record-images">รูปภาพผลวอร์ในเกม (เลือกได้หลายรูป)</label><input id="war-record-images" type="file" accept="image/*" multiple required><small>สูงสุด 10 รูป ขนาดไม่เกิน 10 MB ต่อรูป</small></div><div id="war-record-message" class="message hidden"></div><div class="war-record-submit-row"><span>กดยืนยันเพื่อบันทึกผลวอร์เป็น Record</span><button id="war-record-submit" class="btn btn-primary" type="submit">ยืนยันและบันทึกผลวอร์</button></div></form></section>
+<section class="war-record-overview"><div class="war-record-stat-card"><span>แข่งทั้งหมด</span><strong id="war-record-total">0</strong></div><div class="war-record-stat-card is-win"><span>ชนะ</span><strong id="war-record-wins">0</strong><small id="war-record-win-rate">0% Win Rate</small></div><div class="war-record-stat-card is-loss"><span>แพ้</span><strong id="war-record-losses">0</strong><small id="war-record-loss-rate">0% Loss Rate</small></div></section>
+<section class="panel"><div class="panel-heading"><h3>สถิติแยกตามกิลด์คู่แข่ง</h3></div><div id="war-record-opponent-stats"></div></section><section class="panel"><div class="panel-heading"><h3>ประวัติผลวอร์ทั้งหมด</h3></div><div id="war-record-history"></div></section></section>
+<section id="page-war-attendance-stats" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">GUILD WAR ATTENDANCE</span><h1>สถิติการเข้าร่วมวอร์</h1><p>บันทึกการมาสาย ขาด และลาของสมาชิกในแต่ละรอบวอร์</p></div>
+<section class="panel"><div class="panel-heading"><h3>บันทึกสถานะสมาชิกประจำรอบวอร์</h3></div><div class="war-attendance-stats-toolbar"><label for="war-attendance-stats-event">เลือกรอบวอร์</label><select id="war-attendance-stats-event"></select><button id="war-attendance-stats-load" class="btn btn-outline" type="button">โหลดรายชื่อ</button></div><div id="war-attendance-stats-editor"></div><div class="war-attendance-save-row"><button id="war-attendance-stats-save" class="btn btn-primary" type="button" disabled>บันทึกสถานะการเข้าร่วม</button></div></section><section class="panel"><div class="panel-heading"><h3>สรุปสถิติการเข้าร่วมของสมาชิก</h3></div><div id="war-attendance-member-summary"></div></section></section>
       <!-- ============ PORTFOLIO ============ -->
       <section id="page-portfolio" class="page page-padded hidden">
         <div class="page-intro">
