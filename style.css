@@ -3814,3 +3814,62 @@ button:not(.feedback-notification-button),
     font-size: 15px !important;
   }
 }
+
+
+/* Mobile Guild War submenu: show readable labels in a flyout beside the icon rail. */
+@media (max-width: 700px) {
+  .sidebar {
+    overflow: visible !important;
+  }
+
+  .sidebar .nav-group {
+    position: relative;
+  }
+
+  .sidebar .nav-submenu,
+  .sidebar .nav-submenu.is-open {
+    position: absolute;
+    top: 0;
+    left: 100%;
+    z-index: 100;
+    width: min(248px, calc(100vw - 92px));
+    max-height: min(70vh, 420px);
+    overflow-y: auto;
+    display: none;
+    gap: 4px;
+    padding: 8px;
+    background: rgba(13, 7, 9, .98);
+    border: 1px solid rgba(190, 55, 70, .65);
+    border-radius: 0 10px 10px 0;
+    box-shadow: 12px 8px 28px rgba(0, 0, 0, .55);
+    backdrop-filter: blur(12px);
+  }
+
+  .sidebar .nav-submenu.is-open {
+    display: grid;
+  }
+
+  .sidebar .nav-subitem {
+    justify-content: flex-start;
+    min-height: 44px;
+    padding: 9px 12px;
+    gap: 10px;
+    white-space: normal;
+    text-align: left;
+    font-size: 15px !important;
+    line-height: 1.4;
+  }
+
+  .sidebar .nav-subitem > span:last-child {
+    display: inline !important;
+    min-width: 0;
+  }
+
+  .sidebar .nav-subitem-dot {
+    display: inline-block !important;
+  }
+
+  .sidebar .nav-parent .nav-chevron {
+    display: none;
+  }
+}
