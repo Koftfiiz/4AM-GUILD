@@ -252,17 +252,16 @@ function closeUserMenu() {
 
 function formatDate(value) {
   if (!value) return "-";
-
-  return new Date(value).toLocaleDateString("th-TH", {
-    year: "numeric",
-    month: "short",
-    day: "numeric"
-  });
+  const raw=String(value),match=raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  let year,month,day;
+  if(match){year=match[1];month=match[2];day=match[3];}
+  else{const date=new Date(value);if(Number.isNaN(date.getTime()))return "-";year=String(date.getFullYear());month=String(date.getMonth()+1).padStart(2,"0");day=String(date.getDate()).padStart(2,"0");}
+  return day+":"+month+":"+year;
 }
-
 function formatTime(value) {
   if (!value) return "-";
-  return String(value).slice(0, 5);
+  const raw=String(value),match=raw.match(/(?:T| )(\d{2}):(\d{2})/);
+  return match?match[1]+":"+match[2]:raw.slice(0,5);
 }
 
 function showEmpty(container, title, description) {
@@ -1957,9 +1956,8 @@ async function handlePortfolioCreate(event) {
     await loadPortfolios();
     renderClassLegend();
     resetPortfolioForm();
-    const savedAt = new Intl.DateTimeFormat("th-TH", {
-      dateStyle: "medium", timeStyle: "medium", timeZone: "Asia/Bangkok"
-    }).format(new Date());
+    const savedNow = new Date();
+    const savedAt = formatDate(savedNow.toLocaleDateString("en-CA",{timeZone:"Asia/Bangkok"}))+" "+new Intl.DateTimeFormat("en-GB",{hour:"2-digit",minute:"2-digit",second:"2-digit",hourCycle:"h23",timeZone:"Asia/Bangkok"}).format(savedNow);
     if (status) status.textContent = `บันทึกข้อมูลแฟ้มผลงานสำเร็จ · ${savedAt} น. (เวลาไทย)`;
   } catch (error) {
     console.error("Portfolio save error:", error);
@@ -2597,8 +2595,8 @@ async function loadWarAttendanceMemberSummary(){
 }
 function warSignupDateTime(value){
   if(!value)return "—";
-  const date=new Date(value);
-  return Number.isNaN(date.getTime())?"—":date.toLocaleString("th-TH",{dateStyle:"medium",timeStyle:"short"});
+  const date=new Date(value);if(Number.isNaN(date.getTime()))return "—";
+  return formatDate(date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0"))+" "+String(date.getHours()).padStart(2,"0")+":"+String(date.getMinutes()).padStart(2,"0");
 }
 function warSignupEventState(event,now=Date.now()){
   const open=new Date(event.signup_opens_at).getTime(),close=new Date(event.signup_closes_at).getTime();
@@ -2698,7 +2696,8 @@ async function loadWarSignups(){
     }
     const rosterHtml=renderWarSignupRoster(rows,rosterMembers,leaveRows,attendanceRows);
     const summary=renderWarSignupSummary(rows,rosterMembers);
-    return '<article class="war-signup-card"><div class="war-signup-card-top"><div class="war-signup-card-heading"><h3>'+escapeHTML(event.event_name)+'</h3><p>'+formatDate(event.event_date)+' · เริ่มวอร์ '+formatTime(event.start_time)+'</p></div><div class="war-signup-badges"><span class="war-signup-state '+stateClass+'">'+stateLabel+'</span><span class="war-signup-type">'+typeLabel+'</span></div></div>'+
+    const managementActions=isManagement()?'<div class="war-signup-management-actions"><button class="btn btn-outline btn-sm" type="button" data-war-signup-edit="'+escapeHTML(event.id)+'">แก้ไข Event</button><button class="btn btn-danger btn-sm" type="button" data-war-signup-delete="'+escapeHTML(event.id)+'">ลบ Event</button></div>':"";
+    return '<article class="war-signup-card"><div class="war-signup-card-top"><div class="war-signup-card-heading"><h3>'+escapeHTML(event.event_name)+'</h3><p>'+formatDate(event.event_date)+' · เริ่มวอร์ '+formatTime(event.start_time)+'</p></div><div class="war-signup-badges"><span class="war-signup-state '+stateClass+'">'+stateLabel+'</span><span class="war-signup-type">'+typeLabel+'</span></div></div>'+managementActions+
       '<div class="war-signup-event-meta"><span>เริ่มลงชื่อ: '+warSignupDateTime(event.signup_opens_at)+'</span><span>ปิดรับ: '+warSignupDateTime(event.signup_closes_at)+'</span><span>ผู้ลงชื่อ: '+capacity+'</span></div>'+
       (event.description?'<p class="war-signup-description">'+escapeHTML(String(event.description).replace(/\[\[WAR_CONFIG:[\s\S]*?\]\]/,"").trim())+'</p>':"")+
       '<div class="war-signup-card-bottom"><div class="war-signup-action">'+action+'</div></div>'+rosterHtml+(leaveRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดรายชื่อผู้แจ้งลาไม่ได้ กรุณาตรวจสอบ SQL ระบบแจ้งลาวอร์</p>':"")+(attendanceRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดสถานะขาดวอร์ไม่ได้ กรุณาติดตั้ง SQL ระบบสรุปการเข้า war</p>':"")+summary+'</article>';
@@ -2762,7 +2761,7 @@ function renderWarLeaveLists(){
   management.innerHTML=warLeaveRequests.length?'<div class="war-leave-management-list">'+warLeaveRequests.map(row=>{
     const member=warLeaveMembers.find(item=>item.user_id===row.member_id)||allMembers.find(item=>item.user_id===row.member_id)||{};
     const event=eventName(row.event_id);
-    return '<article class="war-leave-review-row"><div class="war-leave-review-main"><strong>'+escapeHTML(getMemberName(member))+'</strong><span>'+escapeHTML(event?.event_name||"กิจกรรมวอร์")+' · '+escapeHTML(event?formatDate(event.event_date):"")+'</span><p>'+escapeHTML(row.reason||"ไม่ได้ระบุเหตุผล")+'</p></div><div class="war-leave-review-actions"><span class="war-leave-status '+escapeHTML(row.status)+'">'+warLeaveStatusLabel(row.status)+'</span>'+(row.status==="pending"?'<button class="btn btn-primary btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="approved" type="button">รับทราบ</button><button class="btn btn-outline btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="rejected" type="button">ไม่อนุมัติ</button>':"")+'</div></article>';
+    return '<article class="war-leave-review-row"><div class="war-leave-review-main"><strong>'+escapeHTML(getMemberName(member))+'</strong><span>'+escapeHTML(event?.event_name||"กิจกรรมวอร์")+' · '+escapeHTML(event?formatDate(event.event_date):"")+'</span><p>'+escapeHTML(row.reason||"ไม่ได้ระบุเหตุผล")+'</p></div><div class="war-leave-review-actions"><span class="war-leave-status '+escapeHTML(row.status)+'">'+warLeaveStatusLabel(row.status)+'</span>'+(row.status==="pending"?'<button class="btn btn-primary btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="approved" type="button">รับทราบ</button><button class="btn btn-outline btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="rejected" type="button">ไม่อนุมัติ</button>':"")+'<button class="btn btn-outline btn-sm" data-war-leave-edit="'+escapeHTML(row.id)+'" type="button">แก้ไข</button><button class="btn btn-danger btn-sm" data-war-leave-delete="'+escapeHTML(row.id)+'" type="button">ลบ</button></div></article>';
   }).join("")+'</div>':'<div class="war-roster-empty">ยังไม่มีสมาชิกแจ้งลาวอร์</div>';
 }
 async function loadWarLeavePage(){
@@ -2810,17 +2809,30 @@ async function submitWarLeave(event){
 }
 async function reviewWarLeave(id,status){
   if(!isManagement()||!id||!["approved","rejected"].includes(status))return;
-  const q=await supabaseClient.from("war_leave_requests").update({status}).eq("id",id).select("id").single();
-  if(q.error){alert("อัปเดตสถานะคำแจ้งลาไม่สำเร็จ: "+q.error.message);return;}
-  await loadWarLeavePage();
+  const q=await supabaseClient.from("war_leave_requests").update({status,reviewed_by:currentUser.id,reviewed_at:new Date().toISOString()}).eq("id",id).select("id").single();
+  if(q.error){alert("อัปเดตสถานะคำแจ้งลาไม่สำเร็จ: "+q.error.message);return;}await loadWarLeavePage();
+}
+async function editWarLeaveRequest(id){
+  if(!isManagement())return;const row=warLeaveRequests.find(x=>x.id===id);if(!row)return;
+  const reason=prompt("แก้ไขเหตุผลการแจ้งลา:",row.reason||"");if(reason===null)return;
+  if(!reason.trim()){alert("กรุณาระบุเหตุผล");return;}
+  const q=await supabaseClient.from("war_leave_requests").update({reason:reason.trim()}).eq("id",id).select("id").single();
+  if(q.error){alert("แก้ไขคำแจ้งลาไม่สำเร็จ: "+q.error.message);return;}await loadWarLeavePage();
+}
+async function deleteWarLeaveRequest(id){
+  if(!isManagement()||!confirm("ยืนยันลบคำแจ้งลานี้ใช่หรือไม่?"))return;
+  const q=await supabaseClient.from("war_leave_requests").delete().eq("id",id).select("id").single();
+  if(q.error){alert("ลบคำแจ้งลาไม่สำเร็จ: "+q.error.message);return;}await loadWarLeavePage();
 }
 function registerWarLeaveEvents(){
   $("war-leave-form")?.addEventListener("submit",submitWarLeave);
   $("war-leave-event")?.addEventListener("change",renderWarLeaveOwnStatus);
   $("war-leave-refresh")?.addEventListener("click",loadWarLeavePage);
   $("war-leave-management-list")?.addEventListener("click",event=>{
-    const button=event.target.closest("[data-war-leave-review]");
-    if(button)reviewWarLeave(button.dataset.warLeaveReview,button.dataset.status);
+    const review=event.target.closest("[data-war-leave-review]"),edit=event.target.closest("[data-war-leave-edit]"),del=event.target.closest("[data-war-leave-delete]");
+    if(review)reviewWarLeave(review.dataset.warLeaveReview,review.dataset.status);
+    if(edit)editWarLeaveRequest(edit.dataset.warLeaveEdit);
+    if(del)deleteWarLeaveRequest(del.dataset.warLeaveDelete);
   });
 }
 
@@ -2839,35 +2851,98 @@ async function joinWarSignup(eventId,button){
     button.disabled=false;button.textContent="เข้าร่วมวอร์";
   }
 }
+function isDoubleOfficialSaturday(dateValue){
+  if(!dateValue)return false;
+  const date=new Date(dateValue+"T12:00:00"),anchor=new Date("2026-11-14T12:00:00");
+  if(date.getDay()!==6)return false;
+  return Math.round((date-anchor)/(7*86400000))%2===0;
+}
+async function updateWarSignupTimeForDate(){
+  const type=$("war-signup-type")?.value,date=$("war-signup-event-date")?.value,input=$("war-signup-start-time"),note=$("war-signup-time-note");
+  if(!input||!date)return;
+  if(type==="practice"){input.readOnly=false;input.required=true;if(note)note.textContent="ซ้อมวอร์: Management กำหนดเวลาเองได้ (24 ชั่วโมง)";return;}
+  input.readOnly=true;input.required=true;
+  const double=isDoubleOfficialSaturday(date),editId=$("war-signup-edit-id")?.value;
+  const q=await supabaseClient.from("war_events").select("id").eq("event_date",date).eq("registration_type","official");
+  if(q.error){if(note)note.textContent="ตรวจสอบรอบวอร์ไม่สำเร็จ: "+q.error.message;return;}
+  const used=(q.data||[]).filter(x=>x.id!==editId).length;
+  input.value=double&&used===1?"20:30":"20:00";
+  if(note)note.textContent=double?(used===0?"เสาร์นี้มี 2 รอบ · รอบ 1 เวลา 20:00 น.":"เสาร์นี้มี 2 รอบ · รอบ 2 เวลา 20:30 น."):"วอร์จริง 1 รอบ · เวลา 20:00 น.";
+}
+function resetWarSignupForm(){
+  $("war-signup-create-form")?.reset();$("war-signup-edit-id").value="";
+  $("war-signup-create-confirm").textContent="ยืนยันสร้าง Event ลงชื่อวอร์";
+  $("war-signup-create-form")?.classList.remove("is-editing");
+}
+async function startEditWarSignupEvent(id){
+  if(!isManagement())return;
+  const {data,error}=await supabaseClient.from("war_events").select("id,event_name,registration_type,event_date,start_time,signup_opens_at,signup_closes_at,description").eq("id",id).single();
+  if(error){alert("โหลด Event ไม่สำเร็จ: "+error.message);return;}
+  $("war-signup-edit-id").value=data.id;$("war-signup-event-name").value=data.event_name||"";
+  $("war-signup-type").value=data.registration_type||"official";$("war-signup-event-date").value=String(data.event_date||"").slice(0,10);
+  $("war-signup-start-time").value=formatTime(data.start_time)==="-"?"":formatTime(data.start_time);
+  const toLocal=v=>{if(!v)return "";const d=new Date(v);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
+  $("war-signup-opens-at").value=toLocal(data.signup_opens_at);$("war-signup-closes-at").value=toLocal(data.signup_closes_at);
+  $("war-signup-description").value=data.description||"";
+  $("war-signup-create-confirm").textContent="บันทึกการแก้ไข Event";$("war-signup-create-form").classList.remove("hidden");$("war-signup-create-form").classList.add("is-editing");
+  $("war-signup-start-time").readOnly=data.registration_type==="official";
+  $("war-signup-create-form").scrollIntoView({behavior:"smooth",block:"center"});
+}
+async function deleteWarSignupEvent(id,button){
+  if(!isManagement()||!confirm("ยืนยันลบ Event ลงชื่อวอร์นี้?"))return;
+  button.disabled=true;button.textContent="กำลังลบ...";
+  const q=await supabaseClient.from("war_events").delete().eq("id",id).select("id").maybeSingle();
+  if(q.error||!q.data){alert("ลบ Event ไม่สำเร็จ: "+(q.error?.message||"ไม่พบ Event หรือไม่มีสิทธิ์"));button.disabled=false;button.textContent="ลบ Event";return;}
+  await loadWarSignups();
+}
 async function createWarSignupEvent(form){
   if(!isManagement())return;
   const button=$("war-signup-create-confirm"),message=$("war-signup-create-message");
-  const name=$("war-signup-event-name").value.trim(),type=$("war-signup-type").value;
-  const date=$("war-signup-event-date").value,startTime=$("war-signup-start-time").value;
-  const opens=$("war-signup-opens-at").value,closes=$("war-signup-closes-at").value;
-  const description=$("war-signup-description").value.trim();
-  const openDate=new Date(opens),closeDate=new Date(closes);
-  const showError=text=>{message.textContent=text;message.className="message error";};
+  const name=$("war-signup-event-name").value.trim(),type=$("war-signup-type").value,date=$("war-signup-event-date").value;
+  const startTime=$("war-signup-start-time").value,opens=$("war-signup-opens-at").value,closes=$("war-signup-closes-at").value;
+  const description=$("war-signup-description").value.trim(),editId=$("war-signup-edit-id").value;
+  const openDate=new Date(opens),closeDate=new Date(closes),showError=t=>{message.textContent=t;message.className="message error";};
   if(!name||!date||!startTime||!opens||!closes){showError("กรุณากรอกข้อมูลที่จำเป็นให้ครบ");return;}
+  if(type==="official"){
+    const double=isDoubleOfficialSaturday(date),q=await supabaseClient.from("war_events").select("id").eq("event_date",date).eq("registration_type","official");
+    if(q.error){showError(q.error.message);return;}
+    const used=(q.data||[]).filter(x=>x.id!==editId).length;
+    if((double&&used>=2)||(!double&&used>=1)){showError(double?"เสาร์นี้สร้างวอร์จริงครบ 2 รอบแล้ว":"วันที่เลือกมีวอร์จริงได้เพียง 1 รอบ");return;}
+    const expected=double&&used===1?"20:30":"20:00";if(startTime!==expected){showError("เวลาวอร์จริงรอบนี้ต้องเป็น "+expected+" น.");return;}
+  }
   if(Number.isNaN(openDate.getTime())||Number.isNaN(closeDate.getTime())||closeDate<=openDate){showError("เวลาปิดรับสมัครต้องอยู่หลังเวลาเริ่มลงชื่อ");return;}
   if(closeDate<=new Date()){showError("เวลาปิดรับสมัครต้องเป็นเวลาในอนาคต");return;}
-  button.disabled=true;button.textContent="กำลังสร้าง Event...";
+  button.disabled=true;button.textContent=editId?"กำลังบันทึกการแก้ไข...":"กำลังสร้าง Event...";
   try{
-    const {data,error}=await supabaseClient.rpc("create_war_signup_event",{
-      p_event_name:name,p_registration_type:type,p_event_date:date,p_start_time:startTime,
-      p_signup_opens_at:openDate.toISOString(),p_signup_closes_at:closeDate.toISOString(),p_description:description||null
-    });
-    if(error)throw error;
-    form.reset();form.classList.add("hidden");message.classList.add("hidden");
-    alert("ยืนยันสร้าง Event ลงชื่อวอร์เรียบร้อยแล้ว ระบบจะเปิดและปิดรับสมัครตามเวลาที่กำหนด");
+    let result;
+    if(editId)result=await supabaseClient.from("war_events").update({event_name:name,registration_type:type,event_date:date,start_time:startTime,signup_opens_at:openDate.toISOString(),signup_closes_at:closeDate.toISOString(),description:description||null}).eq("id",editId).select("id").single();
+    else result=await supabaseClient.rpc("create_war_signup_event",{p_event_name:name,p_registration_type:type,p_event_date:date,p_start_time:startTime,p_signup_opens_at:openDate.toISOString(),p_signup_closes_at:closeDate.toISOString(),p_description:description||null});
+    if(result.error)throw result.error;
+    resetWarSignupForm();form.classList.add("hidden");message.classList.add("hidden");
+    alert(editId?"แก้ไข Event เรียบร้อยแล้ว":"ยืนยันสร้าง Event ลงชื่อวอร์เรียบร้อยแล้ว");
     await loadWarSignups();
-  }catch(error){
-    console.error("Create war signup event:",error);
-    showError(error.message||"สร้าง Event ไม่สำเร็จ");
-  }finally{button.disabled=false;button.textContent="ยืนยันสร้าง Event ลงชื่อวอร์";}
+  }catch(error){console.error("Save war signup event:",error);showError(error.message||"บันทึก Event ไม่สำเร็จ");}
+  finally{button.disabled=false;button.textContent=$("war-signup-edit-id").value?"บันทึกการแก้ไข Event":"ยืนยันสร้าง Event ลงชื่อวอร์";}
 }
 
-function registerWarRecordAndAttendanceEvents(){$("war-signup-refresh")?.addEventListener("click",loadWarSignups);$("war-signup-add")?.addEventListener("click",()=>{if(isManagement())$("war-signup-create-form")?.classList.toggle("hidden");});$("war-signup-create-cancel")?.addEventListener("click",()=>$("war-signup-create-form")?.classList.add("hidden"));$("war-signup-create-form")?.addEventListener("submit",async e=>{e.preventDefault();await createWarSignupEvent(e.currentTarget);});$("war-signup-content")?.addEventListener("click",e=>{const j=e.target.closest("[data-war-signup-join]");if(j)joinWarSignup(j.dataset.warSignupJoin,j);});$("war-record-cancel-edit")?.addEventListener("click",resetWarRecordEditor);$("war-record-history")?.addEventListener("click",e=>{const ed=e.target.closest("[data-war-record-edit]"),del=e.target.closest("[data-war-record-delete]");if(ed)startEditWarMatchRecord(ed.dataset.warRecordEdit);if(del)deleteWarMatchRecord(del.dataset.warRecordDelete,del);});$("war-record-form")?.addEventListener("submit",async e=>{e.preventDefault();await saveWarMatchRecord(e.currentTarget);});$("war-attendance-stats-load")?.addEventListener("click",loadWarAttendanceEditor);$("war-attendance-stats-event")?.addEventListener("change",loadWarAttendanceEditor);$("war-attendance-stats-save")?.addEventListener("click",saveWarAttendanceStatistics);}
+function registerWarRecordAndAttendanceEvents(){
+  $("war-signup-refresh")?.addEventListener("click",loadWarSignups);
+  $("war-signup-add")?.addEventListener("click",()=>{if(isManagement()){resetWarSignupForm();$("war-signup-create-form")?.classList.toggle("hidden");}});
+  $("war-signup-create-cancel")?.addEventListener("click",()=>{resetWarSignupForm();$("war-signup-create-form")?.classList.add("hidden");});
+  $("war-signup-event-date")?.addEventListener("change",updateWarSignupTimeForDate);
+  $("war-signup-type")?.addEventListener("change",updateWarSignupTimeForDate);
+  $("war-signup-create-form")?.addEventListener("submit",async e=>{e.preventDefault();await createWarSignupEvent(e.currentTarget);});
+  $("war-signup-content")?.addEventListener("click",e=>{
+    const join=e.target.closest("[data-war-signup-join]"),edit=e.target.closest("[data-war-signup-edit]"),del=e.target.closest("[data-war-signup-delete]");
+    if(join)joinWarSignup(join.dataset.warSignupJoin,join);
+    if(edit)startEditWarSignupEvent(edit.dataset.warSignupEdit);
+    if(del)deleteWarSignupEvent(del.dataset.warSignupDelete,del);
+  });
+  $("war-record-cancel-edit")?.addEventListener("click",resetWarRecordEditor);
+  $("war-record-history")?.addEventListener("click",e=>{const ed=e.target.closest("[data-war-record-edit]"),del=e.target.closest("[data-war-record-delete]");if(ed)startEditWarMatchRecord(ed.dataset.warRecordEdit);if(del)deleteWarMatchRecord(del.dataset.warRecordDelete,del);});
+  $("war-record-form")?.addEventListener("submit",async e=>{e.preventDefault();await saveWarMatchRecord(e.currentTarget);});
+  $("war-attendance-stats-load")?.addEventListener("click",loadWarAttendanceEditor);$("war-attendance-stats-event")?.addEventListener("change",loadWarAttendanceEditor);$("war-attendance-stats-save")?.addEventListener("click",saveWarAttendanceStatistics);
+}
 function subscribeToWarRealtime() {
   if (warRealtimeChannel) {
     supabaseClient.removeChannel(warRealtimeChannel);
@@ -3012,9 +3087,7 @@ function renderSystemRoleMembers() {
       ? '<option value="" selected disabled>Admin (Legacy) — เลือก Role ใหม่</option>'
       : "";
     const status = member.active === false ? "รอตรวจสอบ / ไม่ Active" : "Active";
-    const createdAt = member.created_at
-      ? new Date(member.created_at).toLocaleDateString("th-TH", { year: "numeric", month: "short", day: "numeric" })
-      : "ไม่ระบุวันที่";
+    const createdAt = member.created_at ? formatDate(member.created_at) : "ไม่ระบุวันที่";
 
     return `
       <article class="system-role-row" data-system-role-user="${escapeHTML(member.user_id)}">
@@ -3194,7 +3267,7 @@ function sanitizeGuildActivityHTML(html){
 function activityDateLabel(value){
  if(!value)return "";
  const date=new Date(value);if(Number.isNaN(date.getTime()))return "";
- return date.toLocaleString("th-TH",{dateStyle:"medium",timeStyle:"short"});
+ return formatDate(date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0"))+" "+String(date.getHours()).padStart(2,"0")+":"+String(date.getMinutes()).padStart(2,"0");
 }
 function renderGuildActivities(){
  const list=$("guild-activities-list");if(!list)return;
