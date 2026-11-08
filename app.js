@@ -26,6 +26,7 @@ let currentMember = null;
 let allMembers = [];
 let discordAccount = null;
 let allPortfolios = [];
+let portfolioClassFilter = "all";
 let allWarEvents = [];
 let currentWarParties = [];
 let currentWarPartyAssignments = [];
@@ -1636,8 +1637,17 @@ async function renderPortfolios() {
     return;
   }
 
+  const visiblePortfolios = portfolioClassFilter === "all"
+    ? allPortfolios
+    : allPortfolios.filter((portfolio) => getPortfolioClasses(portfolio.game_class)
+        .some((name) => name.toLowerCase() === portfolioClassFilter.toLowerCase()));
+  if (!visiblePortfolios.length) {
+    showEmpty(container, "No Portfolio Found", `ยังไม่มีแฟ้มผลงานของคลาส ${portfolioClassFilter}`);
+    return;
+  }
+
   const reviewer = isPortfolioReviewer();
-  const cards = await Promise.all(allPortfolios.map(async (portfolio) => {
+  const cards = await Promise.all(visiblePortfolios.map(async (portfolio) => {
     const images = portfolio.portfolio_images || [];
     const firstImage = images[0];
     const imageUrl = firstImage ? await getPortfolioImageUrl(firstImage.image_url) : "";
@@ -2048,6 +2058,13 @@ async function handlePortfolioCardAction(event) {
 
 function registerPortfolioEvents() {
   window.portfolioDraftFiles = [];
+  $("class-legend")?.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-portfolio-class-filter]");
+    if (!button) return;
+    portfolioClassFilter = button.dataset.portfolioClassFilter || "all";
+    renderClassLegend();
+    void renderPortfolios();
+  });
   renderPortfolioClassChoices();
   renderPortfolioSelectedFiles();
 
@@ -2676,12 +2693,15 @@ function renderClassLegend() {
   const container = $("class-legend");
   if (!container) return;
 
-  container.innerHTML = CLASS_DATA.map((item) => `
-    <div class="class-item" style="--class-color:${item.color}">
-      <img class="class-icon-image" src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
-      <strong>${escapeHTML(item.name)}</strong>
-    </div>
-  `).join("");
+  container.innerHTML = `
+    <button type="button" class="class-item class-filter-all ${portfolioClassFilter === "all" ? "is-active" : ""}" data-portfolio-class-filter="all" aria-pressed="${portfolioClassFilter === "all"}"><strong>All Classes</strong></button>
+    ${CLASS_DATA.map((item) => `
+      <button type="button" class="class-item ${portfolioClassFilter === item.name ? "is-active" : ""}" data-portfolio-class-filter="${escapeHTML(item.name)}" style="--class-color:${item.color}" aria-pressed="${portfolioClassFilter === item.name}">
+        <img class="class-icon-image" src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
+        <strong>${escapeHTML(item.name)}</strong>
+      </button>
+    `).join("")}
+  `;
 }
 
 // ==========================================
