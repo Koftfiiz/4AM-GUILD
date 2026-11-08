@@ -4234,15 +4234,9 @@ function registerAppEventListeners() {
   });
 
   $("account-details")?.addEventListener("submit", async (event) => {
-    if (event.target.id === "game-uid-form") {
-      event.preventDefault();
-      await saveOwnGameUID(event.target);
-      return;
-    }
-    if (event.target.id === "character-profile-form") {
-      event.preventDefault();
-      await saveOwnCharacterProfile(event.target);
-    }
+    if (event.target.id !== "account-profile-form") return;
+    event.preventDefault();
+    await saveOwnCharacterProfile(event.target);
   });
 
   $("members-list")?.addEventListener("change", async (event) => {
