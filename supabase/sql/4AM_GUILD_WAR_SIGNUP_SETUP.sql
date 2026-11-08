@@ -1,24 +1,45 @@
 -- Query Name: 4AM_GUILD_WAR_SIGNUP_SETUP
--- Type: DDL + RLS Policies
--- Impact: Adds member registration for upcoming war events. Existing war data is unchanged.
-create table if not exists public.war_signups (
- id uuid primary key default gen_random_uuid(),
- war_event_id uuid not null references public.war_events(id) on delete cascade,
- member_id uuid not null references auth.users(id) on delete cascade,
- created_at timestamptz not null default now(),
- unique(war_event_id,member_id)
-);
-create index if not exists war_signups_event_id_idx on public.war_signups(war_event_id);
-alter table public.war_signups enable row level security;
-grant select,insert,delete on public.war_signups to authenticated;
-drop policy if exists "Active members view war signups" on public.war_signups;
-create policy "Active members view war signups" on public.war_signups for select to authenticated
-using(exists(select 1 from public.guild_members gm where gm.user_id=auth.uid() and gm.active=true));
-drop policy if exists "Members register themselves for war" on public.war_signups;
-create policy "Members register themselves for war" on public.war_signups for insert to authenticated
-with check(member_id=auth.uid()
- and exists(select 1 from public.guild_members gm where gm.user_id=auth.uid() and gm.active=true)
- and exists(select 1 from public.war_events we where we.id=war_event_id and we.is_published=false));
-drop policy if exists "Members cancel own war signup" on public.war_signups;
-create policy "Members cancel own war signup" on public.war_signups for delete to authenticated
-using(member_id=auth.uid() and exists(select 1 from public.guild_members gm where gm.user_id=auth.uid() and gm.active=true));
+-- Type: Safe schema verification + grants
+-- Existing installations already have public.war_signups with:
+-- event_id, member_id, raid, status, note, created_at.
+-- This script intentionally does NOT create, drop, rename, or rewrite data,
+-- constraints, or existing RLS policies.
+
+DO $$
+BEGIN
+  IF to_regclass('public.war_signups') IS NULL THEN
+    RAISE EXCEPTION
+      'public.war_signups does not exist. Stop here and verify the database before creating it.';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'war_signups'
+      AND column_name = 'event_id'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'war_signups'
+      AND column_name = 'member_id'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'war_signups'
+      AND column_name = 'raid'
+  ) OR NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public'
+      AND table_name = 'war_signups'
+      AND column_name = 'status'
+  ) THEN
+    RAISE EXCEPTION
+      'war_signups schema does not match the expected existing schema. No changes were made.';
+  END IF;
+END
+$$;
+
+-- Keep row-level security enabled and grant the table operations used by the app.
+-- Existing policies remain untouched and continue to control who can do each action.
+ALTER TABLE public.war_signups ENABLE ROW LEVEL SECURITY;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.war_signups TO authenticated;
