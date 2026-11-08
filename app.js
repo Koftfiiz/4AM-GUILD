@@ -2361,7 +2361,7 @@ function renderRaid(containerId, raidName, parties = []) {
         <div class="party-header">
           <div class="party-heading-fields">
             <h3>${raidName}${partyNumber}</h3>
-            ${canArrange && party ? `<input class="war-party-role" type="text" maxlength="60" value="${escapeHTML(party.party_name && party.party_name !== `${raidName}${partyNumber}` ? party.party_name : "")}" placeholder="ตำแหน่ง / หน้าที่ของตี้" aria-label="ตำแหน่งของตี้ ${raidName}${partyNumber}" data-party-role-id="${escapeHTML(party.id)}">` : (party?.party_name && party.party_name !== `${raidName}${partyNumber}` ? `<small class="war-party-role-label">${escapeHTML(party.party_name)}</small>` : "")}
+            ${party?.party_name && party.party_name !== `${raidName}${partyNumber}` ? `<small class="war-party-role-label">${escapeHTML(party.party_name)}</small>` : ""}
           </div>
           <span class="party-count">${members.length} / 6</span>
         </div>
@@ -2406,32 +2406,6 @@ function renderRaid(containerId, raidName, parties = []) {
 }
 
 async function handleWarSlotChange(event) {
-  const roleInput = event.target.closest(".war-party-role");
-  if (roleInput) {
-    const partyId = roleInput.dataset.partyRoleId;
-    const party = currentWarParties.find(item => item.id === partyId);
-    if (!party || !isManagement()) return;
-    const roleName = roleInput.value.trim();
-    roleInput.disabled = true;
-    try {
-      const { error } = await supabaseClient
-        .from("war_parties")
-        .update({ party_name: roleName || `${party.raid}${party.party_number}` })
-        .eq("id", partyId);
-      if (error) throw error;
-      party.party_name = roleName || `${party.raid}${party.party_number}`;
-      roleInput.classList.add("is-saved");
-      window.setTimeout(() => roleInput.classList.remove("is-saved"), 1200);
-    } catch (error) {
-      console.error("War party role update failed:", error);
-      alert("บันทึกตำแหน่งตี้ไม่สำเร็จ: " + (error.message || "กรุณาลองใหม่"));
-      roleInput.value = party.party_name === `${party.raid}${party.party_number}` ? "" : party.party_name;
-    } finally {
-      roleInput.disabled = false;
-    }
-    return;
-  }
-
   const classSelect = event.target.closest(".war-slot-class");
   if (classSelect) {
     const slot = classSelect.closest("[data-war-slot]");
@@ -2588,8 +2562,7 @@ async function handleWarCreate(event) {
         partyRows.push({
           event_id: createdEvent.id,
           raid,
-          party_number: number,
-          party_name: `${raid}${number}`
+          party_number: number
         });
       }
     });
