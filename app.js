@@ -3145,6 +3145,7 @@ function sanitizeFeedbackHTML(html) {
       return fragment;
     }
     const element = parsed.createElement(tag.toLowerCase());
+    if(tag==="IMG"){const src=node.getAttribute("src")||"";if(!src.startsWith(imagePrefix))return document.createTextNode("");element.src=src;element.alt=(node.alt||"Feedback image").slice(0,120);element.loading="lazy";element.className="guild-feedback-image";return element;}
     if (["DIV","P","SPAN","TD","TH"].includes(tag)) { const st=node.style||{}; if(["left","center","right","justify"].includes(st.textAlign)) element.style.textAlign=st.textAlign; if(/^\\d{1,2}px$/.test(st.fontSize||"")&&parseInt(st.fontSize)<=72)element.style.fontSize=st.fontSize; if(/^(Arial|Tahoma|Georgia|Verdana|monospace)$/i.test(st.fontFamily||""))element.style.fontFamily=st.fontFamily; if(/^#[0-9a-f]{6}$/i.test(st.color||""))element.style.color=st.color; if(/^#[0-9a-f]{6}$/i.test(st.backgroundColor||""))element.style.backgroundColor=st.backgroundColor; } if(tag==="TABLE")element.className="guild-rich-table";
     [...node.childNodes].forEach(child => element.appendChild(clean(child)));
     return element;
