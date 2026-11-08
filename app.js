@@ -30,6 +30,8 @@ let allWarEvents = [];
 let currentWarParties = [];
 let currentWarPartyAssignments = [];
 let currentWarAssignmentEventId = null;
+let warTimeConfirmed = false;
+let warRealtimeChannel = null;
 let registrationBusy = false;
 
 const $ = (id) => document.getElementById(id);
@@ -442,6 +444,8 @@ async function loadApplication() {
       loadPortfolios(),
       loadWarEvents()
     ]);
+
+    subscribeToWarRealtime();
 
     // Re-render after member records are available so each portfolio shows its owner.
     await renderPortfolios();
@@ -2215,10 +2219,26 @@ function getWarEventConfig(event) {
 
 function renderWarLayout() {
   const selectedEvent = allWarEvents[0] || null;
-  const config = getWarEventConfig(selectedEvent);
-  const raidLetters = ["A", "B", "C", "D"].slice(0, config.raidCount);
   const summary = $("war-summary");
   const boards = $("war-raid-boards");
+
+  // Do not expose empty raid/party slots before management creates a war event.
+  if (!selectedEvent) {
+    currentWarParties = [];
+    currentWarPartyAssignments = [];
+    currentWarAssignmentEventId = null;
+    if (summary) summary.innerHTML = "";
+    if (boards) boards.innerHTML = `
+      <div class="empty-state war-no-event">
+        <span>⚔</span>
+        <h3>ยังไม่มีการสร้างตี้วอร์</h3>
+        <p>เมื่อฝ่ายบริหารสร้างตี้วอร์แล้ว สมาชิกจะเข้ามาตรวจสอบ Raid และตี้ของตัวเองได้ที่นี่</p>
+      </div>`;
+    return;
+  }
+
+  const config = getWarEventConfig(selectedEvent);
+  const raidLetters = ["A", "B", "C", "D"].slice(0, config.raidCount);
 
   if (summary) {
     const total = config.raidCount * 30;
@@ -2256,8 +2276,7 @@ function renderWarLayout() {
       <div id="raid-${letter.toLowerCase()}" class="raid-grid"></div>
     </div>`).join("");
 
-  if (selectedEvent) loadSelectedWarEvent(selectedEvent.id);
-  else raidLetters.forEach(letter => renderRaid(`raid-${letter.toLowerCase()}`, letter, []));
+  loadSelectedWarEvent(selectedEvent.id);
 }
 
 async function loadSelectedWarEvent(eventId) {
@@ -2341,7 +2360,10 @@ function renderRaid(containerId, raidName, parties = []) {
     return `
       <article class="party-card">
         <div class="party-header">
-          <div><h3>${raidName}${partyNumber}</h3></div>
+          <div class="party-heading-fields">
+            <h3>${raidName}${partyNumber}</h3>
+            ${canArrange && party ? `<input class="war-party-role" type="text" maxlength="60" value="${escapeHTML(party.party_name && party.party_name !== `${raidName}${partyNumber}` ? party.party_name : "")}" placeholder="ตำแหน่ง / หน้าที่ของตี้" aria-label="ตำแหน่งของตี้ ${raidName}${partyNumber}" data-party-role-id="${escapeHTML(party.id)}">` : (party?.party_name && party.party_name !== `${raidName}${partyNumber}` ? `<small class="war-party-role-label">${escapeHTML(party.party_name)}</small>` : "")}
+          </div>
           <span class="party-count">${members.length} / 6</span>
         </div>
         <div class="party-slots">
@@ -2385,6 +2407,32 @@ function renderRaid(containerId, raidName, parties = []) {
 }
 
 async function handleWarSlotChange(event) {
+  const roleInput = event.target.closest(".war-party-role");
+  if (roleInput) {
+    const partyId = roleInput.dataset.partyRoleId;
+    const party = currentWarParties.find(item => item.id === partyId);
+    if (!party || !isManagement()) return;
+    const roleName = roleInput.value.trim();
+    roleInput.disabled = true;
+    try {
+      const { error } = await supabaseClient
+        .from("war_parties")
+        .update({ party_name: roleName || `${party.raid}${party.party_number}` })
+        .eq("id", partyId);
+      if (error) throw error;
+      party.party_name = roleName || `${party.raid}${party.party_number}`;
+      roleInput.classList.add("is-saved");
+      window.setTimeout(() => roleInput.classList.remove("is-saved"), 1200);
+    } catch (error) {
+      console.error("War party role update failed:", error);
+      alert("บันทึกตำแหน่งตี้ไม่สำเร็จ: " + (error.message || "กรุณาลองใหม่"));
+      roleInput.value = party.party_name === `${party.raid}${party.party_number}` ? "" : party.party_name;
+    } finally {
+      roleInput.disabled = false;
+    }
+    return;
+  }
+
   const classSelect = event.target.closest(".war-slot-class");
   if (classSelect) {
     const slot = classSelect.closest("[data-war-slot]");
@@ -2502,11 +2550,19 @@ async function handleWarCreate(event) {
   const raidCount = mode === "practice" ? Number($("war-raid-count")?.value || 4) : 2;
   const opponent = String($("war-opponent")?.value || "").trim();
   const eventDate = $("war-event-date")?.value;
-  const startTime = $("war-start-time")?.value;
+  const startTime = String($("war-start-time")?.value || "").trim();
   const submit = $("war-create-submit");
 
   if (!opponent || !eventDate || !startTime) {
     setWarCreateMessage("กรุณากรอกชื่อกิลด์คู่แข่ง วันที่ และเวลาเริ่มวอร์ให้ครบ", true);
+    return;
+  }
+  if (!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(startTime)) {
+    setWarCreateMessage("กรุณากรอกเวลาแบบ 24 ชั่วโมง HH:MM เช่น 20:30", true);
+    return;
+  }
+  if (!warTimeConfirmed) {
+    setWarCreateMessage("กรุณากดปุ่มยืนยันเวลาเริ่มวอร์ก่อนสร้างตี้", true);
     return;
   }
   if (!Number.isInteger(raidCount) || raidCount < 1 || raidCount > 4) {
@@ -2557,6 +2613,8 @@ async function handleWarCreate(event) {
 
     $("war-create-panel")?.classList.add("hidden");
     form.reset();
+    warTimeConfirmed = false;
+    updateWarTimeConfirmation();
     updateWarCreateMode();
     await loadWarEvents();
     setWarCreateMessage("สร้างตี้วอร์สำเร็จแล้ว");
@@ -2568,6 +2626,37 @@ async function handleWarCreate(event) {
     submit.disabled = false;
     submit.textContent = "สร้างตี้วอร์";
   }
+}
+
+function updateWarTimeConfirmation(message = "ยังไม่ได้ยืนยันเวลา", isError = false) {
+  const status = $("war-time-confirm-status");
+  if (status) {
+    status.textContent = message;
+    status.classList.toggle("is-confirmed", warTimeConfirmed && !isError);
+    status.classList.toggle("is-error", isError);
+  }
+  const button = $("war-time-confirm");
+  if (button) button.textContent = warTimeConfirmed ? "ยืนยันแล้ว" : "ยืนยันเวลา";
+}
+
+function subscribeToWarRealtime() {
+  if (warRealtimeChannel) {
+    supabaseClient.removeChannel(warRealtimeChannel);
+    warRealtimeChannel = null;
+  }
+
+  warRealtimeChannel = supabaseClient
+    .channel("guild-war-live-updates")
+    .on("postgres_changes", { event: "*", schema: "public", table: "war_events" }, () => loadWarEvents())
+    .on("postgres_changes", { event: "*", schema: "public", table: "war_parties" }, async () => {
+      const eventId = currentWarAssignmentEventId || allWarEvents[0]?.id;
+      if (eventId) await loadSelectedWarEvent(eventId);
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "war_party_members" }, async () => {
+      const eventId = currentWarAssignmentEventId || allWarEvents[0]?.id;
+      if (eventId) await loadSelectedWarEvent(eventId);
+    })
+    .subscribe();
 }
 
 function registerWarCreationEvents() {
@@ -2591,6 +2680,20 @@ function registerWarCreationEvents() {
   document.querySelectorAll('input[name="war-mode"]').forEach(input => input.addEventListener("change", updateWarCreateMode));
   $("war-raid-count")?.addEventListener("change", updateWarCreateMode);
   $("war-create-form")?.addEventListener("submit", handleWarCreate);
+  $("war-start-time")?.addEventListener("input", () => {
+    warTimeConfirmed = false;
+    updateWarTimeConfirmation();
+  });
+  $("war-time-confirm")?.addEventListener("click", () => {
+    const time = String($("war-start-time")?.value || "").trim();
+    if (!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(time)) {
+      warTimeConfirmed = false;
+      updateWarTimeConfirmation("กรุณากรอกเวลา HH:MM ให้ถูกต้อง", true);
+      return;
+    }
+    warTimeConfirmed = true;
+    updateWarTimeConfirmation(`ยืนยันเวลาเริ่มวอร์ ${time} แล้ว`);
+  });
   const dateInput = $("war-event-date");
   if (dateInput) {
     const now = new Date();
