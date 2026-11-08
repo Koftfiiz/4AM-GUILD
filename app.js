@@ -78,6 +78,7 @@ const PAGE_TITLES = {
   war: "จัดตี้วอร์",
   "war-attendance": "ประกาศรายชื่อวอร์",
   "war-signup": "ลงชื่อวอร์",
+  "war-leave": "แจ้งลาวอร์",
   "war-stats": "สถิติกิลด์วอร์",
   "war-attendance-stats": "สถิติการเข้าร่วมวอร์",
   rules: "กฎกิลด์",
@@ -2653,9 +2654,21 @@ async function loadWarSignups(){
     .in("event_id",events.map(event=>event.id)).neq("status","cancelled")
     .order("queue_position",{ascending:true});
   if(signupError){box.innerHTML='<div class="system-role-error">'+escapeHTML(signupError.message)+'</div>';return;}
+  const memberResult=await supabaseClient.from("guild_members")
+    .select("user_id,character_name,nickname,discord_name,game_class,active")
+    .eq("active",true).order("character_name");
+  if(memberResult.error){box.innerHTML='<div class="system-role-error">'+escapeHTML(memberResult.error.message)+'</div>';return;}
+  const rosterMembers=memberResult.data||[];
+  const leaveResults=await Promise.all(events.map(async event=>{
+    const q=await supabaseClient.rpc("get_war_leave_roster",{p_event_id:event.id});
+    return {eventId:event.id,rows:q.error?[]:(q.data||[]),error:q.error||null};
+  }));
+  const leaveByEvent=new Map(leaveResults.map(x=>[x.eventId,x.rows]));
+  const leaveRpcUnavailable=leaveResults.some(x=>x.error);
   const allSignups=signups||[],now=Date.now();
   box.innerHTML=events.map(event=>{
     const rows=allSignups.filter(row=>row.event_id===event.id);
+    const leaveRows=leaveByEvent.get(event.id)||[];
     const state=warSignupEventState(event,now);
     const own=rows.find(row=>row.member_id===currentUser.id);
     const stateLabel=state==="scheduled"?"รอเปิดรับสมัคร":state==="open"?"เปิดรับสมัคร":state==="closed"?"ปิดรับสมัคร":"ข้อมูลเวลาไม่ถูกต้อง";
@@ -2674,19 +2687,128 @@ async function loadWarSignups(){
     }else{
       action='<span class="war-signup-status">ปิดรับสมัครแล้ว</span>';
     }
-    const managerRoster=isManagement()?'<details class="war-signup-manager-roster"><summary>ดูรายชื่อผู้ลงชื่อ ('+rows.length+')</summary><div class="war-signup-roster-list">'+rows.map(row=>{
-      const member=allMembers.find(item=>item.user_id===row.member_id),queue=Number(row.queue_position)||0;
-      const classInfo=getClassInfo(getMemberClass(member||{}));
-      const classIcon=classInfo?.iconPath?'<img class="war-signup-roster-class-icon" src="'+escapeHTML(classInfo.iconPath)+'" alt="'+escapeHTML(getMemberClass(member||{}))+'" loading="lazy">':'<span class="war-signup-roster-class-fallback">✦</span>';
-      return '<div class="war-signup-roster-row"><span class="war-signup-roster-queue">#'+queue+'</span>'+classIcon+'<strong>'+escapeHTML(member?getMemberName(member):"สมาชิก")+'</strong><small>'+(queue<=60?"ตัวจริง":"ตัวสำรอง")+'</small></div>';
-    }).join("")+'</div></details>':"";
+    const rosterHtml=renderWarSignupRoster(rows,rosterMembers,leaveRows,state);
     const summary=state==="closed"?renderWarSignupSummary(rows):"";
     return '<article class="war-signup-card"><div class="war-signup-card-top"><div class="war-signup-card-heading"><h3>'+escapeHTML(event.event_name)+'</h3><p>'+formatDate(event.event_date)+' · เริ่มวอร์ '+formatTime(event.start_time)+'</p></div><div class="war-signup-badges"><span class="war-signup-state '+stateClass+'">'+stateLabel+'</span><span class="war-signup-type">'+typeLabel+'</span></div></div>'+
       '<div class="war-signup-event-meta"><span>เริ่มลงชื่อ: '+warSignupDateTime(event.signup_opens_at)+'</span><span>ปิดรับ: '+warSignupDateTime(event.signup_closes_at)+'</span><span>ผู้ลงชื่อ: '+capacity+'</span></div>'+
       (event.description?'<p class="war-signup-description">'+escapeHTML(String(event.description).replace(/\[\[WAR_CONFIG:[\s\S]*?\]\]/,"").trim())+'</p>':"")+
-      '<div class="war-signup-card-bottom"><div class="war-signup-action">'+action+'</div></div>'+managerRoster+summary+'</article>';
+      '<div class="war-signup-card-bottom"><div class="war-signup-action">'+action+'</div></div>'+rosterHtml+(leaveRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดรายชื่อผู้แจ้งลาไม่ได้ กรุณาติดตั้งระบบแจ้งลาวอร์ใน Supabase</p>':"")+summary+'</article>';
   }).join("");
 }
+function renderWarSignupRoster(signups,members,leaveRows,eventState){
+  const memberMap=new Map((members||[]).map(member=>[member.user_id,member]));
+  const signupIds=new Set((signups||[]).map(row=>row.member_id));
+  const validLeaves=(leaveRows||[]).filter(row=>["pending","approved"].includes(row.status));
+  const leaveMap=new Map(validLeaves.map(row=>[row.member_id,row.status]));
+  const primary=(signups||[]).filter(row=>Number(row.queue_position)>=1&&Number(row.queue_position)<=60).sort((a,b)=>Number(a.queue_position)-Number(b.queue_position));
+  const reserve=(signups||[]).filter(row=>Number(row.queue_position)>=61&&Number(row.queue_position)<=80).sort((a,b)=>Number(a.queue_position)-Number(b.queue_position));
+  const renderSignupList=(items,kind)=>{
+    if(!items.length)return '<div class="war-roster-empty">ยังไม่มีรายชื่อ</div>';
+    return '<div class="war-roster-list">'+items.map(row=>{
+      const member=memberMap.get(row.member_id)||{};
+      const className=getMemberClass(member),info=getClassInfo(className);
+      const icon=info?.iconPath?'<img class="war-roster-class-icon" src="'+escapeHTML(info.iconPath)+'" alt="'+escapeHTML(className)+'" loading="lazy">':'<span class="war-roster-class-fallback">✦</span>';
+      const leaveStatus=leaveMap.get(row.member_id);
+      return '<div class="war-roster-row"><span class="war-roster-number">#'+Number(row.queue_position||0)+'</span>'+icon+'<strong>'+escapeHTML(getMemberName(member))+'</strong><span class="war-roster-row-note">'+(leaveStatus?'<em class="war-roster-leave-flag">แจ้งลา'+(leaveStatus==="pending"?" · รอตรวจสอบ":"")+'</em>':kind)+'</span></div>';
+    }).join("")+'</div>';
+  };
+  const leaveList=validLeaves.map(row=>memberMap.get(row.member_id)).filter(Boolean);
+  const leaveHtml=leaveList.length?'<div class="war-roster-name-list">'+leaveList.map(member=>'<div class="war-roster-name-row"><span class="war-roster-bullet">◆</span><strong>'+escapeHTML(getMemberName(member))+'</strong><small>'+(leaveMap.get(member.user_id)==="approved"?"รับทราบแล้ว":"รอตรวจสอบ")+'</small></div>').join("")+'</div>':'<div class="war-roster-empty">ยังไม่มีสมาชิกแจ้งลา</div>';
+  const absent=eventState==="closed"?(members||[]).filter(member=>!signupIds.has(member.user_id)&&!leaveMap.has(member.user_id)): [];
+  const absentHtml=eventState==="closed"?(absent.length?'<div class="war-roster-name-list">'+absent.map(member=>'<div class="war-roster-name-row"><span class="war-roster-bullet">◆</span><strong>'+escapeHTML(getMemberName(member))+'</strong></div>').join("")+'</div>':'<div class="war-roster-empty">ไม่มีสมาชิกขาดวอร์</div>'):'<div class="war-roster-empty">ระบบจะสรุปรายชื่อผู้ขาดวอร์หลังปิดรับสมัคร</div>';
+  return '<section class="war-signup-roster-board"><div class="war-roster-section"><div class="war-roster-section-head"><h4>รายชื่อผู้ลงชื่อ · ตัวจริง</h4><span>'+primary.length+'/60</span></div>'+renderSignupList(primary,"ตัวจริง")+'</div>'+
+    '<div class="war-roster-section is-reserve"><div class="war-roster-section-head"><h4>รายชื่อผู้ลงชื่อ · ตัวสำรอง</h4><span>'+reserve.length+'/20</span></div>'+renderSignupList(reserve,"ตัวสำรอง")+'</div>'+
+    '<div class="war-roster-section is-leave"><div class="war-roster-section-head"><h4>แจ้งลาวอร์</h4><span>'+leaveList.length+' คน</span></div>'+leaveHtml+'</div>'+
+    '<div class="war-roster-section is-absent"><div class="war-roster-section-head"><h4>ขาดวอร์</h4><span>'+(eventState==="closed"?absent.length+" คน":"รอสรุป")+'</span></div>'+absentHtml+'</div></section>';
+}
+
+let warLeaveEvents=[];
+let warLeaveRequests=[];
+
+function warLeaveStatusLabel(status){
+  return status==="approved"?"รับทราบแล้ว":status==="rejected"?"ไม่อนุมัติ":"รอตรวจสอบ";
+}
+function renderWarLeaveOwnStatus(){
+  const eventId=$("war-leave-event")?.value;
+  const request=warLeaveRequests.find(row=>row.event_id===eventId&&row.member_id===currentUser?.id);
+  const reason=$("war-leave-reason"),status=$("war-leave-own-status"),button=$("war-leave-submit");
+  if(reason)reason.value=request?.reason||"";
+  if(status)status.innerHTML=request?'<strong>สถานะคำแจ้งลา: '+warLeaveStatusLabel(request.status)+'</strong><span> ส่งเมื่อ '+warSignupDateTime(request.created_at)+'</span>':"ยังไม่มีการแจ้งลาสำหรับรอบวอร์ที่เลือก";
+  if(button)button.textContent=request?"ส่งคำแจ้งลาอีกครั้ง / อัปเดตเหตุผล":"ยืนยันแจ้งลาวอร์";
+}
+function renderWarLeaveLists(){
+  const mine=$("war-leave-my-list"),management=$("war-leave-management-list");
+  const myRows=warLeaveRequests.filter(row=>row.member_id===currentUser?.id);
+  const eventName=id=>warLeaveEvents.find(event=>event.id===id);
+  mine.innerHTML=myRows.length?'<div class="war-leave-history-list">'+myRows.map(row=>{
+    const event=eventName(row.event_id);
+    return '<article class="war-leave-history-row"><div><strong>'+escapeHTML(event?.event_name||"กิจกรรมวอร์")+'</strong><small>'+escapeHTML(event?formatDate(event.event_date):"")+' · '+escapeHTML(warLeaveStatusLabel(row.status))+'</small><p>'+escapeHTML(row.reason||"")+'</p></div><span class="war-leave-status '+escapeHTML(row.status)+'">'+warLeaveStatusLabel(row.status)+'</span></article>';
+  }).join("")+'</div>':'<div class="war-roster-empty">ยังไม่มีประวัติการแจ้งลา</div>';
+  if(!isManagement()){ $("war-leave-management")?.classList.add("hidden"); return; }
+  $("war-leave-management")?.classList.remove("hidden");
+  management.innerHTML=warLeaveRequests.length?'<div class="war-leave-management-list">'+warLeaveRequests.map(row=>{
+    const member=allMembers.find(item=>item.user_id===row.member_id)||{};
+    const event=eventName(row.event_id);
+    return '<article class="war-leave-review-row"><div class="war-leave-review-main"><strong>'+escapeHTML(getMemberName(member))+'</strong><span>'+escapeHTML(event?.event_name||"กิจกรรมวอร์")+' · '+escapeHTML(event?formatDate(event.event_date):"")+'</span><p>'+escapeHTML(row.reason||"ไม่ได้ระบุเหตุผล")+'</p></div><div class="war-leave-review-actions"><span class="war-leave-status '+escapeHTML(row.status)+'">'+warLeaveStatusLabel(row.status)+'</span>'+(row.status==="pending"?'<button class="btn btn-primary btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="approved" type="button">รับทราบ</button><button class="btn btn-outline btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="rejected" type="button">ไม่อนุมัติ</button>':"")+'</div></article>';
+  }).join("")+'</div>':'<div class="war-roster-empty">ยังไม่มีสมาชิกแจ้งลาวอร์</div>';
+}
+async function loadWarLeavePage(){
+  const select=$("war-leave-event"),mine=$("war-leave-my-list");
+  if(!select||!currentUser)return;
+  if(mine)mine.innerHTML='<p class="muted">กำลังโหลดข้อมูล...</p>';
+  const [eventsQ,requestsQ]=await Promise.all([
+    supabaseClient.from("war_events").select("id,event_name,event_date,start_time,signup_opens_at,signup_closes_at").not("signup_opens_at","is",null).order("event_date",{ascending:true}),
+    supabaseClient.from("war_leave_requests").select("id,event_id,member_id,reason,status,created_at").order("created_at",{ascending:false})
+  ]);
+  if(eventsQ.error||requestsQ.error){
+    const error=eventsQ.error||requestsQ.error;
+    if(mine)mine.innerHTML='<div class="system-role-error">'+escapeHTML(error.message)+'<br>กรุณารัน SQL ระบบแจ้งลาวอร์ใน Supabase ก่อนใช้งาน</div>';
+    select.innerHTML='<option value="">โหลดข้อมูลไม่สำเร็จ</option>';
+    return;
+  }
+  warLeaveEvents=eventsQ.data||[];
+  warLeaveRequests=requestsQ.data||[];
+  const previous=select.value;
+  const today=new Date().toISOString().slice(0,10);
+  const selectable=warLeaveEvents.filter(event=>event.event_date>=today);
+  select.innerHTML=selectable.length?selectable.map(event=>'<option value="'+escapeHTML(event.id)+'">'+escapeHTML(event.event_name)+' · '+formatDate(event.event_date)+'</option>').join(""):'<option value="">ยังไม่มีรอบวอร์ที่เปิดให้แจ้งลา</option>';
+  if(previous&&selectable.some(event=>event.id===previous))select.value=previous;
+  else if(selectable.length)select.value=selectable[0].id;
+  select.disabled=!selectable.length;
+  $("war-leave-form")?.querySelectorAll("textarea,button").forEach(el=>el.disabled=!selectable.length);
+  renderWarLeaveOwnStatus();
+  renderWarLeaveLists();
+}
+async function submitWarLeave(event){
+  event.preventDefault();
+  if(!currentUser)return;
+  const eventId=$("war-leave-event")?.value,reason=$("war-leave-reason")?.value.trim(),button=$("war-leave-submit"),message=$("war-leave-message");
+  if(!eventId||!reason){message.textContent="กรุณาเลือกรอบวอร์และระบุเหตุผล";message.className="message error";return;}
+  button.disabled=true;button.textContent="กำลังส่งคำแจ้งลา...";
+  try{
+    const q=await supabaseClient.rpc("submit_war_leave",{p_event_id:eventId,p_reason:reason});
+    if(q.error)throw q.error;
+    message.textContent="ส่งคำแจ้งลาวอร์เรียบร้อยแล้ว";message.className="message success";
+    await loadWarLeavePage();
+  }catch(error){message.textContent=error.message||"ส่งคำแจ้งลาไม่สำเร็จ";message.className="message error";}
+  finally{button.disabled=false;}
+}
+async function reviewWarLeave(id,status){
+  if(!isManagement()||!id||!["approved","rejected"].includes(status))return;
+  const q=await supabaseClient.from("war_leave_requests").update({status}).eq("id",id).select("id").single();
+  if(q.error){alert("อัปเดตสถานะคำแจ้งลาไม่สำเร็จ: "+q.error.message);return;}
+  await loadWarLeavePage();
+}
+function registerWarLeaveEvents(){
+  $("war-leave-form")?.addEventListener("submit",submitWarLeave);
+  $("war-leave-event")?.addEventListener("change",renderWarLeaveOwnStatus);
+  $("war-leave-refresh")?.addEventListener("click",loadWarLeavePage);
+  $("war-leave-management-list")?.addEventListener("click",event=>{
+    const button=event.target.closest("[data-war-leave-review]");
+    if(button)reviewWarLeave(button.dataset.warLeaveReview,button.dataset.status);
+  });
+}
+
 async function joinWarSignup(eventId,button){
   if(!currentUser||!eventId||!button)return;
   button.disabled=true;button.textContent="กำลังลงชื่อ...";
@@ -3628,7 +3750,7 @@ function openGuildPage(pageName) {
     button.classList.toggle("active", button.dataset.page === pageName);
   });
 
-  const warPage = ["war", "war-attendance", "war-signup", "war-stats", "war-attendance-stats"].includes(pageName);
+  const warPage = ["war", "war-attendance", "war-signup", "war-leave", "war-stats", "war-attendance-stats"].includes(pageName);
   const warParent = document.querySelector('[data-toggle-submenu="war-submenu"]');
   const warSubmenu = $("war-submenu");
   warParent?.classList.toggle("active", warPage);
@@ -3651,6 +3773,7 @@ function openGuildPage(pageName) {
   if (pageName === "war") loadWarEvents();
   if (pageName === "war-attendance") loadWarAttendance();
   if (pageName === "war-signup") loadWarSignups();
+  if (pageName === "war-leave") loadWarLeavePage();
   if (pageName === "war-stats") loadWarMatchRecords();
   if (pageName === "war-attendance-stats") loadWarAttendanceStatistics();
   if (pageName === "rules") loadGuildRules();
@@ -3943,6 +4066,7 @@ function registerAppEventListeners() {
   registerSystemRoleEvents();
   registerWarCreationEvents();
   registerWarRecordAndAttendanceEvents();
+  registerWarLeaveEvents();
   initializeGuildRichTextEnhancements();
   registerGuildRuleEvents();
   registerFeedbackEvents();
