@@ -2733,9 +2733,9 @@ function renderWarLeaveOwnStatus(){
   const eventId=$("war-leave-event")?.value;
   const request=warLeaveRequests.find(row=>row.event_id===eventId&&row.member_id===currentUser?.id);
   const reason=$("war-leave-reason"),status=$("war-leave-own-status"),button=$("war-leave-submit");
-  if(reason)reason.value=request?.reason||"";
+  if(reason){reason.value=request?.reason||"";reason.disabled=request?.status==="approved";}
   if(status)status.innerHTML=request?'<strong>สถานะคำแจ้งลา: '+warLeaveStatusLabel(request.status)+'</strong><span> ส่งเมื่อ '+warSignupDateTime(request.created_at)+'</span>':"ยังไม่มีการแจ้งลาสำหรับรอบวอร์ที่เลือก";
-  if(button)button.textContent=request?"ส่งคำแจ้งลาอีกครั้ง / อัปเดตเหตุผล":"ยืนยันแจ้งลาวอร์";
+  if(button){button.disabled=request?.status==="approved";button.textContent=request?.status==="approved"?"รับทราบคำแจ้งลาแล้ว":request?"อัปเดตคำแจ้งลา":"ยืนยันแจ้งลาวอร์";}
 }
 function renderWarLeaveLists(){
   const mine=$("war-leave-my-list"),management=$("war-leave-management-list");
