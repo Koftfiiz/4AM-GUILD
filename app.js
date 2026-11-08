@@ -3969,6 +3969,27 @@ async function saveOwnGameUID(form) {
   }
 }
 
+async function saveOwnCharacterProfile(form) {
+  if (!currentUser || !currentMember || !form) return;
+  const characterName = String(form.querySelector("[name='character_name']")?.value || "").trim();
+  const gameClass = String(form.querySelector("[name='game_class']")?.value || "").trim();
+  const button = form.querySelector("button[type='submit']");
+  if (!characterName) { showMessage("character-profile-message", "กรุณากรอกชื่อตัวละคร"); return; }
+  if (characterName.length > 40) { showMessage("character-profile-message", "ชื่อตัวละครต้องไม่เกิน 40 ตัวอักษร"); return; }
+  if (!CLASS_DATA.some(item => item.name === gameClass)) { showMessage("character-profile-message", "กรุณาเลือกอาชีพจากรายการ"); return; }
+  if (button) { button.disabled = true; button.textContent = "กำลังบันทึก..."; }
+  showMessage("character-profile-message", "กำลังบันทึกข้อมูลตัวละคร...", "info");
+  try {
+    const { data, error } = await supabaseClient.from("guild_members").update({ character_name: characterName, game_class: gameClass }).eq("user_id", currentUser.id).select("user_id, character_name, game_class").single();
+    if (error) throw error;
+    Object.assign(currentMember, { character_name: data.character_name, game_class: data.game_class });
+    const cachedMember = allMembers.find(member => member.user_id === currentUser.id);
+    if (cachedMember) Object.assign(cachedMember, { character_name: data.character_name, game_class: data.game_class });
+    renderAccountDetails(); updateUserChip(); renderDashboardProfile(); renderMembers(allMembers); renderWarLayout();
+    showMessage("character-profile-message", "บันทึกชื่อตัวละครและอาชีพสำเร็จ", "success");
+  } catch (error) { console.error("Character profile update error:", error); showMessage("character-profile-message", "บันทึกไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด")); }
+  finally { if (button) { button.disabled = false; button.textContent = "บันทึกข้อมูลตัวละคร"; } }
+}
 // ==========================================
 // ACCOUNT SETTINGS
 // ==========================================
@@ -3983,17 +4004,36 @@ function renderAccountDetails() {
 
   const displayPosition = getAccountDisplayPosition();
   const permission = getAccountPermissionLabel();
+  const currentClass = getClassInfo(currentMember?.game_class);
+  const classIcon = currentClass?.iconPath || "";
+  const classColor = currentClass?.color || "#d8b878";
 
   container.innerHTML = `
+    <div class="settings-detail"><span>Display Name</span><strong>${escapeHTML(name)}</strong></div>
+    <div class="settings-detail"><span>Email Address</span><strong>${escapeHTML(currentUser?.email || "-")}</strong></div>
     <div class="settings-detail">
-      <span>Display Name</span>
-      <strong>${escapeHTML(name)}</strong>
+      <span>อาชีพปัจจุบัน</span>
+      <strong class="account-class-display" style="--class-color:${classColor}">
+        ${classIcon ? '<img src="' + escapeHTML(classIcon) + '" alt="" class="account-class-icon" onerror="this.style.display=\'none\'">' : ''}
+        <span>${escapeHTML(currentMember?.game_class || "ยังไม่ได้เลือกอาชีพ")}</span>
+      </strong>
     </div>
-
-    <div class="settings-detail">
-      <span>Email Address</span>
-      <strong>${escapeHTML(currentUser?.email || "-")}</strong>
-    </div>
+    <form id="character-profile-form" class="game-uid-settings-form account-character-form">
+      <label for="account-character-name">แก้ไขชื่อตัวละคร</label>
+      <input id="account-character-name" name="character_name" type="text" maxlength="40" autocomplete="off" placeholder="กรอกชื่อตัวละครใหม่" value="${escapeHTML(currentMember?.character_name || "")}" required>
+      <label for="account-game-class">เปลี่ยนอาชีพ (Class)</label>
+      <div class="account-class-select-wrap">
+        <img class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'">
+        <select id="account-game-class" name="game_class" required>
+          ${CLASS_DATA.map(item => '<option value="' + escapeHTML(item.name) + '" ' + (item.name === currentMember?.game_class ? 'selected' : '') + '>' + escapeHTML(item.name) + '</option>').join("")}
+        </select>
+      </div>
+      <div class="account-class-legend" aria-label="รายการอาชีพ">
+        ${CLASS_DATA.map(item => '<span class="account-class-option" style="--class-color:' + item.color + '"><img src="' + escapeHTML(item.iconPath) + '" alt="" onerror="this.style.display=\'none\'">' + escapeHTML(item.name) + '</span>').join("")}
+      </div>
+      <button type="submit" class="btn btn-primary">บันทึกข้อมูลตัวละคร</button>
+      <p id="character-profile-message" class="message" aria-live="polite"></p>
+    </form>`;
 
     <div class="settings-detail">
       <span>Game UID</span>
@@ -4190,9 +4230,15 @@ function registerAppEventListeners() {
   registerFeedbackEvents();
 
   $("account-details")?.addEventListener("submit", async (event) => {
-    if (event.target.id !== "game-uid-form") return;
-    event.preventDefault();
-    await saveOwnGameUID(event.target);
+    if (event.target.id === "game-uid-form") {
+      event.preventDefault();
+      await saveOwnGameUID(event.target);
+      return;
+    }
+    if (event.target.id === "character-profile-form") {
+      event.preventDefault();
+      await saveOwnCharacterProfile(event.target);
+    }
   });
 
   $("members-list")?.addEventListener("change", async (event) => {
