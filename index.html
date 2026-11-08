@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=20261108-war-registration-ui-2";
+          app.src = "app.js?v=20261108-war-leave-roster-1";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -197,6 +197,7 @@
               <span>ประกาศรายชื่อวอร์</span>
             </button>
             <button class="nav-subitem" data-page="war-signup"><span class="nav-subitem-dot"></span><span>ลงชื่อวอร์</span></button>
+            <button class="nav-subitem" data-page="war-leave"><span class="nav-subitem-dot"></span><span>แจ้งลาวอร์</span></button>
             <button class="nav-subitem management-only" data-page="war-stats" data-management-only>
               <span class="nav-subitem-dot"></span>
               <span>สถิติกิลด์วอร์</span>
@@ -514,6 +515,28 @@
     </form>
   </section>
   <section class="panel"><div class="panel-heading"><div><h3>กิจกรรมวอร์</h3><small class="muted">Event ที่กำลังจะเปิดรับสมัคร กำลังเปิดรับสมัคร และปิดรับสมัครแล้ว</small></div><button id="war-signup-refresh" class="btn btn-outline btn-sm" type="button">รีเฟรช</button></div><div id="war-signup-content"><p class="muted">กำลังโหลด...</p></div></section>
+</section>
+
+<section id="page-war-leave" class="page page-padded hidden">
+  <div class="page-intro"><span class="section-kicker">WAR LEAVE NOTICE</span><h1>แจ้งลาวอร์</h1><p>แจ้งไม่สามารถเข้าร่วม Guild War ในรอบที่เลือก เพื่อให้ฝ่ายจัดการสรุปรายชื่อกำลังพลได้ถูกต้อง</p></div>
+  <section class="panel war-leave-submit-panel">
+    <div class="panel-heading"><div><span class="panel-kicker">MEMBER LEAVE FORM</span><h3>ส่งคำแจ้งลาวอร์</h3></div></div>
+    <form id="war-leave-form" class="war-leave-form">
+      <div class="form-group"><label for="war-leave-event">เลือกรอบวอร์</label><select id="war-leave-event" required><option value="">กำลังโหลดรอบวอร์...</option></select></div>
+      <div class="form-group"><label for="war-leave-reason">เหตุผลที่ไม่สามารถเข้าร่วม (จำเป็น)</label><textarea id="war-leave-reason" rows="4" maxlength="1000" required placeholder="ระบุเหตุผลหรือรายละเอียดที่ต้องการแจ้งฝ่ายจัดการ"></textarea></div>
+      <div id="war-leave-own-status" class="war-leave-own-status muted">ยังไม่มีการแจ้งลาสำหรับรอบวอร์ที่เลือก</div>
+      <div id="war-leave-message" class="message hidden" role="status"></div>
+      <div class="war-leave-form-actions"><button id="war-leave-submit" class="btn btn-primary" type="submit">ยืนยันแจ้งลาวอร์</button></div>
+    </form>
+  </section>
+  <section class="panel">
+    <div class="panel-heading"><div><span class="panel-kicker">MY LEAVE HISTORY</span><h3>ประวัติการแจ้งลาของฉัน</h3></div><button id="war-leave-refresh" class="btn btn-outline btn-sm" type="button">รีเฟรช</button></div>
+    <div id="war-leave-my-list"><p class="muted">กำลังโหลด...</p></div>
+  </section>
+  <section id="war-leave-management" class="panel hidden">
+    <div class="panel-heading"><div><span class="panel-kicker">MANAGEMENT REVIEW</span><h3>ตรวจสอบคำแจ้งลาของสมาชิก</h3></div></div>
+    <div id="war-leave-management-list"><p class="muted">กำลังโหลด...</p></div>
+  </section>
 </section>
 <section id="page-war-stats" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">WAR PERFORMANCE</span><h1>สถิติกิลด์วอร์</h1><p>บันทึกผลการแข่งขันย้อนหลัง พร้อมสรุปสถิติแพ้ชนะรายกิลด์และภาพรวมทั้งหมด</p></div>
 <section class="panel"><div class="panel-heading"><h3>บันทึกผลวอร์</h3></div><form id="war-record-form" class="war-record-form"><div class="war-record-form-grid"><div class="form-group"><label for="war-record-opponent">ชื่อกิลด์คู่แข่ง</label><input id="war-record-opponent" maxlength="80" required></div><div class="form-group"><label for="war-record-date">วันที่วอร์</label><input id="war-record-date" type="date" required></div><div class="form-group"><label for="war-record-result">ผลการแข่งขัน</label><select id="war-record-result" required><option value="">เลือกผลวอร์</option><option value="win">4AM ชนะ</option><option value="loss">4AM แพ้</option></select></div></div><div class="form-group"><label for="war-record-images">รูปภาพผลวอร์ในเกม (เลือกได้หลายรูป)</label><input id="war-record-images" type="file" accept="image/*" multiple required><small>สูงสุด 10 รูป ขนาดไม่เกิน 10 MB ต่อรูป</small></div><input type="hidden" id="war-record-edit-id" value=""><div id="war-record-existing-images" class="war-record-existing-images"></div><div id="war-record-message" class="message hidden"></div><div class="war-record-submit-row"><span>กดยืนยันเพื่อบันทึกผลวอร์เป็น Record</span><div class="war-record-form-buttons"><button id="war-record-submit" class="btn btn-primary" type="submit">ยืนยันและบันทึกผลวอร์</button><button id="war-record-cancel-edit" class="btn btn-outline hidden" type="button">ยกเลิกการแก้ไข</button></div></div></form></section>
