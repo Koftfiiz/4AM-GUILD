@@ -2214,7 +2214,7 @@ function renderWarEvents() {
     const config=getWarEventConfig(event), stage=getWarEventStage(event);
     const description=String(event.description||"").replace(/\\[\\[WAR_CONFIG:.*?\\]\\]/,"").trim();
     const label=stage==="published"?"PUBLISHED":stage==="draft"?"DRAFT":"กำลังจัดตี้";
-    return `<article class="war-event-card war-event-card-selectable"><div class="war-event-main"><h3>${escapeHTML(event.event_name)}</h3><p>${formatDate(event.event_date)} · ${formatTime(event.start_time)} · ${config.mode==="practice"?"Practice War":"Official War"} · ${config.raidCount} Raid</p>${description?`<small>${escapeHTML(description)}</small>`:""}</div><div class="war-event-actions"><span class="war-stage-badge war-stage-${stage}">${label}</span><button class="btn btn-outline btn-sm" type="button" data-war-open="${escapeHTML(event.id)}">${stage==="published"?"ดูรายละเอียด":"จัดการตี้"}</button></div></article>`;
+    return `<article class="war-event-card war-event-card-selectable"><div class="war-event-main"><h3>${escapeHTML(event.event_name)}</h3><p>${formatDate(event.event_date)} · ${formatTime(event.start_time)} · ${config.mode==="practice"?"Practice War":"Official War"} · ${config.raidCount} Raid</p>${description?`<small>${escapeHTML(description)}</small>`:""}</div><div class="war-event-actions"><span class="war-stage-badge war-stage-${stage}">${label}</span><button class="btn btn-outline btn-sm" type="button" data-war-open="${escapeHTML(event.id)}">${stage==="published"?"ดูรายละเอียด":"จัดการตี้"}</button>${stage==="published"?`<button class="btn btn-danger btn-sm" type="button" data-war-delete="${escapeHTML(event.id)}">ลบวอร์</button>`:""}</div></article>`;
   }).join("");
 }
 
@@ -2478,6 +2478,28 @@ async function confirmWarDraft(){
   catch(error){alert("ยืนยัน Draft ไม่สำเร็จ: "+error.message);}
   finally{if(button){button.disabled=false;button.textContent="ยืนยันการสร้างตี้วอร์";}}
 }
+async function deletePublishedWarEvent(eventId,button){
+  if(!isManagement())return;
+  const event=allWarEvents.find(item=>item.id===eventId);
+  if(!event||!event.is_published)return;
+  const confirmed=window.confirm(`ยืนยันลบวอร์ "${event.event_name}" ใช่หรือไม่?\\n\\nการลบนี้จะลบรายการวอร์ ปาร์ตี้ และรายชื่อสมาชิกที่ผูกกับวอร์นี้ทั้งหมด ไม่สามารถกู้คืนได้`);
+  if(!confirmed)return;
+  if(button){button.disabled=true;button.textContent="กำลังลบ...";}
+  try{
+    const {error}=await supabaseClient.from("war_events").delete().eq("id",eventId).eq("is_published",true).select("id").single();
+    if(error)throw error;
+    if(selectedWarEventId===eventId)selectedWarEventId=null;
+    if(warAttendanceEventId===eventId)warAttendanceEventId=null;
+    await loadWarEvents();
+    if($("war-attendance-content"))await loadWarAttendance();
+    if(selectedWarEventId)renderWarLayout(selectedWarEventId);
+    else renderWarLayout();
+  }catch(error){
+    console.error("Published war deletion failed:",error);
+    alert("ลบวอร์ไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));
+    if(button){button.disabled=false;button.textContent="ลบวอร์";}
+  }
+}
 async function publishWarEvent(){
   if(!isManagement())return;const event=allWarEvents.find(item=>item.id===selectedWarEventId);if(!event||!event.is_draft_confirmed||event.is_published)return;
   const button=$("war-publish-event");if(button){button.disabled=true;button.textContent="กำลัง Publish...";}
@@ -2531,9 +2553,17 @@ function subscribeToWarRealtime() {
 function registerWarCreationEvents(){
   $("war-raid-boards")?.addEventListener("change",handleWarSlotChange);
   $("war-raid-boards")?.addEventListener("click",event=>{const button=event.target.closest("[data-war-remove]");if(button)removeWarPartyMember(button.dataset.warRemove,button);});
-  $("war-events")?.addEventListener("click",event=>{const button=event.target.closest("[data-war-open]");if(!button||!isManagement())return;renderWarLayout(button.dataset.warOpen);$("war-detail-stage")?.scrollIntoView({behavior:"smooth",block:"start"});});
+  $("war-events")?.addEventListener("click",event=>{
+    const deleteButton=event.target.closest("[data-war-delete]");
+    if(deleteButton){deletePublishedWarEvent(deleteButton.dataset.warDelete,deleteButton);return;}
+    const button=event.target.closest("[data-war-open]");
+    if(!button||!isManagement())return;
+    renderWarLayout(button.dataset.warOpen);
+    $("war-detail-stage")?.scrollIntoView({behavior:"smooth",block:"start"});
+  });
   $("war-create-open")?.addEventListener("click",()=>{if(!isManagement())return;selectedWarEventId=null;$("war-detail-stage")?.classList.add("hidden");$("war-create-panel")?.classList.remove("hidden");$("war-create-message")?.classList.add("hidden");$("war-create-panel")?.scrollIntoView({behavior:"smooth",block:"start"});});
   ["war-create-close","war-create-cancel"].forEach(id=>$(id)?.addEventListener("click",()=>$("war-create-panel")?.classList.add("hidden")));
+  $("war-back-to-list")?.addEventListener("click",()=>{$("war-detail-stage")?.classList.add("hidden");$("war-events")?.scrollIntoView({behavior:"smooth",block:"start"});});
   $("war-confirm-draft")?.addEventListener("click",confirmWarDraft);$("war-publish-event")?.addEventListener("click",publishWarEvent);$("war-export-image")?.addEventListener("click",exportWarImage);$("war-sync-discord")?.addEventListener("click",()=>alert("Discord Bot Sync ยังไม่เปิดใช้งานในขณะนี้"));
   document.querySelectorAll('input[name="war-mode"]').forEach(input=>input.addEventListener("change",updateWarCreateMode));$("war-raid-count")?.addEventListener("change",updateWarCreateMode);$("war-create-form")?.addEventListener("submit",handleWarCreate);
   const dateInput=$("war-event-date");if(dateInput){const now=new Date(),today=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);dateInput.min=today;}updateWarCreateMode();

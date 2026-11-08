@@ -3627,3 +3627,26 @@ body { font-size: var(--type-body); }
 .war-detail-stage{margin-top:22px}.war-detail-heading{align-items:center}.war-detail-heading p{margin:6px 0 0;color:var(--muted);font-size:12px}.war-edit-notice{margin:14px 0 20px;color:var(--muted);font-size:13px}.war-final-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-top:22px;margin-top:24px;border-top:1px solid var(--line)}.war-final-actions .btn:disabled{opacity:.48;cursor:not-allowed}
 .war-attendance-event-select{display:flex;align-items:center;gap:12px;margin:6px 0 20px;flex-wrap:wrap}.war-attendance-event-select label{color:var(--muted);font-size:13px}.war-attendance-event-select select{min-width:260px}.war-attendance-heading{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:10px 0 24px}.war-attendance-heading h3{margin:0}.war-attendance-heading p{margin:0;color:var(--muted)}.war-attendance-boards .raid-section{margin-bottom:30px}
 @media(max-width:700px){.war-event-card-selectable{align-items:flex-start;flex-direction:column}.war-event-actions{justify-content:flex-start}.war-final-actions{align-items:stretch;flex-direction:column}.war-final-actions .btn{width:100%}}
+
+/* Keep the War detail navigation button visually consistent with Create War */
+#war-back-to-list.btn-primary{
+  background:linear-gradient(110deg,#7d1824,#c22b3b);
+  border:1px solid rgba(240,120,120,.5);
+  color:#fff;
+  letter-spacing:1px;
+  font-weight:500;
+  box-shadow:0 4px 18px rgba(170,20,36,.25);
+}
+#war-back-to-list.btn-primary:hover:not(:disabled){
+  filter:brightness(1.18);
+  box-shadow:0 0 22px rgba(220,40,55,.4);
+  transform:translateY(-1px);
+}
+.btn-danger{
+  background:linear-gradient(110deg,#54131d,#8f1e2b);
+  border:1px solid rgba(240,120,120,.48);
+  color:#fff;
+  box-shadow:0 3px 12px rgba(120,15,28,.2);
+}
+.btn-danger:hover:not(:disabled){filter:brightness(1.18);transform:translateY(-1px);box-shadow:0 0 18px rgba(220,40,55,.3)}
+.btn-danger:disabled{opacity:.55;cursor:wait}
