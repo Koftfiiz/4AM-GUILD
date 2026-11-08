@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=20261108-guild-activities-1">
+  <link rel="stylesheet" href="style.css?v=20261108-feedback-center-1">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=20261108-guild-activities-1";
+          app.src = "app.js?v=20261108-feedback-center-1";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -110,6 +110,7 @@
       <symbol id="i-crown" viewBox="0 0 24 24"><path d="m3 8 4.5 4L12 5l4.5 7L21 8l-1.8 11H4.8z"/><path d="M5 21.5h14"/></symbol>
       <symbol id="i-megaphone" viewBox="0 0 24 24"><path d="M3 10v4l3.5.6L16 19V5L6.5 9.4z"/><path d="M19.5 9a4.5 4.5 0 0 1 0 6"/><path d="m7 15 1 4.5h2.5L9.5 16"/></symbol>
       <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+      <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></symbol>
       <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
       <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19.5 8.5l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
       <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><path d="M8 14h2M12 14h2M16 14h.01M8 17.5h2M12 17.5h2"/></symbol>
@@ -218,6 +219,11 @@
           <svg class="icon"><use href="#i-shield"/></svg>
           <span>กิจกรรมกิลด์</span>
         </button>
+        
+        <button class="nav-item" data-page="feedback">
+          <svg class="icon"><use href="#i-megaphone"/></svg>
+          <span>แจ้งปัญหา / Feedback</span>
+        </button>
       </nav>
 
       <div class="sidebar-divider developer-only is-role-hidden" data-developer-only aria-hidden="true"><span>DEVELOPER</span></div>
@@ -267,6 +273,22 @@
             <svg class="icon icon-fill"><use href="#i-discord"/></svg>
             <span id="discord-pill-text">ยังไม่ได้เชื่อมต่อ Discord</span>
           </a>
+
+          <div class="feedback-notification-wrap" id="feedback-notification-wrap">
+            <button type="button" class="feedback-notification-button" id="feedback-notification-toggle" aria-label="การแจ้งเตือน" aria-expanded="false">
+              <svg class="icon"><use href="#i-bell"/></svg>
+              <span class="feedback-notification-count hidden" id="feedback-notification-count">0</span>
+            </button>
+            <section class="feedback-notification-panel hidden" id="feedback-notification-panel" aria-label="การแจ้งเตือน">
+              <div class="feedback-notification-heading">
+                <strong>การแจ้งเตือน</strong>
+                <button type="button" id="feedback-notification-read-all">อ่านทั้งหมด</button>
+              </div>
+              <div id="feedback-notification-list" class="feedback-notification-list">
+                <p class="muted">กำลังโหลดการแจ้งเตือน...</p>
+              </div>
+            </section>
+          </div>
 
           <div class="user-menu" id="user-menu">
             <button class="user-chip" id="user-chip" type="button" aria-haspopup="true" aria-expanded="false">
@@ -551,6 +573,102 @@
               <h3>Portfolio Gallery</h3>
               <p>กำลังโหลดแฟ้มผลงาน...</p>
             </div>
+          </div>
+        </section>
+      </section>
+
+      <!-- ============ FEEDBACK & SUPPORT CENTER ============ -->
+      <section id="page-feedback" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">4AM SUPPORT CENTER</span>
+          <h1>แจ้งปัญหา / Feedback</h1>
+          <p>แจ้งปัญหาการใช้งานหรือเสนอความคิดเห็น เพื่อช่วยพัฒนา 4AM GUILD ให้ดียิ่งขึ้น</p>
+        </div>
+
+        <section class="panel feedback-submit-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">SUBMIT A REQUEST</span>
+              <h3>ส่งเรื่องถึงทีมดูแลกิลด์</h3>
+              <p class="muted">รายการที่ส่งจะเป็นข้อมูลส่วนตัว สมาชิกคนอื่นไม่สามารถมองเห็นได้</p>
+            </div>
+          </div>
+          <form id="feedback-submit-form" class="feedback-form">
+            <div class="feedback-form-grid">
+              <div class="form-group">
+                <label for="feedback-type">ประเภทเรื่อง</label>
+                <select id="feedback-type" required>
+                  <option value="problem">แจ้งปัญหา</option>
+                  <option value="feedback">Feedback / ข้อเสนอแนะ</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="feedback-title">หัวข้อ</label>
+                <input id="feedback-title" type="text" maxlength="160" required placeholder="สรุปเรื่องที่ต้องการแจ้ง">
+              </div>
+            </div>
+            <div class="form-group feedback-detail-group">
+              <label>รายละเอียด</label>
+              <div class="rule-editor-toolbar feedback-editor-toolbar">
+                <button type="button" data-feedback-command="bold" title="ตัวหนา"><b>B</b></button>
+                <button type="button" data-feedback-command="italic" title="ตัวเอียง"><i>I</i></button>
+                <button type="button" data-feedback-command="underline" title="ขีดเส้นใต้"><u>U</u></button>
+                <span></span>
+                <button type="button" data-feedback-command="insertUnorderedList">• รายการ</button>
+                <button type="button" data-feedback-command="insertOrderedList">1. รายการ</button>
+                <span></span>
+                <button type="button" data-feedback-command="justifyLeft">ชิดซ้าย</button>
+                <button type="button" data-feedback-command="justifyCenter">กึ่งกลาง</button>
+                <button type="button" data-feedback-command="justifyRight">ชิดขวา</button>
+                <span></span>
+                <button type="button" data-feedback-emoji>😊 Emoji</button>
+              </div>
+              <div id="feedback-editor-body" class="rule-editor-body feedback-editor-body" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="อธิบายรายละเอียดของปัญหาหรือข้อเสนอแนะ..."></div>
+              <small class="feedback-editor-hint">จัดรูปแบบข้อความ ตัวหนา ตัวเอียง ขีดเส้นใต้ รายการ และอีโมจิได้</small>
+            </div>
+            <div class="feedback-submit-row">
+              <p class="message" id="feedback-submit-message" aria-live="polite"></p>
+              <button type="submit" class="btn btn-primary" id="feedback-submit-button">ส่งรายการ</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel feedback-list-panel">
+          <div class="panel-heading feedback-list-heading">
+            <div>
+              <span class="panel-kicker" id="feedback-list-kicker">MY REQUESTS</span>
+              <h3 id="feedback-list-title">รายการที่ฉันแจ้งไว้</h3>
+              <p class="muted" id="feedback-list-description">ติดตามสถานะของปัญหาและ Feedback ที่คุณส่งเข้ามา</p>
+            </div>
+            <button type="button" class="btn btn-outline btn-sm" id="feedback-refresh-button">↻ รีเฟรช</button>
+          </div>
+
+          <div id="feedback-management-filters" class="feedback-management-filters hidden">
+            <div class="form-group">
+              <label for="feedback-filter-type">ประเภท</label>
+              <select id="feedback-filter-type">
+                <option value="all">ทุกประเภท</option>
+                <option value="problem">แจ้งปัญหา</option>
+                <option value="feedback">Feedback</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="feedback-filter-status">สถานะ</label>
+              <select id="feedback-filter-status">
+                <option value="all">ทุกสถานะ</option>
+                <option value="received">รับเรื่องแล้ว</option>
+                <option value="in_progress">กำลังดำเนินการ</option>
+                <option value="resolved">แก้ไขแล้ว</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="feedback-filter-search">ค้นหา</label>
+              <input id="feedback-filter-search" type="search" placeholder="ค้นหาหัวข้อหรือชื่อสมาชิก">
+            </div>
+          </div>
+
+          <div id="guild-feedback-list" class="guild-feedback-list" aria-live="polite">
+            <div class="empty-state"><span>◷</span><h3>กำลังโหลดรายการ</h3><p>กรุณารอสักครู่</p></div>
           </div>
         </section>
       </section>

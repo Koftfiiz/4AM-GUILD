@@ -82,6 +82,7 @@ const PAGE_TITLES = {
   rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
   activities: "กิจกรรมกิลด์",
+  feedback: "แจ้งปัญหา / Feedback",
   settings: "ตั้งค่าบัญชี",
   "system-management": "System Management"
 };
@@ -352,6 +353,12 @@ async function logout(event) {
     discordAccount = null;
     allPortfolios = [];
     allWarEvents = [];
+    if (feedbackRealtimeChannel) {
+      supabaseClient.removeChannel(feedbackRealtimeChannel);
+      feedbackRealtimeChannel = null;
+    }
+    feedbackRowsCache = [];
+    feedbackNotificationsCache = [];
     registrationBusy = false;
 
     $("app-layout")?.classList.add("hidden");
@@ -433,6 +440,7 @@ async function loadApplication() {
     ]);
 
     subscribeToWarRealtime();
+    subscribeToFeedbackRealtime();
 
     // Re-render after member records are available so each portfolio shows its owner.
     await renderPortfolios();
@@ -2953,6 +2961,311 @@ function registerGuildActivityEvents(){
 }
 registerGuildActivityEvents();
 
+// ==========================================
+// FEEDBACK & SUPPORT CENTER
+// ==========================================
+const FEEDBACK_STATUS_LABELS = {
+  received: "รับเรื่องแล้ว",
+  in_progress: "กำลังดำเนินการ",
+  resolved: "แก้ไขแล้ว"
+};
+const FEEDBACK_TYPE_LABELS = { problem: "แจ้งปัญหา", feedback: "Feedback" };
+let feedbackRowsCache = [];
+let feedbackNotificationsCache = [];
+let feedbackRealtimeChannel = null;
+
+function sanitizeFeedbackHTML(html) {
+  const parsed = new DOMParser().parseFromString(String(html || ""), "text/html");
+  const allowed = new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","BLOCKQUOTE","SPAN"]);
+  const clean = node => {
+    if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent || "");
+    if (node.nodeType !== Node.ELEMENT_NODE) return document.createDocumentFragment();
+    const tag = node.tagName;
+    if (!allowed.has(tag)) {
+      const fragment = document.createDocumentFragment();
+      [...node.childNodes].forEach(child => fragment.appendChild(clean(child)));
+      return fragment;
+    }
+    const element = parsed.createElement(tag.toLowerCase());
+    if (["DIV","P","SPAN"].includes(tag) && ["left","center","right","justify"].includes(node.style?.textAlign)) element.style.textAlign = node.style.textAlign;
+    [...node.childNodes].forEach(child => element.appendChild(clean(child)));
+    return element;
+  };
+  const output = document.createElement("div");
+  [...parsed.body.childNodes].forEach(node => output.appendChild(clean(node)));
+  return output.innerHTML;
+}
+
+function feedbackStatusBadge(status) {
+  return '<span class="feedback-status-badge status-' + escapeHTML(status) + '">' +
+    escapeHTML(FEEDBACK_STATUS_LABELS[status] || "รับเรื่องแล้ว") + '</span>';
+}
+
+function getFeedbackMemberLabel(userId) {
+  const member = allMembers.find(item => item.user_id === userId);
+  return member ? getMemberName(member) : "สมาชิกที่ออกจากกิลด์";
+}
+
+function renderGuildFeedback() {
+  const container = $("guild-feedback-list");
+  if (!container) return;
+  const management = isManagement();
+  const typeFilter = $("feedback-filter-type")?.value || "all";
+  const statusFilter = $("feedback-filter-status")?.value || "all";
+  const search = String($("feedback-filter-search")?.value || "").trim().toLocaleLowerCase();
+  let rows = [...feedbackRowsCache];
+  if (typeFilter !== "all") rows = rows.filter(row => row.type === typeFilter);
+  if (statusFilter !== "all") rows = rows.filter(row => row.status === statusFilter);
+  if (search) rows = rows.filter(row =>
+    String(row.title || "").toLocaleLowerCase().includes(search) ||
+    (management && getFeedbackMemberLabel(row.user_id).toLocaleLowerCase().includes(search))
+  );
+
+  if (!rows.length) {
+    showEmpty(container, "ยังไม่มีรายการ", management
+      ? "ยังไม่มีรายการแจ้งปัญหาหรือ Feedback ที่ตรงกับเงื่อนไข"
+      : "เมื่อคุณส่งปัญหาหรือ Feedback รายการจะปรากฏที่นี่");
+    return;
+  }
+
+  container.innerHTML = rows.map(row => {
+    const memberLine = management
+      ? '<div class="feedback-member-line">ผู้แจ้ง: <strong>' + escapeHTML(getFeedbackMemberLabel(row.user_id)) + '</strong></div>'
+      : "";
+    const updated = row.updated_at && row.updated_at !== row.created_at
+      ? '<span>อัปเดตล่าสุด ' + escapeHTML(formatDate(row.updated_at)) + '</span>' : "";
+    const statusControl = management
+      ? '<label class="feedback-status-control"><span>เปลี่ยนสถานะ</span><select data-feedback-status="' + escapeHTML(row.id) + '">' +
+        Object.entries(FEEDBACK_STATUS_LABELS).map(([value,label]) =>
+          '<option value="' + value + '"' + (row.status === value ? " selected" : "") + '>' + escapeHTML(label) + '</option>'
+        ).join("") + '</select></label>' : "";
+    const discordStatus = management
+      ? (row.discord_notified_at
+        ? '<span class="feedback-discord-state is-sent">ส่ง Discord แล้ว</span>'
+        : '<span class="feedback-discord-state is-pending">Discord ยังไม่ส่ง</span>') : "";
+    return '<article class="feedback-ticket-card" data-feedback-id="' + escapeHTML(row.id) + '">' +
+      '<div class="feedback-ticket-topline"><span class="feedback-type-badge type-' + escapeHTML(row.type) + '">' +
+      escapeHTML(FEEDBACK_TYPE_LABELS[row.type] || row.type) + '</span>' + feedbackStatusBadge(row.status) + '</div>' +
+      '<h3>' + escapeHTML(row.title) + '</h3>' + memberLine +
+      '<div class="feedback-ticket-content">' + sanitizeFeedbackHTML(row.content_html) + '</div>' +
+      '<div class="feedback-ticket-footer"><span>ส่งเมื่อ ' + escapeHTML(formatDate(row.created_at)) + '</span>' + updated + discordStatus + '</div>' +
+      (statusControl ? '<div class="feedback-ticket-management">' + statusControl + '</div>' : "") +
+      '</article>';
+  }).join("");
+}
+
+async function loadGuildFeedback() {
+  const container = $("guild-feedback-list");
+  if (!container || !currentUser) return;
+  const management = isManagement();
+  $("feedback-management-filters")?.classList.toggle("hidden", !management);
+  $("feedback-list-kicker").textContent = management ? "MANAGEMENT INBOX" : "MY REQUESTS";
+  $("feedback-list-title").textContent = management ? "รายการแจ้งปัญหาและ Feedback ทั้งหมด" : "รายการที่ฉันแจ้งไว้";
+  $("feedback-list-description").textContent = management
+    ? "ตรวจสอบรายการจากสมาชิกทุกคนและอัปเดตสถานะการดำเนินงาน"
+    : "มีเพียงคุณและทีมดูแลกิลด์เท่านั้นที่สามารถเห็นรายการเหล่านี้ได้";
+  container.innerHTML = '<div class="empty-state"><span>◷</span><h3>กำลังโหลดรายการ</h3><p>กรุณารอสักครู่</p></div>';
+
+  let query = supabaseClient.from("guild_feedback").select("*").order("created_at", { ascending: false });
+  if (!management) query = query.eq("user_id", currentUser.id);
+  const { data, error } = await query;
+  if (error) {
+    console.error("Load guild feedback:", error);
+    showEmpty(container, "โหลดรายการไม่สำเร็จ", error.message || "กรุณาตรวจสอบการตั้งค่า Supabase");
+    return;
+  }
+  feedbackRowsCache = data || [];
+  renderGuildFeedback();
+  await loadFeedbackNotifications();
+}
+
+function renderFeedbackNotifications() {
+  const count = $("feedback-notification-count");
+  const list = $("feedback-notification-list");
+  const unread = feedbackNotificationsCache.filter(item => !item.is_read).length;
+  if (count) {
+    count.textContent = unread > 99 ? "99+" : String(unread);
+    count.classList.toggle("hidden", unread === 0);
+  }
+  if (!list) return;
+  if (!feedbackNotificationsCache.length) {
+    list.innerHTML = '<p class="feedback-notification-empty">ยังไม่มีการแจ้งเตือน</p>';
+    return;
+  }
+  list.innerHTML = feedbackNotificationsCache.map(item =>
+    '<button type="button" class="feedback-notification-item ' + (item.is_read ? "" : "is-unread") +
+    '" data-feedback-notification="' + escapeHTML(item.id) + '"><span class="feedback-notification-dot"></span>' +
+    '<span class="feedback-notification-copy"><strong>' + escapeHTML(item.title || "มีการแจ้งเตือนใหม่") +
+    '</strong><small>' + escapeHTML(item.body || "") + '</small><time>' + escapeHTML(formatDate(item.created_at)) +
+    '</time></span></button>'
+  ).join("");
+}
+
+async function loadFeedbackNotifications() {
+  if (!currentUser) return;
+  const { data, error } = await supabaseClient.from("guild_notifications").select("*")
+    .eq("recipient_user_id", currentUser.id).order("created_at", { ascending: false }).limit(40);
+  if (error) {
+    console.warn("Load feedback notifications:", error);
+    return;
+  }
+  feedbackNotificationsCache = data || [];
+  renderFeedbackNotifications();
+}
+
+async function markFeedbackNotificationRead(notificationId) {
+  if (!currentUser || !notificationId) return;
+  const { error } = await supabaseClient.from("guild_notifications")
+    .update({ is_read: true, read_at: new Date().toISOString() })
+    .eq("id", notificationId).eq("recipient_user_id", currentUser.id);
+  if (error) console.warn("Mark notification read:", error);
+  await loadFeedbackNotifications();
+}
+
+async function markAllFeedbackNotificationsRead() {
+  if (!currentUser) return;
+  const { error } = await supabaseClient.from("guild_notifications")
+    .update({ is_read: true, read_at: new Date().toISOString() })
+    .eq("recipient_user_id", currentUser.id).eq("is_read", false);
+  if (error) {
+    alert("ไม่สามารถอ่านการแจ้งเตือนทั้งหมดได้: " + error.message);
+    return;
+  }
+  await loadFeedbackNotifications();
+}
+
+function subscribeToFeedbackRealtime() {
+  if (feedbackRealtimeChannel) {
+    supabaseClient.removeChannel(feedbackRealtimeChannel);
+    feedbackRealtimeChannel = null;
+  }
+  if (!currentUser) return;
+  feedbackRealtimeChannel = supabaseClient.channel("guild-feedback-live-" + currentUser.id)
+    .on("postgres_changes", { event: "*", schema: "public", table: "guild_feedback" }, () => {
+      if (!$("page-feedback")?.classList.contains("hidden")) loadGuildFeedback();
+    })
+    .on("postgres_changes", {
+      event: "INSERT", schema: "public", table: "guild_notifications",
+      filter: "recipient_user_id=eq." + currentUser.id
+    }, loadFeedbackNotifications)
+    .subscribe();
+  loadFeedbackNotifications();
+}
+
+function closeFeedbackNotificationPanel() {
+  $("feedback-notification-panel")?.classList.add("hidden");
+  $("feedback-notification-toggle")?.setAttribute("aria-expanded", "false");
+}
+
+function registerFeedbackEvents() {
+  const page = $("page-feedback");
+  if (!page || page.dataset.eventsReady === "true") return;
+  page.dataset.eventsReady = "true";
+
+  $("feedback-notification-toggle")?.addEventListener("click", async event => {
+    event.stopPropagation();
+    const panel = $("feedback-notification-panel");
+    const open = panel?.classList.toggle("hidden") === false;
+    $("feedback-notification-toggle")?.setAttribute("aria-expanded", String(open));
+    if (open) await loadFeedbackNotifications();
+  });
+  $("feedback-notification-read-all")?.addEventListener("click", markAllFeedbackNotificationsRead);
+  $("feedback-notification-list")?.addEventListener("click", async event => {
+    const item = event.target.closest("[data-feedback-notification]");
+    if (!item) return;
+    await markFeedbackNotificationRead(item.dataset.feedbackNotification);
+    closeFeedbackNotificationPanel();
+    openGuildPage("feedback");
+  });
+  document.addEventListener("click", event => {
+    if (!event.target.closest("#feedback-notification-wrap")) closeFeedbackNotificationPanel();
+  });
+
+  page.addEventListener("click", event => {
+    const command = event.target.closest("[data-feedback-command]");
+    if (command) {
+      $("feedback-editor-body")?.focus();
+      document.execCommand(command.dataset.feedbackCommand, false, null);
+      return;
+    }
+    if (event.target.closest("[data-feedback-emoji]")) {
+      const emoji = window.prompt("พิมพ์หรือวางอีโมจิ", "💬");
+      if (emoji) {
+        $("feedback-editor-body")?.focus();
+        document.execCommand("insertText", false, emoji);
+      }
+    }
+  });
+
+  page.addEventListener("submit", async event => {
+    if (event.target.id !== "feedback-submit-form") return;
+    event.preventDefault();
+    if (!currentUser || !currentMember || currentMember.active !== true) return;
+    const type = $("feedback-type").value;
+    const title = String($("feedback-title").value || "").trim();
+    const editor = $("feedback-editor-body");
+    const contentHTML = sanitizeFeedbackHTML(editor?.innerHTML || "");
+    const textContent = editor?.innerText?.trim() || "";
+    const button = $("feedback-submit-button");
+    if (!title || !textContent) {
+      showMessage("feedback-submit-message", "กรุณากรอกหัวข้อและรายละเอียดให้ครบถ้วน", "error");
+      return;
+    }
+    if (title.length > 160 || contentHTML.length > 20000) {
+      showMessage("feedback-submit-message", "หัวข้อหรือรายละเอียดมีความยาวเกินกำหนด", "error");
+      return;
+    }
+    button.disabled = true;
+    button.textContent = "กำลังส่งรายการ...";
+    showMessage("feedback-submit-message", "กำลังบันทึกรายการ...", "info");
+    try {
+      const { data, error } = await supabaseClient.from("guild_feedback")
+        .insert({ type, title, content_html: contentHTML }).select("*").single();
+      if (error) throw error;
+
+      let notice = "ระบบบันทึกรายการแล้ว";
+      const { data: discordResult, error: discordError } = await supabaseClient.functions.invoke(
+        "discord-feedback-notify", { body: { feedback_id: data.id } }
+      );
+      if (discordError || discordResult?.success === false) {
+        console.warn("Discord notification failed:", discordError || discordResult);
+        notice += " แต่การแจ้งเตือน Discord ยังไม่สำเร็จ ทีมดูแลสามารถตรวจสอบและส่งซ้ำได้";
+      } else {
+        notice += " และส่งแจ้งเตือน Discord แล้ว";
+      }
+      $("feedback-submit-form").reset();
+      if (editor) editor.innerHTML = "";
+      showMessage("feedback-submit-message", "ส่งรายการสำเร็จ · " + notice, "success");
+      await loadGuildFeedback();
+    } catch (error) {
+      console.error("Submit guild feedback:", error);
+      showMessage("feedback-submit-message", "ส่งรายการไม่สำเร็จ: " + (error.message || "กรุณาลองอีกครั้ง"), "error");
+    } finally {
+      button.disabled = false;
+      button.textContent = "ส่งรายการ";
+    }
+  });
+
+  page.addEventListener("change", async event => {
+    const select = event.target.closest("[data-feedback-status]");
+    if (!select || !isManagement()) return;
+    const id = select.dataset.feedbackStatus;
+    select.disabled = true;
+    const { error } = await supabaseClient.from("guild_feedback")
+      .update({ status: select.value }).eq("id", id);
+    if (error) {
+      alert("เปลี่ยนสถานะไม่สำเร็จ: " + error.message);
+      await loadGuildFeedback();
+      return;
+    }
+    await loadGuildFeedback();
+  });
+
+  $("feedback-refresh-button")?.addEventListener("click", loadGuildFeedback);
+  ["feedback-filter-type","feedback-filter-status"].forEach(id => $(id)?.addEventListener("change", renderGuildFeedback));
+  $("feedback-filter-search")?.addEventListener("input", renderGuildFeedback);
+}
+
 // GUILD RULES
 const GUILD_RULE_KEYS=["regulations","war","discord"];
 const GUILD_RULE_BUCKET="guild-rule-images";
@@ -3106,6 +3419,7 @@ function openGuildPage(pageName) {
   if (pageName === "war-attendance-stats") loadWarAttendanceStatistics();
   if (pageName === "rules") loadGuildRules();
   if (pageName === "activities") loadGuildActivities();
+  if (pageName === "feedback") loadGuildFeedback();
 }
 
 async function copyGameUID(button) {
@@ -3394,6 +3708,7 @@ function registerAppEventListeners() {
   registerWarCreationEvents();
   registerWarRecordAndAttendanceEvents();
   registerGuildRuleEvents();
+  registerFeedbackEvents();
 
   $("account-details")?.addEventListener("submit", async (event) => {
     if (event.target.id !== "game-uid-form") return;
