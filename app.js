@@ -1027,7 +1027,7 @@ function renderMembers(members) {
         <div class="member-info">
           <div class="member-details">
             <h4>${escapeHTML(name)}</h4>
-            <span class="member-role ${String(member.role || "").toLowerCase() === "developer" ? "is-developer" : ""}">${escapeHTML(role)}</span>
+            <span class="member-role role-${escapeHTML(String(member.role || "member").toLowerCase())} ${String(member.role || "").toLowerCase() === "developer" ? "is-developer" : ""}">${escapeHTML(role)}</span>
             <small class="member-guild-position">
               ตำแหน่งกิลด์: ${escapeHTML(guildPosition || "ยังไม่ได้กำหนดตำแหน่ง")}
             </small>
