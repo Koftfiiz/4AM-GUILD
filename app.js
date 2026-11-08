@@ -31,6 +31,9 @@ let allWarEvents = [];
 let currentWarParties = [];
 let currentWarPartyAssignments = [];
 let currentWarAssignmentEventId = null;
+let selectedWarEventId = null;
+let warAttendanceEvents = [];
+let warAttendanceEventId = null;
 let warRealtimeChannel = null;
 let registrationBusy = false;
 
@@ -2194,33 +2197,26 @@ async function loadWarEvents() {
 
   allWarEvents = data || [];
   renderWarEvents();
-  renderWarLayout();
+  renderWarLayout(selectedWarEventId);
 }
 
+function getWarEventStage(event) {
+  if (event?.is_published) return "published";
+  if (event?.is_draft_confirmed) return "draft";
+  return "arranging";
+}
 function renderWarEvents() {
   const container = $("war-events");
   if (!container) return;
-
-  if (!allWarEvents.length) {
-    showEmpty(container, "No War Events", "ยังไม่มีกิจกรรม Guild War");
-    return;
-  }
-
-  container.innerHTML = allWarEvents.map((event) => `
-    <article class="war-event-card">
-      <div>
-        <h3>${escapeHTML(event.event_name)}</h3>
-        <p>${formatDate(event.event_date)} · ${formatTime(event.start_time)}</p>
-        <small>${escapeHTML(event.description || "")}</small>
-      </div>
-      <span>${escapeHTML(event.status || "scheduled")}</span>
-    </article>
-  `).join("");
+  if (!isManagement()) { container.innerHTML = ""; return; }
+  if (!allWarEvents.length) { showEmpty(container,"No War Events","ยังไม่มีกิจกรรม Guild War · กด “สร้างตี้วอร์” เพื่อเริ่มต้น"); return; }
+  container.innerHTML = allWarEvents.map(event => {
+    const config=getWarEventConfig(event), stage=getWarEventStage(event);
+    const description=String(event.description||"").replace(/\\[\\[WAR_CONFIG:.*?\\]\\]/,"").trim();
+    const label=stage==="published"?"PUBLISHED":stage==="draft"?"DRAFT":"กำลังจัดตี้";
+    return `<article class="war-event-card war-event-card-selectable"><div class="war-event-main"><h3>${escapeHTML(event.event_name)}</h3><p>${formatDate(event.event_date)} · ${formatTime(event.start_time)} · ${config.mode==="practice"?"Practice War":"Official War"} · ${config.raidCount} Raid</p>${description?`<small>${escapeHTML(description)}</small>`:""}</div><div class="war-event-actions"><span class="war-stage-badge war-stage-${stage}">${label}</span><button class="btn btn-outline btn-sm" type="button" data-war-open="${escapeHTML(event.id)}">${stage==="published"?"ดูรายละเอียด":"จัดการตี้"}</button></div></article>`;
+  }).join("");
 }
-
-// ==========================================
-// GUILD WAR - PARTY DISPLAY
-// ==========================================
 
 function getWarEventConfig(event) {
   const description = String(event?.description || "");
@@ -2237,117 +2233,40 @@ function getWarEventConfig(event) {
   }
 }
 
-function renderWarLayout() {
-  const selectedEvent = allWarEvents[0] || null;
-  const summary = $("war-summary");
-  const boards = $("war-raid-boards");
-
-  // Do not expose empty raid/party slots before management creates a war event.
-  if (!selectedEvent) {
-    currentWarParties = [];
-    currentWarPartyAssignments = [];
-    currentWarAssignmentEventId = null;
-    if (summary) summary.innerHTML = "";
-    if (boards) boards.innerHTML = `
-      <div class="empty-state war-no-event">
-        <span>⚔</span>
-        <h3>ยังไม่มีการสร้างตี้วอร์</h3>
-        <p>เมื่อฝ่ายบริหารสร้างตี้วอร์แล้ว สมาชิกจะเข้ามาตรวจสอบ Raid และตี้ของตัวเองได้ที่นี่</p>
-      </div>`;
-    return;
-  }
-
-  const config = getWarEventConfig(selectedEvent);
-  const raidLetters = ["A", "B", "C", "D"].slice(0, config.raidCount);
-
-  if (summary) {
-    const total = config.raidCount * 30;
-    summary.innerHTML = `
-      <article class="stat-card stat-card-sm">
-        <div class="stat-icon"><svg class="icon"><use href="#i-swords"/></svg></div>
-        <div class="stat-info"><span class="stat-label">TOTAL CAPACITY</span>
-          <div class="stat-value"><strong>${total}</strong></div>
-          <small>${config.mode === "practice" ? "Practice War" : "Official War"}</small>
-        </div>
-      </article>
-      <article class="stat-card stat-card-sm">
-        <div class="stat-icon letter">${config.raidCount}</div>
-        <div class="stat-info"><span class="stat-label">TOTAL RAIDS</span>
-          <div class="stat-value"><strong>${config.raidCount}</strong></div>
-          <small>5 Parties · 6 Players each</small>
-        </div>
-      </article>
-      <article class="stat-card stat-card-sm">
-        <div class="stat-icon letter">⚔</div>
-        <div class="stat-info"><span class="stat-label">WAR EVENT</span>
-          <div class="stat-value war-summary-name"><strong>${escapeHTML(selectedEvent?.event_name || "ยังไม่มีวอร์")}</strong></div>
-          <small>${selectedEvent ? `${formatDate(selectedEvent.event_date)} · ${formatTime(selectedEvent.start_time)}` : "สร้างตี้วอร์เพื่อเริ่มต้น"}</small>
-        </div>
-      </article>`;
-  }
-
-  if (!boards) return;
-  boards.innerHTML = raidLetters.map((letter, index) => `
-    <div class="raid-section">
-      <div class="raid-title">
-        <span class="raid-badge ${index ? "raid-b" : ""}">${letter}</span>
-        <div><h2>Raid ${letter}</h2><p>${config.mode === "practice" ? "Practice battle formation" : "Official battle formation"}</p></div>
-      </div>
-      <div id="raid-${letter.toLowerCase()}" class="raid-grid"></div>
-    </div>`).join("");
-
-  loadSelectedWarEvent(selectedEvent.id);
+function renderWarLayout(eventId = selectedWarEventId) {
+  const summary=$("war-summary"),boards=$("war-raid-boards"),stage=$("war-detail-stage");
+  const event=allWarEvents.find(item=>item.id===eventId)||null;
+  if(!event){selectedWarEventId=null;currentWarParties=[];currentWarPartyAssignments=[];currentWarAssignmentEventId=null;if(summary)summary.innerHTML="";if(boards)boards.innerHTML="";stage?.classList.add("hidden");return;}
+  selectedWarEventId=event.id;
+  const config=getWarEventConfig(event),letters=["A","B","C","D"].slice(0,config.raidCount);
+  stage?.classList.remove("hidden");
+  if(summary)summary.innerHTML=`
+    <article class="stat-card stat-card-sm"><div class="stat-icon"><svg class="icon"><use href="#i-swords"/></svg></div><div class="stat-info"><span class="stat-label">TOTAL CAPACITY</span><div class="stat-value"><strong>${config.raidCount*30}</strong></div><small>${config.mode==="practice"?"Practice War":"Official War"}</small></div></article>
+    <article class="stat-card stat-card-sm"><div class="stat-icon letter">${config.raidCount}</div><div class="stat-info"><span class="stat-label">TOTAL RAIDS</span><div class="stat-value"><strong>${config.raidCount}</strong></div><small>5 Parties · 6 Players each</small></div></article>
+    <article class="stat-card stat-card-sm"><div class="stat-icon letter">⚔</div><div class="stat-info"><span class="stat-label">WAR EVENT</span><div class="stat-value war-summary-name"><strong>${escapeHTML(event.event_name)}</strong></div><small>${formatDate(event.event_date)} · ${formatTime(event.start_time)}</small></div></article>`;
+  const confirmed=Boolean(event.is_draft_confirmed),published=Boolean(event.is_published);
+  $("war-confirm-draft")?.classList.toggle("hidden",!isManagement()||confirmed||published);
+  $("war-publish-event")?.classList.toggle("hidden",!isManagement()||!confirmed||published);
+  $("war-export-image")?.classList.toggle("hidden",!confirmed);
+  const sync=$("war-sync-discord");sync?.classList.toggle("hidden",!confirmed);if(sync){sync.disabled=true;sync.title="Discord Bot integration ยังไม่เปิดใช้งาน";}
+  const label=$("war-detail-stage-label");if(label)label.textContent=published?"PUBLISHED · สมาชิกมองเห็นแล้ว":confirmed?"DRAFT · ยืนยันรายชื่อแล้ว":"กำลังจัดตี้ · ยังไม่ยืนยัน";
+  const notice=$("war-edit-notice");if(notice)notice.textContent=published?"วอร์นี้เผยแพร่แล้ว จึงเปิดดูรายชื่อได้อย่างเดียว":"เลือก Class ก่อน แล้วเลือกสมาชิกที่มี Class ตรงกันในแต่ละช่อง";
+  if(boards)boards.innerHTML=letters.map((letter,index)=>`<div class="raid-section"><div class="raid-title"><span class="raid-badge ${index?"raid-b":""}">${letter}</span><div><h2>Raid ${letter}</h2><p>${config.mode==="practice"?"Practice battle formation":"Official battle formation"}</p></div></div><div id="raid-${letter.toLowerCase()}" class="raid-grid"></div></div>`).join("");
+  loadSelectedWarEvent(event.id);
 }
 
 async function loadSelectedWarEvent(eventId) {
-  currentWarAssignmentEventId = eventId;
-  const { data: parties, error } = await supabaseClient
-    .from("war_parties")
-    .select(`
-      id,
-      event_id,
-      raid,
-      party_number,
-      party_name,
-      war_party_members (
-        id,
-        member_id,
-        position
-      )
-    `)
-    .eq("event_id", eventId)
-    .order("party_number", { ascending: true });
-
-  if (error) {
-    console.error("War party loading error:", error);
-    currentWarParties = [];
-    currentWarPartyAssignments = [];
-    renderWarLayout();
-    return;
-  }
-
-  currentWarParties = parties || [];
-  currentWarPartyAssignments = currentWarParties.flatMap(party =>
-    (party.war_party_members || []).map(member => ({
-      ...member,
-      party_id: party.id,
-      raid: party.raid,
-      party_number: party.party_number
-    }))
-  );
+  currentWarAssignmentEventId=eventId;
+  const {data:parties,error}=await supabaseClient.from("war_parties").select(`id,event_id,raid,party_number,party_name,war_party_members(id,member_id,position)`).eq("event_id",eventId).order("party_number",{ascending:true});
+  if(error){console.error("War party loading error:",error);currentWarParties=[];currentWarPartyAssignments=[];alert("โหลดรายชื่อปาร์ตี้ไม่สำเร็จ: "+error.message);return;}
+  currentWarParties=parties||[];
+  currentWarPartyAssignments=currentWarParties.flatMap(party=>(party.war_party_members||[]).map(member=>({...member,party_id:party.id,raid:party.raid,party_number:party.party_number})));
   renderAllWarParties();
 }
-
 function renderAllWarParties() {
-  const event = allWarEvents.find(item => item.id === currentWarAssignmentEventId) || allWarEvents[0];
-  const config = getWarEventConfig(event);
-  ["A", "B", "C", "D"].slice(0, config.raidCount).forEach(letter => {
-    renderRaid(
-      `raid-${letter.toLowerCase()}`,
-      letter,
-      currentWarParties.filter(party => party.raid === letter)
-    );
-  });
+  const event=allWarEvents.find(item=>item.id===currentWarAssignmentEventId);if(!event)return;
+  const config=getWarEventConfig(event),editable=isManagement()&&!event.is_published;
+  ["A","B","C","D"].slice(0,config.raidCount).forEach(letter=>renderRaid(`raid-${letter.toLowerCase()}`,letter,currentWarParties.filter(party=>party.raid===letter),{editable}));
 }
 
 function getAssignedWarMemberIds(exceptAssignmentId = null) {
@@ -2367,10 +2286,10 @@ function getWarMemberOptions(className, selectedMemberId = "") {
     .join("");
 }
 
-function renderRaid(containerId, raidName, parties = []) {
+function renderRaid(containerId, raidName, parties = [], options = {}) {
   const container = $(containerId);
   if (!container) return;
-  const canArrange = isManagement();
+  const canArrange = options.editable === true;
 
   container.innerHTML = Array.from({ length: 5 }, (_, index) => {
     const partyNumber = index + 1;
@@ -2447,7 +2366,8 @@ async function handleWarSlotChange(event) {
 
   const memberSelect = event.target.closest(".war-slot-member");
   if (!memberSelect || !memberSelect.value) return;
-  if (!isManagement()) return;
+  const activeWar = allWarEvents.find(item => item.id === currentWarAssignmentEventId);
+  if (!isManagement() || !activeWar || activeWar.is_published) return;
 
   const memberId = memberSelect.value;
   const partyId = memberSelect.dataset.partyId;
@@ -2487,7 +2407,8 @@ async function handleWarSlotChange(event) {
 }
 
 async function removeWarPartyMember(assignmentId, button) {
-  if (!isManagement()) return;
+  const activeWar = allWarEvents.find(item => item.id === currentWarAssignmentEventId);
+  if (!isManagement() || !activeWar || activeWar.is_published) return;
   if (!assignmentId) return;
   button.disabled = true;
   try {
@@ -2533,82 +2454,58 @@ function updateWarCreateMode() {
 }
 
 async function handleWarCreate(event) {
-  event.preventDefault();
-  if (!isManagement()) {
-    setWarCreateMessage("เฉพาะ Developer, Leader และ Management เท่านั้นที่สร้างตี้วอร์ได้", true);
-    return;
-  }
-
-  const form = event.currentTarget;
-  const mode = form.querySelector('input[name="war-mode"]:checked')?.value || "official";
-  const raidCount = mode === "practice" ? Number($("war-raid-count")?.value || 4) : 2;
-  const opponent = String($("war-opponent")?.value || "").trim();
-  const eventDate = $("war-event-date")?.value;
-  const startTime = String($("war-start-time")?.value || "").trim();
-  const submit = $("war-create-submit");
-
-  if (!opponent || !eventDate || !startTime) {
-    setWarCreateMessage("กรุณากรอกชื่อกิลด์คู่แข่ง วันที่ และเวลาเริ่มวอร์ให้ครบ", true);
-    return;
-  }
-  if (!Number.isInteger(raidCount) || raidCount < 1 || raidCount > 4) {
-    setWarCreateMessage("จำนวน Raid ต้องอยู่ระหว่าง 1–4", true);
-    return;
-  }
-
-  submit.disabled = true;
-  submit.textContent = "กำลังสร้าง...";
-  setWarCreateMessage("กำลังบันทึกกิจกรรมและสร้างปาร์ตี้...");
-
-  try {
-    const eventName = `4AM vs ${opponent}`;
-    const metadata = `[[WAR_CONFIG:${JSON.stringify({ mode, raidCount })}]]`;
-    const { data: createdEvent, error: eventError } = await supabaseClient
-      .from("war_events")
-      .insert({
-        event_name: eventName,
-        event_date: eventDate,
-        start_time: startTime,
-        description: metadata,
-        status: "open"
-      })
-      .select()
-      .single();
-
-    if (eventError) throw eventError;
-
-    const partyRows = [];
-    ["A", "B", "C", "D"].slice(0, raidCount).forEach(raid => {
-      for (let number = 1; number <= 5; number++) {
-        partyRows.push({
-          event_id: createdEvent.id,
-          raid,
-          party_number: number
-        });
-      }
-    });
-
-    const { error: partyError } = await supabaseClient
-      .from("war_parties")
-      .insert(partyRows);
-    if (partyError) {
-      console.error("War party creation failed after event creation:", partyError);
-      throw new Error("สร้างกิจกรรมวอร์แล้ว แต่สร้างปาร์ตี้ไม่สำเร็จ กรุณาตรวจสอบสิทธิ์ฐานข้อมูลก่อนลองใหม่: " + partyError.message);
-    }
-
-    $("war-create-panel")?.classList.add("hidden");
-    form.reset();
-    updateWarCreateMode();
-    await loadWarEvents();
-    setWarCreateMessage("สร้างตี้วอร์สำเร็จแล้ว");
-    $("war-create-panel")?.classList.add("hidden");
-  } catch (error) {
-    console.error("War event creation error:", error);
-    setWarCreateMessage(error.message || "สร้างตี้วอร์ไม่สำเร็จ กรุณาลองอีกครั้ง", true);
-  } finally {
-    submit.disabled = false;
-    submit.textContent = "สร้างตี้วอร์";
-  }
+  event.preventDefault();if(!isManagement())return;
+  const form=event.currentTarget,mode=form.querySelector('input[name="war-mode"]:checked')?.value||"official";
+  const raidCount=mode==="practice"?Number($("war-raid-count")?.value||4):2;
+  const opponent=String($("war-opponent")?.value||"").trim(),eventDate=$("war-event-date")?.value,startTime=String($("war-start-time")?.value||"").trim(),description=String($("war-description")?.value||"").trim(),submit=$("war-create-submit");
+  if(!opponent||!eventDate||!startTime){setWarCreateMessage("กรุณากรอกชื่อกิลด์คู่แข่ง วันที่ และเวลาเริ่มวอร์ให้ครบ",true);return;}
+  if(!Number.isInteger(raidCount)||raidCount<1||raidCount>4){setWarCreateMessage("จำนวน Raid ต้องอยู่ระหว่าง 1–4",true);return;}
+  submit.disabled=true;submit.textContent="กำลังสร้าง...";setWarCreateMessage("กำลังสร้างกิจกรรมและเตรียมช่องปาร์ตี้...");
+  try{
+    const metadata=`[[WAR_CONFIG:${JSON.stringify({mode,raidCount})}]]`;
+    const {data:createdEvent,error:eventError}=await supabaseClient.from("war_events").insert({event_name:`4AM vs ${opponent}`,event_date:eventDate,start_time:startTime,description:[description,metadata].filter(Boolean).join("\\n"),status:"open",is_draft_confirmed:false,is_published:false}).select().single();
+    if(eventError)throw eventError;
+    const rows=[];["A","B","C","D"].slice(0,raidCount).forEach(raid=>{for(let n=1;n<=5;n++)rows.push({event_id:createdEvent.id,raid,party_number:n});});
+    const {error:partyError}=await supabaseClient.from("war_parties").insert(rows);if(partyError)throw new Error("สร้างกิจกรรมแล้ว แต่สร้างช่องปาร์ตี้ไม่สำเร็จ: "+partyError.message);
+    form.reset();updateWarCreateMode();$("war-create-panel")?.classList.add("hidden");await loadWarEvents();renderWarLayout(createdEvent.id);$("war-detail-stage")?.scrollIntoView({behavior:"smooth",block:"start"});
+  }catch(error){console.error("War event creation error:",error);setWarCreateMessage(error.message||"สร้างตี้วอร์ไม่สำเร็จ กรุณาลองอีกครั้ง",true);}
+  finally{submit.disabled=false;submit.textContent="สร้างตี้วอร์";}
+}
+async function confirmWarDraft(){
+  if(!isManagement())return;const event=allWarEvents.find(item=>item.id===selectedWarEventId);if(!event||event.is_published||event.is_draft_confirmed)return;
+  const button=$("war-confirm-draft");if(button){button.disabled=true;button.textContent="กำลังยืนยัน...";}
+  try{const {error}=await supabaseClient.from("war_events").update({is_draft_confirmed:true}).eq("id",event.id);if(error)throw error;await loadWarEvents();renderWarLayout(event.id);}
+  catch(error){alert("ยืนยัน Draft ไม่สำเร็จ: "+error.message);}
+  finally{if(button){button.disabled=false;button.textContent="ยืนยันการสร้างตี้วอร์";}}
+}
+async function publishWarEvent(){
+  if(!isManagement())return;const event=allWarEvents.find(item=>item.id===selectedWarEventId);if(!event||!event.is_draft_confirmed||event.is_published)return;
+  const button=$("war-publish-event");if(button){button.disabled=true;button.textContent="กำลัง Publish...";}
+  try{const {error}=await supabaseClient.from("war_events").update({is_published:true}).eq("id",event.id);if(error)throw error;selectedWarEventId=null;await loadWarEvents();renderWarLayout();}
+  catch(error){alert("Publish วอร์ไม่สำเร็จ: "+error.message);}
+  finally{if(button){button.disabled=false;button.textContent="Publish";}}
+}
+async function exportWarImage(){
+  const event=allWarEvents.find(item=>item.id===selectedWarEventId);if(!event||!event.is_draft_confirmed)return;
+  const config=getWarEventConfig(event),width=1600,height=240+config.raidCount*510,esc=value=>escapeHTML(value);
+  const parts=[`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#100b0d"/><rect x="24" y="24" width="1552" height="${height-48}" rx="22" fill="#1b1114" stroke="#b88b48" stroke-width="3"/><text x="70" y="88" fill="#d6ad68" font-size="48" font-family="Arial" font-weight="700">4AM GUILD</text><text x="70" y="137" fill="#fff0df" font-size="30" font-family="Arial" font-weight="700">${esc(event.event_name)}</text><text x="70" y="178" fill="#c9b6a5" font-size="21" font-family="Arial">${esc(formatDate(event.event_date))} · ${esc(formatTime(event.start_time))}</text>`];
+  let y=220;for(const raid of ["A","B","C","D"].slice(0,config.raidCount)){parts.push(`<text x="70" y="${y}" fill="#d6ad68" font-size="30" font-family="Arial" font-weight="700">RAID ${raid}</text>`);y+=18;for(let p=1;p<=5;p++){const party=currentWarParties.find(item=>item.raid===raid&&Number(item.party_number)===p),assigned=party?.war_party_members||[],x=70+(p-1)*300;parts.push(`<rect x="${x}" y="${y}" width="280" height="430" rx="12" fill="#25171b" stroke="#74552f" stroke-width="2"/><text x="${x+16}" y="${y+35}" fill="#e3bd7b" font-size="23" font-family="Arial" font-weight="700">${raid}${p} · ${assigned.length}/6</text>`);for(let slot=1;slot<=6;slot++){const assignment=assigned.find(item=>Number(item.position)===slot),member=allMembers.find(item=>item.user_id===assignment?.member_id);parts.push(`<text x="${x+16}" y="${y+88+(slot-1)*55}" fill="${member?"#fff0df":"#8d7a72"}" font-size="17" font-family="Arial">${slot}. ${esc(member?getMemberName(member):"Empty Slot")}</text><text x="${x+16}" y="${y+111+(slot-1)*55}" fill="#c9a76d" font-size="12" font-family="Arial">${esc(member?getMemberClass(member):"")}</text>`);}}y+=470;}
+  parts.push("</svg>");const svgUrl=URL.createObjectURL(new Blob([parts.join("")],{type:"image/svg+xml;charset=utf-8"}));
+  try{const img=new Image();img.src=svgUrl;await img.decode();const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;canvas.getContext("2d").drawImage(img,0,0);const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));if(!png)throw Error("PNG export failed");const url=URL.createObjectURL(png),link=document.createElement("a");link.href=url;link.download=`4AM-War-${event.event_date}.png`;link.click();URL.revokeObjectURL(url);}catch(error){alert("บันทึกรูปไม่สำเร็จ: "+error.message);}finally{URL.revokeObjectURL(svgUrl);}
+}
+async function loadWarAttendance(){
+  const container=$("war-attendance-content");if(!container)return;container.innerHTML='<p class="muted">กำลังโหลดวอร์ที่เผยแพร่แล้ว...</p>';
+  const {data,error}=await supabaseClient.from("war_events").select("*").eq("is_published",true).order("event_date",{ascending:false});
+  if(error){container.innerHTML=`<div class="system-role-error">โหลดข้อมูลไม่สำเร็จ: ${escapeHTML(error.message)}</div>`;return;}
+  warAttendanceEvents=data||[];if(!warAttendanceEvents.length){showEmpty(container,"ยังไม่มีวอร์ที่เผยแพร่","เมื่อฝ่ายบริหารกด Publish รายชื่อวอร์จะแสดงที่หน้านี้");return;}
+  warAttendanceEventId=warAttendanceEvents.find(item=>item.id===warAttendanceEventId)?.id||warAttendanceEvents[0].id;await renderWarAttendance();
+}
+async function renderWarAttendance(){
+  const container=$("war-attendance-content");if(!container)return;const event=warAttendanceEvents.find(item=>item.id===warAttendanceEventId)||warAttendanceEvents[0];if(!event)return;
+  const config=getWarEventConfig(event),{data:parties,error}=await supabaseClient.from("war_parties").select("id,event_id,raid,party_number,party_name,war_party_members(id,member_id,position)").eq("event_id",event.id).order("party_number",{ascending:true});
+  if(error){container.innerHTML=`<div class="system-role-error">โหลดรายชื่อไม่สำเร็จ: ${escapeHTML(error.message)}</div>`;return;}
+  container.innerHTML=`<div class="war-attendance-event-select"><label for="war-attendance-select">เลือกกิจกรรมวอร์</label><select id="war-attendance-select">${warAttendanceEvents.map(item=>`<option value="${escapeHTML(item.id)}" ${item.id===event.id?"selected":""}>${escapeHTML(item.event_name)} · ${formatDate(item.event_date)}</option>`).join("")}</select></div><div class="war-attendance-heading"><h3>${escapeHTML(event.event_name)}</h3><p>${formatDate(event.event_date)} · ${formatTime(event.start_time)}</p><span class="war-stage-badge war-stage-published">PUBLISHED</span></div><div class="war-attendance-boards">${["A","B","C","D"].slice(0,config.raidCount).map(raid=>`<section class="raid-section"><div class="raid-title"><span class="raid-badge">${raid}</span><div><h2>Raid ${raid}</h2><p>Published roster</p></div></div><div class="raid-grid">${Array.from({length:5},(_,index)=>{const party=parties?.find(item=>item.raid===raid&&Number(item.party_number)===index+1),assigned=party?.war_party_members||[];return `<article class="party-card"><div class="party-header"><h3>${raid}${index+1}</h3><span class="party-count">${assigned.length}/6</span></div><div class="party-slots">${Array.from({length:6},(_,slotIndex)=>{const position=slotIndex+1,assignment=assigned.find(item=>Number(item.position)===position),member=allMembers.find(item=>item.user_id===assignment?.member_id);if(!member)return `<div class="party-slot"><span class="slot-number">${position}</span><span class="slot-empty">Empty Slot</span></div>`;const info=getClassInfo(getMemberClass(member));return `<div class="party-slot party-slot-filled"><span class="slot-number">${position}</span><img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath||"")}" alt=""><span class="slot-member-name">${escapeHTML(getMemberName(member))}</span></div>`;}).join("")}</div></article>`;}).join("")}</div></section>`).join("")}</div>`;
+  $("war-attendance-select")?.addEventListener("change",async event=>{warAttendanceEventId=event.target.value;await renderWarAttendance();});
 }
 
 function subscribeToWarRealtime() {
@@ -2621,49 +2518,26 @@ function subscribeToWarRealtime() {
     .channel("guild-war-live-updates")
     .on("postgres_changes", { event: "*", schema: "public", table: "war_events" }, () => loadWarEvents())
     .on("postgres_changes", { event: "*", schema: "public", table: "war_parties" }, async () => {
-      const eventId = currentWarAssignmentEventId || allWarEvents[0]?.id;
+      const eventId = currentWarAssignmentEventId || selectedWarEventId;
       if (eventId) await loadSelectedWarEvent(eventId);
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "war_party_members" }, async () => {
-      const eventId = currentWarAssignmentEventId || allWarEvents[0]?.id;
+      const eventId = currentWarAssignmentEventId || selectedWarEventId;
       if (eventId) await loadSelectedWarEvent(eventId);
     })
     .subscribe();
 }
 
-function registerWarCreationEvents() {
-  $("war-raid-boards")?.addEventListener("change", handleWarSlotChange);
-  $("war-raid-boards")?.addEventListener("click", event => {
-    const removeButton = event.target.closest("[data-war-remove]");
-    if (removeButton) removeWarPartyMember(removeButton.dataset.warRemove, removeButton);
-  });
-  $("war-create-open")?.addEventListener("click", () => {
-    if (!isManagement()) {
-      alert("เฉพาะ Developer, Leader และ Management เท่านั้นที่สร้างตี้วอร์ได้");
-      return;
-    }
-    $("war-create-panel")?.classList.remove("hidden");
-    $("war-create-message")?.classList.add("hidden");
-    $("war-create-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
-  ["war-create-close", "war-create-cancel"].forEach(id => {
-    $(id)?.addEventListener("click", () => $("war-create-panel")?.classList.add("hidden"));
-  });
-  document.querySelectorAll('input[name="war-mode"]').forEach(input => input.addEventListener("change", updateWarCreateMode));
-  $("war-raid-count")?.addEventListener("change", updateWarCreateMode);
-  $("war-create-form")?.addEventListener("submit", handleWarCreate);
-  const dateInput = $("war-event-date");
-  if (dateInput) {
-    const now = new Date();
-    const localToday = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
-    dateInput.min = localToday;
-  }
-  updateWarCreateMode();
+function registerWarCreationEvents(){
+  $("war-raid-boards")?.addEventListener("change",handleWarSlotChange);
+  $("war-raid-boards")?.addEventListener("click",event=>{const button=event.target.closest("[data-war-remove]");if(button)removeWarPartyMember(button.dataset.warRemove,button);});
+  $("war-events")?.addEventListener("click",event=>{const button=event.target.closest("[data-war-open]");if(!button||!isManagement())return;renderWarLayout(button.dataset.warOpen);$("war-detail-stage")?.scrollIntoView({behavior:"smooth",block:"start"});});
+  $("war-create-open")?.addEventListener("click",()=>{if(!isManagement())return;selectedWarEventId=null;$("war-detail-stage")?.classList.add("hidden");$("war-create-panel")?.classList.remove("hidden");$("war-create-message")?.classList.add("hidden");$("war-create-panel")?.scrollIntoView({behavior:"smooth",block:"start"});});
+  ["war-create-close","war-create-cancel"].forEach(id=>$(id)?.addEventListener("click",()=>$("war-create-panel")?.classList.add("hidden")));
+  $("war-confirm-draft")?.addEventListener("click",confirmWarDraft);$("war-publish-event")?.addEventListener("click",publishWarEvent);$("war-export-image")?.addEventListener("click",exportWarImage);$("war-sync-discord")?.addEventListener("click",()=>alert("Discord Bot Sync ยังไม่เปิดใช้งานในขณะนี้"));
+  document.querySelectorAll('input[name="war-mode"]').forEach(input=>input.addEventListener("change",updateWarCreateMode));$("war-raid-count")?.addEventListener("change",updateWarCreateMode);$("war-create-form")?.addEventListener("submit",handleWarCreate);
+  const dateInput=$("war-event-date");if(dateInput){const now=new Date(),today=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);dateInput.min=today;}updateWarCreateMode();
 }
-
-// ==========================================
-// GUILD WAR - SIGNUP
-// ==========================================
 
 async function signupForWar(eventId, raid, note = "") {
   if (!currentMember) {
@@ -2936,13 +2810,11 @@ function registerSystemRoleEvents() {
 // ==========================================
 
 function syncManagementMenuVisibility() {
-  const statsMenuItem = document.querySelector("[data-management-only]");
-  if (statsMenuItem) {
+  document.querySelectorAll("[data-management-only]").forEach(item => {
     const allowed = isManagement();
-    statsMenuItem.classList.toggle("is-role-hidden", !allowed);
-    statsMenuItem.setAttribute("aria-hidden", String(!allowed));
-  }
-
+    item.classList.toggle("is-role-hidden", !allowed);
+    item.setAttribute("aria-hidden", String(!allowed));
+  });
   const devMenuItems = document.querySelectorAll("[data-developer-only]");
   const developerAllowed = isDeveloper();
   devMenuItems.forEach((item) => {
@@ -2964,8 +2836,8 @@ function getLastGuildPage() {
 }
 
 function openGuildPage(pageName) {
-  if (pageName === "war-stats" && !isManagement()) {
-    pageName = "war";
+  if ((pageName === "war" || pageName === "war-stats") && !isManagement()) {
+    pageName = "war-attendance";
   }
   if (pageName === "system-management" && !isDeveloper()) {
     pageName = "dashboard";
@@ -3012,6 +2884,7 @@ function openGuildPage(pageName) {
 
   if (pageName === "portfolio") loadPortfolios();
   if (pageName === "war") loadWarEvents();
+  if (pageName === "war-attendance") loadWarAttendance();
 }
 
 async function copyGameUID(button) {

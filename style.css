@@ -3619,3 +3619,11 @@ body { font-size: var(--type-body); }
 .nav-subitem[data-page="war"].management-only[aria-hidden="true"] {
   display: none !important;
 }
+
+/* Guild War management workflow */
+.war-event-list{display:grid;gap:12px;margin:18px 0 24px}.war-event-card-selectable{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px 20px;border:1px solid var(--line);border-radius:10px;background:rgba(24,15,18,.88)}
+.war-event-main{min-width:0}.war-event-main h3{margin:0 0 6px;color:var(--cream)}.war-event-main p{margin:0 0 5px;color:var(--muted)}.war-event-main small{color:var(--muted)}.war-event-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap}
+.war-stage-badge{display:inline-flex;align-items:center;padding:6px 10px;border-radius:5px;border:1px solid rgba(205,160,100,.38);color:#e4c58d;font-size:11px;font-weight:700;letter-spacing:.06em;white-space:nowrap}.war-stage-arranging{color:#e7b56d;border-color:rgba(231,181,109,.4)}.war-stage-draft{color:#9fc4e9;border-color:rgba(119,169,217,.42)}.war-stage-published{color:#8ed6a8;border-color:rgba(105,190,132,.42)}
+.war-detail-stage{margin-top:22px}.war-detail-heading{align-items:center}.war-detail-heading p{margin:6px 0 0;color:var(--muted);font-size:12px}.war-edit-notice{margin:14px 0 20px;color:var(--muted);font-size:13px}.war-final-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding-top:22px;margin-top:24px;border-top:1px solid var(--line)}.war-final-actions .btn:disabled{opacity:.48;cursor:not-allowed}
+.war-attendance-event-select{display:flex;align-items:center;gap:12px;margin:6px 0 20px;flex-wrap:wrap}.war-attendance-event-select label{color:var(--muted);font-size:13px}.war-attendance-event-select select{min-width:260px}.war-attendance-heading{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:10px 0 24px}.war-attendance-heading h3{margin:0}.war-attendance-heading p{margin:0;color:var(--muted)}.war-attendance-boards .raid-section{margin-bottom:30px}
+@media(max-width:700px){.war-event-card-selectable{align-items:flex-start;flex-direction:column}.war-event-actions{justify-content:flex-start}.war-final-actions{align-items:stretch;flex-direction:column}.war-final-actions .btn{width:100%}}
