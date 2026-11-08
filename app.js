@@ -2853,21 +2853,42 @@ async function joinWarSignup(eventId,button){
 }
 function isDoubleOfficialSaturday(dateValue){
   if(!dateValue)return false;
-  const date=new Date(dateValue+"T12:00:00"),anchor=new Date("2026-11-14T12:00:00");
-  if(date.getDay()!==6)return false;
-  return Math.round((date-anchor)/(7*86400000))%2===0;
+  const date=new Date(dateValue+"T12:00:00");
+  const anchor=new Date("2026-11-14T12:00:00");
+  if(Number.isNaN(date.getTime())||date.getDay()!==6)return false;
+  const weeks=Math.round((date-anchor)/(7*86400000));
+  return weeks%2===0;
 }
 async function updateWarSignupTimeForDate(){
-  const type=$("war-signup-type")?.value,date=$("war-signup-event-date")?.value,input=$("war-signup-start-time"),note=$("war-signup-time-note");
-  if(!input||!date)return;
-  if(type==="practice"){input.readOnly=false;input.required=true;if(note)note.textContent="ซ้อมวอร์: Management กำหนดเวลาเองได้ (24 ชั่วโมง)";return;}
-  input.readOnly=true;input.required=true;
-  const double=isDoubleOfficialSaturday(date),editId=$("war-signup-edit-id")?.value;
-  const q=await supabaseClient.from("war_events").select("id").eq("event_date",date).eq("registration_type","official");
-  if(q.error){if(note)note.textContent="ตรวจสอบรอบวอร์ไม่สำเร็จ: "+q.error.message;return;}
-  const used=(q.data||[]).filter(x=>x.id!==editId).length;
-  input.value=double&&used===1?"20:30":"20:00";
-  if(note)note.textContent=double?(used===0?"เสาร์นี้มี 2 รอบ · รอบ 1 เวลา 20:00 น.":"เสาร์นี้มี 2 รอบ · รอบ 2 เวลา 20:30 น."):"วอร์จริง 1 รอบ · เวลา 20:00 น.";
+  const type=$("war-signup-type")?.value;
+  const date=$("war-signup-event-date")?.value;
+  const input=$("war-signup-start-time");
+  const note=$("war-signup-time-note");
+  if(!input)return;
+  if(type==="practice"){
+    input.readOnly=false;
+    input.required=true;
+    if(note)note.textContent="ซ้อมวอร์: Management กำหนดวันและเวลาเองได้ (24 ชั่วโมง)";
+    return;
+  }
+  input.readOnly=true;
+  input.required=true;
+  if(!date){
+    input.value="";
+    if(note)note.textContent="วอร์จริงกำหนดเฉพาะวันเสาร์ตามตารางกิลด์";
+    return;
+  }
+  const selectedDate=new Date(date+"T12:00:00");
+  if(selectedDate.getDay()!==6){
+    input.value="";
+    if(note)note.textContent="วอร์จริงเลือกได้เฉพาะวันเสาร์ตามตารางที่กำหนด";
+    return;
+  }
+  const double=isDoubleOfficialSaturday(date);
+  input.value=double?"20:30":"20:00";
+  if(note)note.textContent=double
+    ?"วอร์จริง 2 รอบ · รอบแรก 20:00 น. / รอบสอง 20:30 น. · ลงชื่อเพียงครั้งเดียวเพื่อจัดตี้รอบสอง"
+    :"วอร์จริง 1 รอบ · เวลา 20:00 น. · ลงชื่อเพียงครั้งเดียว";
 }
 function resetWarSignupForm(){
   $("war-signup-create-form")?.reset();$("war-signup-edit-id").value="";
@@ -2904,11 +2925,20 @@ async function createWarSignupEvent(form){
   const openDate=new Date(opens),closeDate=new Date(closes),showError=t=>{message.textContent=t;message.className="message error";};
   if(!name||!date||!startTime||!opens||!closes){showError("กรุณากรอกข้อมูลที่จำเป็นให้ครบ");return;}
   if(type==="official"){
-    const double=isDoubleOfficialSaturday(date),q=await supabaseClient.from("war_events").select("id").eq("event_date",date).eq("registration_type","official");
+    const selectedDate=new Date(date+"T12:00:00");
+    if(selectedDate.getDay()!==6){showError("วอร์จริงเลือกได้เฉพาะวันเสาร์ตามตารางกิลด์");return;}
+    const double=isDoubleOfficialSaturday(date);
+    const q=await supabaseClient.from("war_events").select("id").eq("event_date",date).eq("registration_type","official");
     if(q.error){showError(q.error.message);return;}
     const used=(q.data||[]).filter(x=>x.id!==editId).length;
-    if((double&&used>=2)||(!double&&used>=1)){showError(double?"เสาร์นี้สร้างวอร์จริงครบ 2 รอบแล้ว":"วันที่เลือกมีวอร์จริงได้เพียง 1 รอบ");return;}
-    const expected=double&&used===1?"20:30":"20:00";if(startTime!==expected){showError("เวลาวอร์จริงรอบนี้ต้องเป็น "+expected+" น.");return;}
+    if(used>=1){showError("วันดังกล่าวมี Event ลงชื่อวอร์อยู่แล้ว ใช้ Event เดิมเพียงรายการเดียว");return;}
+    const expected=double?"20:30":"20:00";
+    if(startTime!==expected){
+      showError(double
+        ?"วันเสาร์ที่มีวอร์ 2 รอบ ต้องตั้งเวลา Event เป็น 20:30 น. (รอบสอง) โดยรายชื่อใช้ลงชื่อเพียงครั้งเดียว"
+        :"วันเสาร์ที่มีวอร์ 1 รอบ ต้องตั้งเวลาเป็น 20:00 น.");
+      return;
+    }
   }
   if(Number.isNaN(openDate.getTime())||Number.isNaN(closeDate.getTime())||closeDate<=openDate){showError("เวลาปิดรับสมัครต้องอยู่หลังเวลาเริ่มลงชื่อ");return;}
   if(closeDate<=new Date()){showError("เวลาปิดรับสมัครต้องเป็นเวลาในอนาคต");return;}
