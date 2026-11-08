@@ -2575,7 +2575,7 @@ async function handleWarCreate(event) {
         event_date: eventDate,
         start_time: startTime,
         description: metadata,
-        status: "scheduled"
+        status: "open"
       })
       .select()
       .single();
