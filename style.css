@@ -4338,15 +4338,22 @@ button:not(.feedback-notification-button),
 .war-leave-review-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap}
 @media(max-width:650px){.war-signup-management-actions{justify-content:flex-start}.war-leave-review-actions{width:100%}}
 
-/* Self-service character name and class settings */
-.account-character-form{display:grid;gap:10px;margin:16px 0 22px;padding:16px;border:1px solid rgba(190,45,60,.25);border-radius:8px;background:rgba(15,9,11,.45)}
-.account-character-form label{color:#e4d4c4;font-size:13px;font-weight:700}
-.account-character-form input,.account-character-form select{width:100%;min-height:44px;padding:10px 12px;border:1px solid rgba(190,45,60,.48);border-radius:6px;background:#10090c;color:#f3ebe6;font:inherit;color-scheme:dark}
+/* Account information layout and self-service editing */
+.account-information-heading{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:0 0 8px;padding:0 0 10px;border-bottom:1px solid rgba(194,147,119,.2)}
+.account-information-kicker{color:#e8c98e;font-size:14px;font-weight:800;letter-spacing:.12em}
+.account-edit-button{margin:0!important;flex:0 0 auto;min-width:104px}
+.account-details-list .settings-detail{font-size:16px;gap:16px;padding:14px 0;border-bottom-color:rgba(194,147,119,.22)}
+.account-details-list .settings-detail span{color:#d7c5b6;font-weight:600}
+.account-details-list .settings-detail strong{color:#fff4e8;font-size:16px;font-weight:650}
+.account-details-list .account-class-display{color:var(--class-color,#e5c37d)!important}
+.account-class-display{display:inline-flex;align-items:center;gap:9px}
+.account-character-form{display:grid;gap:11px;margin:18px 0 10px;padding:18px;border:1px solid rgba(190,45,60,.32);border-radius:8px;background:rgba(15,9,11,.52)}
+.account-character-form label{color:#f0d9bd;font-size:14px;font-weight:750}
+.account-character-form input,.account-character-form select{width:100%;min-height:46px;padding:11px 13px;border:1px solid rgba(190,45,60,.48);border-radius:6px;background:#10090c;color:#fff4e8;font-size:16px;font-weight:500;color-scheme:dark}
 .account-character-form input:focus,.account-character-form select:focus{outline:none;border-color:#d8b06a;box-shadow:0 0 0 2px rgba(216,176,106,.13)}
-.account-class-display{display:inline-flex;align-items:center;gap:9px;color:var(--class-color,#e5c37d)}
 .account-class-select-wrap{display:flex;align-items:center;gap:10px}
 .account-class-select-wrap select{flex:1;min-width:0}
-.account-class-icon{width:30px;height:30px;object-fit:contain;flex:0 0 auto}
-.account-class-legend{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 6px}
-.account-class-option{display:inline-flex;align-items:center;gap:5px;padding:5px 8px;border:1px solid color-mix(in srgb,var(--class-color) 38%,transparent);border-radius:5px;color:var(--class-color);font-size:11px}
-.account-class-option img{width:18px;height:18px;object-fit:contain}
+.account-class-icon{width:32px;height:32px;object-fit:contain;flex:0 0 auto}
+.account-profile-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+#account-profile-status{font-size:14px;font-weight:650}
+@media(max-width:600px){.account-information-heading{align-items:center}.account-information-kicker{font-size:12px}.account-details-list .settings-detail{font-size:14px;gap:10px}.account-details-list .settings-detail strong{font-size:14px}.account-profile-actions{flex-direction:column-reverse}.account-profile-actions .btn{width:100%}}
