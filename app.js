@@ -2674,15 +2674,17 @@ async function loadWarSignups(){
     }else{
       action='<span class="war-signup-status">ปิดรับสมัครแล้ว</span>';
     }
-    const managerRoster=isManagement()?'<details class="war-signup-manager-roster"><summary>ดูรายชื่อผู้ลงชื่อ ('+rows.length+')</summary><div>'+rows.map(row=>{
+    const managerRoster=isManagement()?'<details class="war-signup-manager-roster"><summary>ดูรายชื่อผู้ลงชื่อ ('+rows.length+')</summary><div class="war-signup-roster-list">'+rows.map(row=>{
       const member=allMembers.find(item=>item.user_id===row.member_id),queue=Number(row.queue_position)||0;
-      return '<div class="war-signup-roster-row"><span>#'+queue+'</span><strong>'+escapeHTML(member?getMemberName(member):"สมาชิก")+'</strong><small>'+(queue<=60?"ตัวจริง":"ตัวสำรอง")+' · '+escapeHTML(getMemberClass(member||{}))+'</small></div>';
+      const classInfo=getClassInfo(getMemberClass(member||{}));
+      const classIcon=classInfo?.iconPath?'<img class="war-signup-roster-class-icon" src="'+escapeHTML(classInfo.iconPath)+'" alt="'+escapeHTML(getMemberClass(member||{}))+'" loading="lazy">':'<span class="war-signup-roster-class-fallback">✦</span>';
+      return '<div class="war-signup-roster-row"><span class="war-signup-roster-queue">#'+queue+'</span>'+classIcon+'<strong>'+escapeHTML(member?getMemberName(member):"สมาชิก")+'</strong><small>'+(queue<=60?"ตัวจริง":"ตัวสำรอง")+'</small></div>';
     }).join("")+'</div></details>':"";
     const summary=state==="closed"?renderWarSignupSummary(rows):"";
-    return '<article class="war-signup-card"><div class="war-signup-card-top"><div><span class="panel-kicker">'+(event.registration_type==="practice"?"PRACTICE WAR":"OFFICIAL WAR")+'</span><h3>'+escapeHTML(event.event_name)+'</h3><p>'+formatDate(event.event_date)+' · เริ่มวอร์ '+formatTime(event.start_time)+'</p></div><span class="war-signup-state '+stateClass+'">'+stateLabel+'</span></div>'+
+    return '<article class="war-signup-card"><div class="war-signup-card-top"><div class="war-signup-card-heading"><h3>'+escapeHTML(event.event_name)+'</h3><p>'+formatDate(event.event_date)+' · เริ่มวอร์ '+formatTime(event.start_time)+'</p></div><div class="war-signup-badges"><span class="war-signup-state '+stateClass+'">'+stateLabel+'</span><span class="war-signup-type">'+typeLabel+'</span></div></div>'+
       '<div class="war-signup-event-meta"><span>เริ่มลงชื่อ: '+warSignupDateTime(event.signup_opens_at)+'</span><span>ปิดรับ: '+warSignupDateTime(event.signup_closes_at)+'</span><span>ผู้ลงชื่อ: '+capacity+'</span></div>'+
       (event.description?'<p class="war-signup-description">'+escapeHTML(String(event.description).replace(/\[\[WAR_CONFIG:[\s\S]*?\]\]/,"").trim())+'</p>':"")+
-      '<div class="war-signup-card-bottom"><span class="war-signup-type">'+typeLabel+'</span><div class="war-signup-action">'+action+'</div></div>'+managerRoster+summary+'</article>';
+      '<div class="war-signup-card-bottom"><div class="war-signup-action">'+action+'</div></div>'+managerRoster+summary+'</article>';
   }).join("");
 }
 async function joinWarSignup(eventId,button){
