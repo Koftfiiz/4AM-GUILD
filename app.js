@@ -2724,6 +2724,7 @@ function renderWarSignupRoster(signups,members,leaveRows,eventState){
 
 let warLeaveEvents=[];
 let warLeaveRequests=[];
+let warLeaveMembers=[];
 
 function warLeaveStatusLabel(status){
   return status==="approved"?"รับทราบแล้ว":status==="rejected"?"ไม่อนุมัติ":"รอตรวจสอบ";
@@ -2747,7 +2748,7 @@ function renderWarLeaveLists(){
   if(!isManagement()){ $("war-leave-management")?.classList.add("hidden"); return; }
   $("war-leave-management")?.classList.remove("hidden");
   management.innerHTML=warLeaveRequests.length?'<div class="war-leave-management-list">'+warLeaveRequests.map(row=>{
-    const member=allMembers.find(item=>item.user_id===row.member_id)||{};
+    const member=warLeaveMembers.find(item=>item.user_id===row.member_id)||allMembers.find(item=>item.user_id===row.member_id)||{};
     const event=eventName(row.event_id);
     return '<article class="war-leave-review-row"><div class="war-leave-review-main"><strong>'+escapeHTML(getMemberName(member))+'</strong><span>'+escapeHTML(event?.event_name||"กิจกรรมวอร์")+' · '+escapeHTML(event?formatDate(event.event_date):"")+'</span><p>'+escapeHTML(row.reason||"ไม่ได้ระบุเหตุผล")+'</p></div><div class="war-leave-review-actions"><span class="war-leave-status '+escapeHTML(row.status)+'">'+warLeaveStatusLabel(row.status)+'</span>'+(row.status==="pending"?'<button class="btn btn-primary btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="approved" type="button">รับทราบ</button><button class="btn btn-outline btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="rejected" type="button">ไม่อนุมัติ</button>':"")+'</div></article>';
   }).join("")+'</div>':'<div class="war-roster-empty">ยังไม่มีสมาชิกแจ้งลาวอร์</div>';
@@ -2756,20 +2757,22 @@ async function loadWarLeavePage(){
   const select=$("war-leave-event"),mine=$("war-leave-my-list");
   if(!select||!currentUser)return;
   if(mine)mine.innerHTML='<p class="muted">กำลังโหลดข้อมูล...</p>';
-  const [eventsQ,requestsQ]=await Promise.all([
+  const [eventsQ,requestsQ,membersQ]=await Promise.all([
     supabaseClient.from("war_events").select("id,event_name,event_date,start_time,signup_opens_at,signup_closes_at").not("signup_opens_at","is",null).order("event_date",{ascending:true}),
-    supabaseClient.from("war_leave_requests").select("id,event_id,member_id,reason,status,created_at").order("created_at",{ascending:false})
+    supabaseClient.from("war_leave_requests").select("id,event_id,member_id,reason,status,created_at").order("created_at",{ascending:false}),
+    supabaseClient.from("guild_members").select("user_id,character_name,nickname,discord_name,game_class,active").eq("active",true)
   ]);
-  if(eventsQ.error||requestsQ.error){
-    const error=eventsQ.error||requestsQ.error;
+  if(eventsQ.error||requestsQ.error||membersQ.error){
+    const error=eventsQ.error||requestsQ.error||membersQ.error;
     if(mine)mine.innerHTML='<div class="system-role-error">'+escapeHTML(error.message)+'<br>กรุณารัน SQL ระบบแจ้งลาวอร์ใน Supabase ก่อนใช้งาน</div>';
     select.innerHTML='<option value="">โหลดข้อมูลไม่สำเร็จ</option>';
     return;
   }
   warLeaveEvents=eventsQ.data||[];
   warLeaveRequests=requestsQ.data||[];
+  warLeaveMembers=membersQ.data||[];
   const previous=select.value;
-  const today=new Date().toISOString().slice(0,10);
+  const now=new Date(),today=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);
   const selectable=warLeaveEvents.filter(event=>event.event_date>=today);
   select.innerHTML=selectable.length?selectable.map(event=>'<option value="'+escapeHTML(event.id)+'">'+escapeHTML(event.event_name)+' · '+formatDate(event.event_date)+'</option>').join(""):'<option value="">ยังไม่มีรอบวอร์ที่เปิดให้แจ้งลา</option>';
   if(previous&&selectable.some(event=>event.id===previous))select.value=previous;
