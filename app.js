@@ -77,7 +77,7 @@ const PAGE_TITLES = {
   members: "สมาชิกกิลด์",
   war: "จัดตี้วอร์",
   "war-attendance": "เช็คชื่อวอร์",
-  "war-stats": "สถิติการวอร์",
+  "war-stats": "สถิติกิลด์วอร์",
   "war-attendance-stats": "สถิติการเข้าร่วมวอร์",
   rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
