@@ -3876,3 +3876,41 @@ button:not(.feedback-notification-button),
 .guild-rich-table td,.guild-rich-table th{min-width:55px;padding:8px;border:1px solid rgba(205,160,120,.45)}
 .guild-feedback-image{display:block;max-width:min(100%,760px);max-height:580px;height:auto;object-fit:contain;margin:14px auto;border:1px solid rgba(190,145,65,.25);border-radius:7px}
 @media(max-width:700px){.rule-editor-toolbar{gap:5px}.rule-editor-toolbar button{min-width:35px;padding:5px 8px}}
+
+
+/* Scheduled Guild War registration */
+.war-signup-management{margin-bottom:18px}
+.war-signup-create-form{padding-top:18px;border-top:1px solid rgba(190,145,65,.2)}
+.war-signup-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.war-signup-field-wide{grid-column:1/-1}
+.war-signup-form-grid input,.war-signup-form-grid select,.war-signup-form-grid textarea{width:100%;min-height:42px}
+.war-signup-rules-note{display:flex;flex-direction:column;gap:5px;padding:13px 15px;margin:14px 0;background:rgba(177,126,50,.09);border:1px solid rgba(190,145,65,.25);border-radius:8px;font-size:13px}
+.war-signup-form-actions{display:flex;justify-content:flex-end;gap:9px}
+.war-signup-card{padding:18px;margin:14px 0;border:1px solid rgba(190,145,65,.24);border-radius:10px;background:linear-gradient(135deg,rgba(40,18,22,.68),rgba(14,12,14,.82))}
+.war-signup-card-top,.war-signup-card-bottom{display:flex;justify-content:space-between;align-items:center;gap:14px}
+.war-signup-card-top h3{margin:5px 0}.war-signup-card-top p{margin:0;color:var(--text-muted,#aaa)}
+.war-signup-state{display:inline-flex;align-items:center;padding:6px 10px;border-radius:30px;font-size:12px;white-space:nowrap}
+.war-signup-state.is-open{background:rgba(50,155,95,.16);color:#80d7a0}
+.war-signup-state.is-closed{background:rgba(140,140,140,.15);color:#bbb}
+.war-signup-state.is-scheduled{background:rgba(190,145,65,.15);color:#e4c27e}
+.war-signup-event-meta{display:flex;flex-wrap:wrap;gap:8px 18px;margin:14px 0;color:var(--text-muted,#aaa);font-size:13px}
+.war-signup-description{margin:8px 0;color:var(--text-muted,#bbb);white-space:pre-wrap}
+.war-signup-card-bottom{padding-top:12px;border-top:1px solid rgba(190,145,65,.16)}
+.war-signup-type{font-size:12px;color:#d8b878}
+.war-signup-action{display:flex;align-items:center;gap:8px}
+.war-signup-own-status{display:flex;flex-direction:column;text-align:right;gap:3px}
+.war-signup-own-status span{font-size:12px;color:var(--text-muted,#aaa)}
+.war-signup-status{font-size:13px;color:var(--text-muted,#aaa)}
+.war-signup-manager-roster{margin-top:12px;padding-top:10px;border-top:1px solid rgba(190,145,65,.16)}
+.war-signup-manager-roster summary{cursor:pointer;color:#d8b878}
+.war-signup-roster-row{display:grid;grid-template-columns:42px minmax(120px,1fr) minmax(120px,auto);gap:8px;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px}
+.war-signup-roster-row small{color:var(--text-muted,#aaa)}
+.war-signup-summary{margin-top:15px;padding:14px;background:rgba(10,10,12,.55);border:1px solid rgba(190,145,65,.22);border-radius:8px}
+.war-signup-summary-head{display:flex;flex-direction:column;gap:4px}.war-signup-summary-head strong{color:#d8b878;letter-spacing:.08em}
+.war-signup-summary-head span{font-size:13px;color:var(--text-muted,#aaa)}
+.war-signup-summary-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+.war-signup-summary-stats>div{display:flex;flex-direction:column;gap:3px;padding:10px;background:rgba(255,255,255,.035);border-radius:7px}
+.war-signup-summary-stats strong{font-size:23px}.war-signup-summary-stats span{font-size:12px;color:var(--text-muted,#aaa)}
+.war-signup-class-row{display:grid;grid-template-columns:28px minmax(100px,1fr) auto auto;align-items:center;gap:9px;padding:8px 0;border-top:1px solid rgba(255,255,255,.06);font-size:13px}
+.war-signup-class-row img{width:24px;height:24px;object-fit:contain}.war-signup-class-row small{color:var(--text-muted,#aaa)}
+@media(max-width:650px){.war-signup-form-grid{grid-template-columns:1fr}.war-signup-field-wide{grid-column:auto}.war-signup-card-top{align-items:flex-start;flex-direction:column}.war-signup-event-meta{flex-direction:column;gap:5px}.war-signup-roster-row{grid-template-columns:34px minmax(0,1fr)}.war-signup-roster-row small{grid-column:2}.war-signup-class-row{grid-template-columns:26px minmax(90px,1fr) auto}.war-signup-class-row small{grid-column:2/-1}.war-signup-form-actions{flex-direction:column-reverse}.war-signup-form-actions button{width:100%}}
