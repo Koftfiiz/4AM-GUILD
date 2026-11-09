@@ -92,7 +92,8 @@ begin
 
   select * into v_event
   from public.war_events
-  where id = p_event_id;
+  where id = p_event_id
+  for update;
 
   if not found then
     raise exception 'ไม่พบ Event วอร์นี้';
@@ -139,6 +140,7 @@ begin
     where wl.event_id = p_event_id
       and wl.member_id = gm.user_id
       and wl.status <> 'rejected'
+      and wl.created_at <= v_event.signup_closes_at
     order by wl.created_at desc
     limit 1
   ) lr on true
