@@ -37,7 +37,7 @@ let warAttendanceEventId = null;
 let warRealtimeChannel = null;
 let registrationBusy = false;
 let warArrangeMode = false;
-let warAssignmentFilter="all",warAssignmentClassFilter="all",warAssignmentSearch="",warAssignmentSignups=[],warAssignmentLeaves=[],warAssignmentAbsentees=[],warAssignmentModalSlot=null;
+let warAssignmentFilter="all",warAssignmentClassFilter="all",warAssignmentSearch="",warAssignmentSignups=[],warAssignmentLeaves=[],warAssignmentAbsentees=[],warAssignmentRosterSnapshot=[],warAssignmentModalSlot=null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -2237,7 +2237,7 @@ function renderWarLayout(eventId = selectedWarEventId) {
   if(!event){selectedWarEventId=null;currentWarParties=[];currentWarPartyAssignments=[];currentWarAssignmentEventId=null;if(summary)summary.innerHTML="";if(boards)boards.innerHTML="";stage?.classList.add("hidden");return;}
   selectedWarEventId=event.id;
   const config=getWarEventConfig(event),letters=["A","B","C","D"].slice(0,config.raidCount);
-  warArrangeMode=false;warAssignmentFilter="all";warAssignmentClassFilter="all";warAssignmentSearch="";warAssignmentSignups=[];warAssignmentLeaves=[];closeWarAssignmentModal();
+  warArrangeMode=false;warAssignmentFilter="all";warAssignmentClassFilter="all";warAssignmentSearch="";warAssignmentSignups=[];warAssignmentLeaves=[];warAssignmentAbsentees=[];warAssignmentRosterSnapshot=[];closeWarAssignmentModal();
   stage?.classList.remove("hidden");
   if(summary)summary.innerHTML=`
     <article class="stat-card stat-card-sm"><div class="stat-icon"><svg class="icon"><use href="#i-swords"/></svg></div><div class="stat-info"><span class="stat-label">TOTAL CAPACITY</span><div class="stat-value"><strong>${config.raidCount*30}</strong></div><small>${config.mode==="practice"?"Practice War":"Official War"}</small></div></article>
@@ -2256,16 +2256,22 @@ function renderWarLayout(eventId = selectedWarEventId) {
 
 async function loadSelectedWarEvent(eventId){
  currentWarAssignmentEventId=eventId;
- const [p,s,l,attendance]=await Promise.all([
+ const event=allWarEvents.find(item=>item.id===eventId);
+ const isSignupClosed=Boolean(event?.signup_closes_at)&&Date.now()>=new Date(event.signup_closes_at).getTime();
+ const [p,s,l,snapshot,attendance]=await Promise.all([
   supabaseClient.from("war_parties").select(`id,event_id,raid,party_number,party_name,war_party_members(id,member_id,position)`).eq("event_id",eventId).order("party_number",{ascending:true}),
   supabaseClient.from("war_signups").select("id,event_id,member_id,raid,status,queue_position").eq("event_id",eventId).neq("status","cancelled"),
   supabaseClient.from("war_leave_requests").select("id,event_id,member_id,status").eq("event_id",eventId),
-  supabaseClient.rpc("get_war_attendance_roster",{p_event_id:eventId})
+  isSignupClosed?supabaseClient.rpc("capture_war_event_roster_snapshot",{p_event_id:eventId}):Promise.resolve({data:[],error:null}),
+  Promise.resolve({data:[],error:null})
  ]);
  if(p.error){console.error("War party loading error:",p.error);currentWarParties=[];currentWarPartyAssignments=[];alert("โหลดรายชื่อปาร์ตี้ไม่สำเร็จ: "+p.error.message);return;}
- currentWarParties=p.data||[];warAssignmentSignups=s.error?[]:(s.data||[]);warAssignmentLeaves=l.error?[]:(l.data||[]);warAssignmentAbsentees=attendance.error?[]:(attendance.data||[]).filter(x=>x.attendance_status==="absent").map(x=>x.member_id);
+ if(snapshot.error)console.error("War roster snapshot error:",snapshot.error);
+ currentWarParties=p.data||[];warAssignmentSignups=s.error?[]:(s.data||[]);warAssignmentLeaves=l.error?[]:(l.data||[]);
+ warAssignmentRosterSnapshot=snapshot.error?[]:(snapshot.data||[]);
+ warAssignmentAbsentees=warAssignmentRosterSnapshot.filter(x=>x.roster_status==="absent").map(x=>x.member_id);
  currentWarPartyAssignments=currentWarParties.flatMap(party=>(party.war_party_members||[]).map(member=>({...member,party_id:party.id,raid:party.raid,party_number:party.party_number})));
- renderWarAssignmentToolbar(getWarEventConfig(allWarEvents.find(item=>item.id===eventId)).raidCount);renderAllWarParties();
+ renderWarAssignmentToolbar(getWarEventConfig(event).raidCount);renderAllWarParties();
 }
 function renderAllWarParties(){
  const event=allWarEvents.find(item=>item.id===currentWarAssignmentEventId);if(!event)return;
@@ -2298,17 +2304,17 @@ function renderRaid(containerId,raidName,parties=[],options={}){
  return `<div class="party-slot ${canArrange&&p?"party-slot-editor":""}"><span class="war-empty-slot-number">${pos}</span>${canArrange&&p?`<button class="war-slot-add-button" type="button" data-war-add-slot data-party-id="${escapeHTML(p.id)}" data-position="${pos}">＋ ADD</button>`:'<span class="slot-empty">Empty Slot</span>'}</div>`;
  }).join("")}</div></article>`;}).join("");
 }
-function warMemberStatus(id){const signup=warAssignmentSignups.find(x=>x.member_id===id),leave=warAssignmentLeaves.find(x=>x.member_id===id&&x.status!=="rejected"),alreadyAssigned=currentWarPartyAssignments.some(x=>x.member_id===id);return {signup,leave,reserve:!!signup&&Number(signup.queue_position)>=61&&!alreadyAssigned,raid:signup?.raid||""};}
+function warMemberStatus(id){const signup=warAssignmentSignups.find(x=>x.member_id===id),leave=warAssignmentLeaves.find(x=>x.member_id===id&&x.status!=="rejected"),snapshot=warAssignmentRosterSnapshot.find(x=>x.member_id===id),alreadyAssigned=currentWarPartyAssignments.some(x=>x.member_id===id);return {signup,leave,snapshot,absent:snapshot?.roster_status==="absent",addedByManagement:snapshot?.roster_status==="added_by_management",reserve:(snapshot?.roster_status==="reserve"||(!snapshot&&!!signup&&Number(signup.queue_position)>=61))&&!alreadyAssigned,raid:signup?.raid||""};}
 function renderWarAssignmentToolbar(raidCount=2){
- const root=$("war-assignment-toolbar");if(!root)return;const active=allMembers.filter(x=>x.active===true),reserve=warAssignmentSignups.filter(x=>Number(x.queue_position)>=61).length;
+ const root=$("war-assignment-toolbar");if(!root)return;const active=allMembers.filter(x=>x.active===true),reserve=warAssignmentRosterSnapshot.length?warAssignmentRosterSnapshot.filter(x=>x.roster_status==="reserve"&&!currentWarPartyAssignments.some(a=>a.member_id===x.member_id)).length:warAssignmentSignups.filter(x=>Number(x.queue_position)>=61).length;
  const teams=["A","B","C","D"].slice(0,raidCount).map(x=>`<button class="war-filter-chip" data-war-filter="${x}" type="button">Raid ${x}</button>`).join("");
  const classes=CLASS_DATA.map(info=>{const count=active.filter(x=>getMemberClass(x).toLowerCase()===info.name.toLowerCase()).length;return `<button class="war-class-filter" data-war-class-filter="${escapeHTML(info.name)}" type="button" title="${escapeHTML(info.name)}"><img src="${escapeHTML(info.iconPath)}" alt=""><span>${count}</span></button>`;}).join("");
- root.innerHTML=`<div class="war-assignment-filter-row"><div class="war-filter-group"><button class="war-filter-chip is-active" data-war-filter="all" type="button">All Raid</button>${teams}<button class="war-filter-chip" data-war-filter="reserve" type="button">สำรอง · ${reserve}</button><button class="war-filter-chip" data-war-filter="leave" type="button">ลาวอร์ · ${warAssignmentLeaves.filter(x=>x.status!=="rejected").length}</button><button class="war-filter-chip" data-war-filter="absent" type="button">ขาดวอร์ · ${warAssignmentAbsentees.length}</button></div></div><div class="war-assignment-search-row"><label class="war-assignment-search"><span>⌕</span><input id="war-assignment-search" type="search" placeholder="ค้นหาชื่อตัวละคร หรือ UID..." value="${escapeHTML(warAssignmentSearch)}"></label><button class="war-count-chip" data-war-filter="all" type="button">TOTAL <strong>${active.length}</strong></button><button class="war-count-chip is-reserve" data-war-filter="reserve" type="button">RESERVE <strong>${reserve}</strong></button></div><div class="war-assignment-class-row"><span class="war-filter-caption">FILTER BY CLASS</span><button class="war-class-filter is-active" data-war-class-filter="all" type="button">ALL</button>${classes}</div><div class="war-assignment-results" id="war-assignment-results"></div>`;
+ root.innerHTML=`<div class="war-assignment-filter-row"><div class="war-filter-group"><button class="war-filter-chip is-active" data-war-filter="all" type="button">All Raid</button>${teams}<button class="war-filter-chip" data-war-filter="reserve" type="button">สำรอง · ${reserve}</button><button class="war-filter-chip" data-war-filter="leave" type="button">ลาวอร์ · ${warAssignmentRosterSnapshot.filter(x=>x.roster_status==="leave").length||warAssignmentLeaves.filter(x=>x.status!=="rejected").length}</button><button class="war-filter-chip" data-war-filter="absent" type="button">ขาดวอร์ · ${warAssignmentAbsentees.length}</button></div></div><div class="war-assignment-search-row"><label class="war-assignment-search"><span>⌕</span><input id="war-assignment-search" type="search" placeholder="ค้นหาชื่อตัวละคร หรือ UID..." value="${escapeHTML(warAssignmentSearch)}"></label><button class="war-count-chip" data-war-filter="all" type="button">TOTAL <strong>${active.length}</strong></button><button class="war-count-chip is-reserve" data-war-filter="reserve" type="button">RESERVE <strong>${reserve}</strong></button></div><div class="war-assignment-class-row"><span class="war-filter-caption">FILTER BY CLASS</span><button class="war-class-filter is-active" data-war-class-filter="all" type="button">ALL</button>${classes}</div><div class="war-assignment-results" id="war-assignment-results"></div>`;
  applyWarAssignmentMemberFilters();
 }
 function applyWarAssignmentMemberFilters(){
- const q=warAssignmentSearch.trim().toLowerCase(),members=allMembers.filter(m=>m.active===true).filter(m=>{const st=warMemberStatus(m.user_id);if(warAssignmentFilter==="leave"&&!st.leave)return false;if(warAssignmentFilter==="reserve"&&!st.reserve)return false;if(warAssignmentFilter==="absent"&&!warAssignmentAbsentees.includes(m.user_id))return false;if(["A","B","C","D"].includes(warAssignmentFilter)&&st.raid!==warAssignmentFilter)return false;if(warAssignmentClassFilter!=="all"&&getMemberClass(m).toLowerCase()!==warAssignmentClassFilter.toLowerCase())return false;return !q||getMemberName(m).toLowerCase().includes(q)||String(m.game_uid||"").includes(q);});
- const out=$("war-assignment-results");if(out){out.innerHTML=members.length?members.slice(0,40).map(m=>{const info=getClassInfo(getMemberClass(m)),st=warMemberStatus(m.user_id);return `<button class="war-assignment-member-pill" data-war-pool-member="${escapeHTML(m.user_id)}" type="button" style="--class-color:${info?.color||"#aaa"}"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span>${escapeHTML(getMemberName(m))}</span><small>${st.leave?"ลาวอร์":warAssignmentAbsentees.includes(m.user_id)?"ขาดวอร์":st.reserve?"สำรอง":st.raid?"RAID "+st.raid:"ยังไม่จัดตี้"}</small></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่ตรงกับตัวกรอง</p>';if(members.length>40)out.insertAdjacentHTML("beforeend",`<small class="war-assignment-more">แสดง 40 จาก ${members.length} คน · ใช้ช่องค้นหาเพื่อจำกัดผลลัพธ์</small>`);}
+ const q=warAssignmentSearch.trim().toLowerCase(),members=allMembers.filter(m=>m.active===true).filter(m=>{const st=warMemberStatus(m.user_id);if(warAssignmentFilter==="leave"&&!st.leave)return false;if(warAssignmentFilter==="reserve"&&!st.reserve)return false;if(warAssignmentFilter==="absent"&&!st.absent)return false;if(["A","B","C","D"].includes(warAssignmentFilter)&&st.raid!==warAssignmentFilter)return false;if(warAssignmentClassFilter!=="all"&&getMemberClass(m).toLowerCase()!==warAssignmentClassFilter.toLowerCase())return false;return !q||getMemberName(m).toLowerCase().includes(q)||String(m.game_uid||"").includes(q);});
+ const out=$("war-assignment-results");if(out){out.innerHTML=members.length?members.slice(0,40).map(m=>{const info=getClassInfo(getMemberClass(m)),st=warMemberStatus(m.user_id);return `<button class="war-assignment-member-pill" data-war-pool-member="${escapeHTML(m.user_id)}" type="button" style="--class-color:${info?.color||"#aaa"}"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span>${escapeHTML(getMemberName(m))}</span><small>${st.addedByManagement?"เพิ่มโดยฝ่ายบริหาร":st.leave?"ลาวอร์":st.absent?"ขาดวอร์":st.reserve?"สำรอง":st.raid?"RAID "+st.raid:"ยังไม่จัดตี้"}</small></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่ตรงกับตัวกรอง</p>';if(members.length>40)out.insertAdjacentHTML("beforeend",`<small class="war-assignment-more">แสดง 40 จาก ${members.length} คน · ใช้ช่องค้นหาเพื่อจำกัดผลลัพธ์</small>`);}
  document.querySelectorAll("[data-war-filter]").forEach(b=>b.classList.toggle("is-active",b.dataset.warFilter===warAssignmentFilter));document.querySelectorAll("[data-war-class-filter]").forEach(b=>b.classList.toggle("is-active",b.dataset.warClassFilter===warAssignmentClassFilter));
  document.querySelectorAll("[data-raid-section]").forEach(s=>s.classList.toggle("hidden",["leave","reserve","absent"].includes(warAssignmentFilter)||(warAssignmentFilter!=="all"&&s.dataset.raidSection!==warAssignmentFilter)));
 }
@@ -2327,8 +2333,17 @@ function renderWarAssignmentModalMembers(){
 async function assignWarMemberToSlot(id){
  const slot=warAssignmentModalSlot;if(!slot)return;const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event||event.is_published)return;const party=currentWarParties.find(x=>x.id===slot.partyId);if(!party)return;
  if(getAssignedWarMemberIds(slot.assignmentId).has(id)){alert("สมาชิกคนนี้ถูกจัดลงปาร์ตี้อื่นในวอร์รอบนี้แล้ว");return;}
- try{const r=slot.assignmentId?await supabaseClient.from("war_party_members").update({member_id:id}).eq("id",slot.assignmentId).select().single():await supabaseClient.from("war_party_members").insert({party_id:slot.partyId,member_id:id,position:slot.position}).select().single();if(r.error)throw r.error;await loadSelectedWarEvent(currentWarAssignmentEventId);closeWarAssignmentModal();}
- catch(e){console.error(e);const status=$("war-modal-status");if(status)status.textContent="บันทึกไม่สำเร็จ: "+(e.message||"กรุณาลองใหม่");}
+ try{
+  const snapshot=warAssignmentRosterSnapshot.find(x=>x.member_id===id);
+  if(snapshot&&["absent","leave"].includes(snapshot.roster_status)){
+   const reason=prompt("สมาชิกคนนี้ไม่ได้ลงชื่อทันเวลา/แจ้งลาไว้ กรุณาระบุเหตุผลที่ฝ่ายบริหารเพิ่มเข้าวอร์:");
+   if(reason===null)return;
+   if(!reason.trim()){alert("กรุณาระบุเหตุผลในการเพิ่มสมาชิก");return;}
+   const add=await supabaseClient.rpc("add_member_to_war_event_roster",{p_event_id:currentWarAssignmentEventId,p_member_id:id,p_reason:reason.trim()});
+   if(add.error)throw add.error;
+  }
+  const r=slot.assignmentId?await supabaseClient.from("war_party_members").update({member_id:id}).eq("id",slot.assignmentId).select().single():await supabaseClient.from("war_party_members").insert({party_id:slot.partyId,member_id:id,position:slot.position}).select().single();if(r.error)throw r.error;await loadSelectedWarEvent(currentWarAssignmentEventId);closeWarAssignmentModal();
+ }catch(e){console.error(e);const status=$("war-modal-status");if(status)status.textContent="บันทึกไม่สำเร็จ: "+(e.message||"กรุณาลองใหม่");}
 }
 async function removeWarPartyMember(id,button){
  const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event||event.is_published||!id)return;if(button){button.disabled=true;button.textContent="กำลังนำออก...";}
