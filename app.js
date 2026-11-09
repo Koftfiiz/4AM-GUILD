@@ -3041,6 +3041,7 @@ async function updateWarSignupTimeForDate(){
   }
   input.readOnly=true;
   input.required=true;
+  const display=$("war-signup-start-time-display");
   if(!date){
     input.value="";
     if(note)note.textContent="วอร์จริงกำหนดเฉพาะวันเสาร์ตามตารางกิลด์";
@@ -3129,6 +3130,7 @@ function registerWarRecordAndAttendanceEvents(){
   $("war-signup-create-cancel")?.addEventListener("click",()=>{resetWarSignupForm();$("war-signup-create-form")?.classList.add("hidden");});
   $("war-signup-event-date")?.addEventListener("change",updateWarSignupTimeForDate);
   $("war-signup-type")?.addEventListener("change",updateWarSignupTimeForDate);
+  $("war-signup-start-time")?.addEventListener("click",()=>{if($("war-signup-type")?.value==="practice")$("war-signup-start-time").readOnly=false;});
   $("war-signup-create-form")?.addEventListener("submit",async e=>{e.preventDefault();await createWarSignupEvent(e.currentTarget);});
   $("war-signup-content")?.addEventListener("click",e=>{
     const join=e.target.closest("[data-war-signup-join]"),edit=e.target.closest("[data-war-signup-edit]"),del=e.target.closest("[data-war-signup-delete]"),evidence=e.target.closest("[data-war-signup-evidence]");
