@@ -1921,6 +1921,19 @@ body #registration-screen.login-card::after {
   font-size: 19px;
 }
 
+/* Bold only the requested top-level sidebar menu labels.
+   Guild War submenu items (.nav-subitem) intentionally keep their current weight. */
+.sidebar .nav-item[data-page="dashboard"] > span,
+.sidebar .nav-item[data-page="members"] > span,
+.sidebar .nav-parent[data-toggle-submenu="war-submenu"] > span:not(.nav-chevron),
+.sidebar .nav-item[data-page="rules"] > span,
+.sidebar .nav-item[data-page="portfolio"] > span,
+.sidebar .nav-item[data-page="feedback"] > span,
+.sidebar .nav-item[data-page="system-management"] > span,
+.sidebar .nav-item[data-page="settings"] > span {
+  font-weight: 700;
+}
+
 .sidebar .sidebar-divider {
   font-size: 14px;
 }
