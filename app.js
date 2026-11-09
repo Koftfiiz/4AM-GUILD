@@ -2466,9 +2466,9 @@ function updateWarCreateMode() {
   if(dateInput){dateInput.disabled=!isPractice;if(!isPractice)dateInput.value=getUpcomingWarSaturday();}
   const rounds=isPractice?[]:getOfficialWarRounds(dateInput?.value);
   if(timeInput){timeInput.disabled=!isPractice;if(!isPractice)timeInput.value=rounds[0]||"20:00";}
-  if(dateDisplay){dateDisplay.value=formatWarDateDisplay(dateInput?.value);dateDisplay.readOnly=true;dateDisplay.placeholder="dd/mm/yyyy";if(!isPractice)dateDisplay.setCustomValidity("");}
-  if(timeDisplay){timeDisplay.value=isPractice?(timeInput?.value||""):(rounds.length===2?"รอบแรก "+rounds[0]+" น. / รอบสอง "+rounds[1]+" น.":"รอบเดียว "+(rounds[0]||"20:00")+" น.");timeDisplay.readOnly=true;timeDisplay.placeholder="00:00";if(!isPractice)timeDisplay.setCustomValidity("");}
-  if(!isPractice)closePracticeTimePicker();const datePickerButton=$("war-date-picker-button"),timePickerButton=$("war-time-picker-button");datePickerButton?.classList.toggle("hidden",!isPractice);timePickerButton?.classList.toggle("hidden",!isPractice);datePickerButton?.toggleAttribute("disabled",!isPractice);timePickerButton?.toggleAttribute("disabled",!isPractice);
+  if(dateDisplay){dateDisplay.value=formatWarDateDisplay(dateInput?.value);dateDisplay.readOnly=true;dateDisplay.placeholder="dd/mm/yyyy";dateDisplay.style.cursor=isPractice?"pointer":"default";if(!isPractice)dateDisplay.setCustomValidity("");}
+  if(timeDisplay){timeDisplay.value=isPractice?(timeInput?.value||""):(rounds.length===2?"รอบแรก "+rounds[0]+" น. / รอบสอง "+rounds[1]+" น.":"รอบเดียว "+(rounds[0]||"20:00")+" น.");timeDisplay.readOnly=true;timeDisplay.placeholder="00:00";timeDisplay.style.cursor=isPractice?"pointer":"default";if(!isPractice)timeDisplay.setCustomValidity("");}
+  if(!isPractice){closePracticeTimePicker();closeWarDatePicker();}
   const raidCount=isPractice?Number($("war-raid-count")?.value||4):2;
   const summary=$("war-create-capacity");
   if(summary)summary.textContent=isPractice?"ซ้อมวอร์: "+raidCount+" Raid · "+(raidCount*5)+" ปาร์ตี้ · รองรับ "+(raidCount*30)+" คน":"วอร์จริงวันเสาร์ "+formatWarDateDisplay(dateInput?.value)+" · "+rounds.length+" รอบ ("+rounds.join(" / ")+") น. · 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน";
@@ -2482,24 +2482,41 @@ function syncPracticeTimeDisplay(){
   const display=$("war-start-time-display"),timeInput=$("war-start-time");if(!display||!timeInput)return;
   display.value=timeInput.value;display.setCustomValidity(timeInput.value?"":"กรุณาเลือกเวลาเริ่มวอร์");
 }
-function openWarNativePicker(input){
-  if(!input||input.disabled)return;
-  try{
-    if(typeof input.showPicker==="function")input.showPicker();
-    else{input.focus();input.click();}
-  }catch(error){
-    input.focus();
-    input.click();
-  }
-}
-function closePracticeTimePicker(){
-  document.querySelector(".war-time-picker-popover")?.remove();
+function closeWarDatePicker(){document.querySelector(".war-date-picker-popover")?.remove();}
+function closePracticeTimePicker(){document.querySelector(".war-time-picker-popover")?.remove();}
+function openWarDatePicker(){
+  const dateInput=$("war-event-date"),display=$("war-event-date-display");
+  if(!dateInput||dateInput.disabled||!display)return;
+  if(document.querySelector(".war-date-picker-popover")){closeWarDatePicker();return;}
+  closePracticeTimePicker();
+  const wrapper=display.closest(".war-picker-control");if(!wrapper)return;
+  const selected=dateInput.value?new Date(dateInput.value+"T12:00:00"):new Date();
+  let view=new Date(selected.getFullYear(),selected.getMonth(),1);
+  const panel=document.createElement("div");panel.className="war-date-picker-popover";
+  const minValue=dateInput.min||"";
+  const render=()=>{
+    const year=view.getFullYear(),month=view.getMonth();
+    const firstDay=new Date(year,month,1).getDay(),offset=(firstDay+6)%7;
+    const days=new Date(year,month+1,0).getDate();
+    const monthLabel=new Intl.DateTimeFormat("th-TH",{month:"long",year:"numeric"}).format(view);
+    const cells=Array.from({length:offset},()=>'<span class="war-calendar-empty"></span>');
+    for(let day=1;day<=days;day++){
+      const date=new Date(year,month,day),iso=year+"-"+String(month+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
+      const disabled=!!minValue&&iso<minValue,active=iso===dateInput.value;
+      cells.push('<button type="button" class="war-calendar-day'+(active?' is-selected':'')+'" data-date="'+iso+'"'+(disabled?' disabled':'')+'>'+day+'</button>');
+    }
+    panel.innerHTML='<div class="war-date-picker-heading"><button type="button" class="war-calendar-nav" data-month="-1" aria-label="เดือนก่อนหน้า">‹</button><strong>'+monthLabel+'</strong><button type="button" class="war-calendar-nav" data-month="1" aria-label="เดือนถัดไป">›</button></div><div class="war-calendar-weekdays"><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span><span>อา</span></div><div class="war-calendar-grid">'+cells.join("")+'</div>';
+    panel.querySelectorAll("[data-month]").forEach(button=>button.addEventListener("click",()=>{view=new Date(year,month+Number(button.dataset.month),1);render();}));
+    panel.querySelectorAll("[data-date]").forEach(button=>button.addEventListener("click",()=>{dateInput.value=button.dataset.date;syncPracticeDateDisplay();closeWarDatePicker();}));
+  };
+  wrapper.appendChild(panel);render();
 }
 function openPracticeTimePicker(){
-  const timeInput=$("war-start-time"),button=$("war-time-picker-button");
-  if(!timeInput||timeInput.disabled||!button)return;
+  const timeInput=$("war-start-time"),display=$("war-start-time-display");
+  if(!timeInput||timeInput.disabled||!display)return;
   if(document.querySelector(".war-time-picker-popover")){closePracticeTimePicker();return;}
-  const wrapper=button.closest(".war-picker-control");if(!wrapper)return;
+  closeWarDatePicker();
+  const wrapper=display.closest(".war-picker-control");if(!wrapper)return;
   const current=/^\\d{2}:\\d{2}$/.test(timeInput.value)?timeInput.value:"20:00";
   const [currentHour,currentMinute]=current.split(":");
   const panel=document.createElement("div");panel.className="war-time-picker-popover";
@@ -3078,7 +3095,7 @@ function registerWarCreationEvents(){
   ["war-create-close","war-create-cancel"].forEach(id=>$(id)?.addEventListener("click",()=>$("war-create-panel")?.classList.add("hidden")));
   $("war-back-to-list")?.addEventListener("click",()=>{$("war-detail-stage")?.classList.add("hidden");$("war-events")?.scrollIntoView({behavior:"smooth",block:"start"});});
   $("war-confirm-draft")?.addEventListener("click",confirmWarDraft);$("war-publish-event")?.addEventListener("click",publishWarEvent);$("war-export-image")?.addEventListener("click",exportWarImage);$("war-sync-discord")?.addEventListener("click",()=>alert("Discord Bot Sync ยังไม่เปิดใช้งานในขณะนี้"));
-  document.querySelectorAll('input[name="war-mode"]').forEach(input=>input.addEventListener("change",updateWarCreateMode));$("war-raid-count")?.addEventListener("change",updateWarCreateMode);$("war-create-form")?.addEventListener("submit",handleWarCreate);$("war-date-picker-button")?.addEventListener("click",()=>openWarNativePicker($("war-event-date")));$("war-time-picker-button")?.addEventListener("click",openPracticeTimePicker);$("war-event-date")?.addEventListener("change",()=>{syncPracticeDateDisplay();});$("war-start-time")?.addEventListener("change",syncPracticeTimeDisplay);$("war-event-date-display")?.addEventListener("input",syncPracticeDateDisplay);$("war-event-date-display")?.addEventListener("blur",()=>{syncPracticeDateDisplay();const input=$("war-event-date-display"),parsed=$("war-event-date")?.value;if(parsed)input.value=formatWarDateDisplay(parsed);});$("war-start-time-display")?.addEventListener("input",syncPracticeTimeDisplay);$("war-start-time-display")?.addEventListener("blur",syncPracticeTimeDisplay);
+  document.querySelectorAll('input[name="war-mode"]').forEach(input=>input.addEventListener("change",updateWarCreateMode));$("war-raid-count")?.addEventListener("change",updateWarCreateMode);$("war-create-form")?.addEventListener("submit",handleWarCreate);$("war-event-date-display")?.addEventListener("click",openWarDatePicker);$("war-start-time-display")?.addEventListener("click",openPracticeTimePicker);$("war-event-date")?.addEventListener("change",()=>{syncPracticeDateDisplay();});$("war-start-time")?.addEventListener("change",syncPracticeTimeDisplay);$("war-event-date-display")?.addEventListener("input",syncPracticeDateDisplay);$("war-event-date-display")?.addEventListener("blur",()=>{syncPracticeDateDisplay();const input=$("war-event-date-display"),parsed=$("war-event-date")?.value;if(parsed)input.value=formatWarDateDisplay(parsed);});$("war-start-time-display")?.addEventListener("input",syncPracticeTimeDisplay);$("war-start-time-display")?.addEventListener("blur",syncPracticeTimeDisplay);
   const dateInput=$("war-event-date");if(dateInput){const now=new Date(),today=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);dateInput.min=today;}updateWarCreateMode();
 }
 
