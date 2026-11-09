@@ -2624,54 +2624,62 @@ async function exportWarImage(){
   const height=330+config.raidCount*510,esc=value=>escapeHTML(String(value??""));
   const toDataUrl=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});
   try{
-    const [background,fontCss]=await Promise.all([
+    const [background,logo,fontCss]=await Promise.all([
       fetch("assets/4am-web-bg.jpg").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ assets/4am-web-bg.jpg");return response.blob();}).then(toDataUrl),
+      fetch("assets/4am-guild-logo.png").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ assets/4am-guild-logo.png");return response.blob();}).then(toDataUrl),
       getThaiFontCss()
     ]);
     const parts=[`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
       <defs>
-        <linearGradient id="goldLine" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4d99b"/><stop offset=".48" stop-color="#b88b48"/><stop offset="1" stop-color="#70451f"/></linearGradient>
-        <linearGradient id="cardFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#211317" stop-opacity=".96"/><stop offset="1" stop-color="#090709" stop-opacity=".96"/></linearGradient>
-        <linearGradient id="redAccent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#641722"/><stop offset=".55" stop-color="#a52c3a"/><stop offset="1" stop-color="#421018"/></linearGradient>
+        <linearGradient id="redLine" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4655"/><stop offset=".5" stop-color="#a10f20"/><stop offset="1" stop-color="#4b0710"/></linearGradient>
+        <linearGradient id="cardFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0b0e" stop-opacity=".98"/><stop offset="1" stop-color="#050506" stop-opacity=".98"/></linearGradient>
+        <linearGradient id="redAccent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3b080e"/><stop offset=".52" stop-color="#b51227"/><stop offset="1" stop-color="#430810"/></linearGradient>
+        <filter id="redGlow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
       </defs>
       <image x="0" y="0" width="1600" height="${height}" preserveAspectRatio="xMidYMid slice" href="${background}" xlink:href="${background}"/>
-      <rect width="1600" height="${height}" fill="#080608" opacity=".76"/>
-      <rect x="24" y="24" width="1552" height="${height-48}" rx="24" fill="#10090c" fill-opacity=".62" stroke="url(#goldLine)" stroke-width="3"/>
-      <path d="M48 188 H1552" stroke="#b88b48" stroke-opacity=".55" stroke-width="2"/>
-      <rect x="48" y="48" width="1504" height="122" rx="14" fill="#090709" fill-opacity=".72" stroke="#8d2632" stroke-opacity=".85" stroke-width="2"/>
-      <text x="82" y="99" fill="#e8c98f" font-size="42" font-family="Noto Sans Thai" font-weight="700" letter-spacing="4">4AM GUILD</text>
-      <text x="82" y="145" fill="#fff0df" font-size="28" font-family="Noto Sans Thai" font-weight="700">${esc(event.event_name)}</text>
-      <text x="1515" y="101" text-anchor="end" fill="#e8c98f" font-size="19" font-family="Noto Sans Thai" font-weight="700">GUILD WAR ROSTER</text>
-      <text x="1515" y="139" text-anchor="end" fill="#e8d9ca" font-size="20" font-family="Noto Sans Thai">${esc(formatDate(event.event_date))}  ·  ${esc(formatTime(event.start_time))} น.</text>`];
+      <rect width="1600" height="${height}" fill="#030304" opacity=".82"/>
+      <rect x="24" y="24" width="1552" height="${height-48}" rx="20" fill="#080608" fill-opacity=".58" stroke="url(#redLine)" stroke-width="4"/>
+      <path d="M48 188 H1552" stroke="#e21b35" stroke-opacity=".8" stroke-width="3"/>
+      <path d="M48 180 H420" stroke="#ff394d" stroke-width="5" filter="url(#redGlow)"/>
+      <rect x="48" y="48" width="1504" height="122" rx="12" fill="#050506" fill-opacity=".84" stroke="#a70d22" stroke-width="2"/>
+      <image x="70" y="61" width="96" height="96" preserveAspectRatio="xMidYMid meet" href="${logo}" xlink:href="${logo}"/>
+      <text x="185" y="119" fill="#ffffff" font-size="48" font-family="Noto Sans Thai" font-weight="900" letter-spacing="3">4AM GUILD</text>
+      <path d="M185 133 H530" stroke="#e21b35" stroke-width="5"/>
+      <text x="185" y="158" fill="#d6cdd0" font-size="19" font-family="Noto Sans Thai" font-weight="700" letter-spacing="2">THE OUTRAGEOUS</text>
+      <text x="1515" y="101" text-anchor="end" fill="#ff4054" font-size="21" font-family="Noto Sans Thai" font-weight="900" letter-spacing="3">GUILD WAR ROSTER</text>
+      <text x="1515" y="139" text-anchor="end" fill="#ffffff" font-size="22" font-family="Noto Sans Thai" font-weight="700">${esc(event.event_name)}</text>
+      <text x="1515" y="163" text-anchor="end" fill="#c9bfc2" font-size="17" font-family="Noto Sans Thai">${esc(formatDate(event.event_date))}  ·  ${esc(formatTime(event.start_time))} น.</text>`];
     let y=220;
     for(const [raidIndex,raid] of raidNames.entries()){
-      parts.push(`<rect x="48" y="${y}" width="1504" height="42" rx="8" fill="url(#redAccent)" stroke="#bd8d50" stroke-opacity=".75" stroke-width="1.5"/>
-        <text x="70" y="${y+29}" fill="#ffe4b0" font-size="25" font-family="Noto Sans Thai" font-weight="700" letter-spacing="2">RAID ${raid}</text>
-        <text x="1525" y="${y+28}" text-anchor="end" fill="#f3d8aa" font-size="16" font-family="Noto Sans Thai">${raidIndex+1} / ${raidNames.length}</text>`);
+      parts.push(`<rect x="48" y="${y}" width="1504" height="42" rx="6" fill="url(#redAccent)" stroke="#ef263f" stroke-opacity=".95" stroke-width="2"/>
+        <path d="M48 ${y+4} H1552" stroke="#ff6472" stroke-opacity=".55" stroke-width="2"/>
+        <text x="70" y="${y+29}" fill="#ffffff" font-size="25" font-family="Noto Sans Thai" font-weight="900" letter-spacing="3">RAID ${raid}</text>
+        <text x="1525" y="${y+28}" text-anchor="end" fill="#ffe8eb" font-size="16" font-family="Noto Sans Thai" font-weight="700">${raidIndex+1} / ${raidNames.length}</text>`);
       const cardY=y+56;
       for(let p=1;p<=5;p++){
         const party=currentWarParties.find(item=>item.raid===raid&&Number(item.party_number)===p);
         const assigned=party?.war_party_members||[],x=60+(p-1)*300;
-        parts.push(`<rect x="${x}" y="${cardY}" width="284" height="426" rx="12" fill="url(#cardFill)" stroke="#a77a42" stroke-opacity=".9" stroke-width="2"/>
-          <path d="M${x+1} ${cardY+54} H${x+283}" stroke="#8e2935" stroke-width="3"/>
-          <text x="${x+16}" y="${cardY+35}" fill="#f0d49d" font-size="23" font-family="Noto Sans Thai" font-weight="700">${raid}${p}</text>
-          <text x="${x+266}" y="${cardY+34}" text-anchor="end" fill="#d9b77c" font-size="17" font-family="Noto Sans Thai" font-weight="700">${assigned.length}/6</text>`);
+        parts.push(`<rect x="${x}" y="${cardY}" width="284" height="426" rx="10" fill="url(#cardFill)" stroke="#bd1b31" stroke-opacity=".95" stroke-width="2.5"/>
+          <path d="M${x+1} ${cardY+54} H${x+283}" stroke="#e21b35" stroke-width="4"/>
+          <path d="M${x+12} ${cardY+12} H${x+88}" stroke="#ff4054" stroke-width="3"/>
+          <text x="${x+16}" y="${cardY+35}" fill="#ffffff" font-size="23" font-family="Noto Sans Thai" font-weight="900">${raid}${p}</text>
+          <text x="${x+266}" y="${cardY+34}" text-anchor="end" fill="#ff5365" font-size="17" font-family="Noto Sans Thai" font-weight="900">${assigned.length}/6</text>`);
         for(let slot=1;slot<=6;slot++){
           const assignment=assigned.find(item=>Number(item.position)===slot);
           const member=allMembers.find(item=>item.user_id===assignment?.member_id);
           const rowY=cardY+91+(slot-1)*54;
-          if(slot>1)parts.push(`<path d="M${x+14} ${rowY-22} H${x+270}" stroke="#8d6b50" stroke-opacity=".28"/>`);
-          parts.push(`<circle cx="${x+25}" cy="${rowY-5}" r="12" fill="${member?"#8f2632":"#34272a"}" stroke="#c49a5b" stroke-opacity=".8"/>
-            <text x="${x+25}" y="${rowY}" text-anchor="middle" fill="#fff0df" font-size="13" font-family="Noto Sans Thai" font-weight="700">${slot}</text>
-            <text x="${x+47}" y="${rowY-3}" fill="${member?"#fff0df":"#8f8580"}" font-size="16" font-family="Noto Sans Thai" font-weight="700">${esc(member?getMemberName(member):"ว่าง")}</text>
-            <text x="${x+47}" y="${rowY+17}" fill="${member?"#d6b579":"#766b68"}" font-size="12" font-family="Noto Sans Thai">${esc(member?getMemberClass(member):"รอสมาชิก")}</text>`);
+          if(slot>1)parts.push(`<path d="M${x+14} ${rowY-22} H${x+270}" stroke="#a11a2c" stroke-opacity=".45" stroke-width="1.5"/>`);
+          parts.push(`<circle cx="${x+25}" cy="${rowY-5}" r="12" fill="${member?"#c31830":"#211619"}" stroke="${member?"#ff5264":"#6a3039"}" stroke-width="1.5"/>
+            <text x="${x+25}" y="${rowY}" text-anchor="middle" fill="#ffffff" font-size="13" font-family="Noto Sans Thai" font-weight="900">${slot}</text>
+            <text x="${x+47}" y="${rowY-3}" fill="${member?"#ffffff":"#81777a"}" font-size="16" font-family="Noto Sans Thai" font-weight="700">${esc(member?getMemberName(member):"ว่าง")}</text>
+            <text x="${x+47}" y="${rowY+17}" fill="${member?"#f05263":"#655b5e"}" font-size="12" font-family="Noto Sans Thai">${esc(member?getMemberClass(member):"รอสมาชิก")}</text>`);
         }
       }
       y+=510;
     }
-    parts.push(`<text x="800" y="${height-35}" text-anchor="middle" fill="#d7bd96" font-size="15" font-family="Noto Sans Thai" letter-spacing="2">THE OUTRAGEOUS  ·  4AM GUILD</text></svg>`);
+    parts.push(`<text x="800" y="${height-35}" text-anchor="middle" fill="#c7bfc1" font-size="15" font-family="Noto Sans Thai" letter-spacing="3">4AM GUILD  ·  THE OUTRAGEOUS</text></svg>`);
     const svg=parts.join("");
-    const svgWithFonts=fontCss?svg.replace("<svg ",`<svg `).replace(">",`><style>${fontCss}</style>`):svg;
+    const svgWithFonts=fontCss?svg.replace(">",`><style>${fontCss}</style>`):svg;
     const svgUrl=URL.createObjectURL(new Blob([svgWithFonts],{type:"image/svg+xml;charset=utf-8"}));
     try{
       const img=new Image();img.src=svgUrl;await img.decode();
