@@ -4428,3 +4428,12 @@ button:not(.feedback-notification-button),
 .activity-comment-edit-controls{display:grid;gap:8px;margin-top:8px}
 .activity-comment-edit-controls>div{display:flex;gap:7px}
 @media(max-width:700px){.activity-datetime-grid{grid-template-columns:1fr}.activity-date-time-row{grid-template-columns:minmax(0,1fr) 112px}.activity-comment-form{align-items:stretch;flex-direction:column}.activity-comment-form button{width:100%}.activity-comment-heading{align-items:flex-start;flex-direction:column;gap:3px}}
+
+
+/* Guild War native date/time picker controls */
+.war-picker-control{position:relative;display:flex;align-items:stretch;width:100%;min-width:0;}
+.war-picker-control .war-schedule-display{flex:1 1 auto;width:100%;min-width:0;padding-right:54px!important;cursor:default;}
+.war-picker-button{position:absolute;right:5px;top:50%;transform:translateY(-50%);z-index:2;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:5px;background:rgba(190,145,65,.13);color:var(--gold-light);font-size:25px;line-height:1;cursor:pointer;}
+.war-picker-button:hover:not(:disabled){background:rgba(190,145,65,.25);}
+.war-picker-button:disabled{opacity:.35;cursor:not-allowed;}
+.war-native-picker-input{position:absolute!important;left:8px!important;top:50%!important;width:2px!important;height:2px!important;min-height:2px!important;opacity:0!important;pointer-events:none!important;padding:0!important;border:0!important;}
