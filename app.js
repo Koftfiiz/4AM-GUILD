@@ -2444,17 +2444,25 @@ function getOfficialWarRounds(dateValue) {
   if (!dateValue) return [];
   return isDoubleOfficialSaturday(dateValue) ? ["20:00","20:30"] : ["20:00"];
 }
+function formatWarDateDisplay(dateValue) {
+  if(!dateValue)return "";
+  const parts=String(dateValue).split("-");
+  return parts.length===3?`${parts[2]}/${parts[1]}/${parts[0]}`:"";
+}
 function updateWarCreateMode() {
   const mode = document.querySelector('input[name="war-mode"]:checked')?.value || "official";
   const isPractice = mode === "practice";
   $("war-raid-count-wrap")?.classList.toggle("hidden", !isPractice);
   const dateInput=$("war-event-date"),timeInput=$("war-start-time"),scheduleNote=$("war-create-schedule-note");
-  if(dateInput){dateInput.disabled=!isPractice;if(!isPractice)dateInput.value=getUpcomingWarSaturday();}
+  const dateDisplay=$("war-event-date-display"),timeDisplay=$("war-start-time-display");
+  if(dateInput){dateInput.disabled=!isPractice;if(!isPractice)dateInput.value=getUpcomingWarSaturday();dateInput.classList.toggle("hidden",!isPractice);}
   const rounds=isPractice?[]:getOfficialWarRounds(dateInput?.value);
-  if(timeInput){timeInput.disabled=!isPractice;if(!isPractice)timeInput.value=rounds[0]||"20:00";}
+  if(timeInput){timeInput.disabled=!isPractice;if(!isPractice)timeInput.value=rounds[0]||"20:00";timeInput.classList.toggle("hidden",!isPractice);}
+  if(dateDisplay){dateDisplay.value=formatWarDateDisplay(dateInput?.value);dateDisplay.classList.toggle("hidden",isPractice);}
+  if(timeDisplay){timeDisplay.value=isPractice?"":`${timeInput?.value||"20:00"} น.`;timeDisplay.classList.toggle("hidden",isPractice);}
   const raidCount=isPractice?Number($("war-raid-count")?.value||4):2;
   const summary=$("war-create-capacity");
-  if(summary)summary.textContent=isPractice?`ซ้อมวอร์: ${raidCount} Raid · ${raidCount*5} ปาร์ตี้ · รองรับ ${raidCount*30} คน`:`วอร์จริงวันเสาร์ ${formatDate(dateInput?.value)} · ${rounds.length} รอบ (${rounds.join(" / ")}) น. · 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน`;
+  if(summary)summary.textContent=isPractice?`ซ้อมวอร์: ${raidCount} Raid · ${raidCount*5} ปาร์ตี้ · รองรับ ${raidCount*30} คน`:`วอร์จริงวันเสาร์ ${formatWarDateDisplay(dateInput?.value)} · ${rounds.length} รอบ (${rounds.join(" / ")}) น. · 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน`;
   if(scheduleNote)scheduleNote.textContent=isPractice?"ซ้อมวอร์: เลือกวันและเวลาได้เอง":(rounds.length===2?"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด · รอบ 1 เวลา 20:00 น. / รอบ 2 เวลา 20:30 น.":"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด · วอร์ 1 รอบ เวลา 20:00 น.");
 }
 
