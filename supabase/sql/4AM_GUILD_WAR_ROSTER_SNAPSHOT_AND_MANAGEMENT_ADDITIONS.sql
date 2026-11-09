@@ -187,6 +187,12 @@ begin
 
   perform public.capture_war_event_roster_snapshot(p_event_id);
 
+  insert into public.war_event_roster_snapshots (
+    event_id, member_id, original_status, roster_status
+  ) values (
+    p_event_id, p_member_id, 'absent', 'absent'
+  ) on conflict (event_id, member_id) do nothing;
+
   select * into v_row
   from public.war_event_roster_snapshots
   where event_id = p_event_id and member_id = p_member_id
