@@ -2301,7 +2301,7 @@ function renderRaid(containerId,raidName,parties=[],options={}){
  container.innerHTML=Array.from({length:5},(_,i)=>{const n=i+1,p=parties.find(x=>Number(x.party_number)===n),members=p?.war_party_members||[];
  return `<article class="party-card" data-party-card data-raid="${raidName}"><div class="party-header"><div class="party-heading-fields"><h3>${raidName}${n}</h3>${p?.party_name&&p.party_name!==`${raidName}${n}`?`<small class="war-party-role-label">${escapeHTML(p.party_name)}</small>`:""}</div><span class="party-count">(6)</span></div><div class="party-slots">${Array.from({length:6},(_,j)=>{const pos=j+1,slot=members.find(x=>Number(x.position)===pos),member=allMembers.find(x=>x.user_id===slot?.member_id);
  if(slot&&member){const info=getClassInfo(getMemberClass(member));return `<button class="party-slot party-slot-filled war-member-slot" type="button" data-war-manage-slot data-assignment-id="${escapeHTML(slot.id)}" data-party-id="${escapeHTML(p.id)}" data-position="${pos}" style="--class-color:${info?.color||"#aaa"}" ${canArrange?"":"disabled"}><img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath||"")}" alt="${escapeHTML(info?.name||"")}"><span class="war-member-identity"><strong class="slot-member-name">${escapeHTML(getMemberName(member))}</strong><small class="war-member-class">${escapeHTML(info?.name||getMemberClass(member))}</small></span><span class="war-member-skills" aria-label="ช่อง Skill ของสมาชิก"></span><span class="war-member-slot-edit">${canArrange?"MANAGE":""}</span></button>`;}
- return `<div class="party-slot ${canArrange&&p?"party-slot-editor":""}"><span class="war-empty-slot-number">${pos}</span>${canArrange&&p?`<button class="war-slot-add-button" type="button" data-war-add-slot data-party-id="${escapeHTML(p.id)}" data-position="${pos}">＋ ADD</button>`:'<span class="slot-empty">Empty Slot</span>'}</div>`;
+ return `<div class="party-slot ${canArrange&&p?"party-slot-editor":""}">${canArrange&&p?`<button class="war-slot-add-button" type="button" data-war-add-slot data-party-id="${escapeHTML(p.id)}" data-position="${pos}">＋ ADD</button>`:'<span class="slot-empty">Empty Slot</span>'}</div>`;
  }).join("")}</div></article>`;}).join("");
 }
 function warMemberStatus(id){const signup=warAssignmentSignups.find(x=>x.member_id===id),leaveRow=warAssignmentLeaves.find(x=>x.member_id===id&&x.status!=="rejected"),snapshot=warAssignmentRosterSnapshot.find(x=>x.member_id===id),alreadyAssigned=currentWarPartyAssignments.some(x=>x.member_id===id),leave=snapshot?snapshot.roster_status==="leave":!!leaveRow;return {signup,leave,leaveRow,snapshot,absent:snapshot?.roster_status==="absent",addedByManagement:snapshot?.roster_status==="added_by_management",reserve:(snapshot?.roster_status==="reserve"||(!snapshot&&!!signup&&Number(signup.queue_position)>=61))&&!alreadyAssigned,raid:signup?.raid||""};}
@@ -2807,9 +2807,69 @@ async function loadWarSignups(){
     return '<article class="war-signup-card"><div class="war-signup-card-top"><div class="war-signup-card-heading"><h3>'+escapeHTML(event.event_name)+'</h3><p>'+formatDate(event.event_date)+' · เริ่มวอร์ '+formatTime(event.start_time)+'</p></div><div class="war-signup-badges"><span class="war-signup-state '+stateClass+'">'+stateLabel+'</span><span class="war-signup-type">'+typeLabel+'</span></div></div>'+managementActions+
       '<div class="war-signup-event-meta"><span>เริ่มลงชื่อ: '+warSignupDateTime(event.signup_opens_at)+'</span><span>ปิดรับ: '+warSignupDateTime(event.signup_closes_at)+'</span><span>ผู้ลงชื่อ: '+capacity+'</span></div>'+
       (event.description?'<p class="war-signup-description">'+escapeHTML(String(event.description).replace(/\[\[WAR_CONFIG:[\s\S]*?\]\]/,"").trim())+'</p>':"")+
-      '<div class="war-signup-card-bottom"><div class="war-signup-action">'+action+'</div></div>'+rosterHtml+(leaveRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดรายชื่อผู้แจ้งลาไม่ได้ กรุณาตรวจสอบ SQL ระบบแจ้งลาวอร์</p>':"")+(attendanceRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดสถานะขาดวอร์ไม่ได้ กรุณาติดตั้ง SQL ระบบสรุปการเข้า war</p>':"")+summary+'</article>';
+      '<div class="war-signup-card-bottom"><div class="war-signup-action">'+action+'</div>'+(state==="closed"?'<button class="btn btn-outline btn-sm war-signup-evidence-btn" type="button" data-war-signup-evidence="'+escapeHTML(event.id)+'">↓ ดาวน์โหลดภาพหลักฐานการลงชื่อ</button>':"")+'</div>'+rosterHtml+(leaveRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดรายชื่อผู้แจ้งลาไม่ได้ กรุณาตรวจสอบ SQL ระบบแจ้งลาวอร์</p>':"")+(attendanceRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดสถานะขาดวอร์ไม่ได้ กรุณาติดตั้ง SQL ระบบสรุปการเข้า war</p>':"")+summary+'</article>';
   }).join("");
 }
+
+async function exportWarSignupEvidence(eventId,button){
+  if(button){button.disabled=true;button.textContent="กำลังสร้างภาพหลักฐาน...";}
+  try{
+    const [{data:event,error:eventError},{data:signups,error:signupError},{data:members,error:memberError},leaveResult]=await Promise.all([
+      supabaseClient.from("war_events").select("id,event_name,event_date,start_time,signup_opens_at,signup_closes_at,registration_type").eq("id",eventId).single(),
+      supabaseClient.from("war_signups").select("id,member_id,queue_position,created_at,status").eq("event_id",eventId).neq("status","cancelled").order("queue_position",{ascending:true}),
+      supabaseClient.from("guild_members").select("user_id,character_name,nickname,discord_name,game_class").eq("active",true),
+      supabaseClient.rpc("get_war_leave_roster",{p_event_id:eventId})
+    ]);
+    if(eventError)throw eventError;if(signupError)throw signupError;if(memberError)throw memberError;
+    if(Date.now()<new Date(event.signup_closes_at).getTime())throw new Error("ดาวน์โหลดภาพหลักฐานได้หลังปิดรับสมัครเท่านั้น");
+    if(leaveResult.error)throw new Error("โหลดรายชื่อแจ้งลาไม่สำเร็จ: "+leaveResult.error.message);
+    const memberMap=new Map((members||[]).map(m=>[m.user_id,m]));
+    const primary=(signups||[]).filter(x=>Number(x.queue_position)>=1&&Number(x.queue_position)<=60);
+    const reserve=(signups||[]).filter(x=>Number(x.queue_position)>=61&&Number(x.queue_position)<=80);
+    const leaves=(leaveResult.data||[]).filter(x=>x.status!=="rejected");
+    const columns=[
+      {title:"ตัวจริง",rows:primary.map(x=>({name:getMemberName(memberMap.get(x.member_id)||{}),detail:"คิว "+x.queue_position}))},
+      {title:"ตัวสำรอง",rows:reserve.map(x=>({name:getMemberName(memberMap.get(x.member_id)||{}),detail:"คิว "+x.queue_position}))},
+      {title:"แจ้งลาวอร์",rows:leaves.map(x=>({name:getMemberName(memberMap.get(x.member_id)||{}),detail:x.status==="approved"?"รับทราบแล้ว":x.status==="pending"?"รอตรวจสอบ":String(x.status||"")})).filter(x=>x.name)}
+    ];
+    const maxRows=Math.max(1,...columns.map(x=>x.rows.length)),width=1800,top=310,rowHeight=46,height=top+maxRows*rowHeight+120;
+    const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+    const ctx=canvas.getContext("2d");if(!ctx)throw new Error("ไม่สามารถสร้างภาพหลักฐานได้");
+    ctx.fillStyle="#09080b";ctx.fillRect(0,0,width,height);
+    const gradient=ctx.createLinearGradient(0,0,width,height);gradient.addColorStop(0,"#260b12");gradient.addColorStop(.5,"#100b10");gradient.addColorStop(1,"#070709");ctx.fillStyle=gradient;ctx.fillRect(22,22,width-44,height-44);
+    ctx.strokeStyle="#b51d32";ctx.lineWidth=4;ctx.strokeRect(24,24,width-48,height-48);
+    ctx.fillStyle="#fff";ctx.font="900 48px 'Noto Sans Thai',sans-serif";ctx.fillText("4AM GUILD · WAR REGISTRATION EVIDENCE",64,94);
+    ctx.fillStyle="#ff6878";ctx.font="700 34px 'Noto Sans Thai',sans-serif";ctx.fillText(String(event.event_name||"Guild War"),64,151);
+    ctx.fillStyle="#e7dce0";ctx.font="500 23px 'Noto Sans Thai',sans-serif";
+    ctx.fillText("วันที่วอร์: "+formatDate(event.event_date)+"  |  เวลา: "+formatTime(event.start_time),64,202);
+    ctx.fillText("ปิดรับสมัคร: "+warSignupDateTime(event.signup_closes_at)+"  |  บันทึกภาพ: "+warSignupDateTime(new Date().toISOString()),64,242);
+    ctx.fillStyle="#c9aeb5";ctx.font="500 19px 'Noto Sans Thai',sans-serif";
+    ctx.fillText("ภาพนี้แสดงรายชื่อที่บันทึกในระบบ ณ เวลาที่สร้างภาพ ไม่ใช่หลักฐานการเข้าร่วมจริงในสนามวอร์",64,278);
+    const gap=24,colWidth=(width-128-gap*2)/3;
+    columns.forEach((col,index)=>{
+      const x=64+index*(colWidth+gap);
+      ctx.fillStyle="#42101b";ctx.fillRect(x,top-10,colWidth,54);
+      ctx.strokeStyle="#b51d32";ctx.lineWidth=2;ctx.strokeRect(x,top-10,colWidth,54);
+      ctx.fillStyle="#fff";ctx.font="800 25px 'Noto Sans Thai',sans-serif";ctx.fillText(col.title+" · "+col.rows.length+" คน",x+18,top+26);
+      if(!col.rows.length){ctx.fillStyle="#b9aab0";ctx.font="500 20px 'Noto Sans Thai',sans-serif";ctx.fillText("ไม่มีรายชื่อ",x+18,top+90);}
+      col.rows.forEach((row,i)=>{
+        const y=top+60+i*rowHeight;
+        if(i%2===0){ctx.fillStyle="rgba(255,255,255,.045)";ctx.fillRect(x,y,colWidth,rowHeight);}
+        ctx.fillStyle="#f8f2f3";ctx.font="600 19px 'Noto Sans Thai',sans-serif";
+        const name=String(row.name||"ไม่พบชื่อสมาชิก");ctx.fillText(name.length>24?name.slice(0,23)+"…":name,x+18,y+29);
+        ctx.fillStyle="#d5aeb6";ctx.font="500 15px 'Noto Sans Thai',sans-serif";ctx.textAlign="right";ctx.fillText(row.detail,x+colWidth-16,y+28);ctx.textAlign="left";
+      });
+    });
+    ctx.fillStyle="#8d7d83";ctx.font="500 16px 'Noto Sans Thai',sans-serif";ctx.textAlign="center";
+    ctx.fillText("4AM GUILD · SYSTEM GENERATED RECORD",width/2,height-48);ctx.textAlign="left";
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(value=>value?resolve(value):reject(new Error("สร้างไฟล์ PNG ไม่สำเร็จ")),"image/png"));
+    const url=URL.createObjectURL(blob),link=document.createElement("a");
+    link.href=url;link.download="4AM-War-Registration-"+String(event.event_date||"").slice(0,10)+".png";document.body.appendChild(link);link.click();link.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+  }catch(error){console.error("War signup evidence export failed:",error);alert("ดาวน์โหลดภาพหลักฐานไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));}
+  finally{if(button){button.disabled=false;button.textContent="↓ ดาวน์โหลดภาพหลักฐานการลงชื่อ";}}
+}
+
 function renderWarSignupRoster(signups,members,leaveRows,attendanceRows){
   const memberMap=new Map((members||[]).map(member=>[member.user_id,member]));
   const leaveMap=new Map((leaveRows||[]).map(row=>[row.member_id,row.status]));
@@ -3070,10 +3130,11 @@ function registerWarRecordAndAttendanceEvents(){
   $("war-signup-type")?.addEventListener("change",updateWarSignupTimeForDate);
   $("war-signup-create-form")?.addEventListener("submit",async e=>{e.preventDefault();await createWarSignupEvent(e.currentTarget);});
   $("war-signup-content")?.addEventListener("click",e=>{
-    const join=e.target.closest("[data-war-signup-join]"),edit=e.target.closest("[data-war-signup-edit]"),del=e.target.closest("[data-war-signup-delete]");
+    const join=e.target.closest("[data-war-signup-join]"),edit=e.target.closest("[data-war-signup-edit]"),del=e.target.closest("[data-war-signup-delete]"),evidence=e.target.closest("[data-war-signup-evidence]");
     if(join)joinWarSignup(join.dataset.warSignupJoin,join);
     if(edit)startEditWarSignupEvent(edit.dataset.warSignupEdit);
     if(del)deleteWarSignupEvent(del.dataset.warSignupDelete,del);
+    if(evidence)exportWarSignupEvidence(evidence.dataset.warSignupEvidence,evidence);
   });
   $("war-record-cancel-edit")?.addEventListener("click",resetWarRecordEditor);
   $("war-record-history")?.addEventListener("click",e=>{const ed=e.target.closest("[data-war-record-edit]"),del=e.target.closest("[data-war-record-delete]");if(ed)startEditWarMatchRecord(ed.dataset.warRecordEdit);if(del)deleteWarMatchRecord(del.dataset.warRecordDelete,del);});
