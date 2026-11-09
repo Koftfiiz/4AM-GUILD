@@ -3043,7 +3043,9 @@ function updateWarSignupDateControls(selectedIso="",useDefault=false){
   if(!select||!practice||!canonical)return;
   const dates=getNextTwoWarSaturdays();
   select.innerHTML='<option value="">เลือกวันเสาร์</option>'+dates.map(iso=>'<option value="'+iso+'">วันเสาร์ '+formatDisplayDate(iso)+'</option>').join("");
-  let wanted=selectedIso||parseDisplayDate(canonical.value)||parseDisplayDate(practice.value);
+  const requestedDate=selectedIso||parseDisplayDate(canonical.value)||parseDisplayDate(practice.value);
+  const outsideRange=Boolean(requestedDate&&!dates.includes(requestedDate));
+  let wanted=requestedDate;
   if(!dates.includes(wanted))wanted=useDefault?dates[0]:"";
   select.value=wanted||"";
   if(wanted&&!practice.value)practice.value=formatDisplayDate(wanted);
@@ -3054,7 +3056,9 @@ function updateWarSignupDateControls(selectedIso="",useDefault=false){
   practice.required=isPractice;
   canonical.value=isPractice?(parseDisplayDate(practice.value)?practice.value:""):(select.value?formatDisplayDate(select.value):"");
   const note=$("war-signup-date-note");
-  if(note)note.textContent=isPractice?"ซ้อมวอร์: เลือกวันที่เองได้จากปฏิทิน":"วอร์จริง: เลือกได้เฉพาะ 2 วันเสาร์ที่ใกล้จะถึง";
+  if(note)note.textContent=isPractice
+    ?"ซ้อมวอร์: เลือกวันที่เองได้จากปฏิทิน"
+    :(outsideRange?"Event เดิมอยู่นอก 2 วันเสาร์ถัดไป กรุณาเลือกวันใหม่จากรายการก่อนบันทึก":"วอร์จริง: เลือกได้เฉพาะ 2 วันเสาร์ที่ใกล้จะถึง");
 }
 async function updateWarSignupTimeForDate(){
   const type=$("war-signup-type")?.value;
@@ -3564,7 +3568,7 @@ function getNextFourWarSaturdays(){
  });
 }
 function openGlobalDatePicker(input){
- if(!input||input.disabled||(input.readOnly&&!input.matches("[data-activity-date-input]")))return;
+ if(!input||input.disabled||(input.readOnly&&!input.matches("[data-activity-date-input],[data-activity-datetime-input]")))return;
  closeGlobalDateTimePicker();
  const wrapper=input.closest(".form-group")||input.parentElement;if(!wrapper)return;
  const isOfficialWarDate=input.matches("[data-war-signup-date]")&&$("war-signup-type")?.value==="official";
