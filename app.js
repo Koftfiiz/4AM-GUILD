@@ -3390,7 +3390,7 @@ function setGlobalPickerValue(input,dateValue,timeValue){
  input.dispatchEvent(new Event("change",{bubbles:true}));
 }
 function openGlobalDatePicker(input){
- if(!input||input.disabled||input.readOnly)return;
+ if(!input||input.disabled||(input.readOnly&&!input.matches("[data-activity-date-input]")))return;
  closeGlobalDateTimePicker();
  const wrapper=input.closest(".form-group")||input.parentElement;if(!wrapper)return;
  let dateValue=globalPickerDateValue(input);
@@ -3422,7 +3422,7 @@ function openGlobalDatePicker(input){
  wrapper.appendChild(panel);render();
 }
 function openGlobalTimePicker(input){
- if(!input||input.disabled||input.readOnly)return;
+ if(!input||input.disabled||(input.readOnly&&!input.matches("[data-activity-time-input]")))return;
  closeGlobalDateTimePicker();
  const wrapper=input.closest(".form-group")||input.parentElement;if(!wrapper)return;
  const current=globalPickerTimeValue(input)||"20:00",[hour,minute]=current.split(":");
