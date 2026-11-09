@@ -4834,3 +4834,23 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 @keyframes duck-win{from{translate:0 -2px;rotate:-10deg}to{translate:0 3px;rotate:10deg}}
 @media(prefers-reduced-motion:reduce){.duck-race-water-shimmer,.duck-race-emoji,.duck-race-wake,.duck-race-bubbles{animation:none!important}}
 @media(max-width:700px){.duck-race-lane{grid-template-columns:23px minmax(0,1fr) 70px;gap:6px;min-height:60px;padding:4px}.duck-race-lane-track{height:48px}.duck-race-emoji{flex-basis:37px;width:37px;height:37px;font-size:25px}.duck-race-track{padding:10px 7px}}
+
+
+/* Duck Race controls live inside the arcade scene, opened by the in-game gear */
+.duck-race-shell{position:relative}
+.duck-race-admin{position:absolute;z-index:30;inset:86px 18px 76px;display:block;overflow:auto;margin:0;padding:clamp(14px,2.5vw,26px);border:3px solid #f1d18c!important;border-radius:18px;background:linear-gradient(155deg,#fffdf2,#e8f7fa)!important;box-shadow:0 18px 65px rgba(0,42,73,.48);color:#173b50}
+.duck-race-admin.hidden{display:none!important}
+.duck-race-admin .panel-heading{margin-bottom:16px}
+.duck-race-admin .panel-kicker{color:#1985aa}
+.duck-race-admin h3{color:#143d53;font-size:22px}
+.duck-race-form{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.duck-race-form .form-group label,.duck-race-time-group>label{color:#22536a;font-weight:800}
+.duck-race-form input,.duck-race-form select,.duck-race-time-inputs input,.duck-race-names-wrap textarea{border:1px solid #9bcbd9;background:#fff;color:#173b50;border-radius:9px}
+.duck-race-time-inputs>label{color:#22536a}
+.duck-race-names-wrap small,.duck-race-war-note{color:#38677a}
+.duck-race-war-note{background:#dff4f9}
+.duck-race-form-actions{align-items:center}
+.duck-race-form-message{color:#22536a}
+.duck-race-controls #duck-race-settings{border:1px solid #f2d28e;background:#fff8df;color:#6a4b16;font-weight:900}
+.duck-race-controls #duck-race-settings:hover{background:#ffedb5}
+@media(max-width:700px){.duck-race-admin{inset:75px 8px 70px;padding:13px}.duck-race-form{grid-template-columns:1fr}.duck-race-form-actions{grid-column:1/-1}.duck-race-time-group,.duck-race-participant-options{grid-column:1/-1}}
