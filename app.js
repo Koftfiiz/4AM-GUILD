@@ -3299,11 +3299,40 @@ function activityDateLabel(value){
  const date=new Date(value);if(Number.isNaN(date.getTime()))return "";
  return new Intl.DateTimeFormat("th-TH",{day:"2-digit",month:"2-digit",year:"numeric",calendar:"gregory",numberingSystem:"latn",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(date);
 }
-function activityInputDate(value){
- if(!value)return "";
- const date=new Date(value);if(Number.isNaN(date.getTime()))return "";
- const local=new Date(date.getTime()-date.getTimezoneOffset()*60000);
- return local.toISOString().slice(0,16);
+function activityInputParts(value){
+ if(!value)return {date:"",time:""};
+ const date=new Date(value);if(Number.isNaN(date.getTime()))return {date:"",time:""};
+ return {
+  date:String(date.getDate()).padStart(2,"0")+"/"+String(date.getMonth()+1).padStart(2,"0")+"/"+date.getFullYear(),
+  time:String(date.getHours()).padStart(2,"0")+":"+String(date.getMinutes()).padStart(2,"0")
+ };
+}
+function parseActivityDateTime(dateValue,timeValue,label){
+ const dateText=String(dateValue||"").trim(),timeText=String(timeValue||"").trim();
+ if(!dateText&&!timeText)return null;
+ if(!dateText||!timeText)throw new Error("กรุณากรอก"+label+"ทั้งวันที่และเวลา");
+ const dateMatch=dateText.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+ const timeMatch=timeText.match(/^(\d{2}):(\d{2})$/);
+ if(!dateMatch)throw new Error("รูปแบบวันที่"+label+"ต้องเป็น dd/mm/yyyy");
+ if(!timeMatch)throw new Error("รูปแบบเวลา"+label+"ต้องเป็น 24 ชั่วโมง HH:mm");
+ const day=Number(dateMatch[1]),month=Number(dateMatch[2]),year=Number(dateMatch[3]);
+ const hour=Number(timeMatch[1]),minute=Number(timeMatch[2]);
+ const check=new Date(0);check.setFullYear(year,month-1,day);check.setHours(0,0,0,0);
+ if(year<1000||year>9999||check.getFullYear()!==year||check.getMonth()!==month-1||check.getDate()!==day)
+  throw new Error("วันที่"+label+"ไม่ถูกต้อง");
+ if(hour>23||minute>59)throw new Error("เวลา"+label+"ไม่ถูกต้อง กรุณาใช้ 00:00–23:59");
+ const local=new Date(0);local.setFullYear(year,month-1,day);local.setHours(hour,minute,0,0);
+ return local.toISOString();
+}
+function formatActivityDateInput(value){
+ const digits=String(value||"").replace(/\D/g,"").slice(0,8);
+ if(digits.length<=2)return digits;
+ if(digits.length<=4)return digits.slice(0,2)+"/"+digits.slice(2);
+ return digits.slice(0,2)+"/"+digits.slice(2,4)+"/"+digits.slice(4);
+}
+function formatActivityTimeInput(value){
+ const digits=String(value||"").replace(/\D/g,"").slice(0,4);
+ return digits.length<=2?digits:digits.slice(0,2)+":"+digits.slice(2);
 }
 function activityDateRange(item){
  const start=item.starts_at?activityDateLabel(item.starts_at):"ไม่กำหนดเวลาเริ่ม";
@@ -3403,8 +3432,9 @@ function openGuildActivityEditor(id=null){
  panel.dataset.editingId=item?.id||"";
  $("activity-editor-title").textContent=item?"แก้ไขกิจกรรม":"สร้างกิจกรรมใหม่";
  title.value=item?.title||"";body.innerHTML=sanitizeGuildActivityHTML(item?.content_html||"");
- $("activity-starts-input").value=activityInputDate(item?.starts_at);
- $("activity-ends-input").value=activityInputDate(item?.ends_at);
+ const startParts=activityInputParts(item?.starts_at),endParts=activityInputParts(item?.ends_at);
+ $("activity-start-date-input").value=startParts.date;$("activity-start-time-input").value=startParts.time;
+ $("activity-end-date-input").value=endParts.date;$("activity-end-time-input").value=endParts.time;
  if(msg){msg.textContent="";msg.className="message";}
  $("activity-save-button").textContent=item?"บันทึกการแก้ไข":"บันทึกกิจกรรม";
  panel.classList.remove("hidden");$("activity-add-button")?.classList.add("hidden");
@@ -3423,13 +3453,18 @@ async function uploadGuildActivityImage(file){
 function closeGuildActivityEditor(){
  $("activity-editor")?.classList.add("hidden");$("activity-editor")?.removeAttribute("data-editing-id");
  $("activity-title-input").value="";$("activity-editor-body").innerHTML="";
- $("activity-starts-input").value="";$("activity-ends-input").value="";
+ $("activity-start-date-input").value="";$("activity-start-time-input").value="";
+ $("activity-end-date-input").value="";$("activity-end-time-input").value="";
  $("activity-emoji-picker")?.classList.add("hidden");
  $("activity-add-button")?.classList.toggle("hidden",!isManagement());
 }
 function registerGuildActivityEvents(){
  const page=$("page-activities");if(!page||page.dataset.eventsReady==="true")return;page.dataset.eventsReady="true";
  renderActivityEmojiPicker();
+ page.addEventListener("input",event=>{
+  if(event.target.matches("[data-activity-date-input]"))event.target.value=formatActivityDateInput(event.target.value);
+  if(event.target.matches("[data-activity-time-input]"))event.target.value=formatActivityTimeInput(event.target.value);
+ });
  page.addEventListener("mousedown",event=>{if(event.target.closest("#activity-editor-body"))rememberActivityEmojiSelection();});
  page.addEventListener("click",async event=>{
   const add=event.target.closest("#activity-add-button"),edit=event.target.closest("[data-activity-edit]"),del=event.target.closest("[data-activity-delete]"),cmd=event.target.closest("[data-activity-command]"),emoji=event.target.closest("[data-activity-emoji]"),emojiValue=event.target.closest("[data-activity-emoji-value]"),image=event.target.closest("[data-activity-image]");
@@ -3477,8 +3512,11 @@ function registerGuildActivityEvents(){
    if(!title){msg.textContent="กรุณาระบุหัวข้อกิจกรรม";msg.className="message error";$("activity-title-input").focus();return;}
    const content=sanitizeGuildActivityHTML(body.innerHTML);
    if(!content.trim()){msg.textContent="กรุณากรอกรายละเอียดกิจกรรม";msg.className="message error";body.focus();return;}
-   const startsValue=$("activity-starts-input").value,endsValue=$("activity-ends-input").value;
-   const startsAt=startsValue?new Date(startsValue).toISOString():null,endsAt=endsValue?new Date(endsValue).toISOString():null;
+   let startsAt,endsAt;
+   try{
+    startsAt=parseActivityDateTime($("activity-start-date-input").value,$("activity-start-time-input").value,"เริ่ม");
+    endsAt=parseActivityDateTime($("activity-end-date-input").value,$("activity-end-time-input").value,"สิ้นสุด");
+   }catch(validationError){msg.textContent=validationError.message;msg.className="message error";return;}
    if(startsAt&&endsAt&&new Date(endsAt)<new Date(startsAt)){msg.textContent="เวลาสิ้นสุดต้องไม่ก่อนเวลาเริ่ม";msg.className="message error";return;}
    save.disabled=true;save.textContent="กำลังบันทึก...";
    try{
