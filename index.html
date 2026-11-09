@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=duck-race-rules-number-guess-demo-20261110">
+  <link rel="stylesheet" href="style.css?v=duck-race-realtime-setup-20261110">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=duck-race-number-guess-demo-20261110";;
+          app.src = "app.js?v=duck-race-realtime-setup-20261110";;
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -811,35 +811,28 @@
           <p>มินิเกมแข่งเป็ดลุ้นรางวัล · ทดลองหน้าตาและระบบการแข่งขันโดยยังไม่เชื่อมรายชื่อสมาชิก</p>
         </div>
 
-        <section class="duck-race-shell panel" aria-label="Duck Race demo">
-          <div class="duck-race-heading">
-            <div>
-              <span class="duck-race-kicker">4AM DUCK RACE · ARCADE PREVIEW</span>
-              <h2 id="duck-race-title">4AM DUCK RACE</h2>
-              <p id="duck-race-prize">รางวัลเซอร์ไพรส์</p>
-            </div>
-            <span class="duck-race-demo-badge">DEMO MODE</span>
-          </div>
-          <div class="duck-race-notice"><strong>โหมดทดลอง</strong><span>ยังไม่เชื่อมรายชื่อวอร์หรือบัญชีสมาชิก ผลการแข่งขันจะถูกจำลองในเบราว์เซอร์นี้เท่านั้น</span></div>
-          <section class="duck-race-admin panel hidden" id="duck-race-admin">
-            <div class="panel-heading"><div><span class="panel-kicker">MANAGEMENT CONTROL</span><h3>ตั้งค่าการแข่งขัน</h3></div></div>
+        <section class="duck-race-shell panel" aria-label="4AM Duck Race">
+          <div class="duck-race-heading"><div><span class="duck-race-kicker">4AM GUILD · LIVE ARCADE</span><h2 id="duck-race-title">4AM DUCK RACE</h2><p id="duck-race-prize">รอผู้จัดสร้างการแข่งขัน</p></div><span class="duck-race-demo-badge" id="duck-race-live-badge">LIVE RACE</span></div>
+          <div class="duck-race-notice"><strong>LIVE</strong><span>สมาชิกที่เข้าสู่ระบบทุกคนสามารถรับชมสนามเดียวกันแบบเรียลไทม์ การตั้งค่าและควบคุมสงวนสิทธิ์ Developer, Leader และ Management</span></div>
+          <section class="duck-race-admin panel hidden" id="duck-race-admin"><div class="panel-heading"><div><span class="panel-kicker">MANAGEMENT CONTROL</span><h3>ตั้งค่าการแข่งขัน</h3></div></div>
             <form id="duck-race-form" class="duck-race-form">
+              <div class="form-group"><label for="duck-race-mode">โหมดการแข่งขัน</label><select id="duck-race-mode"><option value="free">FREE RACE · กรอกรายชื่อเอง</option><option value="war">WAR RACE · ดึงจาก War Signup</option></select></div>
+              <div class="form-group duck-race-war-source hidden" id="duck-race-war-source-wrap"><label for="duck-race-war-source">เลือกรอบวอร์</label><select id="duck-race-war-source"><option value="">กำลังโหลดรอบวอร์...</option></select></div>
               <div class="form-group"><label for="duck-race-title-input">ชื่อการแข่งขัน</label><input id="duck-race-title-input" maxlength="80" value="4AM DUCK RACE" required></div>
-              <div class="form-group"><label for="duck-race-prize-input">ของรางวัล</label><input id="duck-race-prize-input" maxlength="120" value="รางวัลเซอร์ไพรส์" required></div>
-              <div class="form-group"><label for="duck-race-count-input">จำนวนเป็ด</label><select id="duck-race-count-input"><option value="4">4 ตัว</option><option value="6" selected>6 ตัว</option><option value="8">8 ตัว</option></select></div>
-              <div class="duck-race-form-actions"><button type="button" class="btn btn-outline" id="duck-race-cancel">ยกเลิก</button><button type="submit" class="btn btn-primary">บันทึกการตั้งค่า</button></div>
-              <p id="duck-race-form-message" class="message"></p>
-            </form>
-          </section>
-          <div class="duck-race-track-header"><span>START</span><span>FINISH</span></div>
-          <div id="duck-race-track" class="duck-race-track" aria-live="polite"></div>
-          <div class="duck-race-result" id="duck-race-result"><span class="duck-race-result-icon">🏁</span><div><strong>พร้อมลงสนามหรือยัง?</strong><p>กดเริ่มการแข่งขันเพื่อดูเป็ดทั้งสนามแข่งกัน</p></div></div>
-          <div class="duck-race-controls">
-            <button type="button" class="btn btn-primary" id="duck-race-start">▶ เริ่มการแข่งขัน</button>
-            <button type="button" class="btn btn-outline" id="duck-race-reset">↻ รีเซ็ตสนาม</button>
-            <button type="button" class="btn btn-outline management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-settings">⚙ ตั้งค่าเกม</button>
-          </div>
-          <p class="duck-race-footnote">หมายเหตุ: ตอนนี้เป็น Prototype สำหรับดูหน้าตาและทดสอบ Animation เท่านั้น ยังไม่มีการลงทะเบียนผู้เล่น การสุ่มผู้ชนะจากรายชื่อ หรือการแจกของรางวัลจริง</p>
+              <div class="form-group"><label for="duck-race-prize-input">ของรางวัล (ไม่บังคับ)</label><input id="duck-race-prize-input" maxlength="120" placeholder="เช่น รางวัลเซอร์ไพรส์"></div>
+              <div class="duck-race-time-group"><label>ระยะเวลาการแข่งขัน</label><div class="duck-race-time-inputs"><label>ชั่วโมง<input id="duck-race-hours" type="number" min="0" max="23" value="0"></label><span>:</span><label>นาที<input id="duck-race-minutes" type="number" min="0" max="59" value="1"></label><span>:</span><label>วินาที<input id="duck-race-seconds" type="number" min="0" max="59" value="0"></label></div></div>
+              <div class="duck-race-participant-options" id="duck-race-free-options"><div class="form-group"><label for="duck-race-participant-mode">วิธีกำหนดผู้เข้าร่วม</label><select id="duck-race-participant-mode"><option value="count">กำหนดจำนวนอย่างเดียว</option><option value="names">กรอกชื่ออย่างเดียว</option><option value="both">กำหนดจำนวนและกรอกชื่อ</option></select></div>
+                <div class="form-group" id="duck-race-count-wrap"><label for="duck-race-count-input">จำนวนเป็ด / ผู้เข้าร่วม (สูงสุด 120)</label><input id="duck-race-count-input" type="number" min="1" max="120" value="10"></div>
+                <div class="form-group duck-race-names-wrap hidden" id="duck-race-names-wrap"><label for="duck-race-names-input">รายชื่อผู้เข้าร่วม (หนึ่งชื่อต่อบรรทัด)</label><textarea id="duck-race-names-input" rows="5" maxlength="6000" placeholder="Garrett&#10;Garlen&#10;OutRaGeOuZ"></textarea><small id="duck-race-name-count">0 รายชื่อ</small></div>
+              </div>
+              <p class="duck-race-war-note hidden" id="duck-race-war-note">ระบบจะนำสมาชิกที่ลงชื่อ War Signup ในรอบที่เลือกมาเป็นผู้เข้าแข่งขันโดยอัตโนมัติ</p>
+              <div class="duck-race-form-actions"><button type="button" class="btn btn-outline" id="duck-race-cancel">ยกเลิก</button><button type="submit" class="btn btn-primary" id="duck-race-set">SET · สร้างสนาม</button></div><p id="duck-race-form-message" class="message"></p>
+            </form></section>
+          <div class="duck-race-live-summary" id="duck-race-live-summary"><span class="duck-race-status-pill" id="duck-race-status">WAITING</span><span id="duck-race-count-label">ยังไม่มีผู้เข้าแข่งขัน</span><span id="duck-race-clock">00:00:00</span></div>
+          <div class="duck-race-track-header"><span>START</span><span>FINISH</span></div><div id="duck-race-track" class="duck-race-track" aria-live="polite"><div class="duck-race-empty">รอ Management สร้างการแข่งขัน Duck Race</div></div>
+          <div class="duck-race-result" id="duck-race-result"><span class="duck-race-result-icon">🏁</span><div><strong>สนามยังไม่เริ่ม</strong><p>เมื่อผู้จัดกด SET สนามแข่งขันจะปรากฏที่นี่สำหรับสมาชิกทุกคน</p></div></div>
+          <div class="duck-race-controls"><button type="button" class="btn btn-primary management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-start" disabled>▶ START</button><button type="button" class="btn btn-warning management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-pause" disabled>Ⅱ PAUSE</button><button type="button" class="btn btn-outline management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-continue" disabled>▶ CONTINUE</button><button type="button" class="btn btn-outline management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-reset" disabled>↻ RESET</button><button type="button" class="btn btn-outline management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-settings">⚙ ตั้งค่าเกม</button></div>
+          <p class="duck-race-footnote">การแข่งขันและสถานะจะซิงก์ผ่าน Supabase Realtime ไปยังสมาชิกทุกคนที่เปิดหน้า Duck Race อยู่</p>
         </section>
         <section class="panel activities-panel">
           <div class="panel-heading activities-heading">
