@@ -3954,9 +3954,9 @@ function renderDuckRaceTrack(running,winnerIndex=-1){
  track.innerHTML=Array.from({length:count},(_,i)=>{
   const name="เป็ด "+String(i+1).padStart(2,"0");
   const duration=(3.7+((i*37+13)%19)/10).toFixed(2);
-  return '<div class="duck-race-lane'+(winnerIndex===i?' is-winner':'')+'" data-duck-lane="'+i+'"><span class="duck-race-lane-number">'+String(i+1).padStart(2,"0")+'</span><div class="duck-race-lane-track"><div class="duck-race-progress" style="--duck-color:'+colors[i]+';--duck-duration:'+duration+'s;--duck-progress:'+(running?'100%':'0%')+'"><span class="duck-race-emoji">🦆</span></div></div><span class="duck-race-lane-name">'+name+'</span></div>';
+  return '<div class="duck-race-lane'+(winnerIndex===i?' is-winner':'')+'" data-duck-lane="'+i+'"><span class="duck-race-lane-number">'+String(i+1).padStart(2,"0")+'</span><div class="duck-race-lane-track"><div class="duck-race-progress" style="--duck-color:'+colors[i]+';--duck-duration:'+duration+'s;--duck-progress:0%"><span class="duck-race-emoji">🦆</span></div></div><span class="duck-race-lane-name">'+name+'</span></div>';
  }).join("");
- if(running)track.querySelectorAll(".duck-race-progress").forEach(node=>node.classList.add("is-racing"));
+ if(running)requestAnimationFrame(()=>track.querySelectorAll(".duck-race-progress").forEach(node=>node.classList.add("is-racing")));
 }
 function resetDuckRaceDemo(){
  if(duckRaceTimer)clearTimeout(duckRaceTimer);
