@@ -4465,3 +4465,12 @@ button:not(.feedback-notification-button),
 .war-time-picker-actions button{min-height:36px;padding:7px 12px;border:1px solid rgba(216,176,106,.32);border-radius:5px;background:rgba(216,176,106,.08);color:#e8d5bd;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
 .war-time-picker-actions .war-time-apply{border-color:#a92d3c;background:#8f1e2d;color:#fff}
 .war-time-picker-actions button:hover{filter:brightness(1.18)}
+
+/* Shared global date/time picker behavior across all guild pages */
+.form-group{position:relative}
+.global-date-time-popover{z-index:1000}
+.global-picker-time-row{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:12px;color:#e8c98f}
+.global-picker-time-row label{margin-right:5px;font-size:12px}
+.global-picker-time-row select{min-width:66px;padding:7px 8px;border:1px solid rgba(216,176,106,.35);border-radius:5px;background:#211619;color:#f3e6d5}
+input[type="date"],input[type="time"],input[type="datetime-local"],[data-activity-date-input],[data-activity-time-input]{cursor:pointer}
+input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webkit-calendar-picker-indicator,input[type="datetime-local"]::-webkit-calendar-picker-indicator{opacity:0;display:none}
