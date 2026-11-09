@@ -2468,7 +2468,7 @@ function updateWarCreateMode() {
   if(timeInput){timeInput.disabled=!isPractice;if(!isPractice)timeInput.value=rounds[0]||"20:00";}
   if(dateDisplay){dateDisplay.value=formatWarDateDisplay(dateInput?.value);dateDisplay.readOnly=true;dateDisplay.placeholder="dd/mm/yyyy";if(!isPractice)dateDisplay.setCustomValidity("");}
   if(timeDisplay){timeDisplay.value=isPractice?(timeInput?.value||""):(rounds.length===2?"รอบแรก "+rounds[0]+" น. / รอบสอง "+rounds[1]+" น.":"รอบเดียว "+(rounds[0]||"20:00")+" น.");timeDisplay.readOnly=true;timeDisplay.placeholder="00:00";if(!isPractice)timeDisplay.setCustomValidity("");}
-  $("war-date-picker-button")?.toggleAttribute("disabled",!isPractice);$("war-time-picker-button")?.toggleAttribute("disabled",!isPractice);
+  const datePickerButton=$("war-date-picker-button"),timePickerButton=$("war-time-picker-button");datePickerButton?.classList.toggle("hidden",!isPractice);timePickerButton?.classList.toggle("hidden",!isPractice);datePickerButton?.toggleAttribute("disabled",!isPractice);timePickerButton?.toggleAttribute("disabled",!isPractice);
   const raidCount=isPractice?Number($("war-raid-count")?.value||4):2;
   const summary=$("war-create-capacity");
   if(summary)summary.textContent=isPractice?"ซ้อมวอร์: "+raidCount+" Raid · "+(raidCount*5)+" ปาร์ตี้ · รองรับ "+(raidCount*30)+" คน":"วอร์จริงวันเสาร์ "+formatWarDateDisplay(dateInput?.value)+" · "+rounds.length+" รอบ ("+rounds.join(" / ")+") น. · 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน";
