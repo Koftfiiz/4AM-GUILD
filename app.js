@@ -3333,6 +3333,14 @@ function renderActivityEmojiPicker(){
  const picker=$("activity-emoji-picker");if(!picker)return;
  picker.innerHTML='<div class="activity-emoji-grid">'+GUILD_ACTIVITY_EMOJIS.map((emoji,index)=>'<button type="button" class="activity-emoji-option" data-activity-emoji-value="'+index+'" aria-label="Emoji '+emoji+'">'+emoji+'</button>').join("")+'</div>';
 }
+async function notifyGuildActivityDiscord(kind,id){
+ try{
+  const body=kind==="activity"?{kind,activity_id:id}:{kind,comment_id:id};
+  const {data,error}=await supabaseClient.functions.invoke("discord-guild-activity-notify",{body});
+  if(error||data?.success===false){console.warn("Guild activity Discord notification failed:",error||data);return false;}
+  return true;
+ }catch(error){console.warn("Guild activity Discord notification failed:",error);return false;}
+}
 function renderGuildActivities(){
  const list=$("guild-activities-list");if(!list)return;
  if(!guildActivitiesCache.length){
@@ -3483,6 +3491,7 @@ function registerGuildActivityEvents(){
     if(index>=0)guildActivitiesCache[index]=saved;else guildActivitiesCache.unshift(saved);
     guildActivitiesCache.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     closeGuildActivityEditor();renderGuildActivities();
+    if(!id){const notified=await notifyGuildActivityDiscord("activity",saved.id);if(!notified)alert("บันทึกกิจกรรมแล้ว แต่แจ้งเตือน Discord ไม่สำเร็จ กรุณาตรวจสอบ Edge Function");}
    }catch(error){console.error("Save guild activity:",error);msg.textContent="บันทึกไม่สำเร็จ: "+error.message;msg.className="message error";}
    finally{save.disabled=false;save.textContent=id?"บันทึกการแก้ไข":"บันทึกกิจกรรม";}
   }
@@ -3496,6 +3505,8 @@ function registerGuildActivityEvents(){
   try{
    const {error}=await supabaseClient.from("guild_activity_comments").insert({activity_id:form.dataset.activityCommentForm,user_id:currentUser.id,content});
    if(error)throw error;
+   const {data:inserted,error:fetchError}=await supabaseClient.from("guild_activity_comments").select("id").eq("activity_id",form.dataset.activityCommentForm).eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(1).maybeSingle();
+   if(!fetchError&&inserted?.id){const notified=await notifyGuildActivityDiscord("comment",inserted.id);if(!notified)console.warn("Comment saved, but Discord notification was not delivered");}
    textarea.value="";await loadGuildActivityComments();
   }catch(error){console.error("Submit activity comment:",error);alert("ส่งความคิดเห็นไม่สำเร็จ: "+error.message);}
   finally{button.disabled=false;button.textContent="ส่งความคิดเห็น";}
