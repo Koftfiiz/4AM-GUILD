@@ -256,7 +256,7 @@ function formatDate(value) {
   let year,month,day;
   if(match){year=match[1];month=match[2];day=match[3];}
   else{const date=new Date(value);if(Number.isNaN(date.getTime()))return "-";year=String(date.getFullYear());month=String(date.getMonth()+1).padStart(2,"0");day=String(date.getDate()).padStart(2,"0");}
-  return day+":"+month+":"+year;
+  return day+"/"+month+"/"+year;
 }
 function formatTime(value) {
   if (!value) return "-";
