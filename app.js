@@ -3815,6 +3815,146 @@ function registerGuildActivityEvents(){
   finally{input.value="";if(button){button.disabled=false;button.textContent="▧ รูปภาพ";}}
  });
 }
+
+// ==========================================
+// 4AM GUILD — POST WAR REWARD REGISTRATION
+// Discord Bot and website share the same Supabase records.
+// ==========================================
+let rewardEventsCache=[];
+let rewardWarEventsCache=[];
+let rewardRealtimeChannel=null;
+
+async function loadRewardWarEventOptions(){
+ const select=$("reward-war-event-select");if(!select)return;
+ const {data,error}=await supabaseClient.from("war_events")
+  .select("id,event_name,event_date,is_published")
+  .eq("is_published",true).order("event_date",{ascending:false}).limit(30);
+ if(error){select.innerHTML='<option value="">โหลดรายการวอร์ไม่สำเร็จ</option>';return;}
+ rewardWarEventsCache=data||[];
+ select.innerHTML='<option value="">เลือก Guild War</option>'+rewardWarEventsCache.map(event=>'<option value="'+escapeHTML(event.id)+'">'+escapeHTML(event.event_name)+' · '+escapeHTML(formatDate(event.event_date))+'</option>').join("");
+}
+
+function renderRewardEvents(){
+ const list=$("reward-events-list");if(!list)return;
+ if(!rewardEventsCache.length){
+  list.innerHTML='<div class="empty-state"><span>🎁</span><h3>ยังไม่มีกิจกรรมแจกของรางวัล</h3><p>'+(isManagement()?'กด “เปิดกิจกรรม” เพื่อสร้างกิจกรรมหลัง Guild War':'รอฝ่ายบริหารเปิดกิจกรรมแจกของรางวัล')+'</p></div>';return;
+ }
+ list.innerHTML=rewardEventsCache.map(item=>{
+  const id=escapeHTML(item.event_id),title=escapeHTML(item.title||"กิจกรรมแจกของรางวัล");
+  const warName=escapeHTML(item.war_event_name||"Guild War");
+  const closeLabel=item.signup_closes_at?activityDateLabel(item.signup_closes_at):"ไม่ระบุ";
+  const closed=item.status!=="open"||!item.signup_closes_at||Date.now()>=new Date(item.signup_closes_at).getTime();
+  const signed=Boolean(item.my_signup);
+  const eligible=Boolean(item.eligible);
+  const status=closed?(item.status==="completed"?"เสร็จสิ้น":"ปิดรับสมัคร"):"เปิดรับสมัคร";
+  const statusClass=closed?"is-closed":"is-open";
+  let action="";
+  if(!closed&&eligible){
+   action=signed
+    ?'<button type="button" class="btn btn-outline btn-sm" data-reward-cancel="'+id+'">ยกเลิกการลงชื่อ</button><span class="reward-registered-label">✓ ลงชื่อแล้ว</span>'
+    :'<button type="button" class="btn btn-primary btn-sm" data-reward-register="'+id+'">ลงชื่อเข้าร่วม</button>';
+  }else if(!eligible){
+   action='<span class="reward-ineligible-label">ไม่มีสิทธิ์ · ไม่อยู่ในรายชื่อวอร์นี้</span>';
+  }else{
+   action='<span class="reward-registered-label">'+(signed?'✓ ลงชื่อสำเร็จ':'ปิดรับสมัครแล้ว')+'</span>';
+  }
+  const managerActions=isManagement()
+   ?'<div class="reward-manager-actions"><button type="button" class="btn btn-outline btn-sm" data-reward-participants="'+id+'">ดูรายชื่อ ('+Number(item.participant_count||0)+')</button>'+(closed?'':'<button type="button" class="btn btn-danger btn-sm" data-reward-close="'+id+'">ปิดรับสมัคร</button>')+'</div>'
+   :'';
+  return '<article class="reward-event-card"><div class="reward-event-card-main"><div class="reward-event-title-row"><h4>'+title+'</h4><span class="reward-status '+statusClass+'">'+status+'</span></div><p class="reward-war-reference">อ้างอิงรายชื่อจาก: <strong>'+warName+'</strong></p>'+(item.description?'<p class="reward-event-description">'+escapeHTML(item.description)+'</p>':'')+'<div class="reward-event-meta"><span>ปิดลงชื่อ: '+escapeHTML(closeLabel)+'</span><strong>ผู้ลงชื่อ '+Number(item.participant_count||0)+' คน</strong></div><div class="reward-event-actions">'+action+managerActions+'</div></div></article>';
+ }).join("");
+}
+
+async function loadRewardEvents(){
+ const list=$("reward-events-list");if(list)list.innerHTML='<div class="empty-state"><span>◷</span><h3>กำลังโหลดกิจกรรมแจกของรางวัล</h3><p>กรุณารอสักครู่</p></div>';
+ const {data,error}=await supabaseClient.rpc("get_reward_event_overview");
+ if(error){
+  console.error("Reward event overview:",error);
+  if(list)list.innerHTML='<div class="system-role-error">ยังไม่ได้ติดตั้งระบบฐานข้อมูลกิจกรรมแจกของรางวัล หรือ RPC มีปัญหา: '+escapeHTML(error.message)+'<br>กรุณาติดตั้ง SQL: 4AM_GUILD_REWARD_EVENT_DUAL_REGISTRATION</div>';
+  return;
+ }
+ rewardEventsCache=data||[];
+ renderRewardEvents();
+}
+
+function subscribeToRewardRealtime(){
+ if(rewardRealtimeChannel){supabaseClient.removeChannel(rewardRealtimeChannel);rewardRealtimeChannel=null;}
+ if(!currentUser)return;
+ rewardRealtimeChannel=supabaseClient.channel("4am-reward-events-"+currentUser.id)
+  .on("postgres_changes",{event:"*",schema:"public",table:"reward_events"},()=>loadRewardEvents())
+  .on("postgres_changes",{event:"*",schema:"public",table:"reward_event_signups"},()=>loadRewardEvents())
+  .subscribe();
+}
+
+async function showRewardParticipants(eventId){
+ if(!isManagement())return;
+ const panel=$("reward-participants-panel"),list=$("reward-participants-list");
+ if(!panel||!list)return;
+ panel.classList.remove("hidden");list.innerHTML='<p class="muted">กำลังโหลดรายชื่อ...</p>';
+ const {data,error}=await supabaseClient.rpc("get_reward_event_participants",{p_event_id:eventId});
+ if(error){list.innerHTML='<p class="message error">'+escapeHTML(error.message)+'</p>';return;}
+ const event=rewardEventsCache.find(row=>row.event_id===eventId);
+ $("reward-participants-title").textContent="รายชื่อผู้ลงทะเบียน · "+(event?.title||"กิจกรรม");
+ list.innerHTML=(data||[]).length?(data||[]).map((row,index)=>'<div class="reward-participant-row"><span class="reward-participant-number">'+(index+1)+'</span><strong>'+escapeHTML(row.character_name||row.nickname||"สมาชิก")+'</strong><small>'+(row.queue_position>=61?'ตัวสำรอง':'ตัวจริง')+'</small><time>'+escapeHTML(activityDateLabel(row.created_at))+'</time><span class="reward-source-label">'+(row.source==="discord"?"Discord":"เว็บไซต์")+'</span></div>').join(""):'<p class="muted">ยังไม่มีผู้ลงทะเบียน</p>';
+ panel.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
+
+async function handleRewardRegistration(eventId,action,button){
+ if(!currentUser||!currentMember?.active){alert("กรุณาเข้าสู่ระบบด้วยบัญชีสมาชิกกิลด์");return;}
+ if(button){button.disabled=true;button.textContent="กำลังบันทึก...";}
+ try{
+  const rpc=action==="register"?"register_reward_event":"cancel_reward_event_signup";
+  const {data,error}=await supabaseClient.rpc(rpc,{p_event_id:eventId});
+  if(error)throw error;
+  if(data&&data.success===false)throw new Error(data.message||"ไม่สามารถดำเนินการได้");
+  await loadRewardEvents();
+ }catch(error){console.error("Reward registration:",error);alert(error.message||"บันทึกการลงชื่อไม่สำเร็จ");}
+ finally{if(button)button.disabled=false;}
+}
+
+function registerRewardEvents(){
+ const page=$("page-activities");if(!page||page.dataset.rewardEventsReady==="true")return;
+ page.dataset.rewardEventsReady="true";
+ $("reward-create-open")?.addEventListener("click",async()=>{
+  if(!isManagement())return;
+  const form=$("reward-create-form");form?.classList.remove("hidden");
+  await loadRewardWarEventOptions();
+ });
+ $("reward-create-cancel")?.addEventListener("click",()=>{$("reward-create-form")?.classList.add("hidden");});
+ $("reward-participants-close")?.addEventListener("click",()=>{$("reward-participants-panel")?.classList.add("hidden");});
+ $("reward-create-form")?.addEventListener("submit",async event=>{
+  event.preventDefault();if(!isManagement())return;
+  const form=event.currentTarget,button=$("reward-create-submit"),message=$("reward-create-message");
+  const warId=$("reward-war-event-select").value,title=$("reward-title-input").value.trim(),description=$("reward-description-input").value.trim(),closeValue=$("reward-close-input").value;
+  if(!warId||!title||!closeValue){message.textContent="กรุณากรอกข้อมูลให้ครบ";message.className="message error";return;}
+  const closeAt=new Date(closeValue);
+  if(Number.isNaN(closeAt.getTime())||closeAt.getTime()<=Date.now()){message.textContent="เวลาปิดรับสมัครต้องเป็นเวลาในอนาคต";message.className="message error";return;}
+  button.disabled=true;button.textContent="กำลังเปิดกิจกรรม...";
+  try{
+   const {data,error}=await supabaseClient.rpc("create_reward_event",{p_war_event_id:warId,p_title:title,p_description:description,p_signup_closes_at:closeAt.toISOString()});
+   if(error)throw error;
+   form.reset();form.classList.add("hidden");await loadRewardEvents();
+   alert("เปิดกิจกรรมแจกของรางวัลแล้ว");
+  }catch(error){message.textContent=error.message||"เปิดกิจกรรมไม่สำเร็จ";message.className="message error";}
+  finally{button.disabled=false;button.textContent="เปิดกิจกรรม";}
+ });
+ $("reward-events-list")?.addEventListener("click",async event=>{
+  const register=event.target.closest("[data-reward-register]"),cancel=event.target.closest("[data-reward-cancel]"),close=event.target.closest("[data-reward-close]"),participants=event.target.closest("[data-reward-participants]");
+  if(register){await handleRewardRegistration(register.dataset.rewardRegister,"register",register);return;}
+  if(cancel){if(!window.confirm("ต้องการยกเลิกการลงชื่อกิจกรรมนี้หรือไม่?"))return;await handleRewardRegistration(cancel.dataset.rewardCancel,"cancel",cancel);return;}
+  if(close){
+   if(!isManagement()||!window.confirm("ปิดรับสมัครกิจกรรมนี้ใช่หรือไม่?"))return;
+   close.disabled=true;
+   const {error}=await supabaseClient.rpc("close_reward_event",{p_event_id:close.dataset.rewardClose});
+   if(error){alert("ปิดกิจกรรมไม่สำเร็จ: "+error.message);close.disabled=false;}else await loadRewardEvents();
+   return;
+  }
+  if(participants){await showRewardParticipants(participants.dataset.rewardParticipants);return;}
+ });
+}
+
+registerRewardEvents();
+
 registerGuildActivityEvents();
 
 // ==========================================
