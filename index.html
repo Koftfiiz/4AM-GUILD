@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=raidcardmw9i56sj">
+  <link rel="stylesheet" href="style.css?v=sidebarmw9j1sf3">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=raidcardmw9i56sj";
+          app.src = "app.js?v=sidebarmw9j1sf3";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -255,6 +255,8 @@
         </div>
       </div>
     </aside>
+    <button id="sidebar-toggle" class="sidebar-toggle" type="button" aria-label="ย่อแถบเมนู" aria-expanded="true" title="ย่อแถบเมนู"><svg class="icon"><use href="#i-chevron-left"/></svg></button>
+    <button id="sidebar-backdrop" class="sidebar-backdrop" type="button" aria-label="ปิดเมนู"></button>
 
     <!-- MAIN CONTENT -->
     <main class="main-area">
