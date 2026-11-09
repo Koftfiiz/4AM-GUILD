@@ -3895,7 +3895,7 @@ async function showRewardParticipants(eventId){
  if(error){list.innerHTML='<p class="message error">'+escapeHTML(error.message)+'</p>';return;}
  const event=rewardEventsCache.find(row=>row.event_id===eventId);
  $("reward-participants-title").textContent="รายชื่อผู้ลงทะเบียน · "+(event?.title||"กิจกรรม");
- list.innerHTML=(data||[]).length?(data||[]).map((row,index)=>'<div class="reward-participant-row"><span class="reward-participant-number">'+(index+1)+'</span><strong>'+escapeHTML(row.character_name||row.nickname||"สมาชิก")+'</strong><small>'+(row.queue_position>=61?'ตัวสำรอง':'ตัวจริง')+'</small><time>'+escapeHTML(activityDateLabel(row.created_at))+'</time><span class="reward-source-label">'+(row.source==="discord"?"Discord":"เว็บไซต์")+'</span></div>').join(""):'<p class="muted">ยังไม่มีผู้ลงทะเบียน</p>';
+ list.innerHTML=(data||[]).length?(data||[]).map((row,index)=>'<div class="reward-participant-row"><span class="reward-participant-number">'+(index+1)+'</span><strong>'+escapeHTML(row.character_name||row.nickname||"สมาชิก")+'</strong><small>'+escapeHTML(row.roster_type|| (row.queue_position>=61?'ตัวสำรอง':'ตัวจริง'))+'</small><time>'+escapeHTML(activityDateLabel(row.created_at))+'</time><span class="reward-source-label">'+(row.source==="discord"?"Discord":"เว็บไซต์")+'</span></div>').join(""):'<p class="muted">ยังไม่มีผู้ลงทะเบียน</p>';
  panel.scrollIntoView({behavior:"smooth",block:"nearest"});
 }
 
@@ -4456,7 +4456,7 @@ function openGuildPage(pageName) {
   if (pageName === "war-stats") loadWarMatchRecords();
   if (pageName === "war-attendance-stats") loadWarAttendanceStatistics();
   if (pageName === "rules") loadGuildRules();
-  if (pageName === "activities") { subscribeToGuildActivityRealtime(); loadGuildActivities(); }
+  if (pageName === "activities") { subscribeToGuildActivityRealtime(); loadGuildActivities(); subscribeToRewardRealtime(); loadRewardEvents(); }
   if (pageName === "feedback") loadGuildFeedback();
 }
 
