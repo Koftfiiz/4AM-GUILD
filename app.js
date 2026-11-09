@@ -2459,7 +2459,7 @@ function updateWarCreateMode() {
   const rounds=isPractice?[]:getOfficialWarRounds(dateInput?.value);
   if(timeInput){timeInput.disabled=!isPractice;if(!isPractice)timeInput.value=rounds[0]||"20:00";timeInput.classList.toggle("hidden",!isPractice);}
   if(dateDisplay){dateDisplay.value=formatWarDateDisplay(dateInput?.value);dateDisplay.classList.toggle("hidden",isPractice);}
-  if(timeDisplay){timeDisplay.value=isPractice?"":`${timeInput?.value||"20:00"} น.`;timeDisplay.classList.toggle("hidden",isPractice);}
+  if(timeDisplay){timeDisplay.value=isPractice?"":(rounds.length===2?`รอบแรก ${rounds[0]} น. / รอบสอง ${rounds[1]} น.`:`รอบเดียว ${rounds[0]||"20:00"} น.`);timeDisplay.classList.toggle("hidden",isPractice);}
   const raidCount=isPractice?Number($("war-raid-count")?.value||4):2;
   const summary=$("war-create-capacity");
   if(summary)summary.textContent=isPractice?`ซ้อมวอร์: ${raidCount} Raid · ${raidCount*5} ปาร์ตี้ · รองรับ ${raidCount*30} คน`:`วอร์จริงวันเสาร์ ${formatWarDateDisplay(dateInput?.value)} · ${rounds.length} รอบ (${rounds.join(" / ")}) น. · 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน`;
