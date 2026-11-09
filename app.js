@@ -2633,6 +2633,20 @@ async function exportWarImage(){
       fetch("assets/4am-guild-logo.png").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ assets/4am-guild-logo.png");return response.blob();}).then(toDataUrl),
       getThaiFontCss()
     ]);
+    const rosterClassNames=[...new Set(currentWarParties.flatMap(party=>(party.war_party_members||[]).map(assignment=>{
+      const member=allMembers.find(item=>item.user_id===assignment.member_id);
+      return member?getMemberClass(member):null;
+    }).filter(Boolean)))];
+    const classIconEntries=await Promise.all(rosterClassNames.map(async className=>{
+      const info=getClassInfo(className);
+      if(!info?.iconPath)return [className,""];
+      try{
+        const response=await fetch(info.iconPath);
+        if(!response.ok)return [className,""];
+        return [className,await toDataUrl(await response.blob())];
+      }catch{return [className,""]; }
+    }));
+    const classIconData=Object.fromEntries(classIconEntries);
     const parts=[`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
       <defs>
         <linearGradient id="redLine" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4655"/><stop offset=".5" stop-color="#a10f20"/><stop offset="1" stop-color="#4b0710"/></linearGradient>
@@ -2672,10 +2686,11 @@ async function exportWarImage(){
           const member=allMembers.find(item=>item.user_id===assignment?.member_id);
           const rowY=cardY+91+(slot-1)*54;
           if(slot>1)parts.push(`<path d="M${x+14} ${rowY-22} H${x+270}" stroke="#a11a2c" stroke-opacity=".45" stroke-width="1.5"/>`);
+          const classIcon=member?classIconData[getMemberClass(member)]:"";
           parts.push(`<circle cx="${x+25}" cy="${rowY-5}" r="12" fill="${member?"#c31830":"#211619"}" stroke="${member?"#ff5264":"#6a3039"}" stroke-width="1.5"/>
             <text x="${x+25}" y="${rowY}" text-anchor="middle" fill="#ffffff" font-size="13" font-family="Noto Sans Thai" font-weight="900">${slot}</text>
-            <text x="${x+47}" y="${rowY-3}" fill="${member?"#ffffff":"#81777a"}" font-size="16" font-family="Noto Sans Thai" font-weight="700">${esc(member?getMemberName(member):"ว่าง")}</text>
-            <text x="${x+47}" y="${rowY+17}" fill="${member?"#f05263":"#655b5e"}" font-size="12" font-family="Noto Sans Thai">${esc(member?getMemberClass(member):"รอสมาชิก")}</text>`);
+            ${classIcon?`<image x="${x+45}" y="${rowY-19}" width="28" height="28" preserveAspectRatio="xMidYMid meet" href="${classIcon}" xlink:href="${classIcon}"/>`:""}
+            <text x="${x+(classIcon?82:47)}" y="${rowY+1}" fill="${member?"#ffffff":"#81777a"}" font-size="16" font-family="Noto Sans Thai" font-weight="700">${esc(member?getMemberName(member):"ว่าง")}</text>`);
         }
       }
       y+=510;
