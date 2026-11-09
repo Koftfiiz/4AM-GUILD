@@ -156,6 +156,108 @@ begin
 end;
 $$;
 
+-- Capture closed events automatically within one minute when pg_cron is available.
+-- The Party Assignment page also calls capture_war_event_roster_snapshot() as a fallback.
+create or replace function public.capture_due_war_event_roster_snapshots()
+returns integer
+language plpgsql
+security definer
+set search_path = public, auth
+as $
+declare
+  v_event record;
+  v_rows integer;
+  v_total integer := 0;
+begin
+  for v_event in
+    select e.id, e.signup_closes_at
+    from public.war_events e
+    where e.signup_closes_at is not null
+      and e.signup_closes_at <= now()
+      and not exists (
+        select 1 from public.war_event_roster_snapshots r
+        where r.event_id = e.id
+      )
+    order by e.signup_closes_at
+    for update of e
+  loop
+    insert into public.war_event_roster_snapshots (
+      event_id, member_id, signup_id, leave_request_id,
+      original_status, roster_status
+    )
+    select
+      v_event.id,
+      gm.user_id,
+      s.id,
+      lr.id,
+      case
+        when lr.id is not null then 'leave'
+        when s.id is not null and coalesce(s.queue_position, 999) <= 60 then 'signed_up'
+        when s.id is not null then 'reserve'
+        else 'absent'
+      end,
+      case
+        when lr.id is not null then 'leave'
+        when s.id is not null and coalesce(s.queue_position, 999) <= 60 then 'signed_up'
+        when s.id is not null then 'reserve'
+        else 'absent'
+      end
+    from public.guild_members gm
+    left join lateral (
+      select ws.id, ws.queue_position
+      from public.war_signups ws
+      where ws.event_id = v_event.id
+        and ws.member_id = gm.user_id
+        and ws.status <> 'cancelled'
+      order by ws.created_at desc
+      limit 1
+    ) s on true
+    left join lateral (
+      select wl.id
+      from public.war_leave_requests wl
+      where wl.event_id = v_event.id
+        and wl.member_id = gm.user_id
+        and wl.status <> 'rejected'
+        and wl.created_at <= v_event.signup_closes_at
+      order by wl.created_at desc
+      limit 1
+    ) lr on true
+    where gm.active = true
+    on conflict (event_id, member_id) do nothing;
+
+    get diagnostics v_rows = row_count;
+    if v_rows > 0 then v_total := v_total + 1; end if;
+  end loop;
+  return v_total;
+end;
+$;
+
+do $
+declare
+  v_job_id bigint;
+begin
+  begin
+    execute 'create extension if not exists pg_cron';
+    if to_regnamespace('cron') is not null then
+      select jobid into v_job_id
+      from cron.job
+      where jobname = '4am-war-roster-snapshot'
+      limit 1;
+      if v_job_id is not null then
+        perform cron.unschedule(v_job_id);
+      end if;
+      perform cron.schedule(
+        '4am-war-roster-snapshot',
+        '* * * * *',
+        'select public.capture_due_war_event_roster_snapshots();'
+      );
+    end if;
+  exception when others then
+    raise notice 'pg_cron was not enabled; Party Assignment will create the snapshot on first access after signup closes. Details: %', sqlerrm;
+  end;
+end;
+$;
+
 create or replace function public.add_member_to_war_event_roster(
   p_event_id uuid,
   p_member_id uuid,
