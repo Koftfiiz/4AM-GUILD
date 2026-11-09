@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=reward-registration-20261110">
+  <link rel="stylesheet" href="style.css?v=number-game-20261110">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=reward-registration-20261110";
+          app.src = "app.js?v=number-game-20261110";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -219,10 +219,23 @@
           <span>แฟ้มผลงาน</span>
         </button>
 
-        <button class="nav-item" data-page="activities">
-          <svg class="icon"><use href="#i-party-popper"/></svg>
-          <span>กิจกรรมกิลด์</span>
-        </button>
+        <div class="nav-group">
+          <button class="nav-item nav-parent" type="button" data-toggle-submenu="guild-activities-submenu" aria-expanded="false">
+            <svg class="icon"><use href="#i-party-popper"/></svg>
+            <span>กิจกรรมกิลด์</span>
+            <span class="nav-chevron">⌄</span>
+          </button>
+          <div id="guild-activities-submenu" class="nav-submenu">
+            <button class="nav-subitem" data-page="activities">
+              <span class="nav-subitem-dot"></span>
+              <span>มินิเกมแจกของรางวัล</span>
+            </button>
+            <button class="nav-subitem" data-page="number-guess">
+              <span class="nav-subitem-dot"></span>
+              <span>กิจกรรมทายตัวเลข</span>
+            </button>
+          </div>
+        </div>
         
         <button class="nav-item" data-page="feedback">
           <svg class="icon"><use href="#i-megaphone"/></svg>
@@ -706,6 +719,72 @@
           <div id="guild-feedback-list" class="guild-feedback-list" aria-live="polite">
             <div class="empty-state"><span>◷</span><h3>กำลังโหลดรายการ</h3><p>กรุณารอสักครู่</p></div>
           </div>
+        </section>
+      </section>
+
+
+      <!-- ============ CYBERPUNK NUMBER GUESS ============ -->
+      <section id="page-number-guess" class="page page-padded hidden">
+        <div class="number-guess-hero">
+          <div class="number-guess-hero-grid"></div>
+          <div class="number-guess-hero-content">
+            <span class="number-guess-eyebrow">4AM GUILD · NEON CHANCE SYSTEM</span>
+            <h1>กิจกรรมทายตัวเลข</h1>
+            <p>เลือกหมายเลขนำโชคของคุณ ตั้งแต่ 00 ถึง 99 · หนึ่งสมาชิกต่อหนึ่งหมายเลข</p>
+            <div class="number-guess-live-indicator"><i></i> NUMBER GRID ONLINE</div>
+          </div>
+          <div class="number-guess-orb" aria-hidden="true"><span>?</span></div>
+        </div>
+
+        <section class="number-guess-admin-panel panel hidden" id="number-guess-admin-panel">
+          <div class="panel-heading">
+            <div><span class="panel-kicker">MANAGEMENT CONTROL</span><h3>เปิดกิจกรรมทายตัวเลข</h3></div>
+            <button type="button" class="btn btn-primary" id="number-guess-create-open">＋ สร้างกิจกรรม</button>
+          </div>
+          <form id="number-guess-create-form" class="number-guess-create-form hidden">
+            <div class="form-group"><label for="number-guess-war-select">อ้างอิงรายชื่อ Guild War</label><select id="number-guess-war-select" required><option value="">กำลังโหลดรายการวอร์...</option></select></div>
+            <div class="form-group"><label for="number-guess-title">ชื่อกิจกรรม</label><input id="number-guess-title" maxlength="120" required placeholder="เช่น 4AM Lucky Number #01"></div>
+            <div class="form-group"><label for="number-guess-close">เวลาปิดรับตัวเลข</label><input id="number-guess-close" type="datetime-local" required></div>
+            <div class="number-guess-form-actions"><button type="button" class="btn btn-outline" id="number-guess-create-cancel">ยกเลิก</button><button type="submit" class="btn btn-primary" id="number-guess-create-submit">เปิดกิจกรรม</button></div>
+            <p class="message" id="number-guess-create-message"></p>
+          </form>
+        </section>
+
+        <section class="number-guess-console panel" aria-label="ตารางเลือกหมายเลข">
+          <div id="number-guess-event-state" class="number-guess-event-state">
+            <span class="number-guess-state-icon">⌁</span>
+            <div><strong>กำลังเชื่อมต่อระบบกิจกรรม</strong><p>กำลังตรวจสอบกิจกรรมที่เปิดอยู่...</p></div>
+          </div>
+          <div class="number-guess-stats">
+            <div class="number-guess-stat"><span>NUMBERS</span><strong>100</strong><small>00 — 99</small></div>
+            <div class="number-guess-stat"><span>CLAIMED</span><strong id="number-guess-claimed-count">—</strong><small>หมายเลขถูกเลือกแล้ว</small></div>
+            <div class="number-guess-stat"><span>AVAILABLE</span><strong id="number-guess-available-count">—</strong><small>หมายเลขที่ยังว่าง</small></div>
+          </div>
+          <div class="number-guess-selection-bar">
+            <div><span class="number-guess-selection-label">YOUR NUMBER</span><strong id="number-guess-own-number">--</strong></div>
+            <p id="number-guess-selection-hint">เลือกหมายเลขที่ยังว่างได้หนึ่งหมายเลข</p>
+          </div>
+          <div class="number-guess-grid-wrap">
+            <div class="number-guess-grid-heading"><span>SELECT YOUR LUCKY NUMBER</span><span>00 / 99</span></div>
+            <div class="number-guess-grid" id="number-guess-grid" aria-label="เลือกตัวเลข 00 ถึง 99">
+              <div class="number-guess-loading">กำลังโหลดตารางหมายเลข...</div>
+            </div>
+          </div>
+          <div class="number-guess-legend">
+            <span><i class="legend-available"></i> ว่าง</span>
+            <span><i class="legend-selected"></i> หมายเลขของคุณ</span>
+            <span><i class="legend-taken"></i> มีผู้เลือกแล้ว</span>
+          </div>
+          <div class="number-guess-rules">
+            <span>◈ ONE MEMBER / ONE NUMBER</span>
+            <span>◈ DUPLICATE NUMBERS BLOCKED</span>
+            <span>◈ WAR ROSTER ONLY · MAIN + RESERVE</span>
+          </div>
+          <p class="number-guess-feedback" id="number-guess-feedback" aria-live="polite"></p>
+        </section>
+        <section class="number-guess-management-list panel hidden" id="number-guess-management-list">
+          <div class="panel-heading"><div><span class="panel-kicker">REGISTRATION LOG</span><h3>รายชื่อผู้เลือกหมายเลข</h3></div><button class="btn btn-outline btn-sm" id="number-guess-refresh-list">รีเฟรช</button></div>
+          <div id="number-guess-participants"></div>
         </section>
       </section>
 
