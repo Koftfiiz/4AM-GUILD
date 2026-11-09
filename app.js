@@ -2335,7 +2335,8 @@ async function assignWarMemberToSlot(id){
  if(getAssignedWarMemberIds(slot.assignmentId).has(id)){alert("สมาชิกคนนี้ถูกจัดลงปาร์ตี้อื่นในวอร์รอบนี้แล้ว");return;}
  try{
   const snapshot=warAssignmentRosterSnapshot.find(x=>x.member_id===id);
-  if(snapshot&&["absent","leave"].includes(snapshot.roster_status)){
+  const signupClosed=Boolean(event.signup_closes_at)&&Date.now()>=new Date(event.signup_closes_at).getTime();
+  if(signupClosed&&(!snapshot||["absent","leave"].includes(snapshot.roster_status))){
    const reason=prompt("สมาชิกคนนี้ไม่ได้ลงชื่อทันเวลา/แจ้งลาไว้ กรุณาระบุเหตุผลที่ฝ่ายบริหารเพิ่มเข้าวอร์:");
    if(reason===null)return;
    if(!reason.trim()){alert("กรุณาระบุเหตุผลในการเพิ่มสมาชิก");return;}
