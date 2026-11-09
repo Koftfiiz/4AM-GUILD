@@ -34,7 +34,8 @@ async function verifyDiscordRequest(request: Request, rawBody: string): Promise<
       hexToBytes(signature),
       encoder.encode(timestamp + rawBody),
     );
-  } catch {
+  } catch (error) {
+    console.error("[REWARD DEBUG] Signature verification exception:", error instanceof Error ? error.message : String(error));
     return false;
   }
 }
@@ -72,7 +73,20 @@ Deno.serve(async (request: Request) => {
   if (request.method !== "POST") return jsonResponse({ error: "Method not allowed" }, 405);
 
   const rawBody = await request.text();
-  if (!(await verifyDiscordRequest(request, rawBody))) {
+
+  // TEMPORARY DIAGNOSTICS: never log the signature, public key, body, or any secret value.
+  console.log("[REWARD DEBUG] Request received");
+  console.log("[REWARD DEBUG] Method:", request.method);
+  console.log("[REWARD DEBUG] Has signature:", !!request.headers.get("x-signature-ed25519"));
+  console.log("[REWARD DEBUG] Has timestamp:", !!request.headers.get("x-signature-timestamp"));
+  console.log("[REWARD DEBUG] Public key configured:", !!Deno.env.get("DISCORD_APPLICATION_PUBLIC_KEY"));
+  console.log("[REWARD DEBUG] Public key format valid:", /^[0-9a-f]{64}$/i.test(Deno.env.get("DISCORD_APPLICATION_PUBLIC_KEY") || ""));
+
+  const signatureValid = await verifyDiscordRequest(request, rawBody);
+  console.log("[REWARD DEBUG] Signature verification:", signatureValid ? "VALID" : "INVALID");
+
+  if (!signatureValid) {
+    console.error("[REWARD DEBUG] Request rejected: invalid Discord request signature");
     return jsonResponse({ error: "Invalid Discord request signature" }, 401);
   }
 
