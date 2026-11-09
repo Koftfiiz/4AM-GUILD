@@ -106,16 +106,12 @@ Deno.serve(async (request: Request) => {
     return jsonResponse({ type: 4, data: { content: "ไม่พบ Discord User ID", flags: 64 } });
   }
 
-  // Slash command: /reward-open war_event_id:<UUID> title:<name> signup_closes_at:<ISO timestamp>
+  // Slash command: /reward-open title:<name> signup_closes_at:<ISO timestamp> (uses the latest published Guild War)
   if (interaction.type === 2 && interaction.data?.name === "reward-open") {
     const options = Array.isArray(interaction.data.options) ? interaction.data.options : [];
-    const warEventId = getOption(options, "war_event_id");
     const title = getOption(options, "title").trim();
     const closesAt = getOption(options, "signup_closes_at").trim();
 
-    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(warEventId)) {
-      return jsonResponse({ type: 4, data: { content: "กรุณาระบุ War Event ID ที่ถูกต้อง", flags: 64 } });
-    }
     const closeDate = new Date(closesAt);
     if (!title || title.length > 120 || !closesAt || Number.isNaN(closeDate.getTime()) || closeDate.getTime() <= Date.now()) {
       return jsonResponse({ type: 4, data: { content: "กรุณาระบุชื่อกิจกรรมและเวลาปิดรับสมัครในอนาคตให้ถูกต้อง", flags: 64 } });
@@ -123,7 +119,7 @@ Deno.serve(async (request: Request) => {
 
     const { data, error } = await supabase.rpc("create_reward_event_from_discord", {
       p_discord_user_id: discordUserId,
-      p_war_event_id: warEventId,
+      p_war_event_id: null,
       p_title: title,
       p_description: "",
       p_signup_closes_at: closeDate.toISOString(),
