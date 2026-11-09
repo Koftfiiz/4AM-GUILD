@@ -4474,3 +4474,13 @@ button:not(.feedback-notification-button),
 .global-picker-time-row select{min-width:66px;padding:7px 8px;border:1px solid rgba(216,176,106,.35);border-radius:5px;background:#211619;color:#f3e6d5}
 input[type="date"],input[type="time"],input[type="datetime-local"],[data-activity-date-input],[data-activity-time-input]{cursor:pointer}
 input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webkit-calendar-picker-indicator,input[type="datetime-local"]::-webkit-calendar-picker-indicator{opacity:0;display:none}
+
+
+/* Guild War event detail: match the Create War section heading size. */
+.war-event-main p{
+  margin:0 0 5px;
+  color:var(--gold-light);
+  font-size:var(--type-section-title,20px);
+  font-weight:500;
+  line-height:1.5;
+}
