@@ -4569,6 +4569,12 @@ function openGuildPage(pageName) {
   warParent?.classList.toggle("active", warPage);
   if (warPage && warSubmenu) warSubmenu.classList.add("is-open");
 
+  const guildActivityPage = ["activities", "number-guess"].includes(pageName);
+  const guildActivityParent = document.querySelector('[data-toggle-submenu="guild-activities-submenu"]');
+  const guildActivitySubmenu = $("guild-activities-submenu");
+  guildActivityParent?.classList.toggle("active", guildActivityPage);
+  if (guildActivityPage && guildActivitySubmenu) guildActivitySubmenu.classList.add("is-open");
+
   document.title = `${PAGE_TITLES[pageName] || "4AM GUILD"} | 4AM GUILD`;
 
   closeUserMenu();
