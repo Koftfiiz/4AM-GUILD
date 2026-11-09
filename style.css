@@ -3429,7 +3429,7 @@ body #registration-screen.login-card::after {
 .war-vs-field .war-team-name { color:var(--gold-light); font-size:clamp(32px,4vw,44px); line-height:1; font-weight:900; letter-spacing:2px; text-shadow:0 0 18px rgba(220,174,91,.32); }
 .war-vs-field .war-versus-mark { display:inline-flex; align-items:center; justify-content:center; min-width:48px; height:34px; padding:0 10px; color:#fff; font-size:16px; font-weight:900; font-style:italic; letter-spacing:2px; background:linear-gradient(135deg,#a82d39,#e45b63 52%,#8e1e2a); border:1px solid rgba(255,190,190,.45); border-radius:5px; transform:skew(-12deg); box-shadow:0 3px 14px rgba(190,45,58,.3); }
 .war-opponent-row .war-vs-field input { width:50%; max-width:360px; min-width:180px; }
-.war-create-capacity { margin:5px 0 16px; padding:11px 13px; color:var(--gold-light); background:rgba(190,145,65,.08); border-left:3px solid var(--gold); font-size:12px; }
+.war-create-capacity { margin:5px 0 16px; padding:11px 13px; color:var(--gold-light); background:rgba(190,145,65,.08); border-left:3px solid var(--gold); font-size:var(--type-section-title) !important; font-weight:500; line-height:1.4; }
 .war-create-actions { display:flex; justify-content:flex-end; gap:10px; }
 .war-summary-name { overflow-wrap:anywhere; }
 .war-summary-name strong { font-size:clamp(15px,1.5vw,21px); }
