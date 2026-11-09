@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=guild-community-cleanup-20261110">
+  <link rel="stylesheet" href="style.css?v=sidebar-navigation-order-20261110">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=guild-community-cleanup-20261110";
+          app.src = "app.js?v=sidebar-navigation-order-20261110";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -173,7 +173,12 @@
       <nav class="sidebar-nav">
         <button class="nav-item active" data-page="dashboard">
           <svg class="icon"><use href="#i-home"/></svg>
-          <span>ภาพรวมกิลด์</span>
+          <span>Dashboard</span>
+        </button>
+
+        <button class="nav-item" data-page="rules">
+          <svg class="icon"><use href="#i-shield-check"/></svg>
+          <span>กฎกิลด์</span>
         </button>
 
         <button class="nav-item" data-page="members">
@@ -209,11 +214,6 @@
           </div>
         </div>
 
-        <button class="nav-item" data-page="rules">
-          <svg class="icon"><use href="#i-shield-check"/></svg>
-          <span>กฎกิลด์</span>
-        </button>
-
         <button class="nav-item" data-page="portfolio">
           <svg class="icon"><use href="#i-folder-image"/></svg>
           <span>แฟ้มผลงาน</span>
@@ -226,9 +226,9 @@
             <span class="nav-chevron">⌄</span>
           </button>
           <div id="guild-community-submenu" class="nav-submenu">
+            <button class="nav-subitem" data-page="guild-news"><span class="nav-subitem-dot"></span><span>ข่าวสารกิลด์</span></button>
+            <button class="nav-subitem" data-page="guild-activities"><span class="nav-subitem-dot"></span><span>กิจกรรมกิลด์</span></button>
             <button class="nav-subitem" data-page="community-board"><span class="nav-subitem-dot"></span><span>Community Board</span></button>
-            <button class="nav-subitem" data-page="guild-news"><span class="nav-subitem-dot"></span><span>Guild News</span></button>
-            <button class="nav-subitem" data-page="guild-activities"><span class="nav-subitem-dot"></span><span>Guild Activities</span></button>
           </div>
         </div>
         
