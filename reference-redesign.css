@@ -112,3 +112,11 @@ input,select,textarea,.rule-editor-body{background:rgba(7,10,17,.88)!important;b
  .reference-content-grid,.reference-bottom-grid{grid-template-columns:1fr}.reference-gallery{height:160px}.reference-builds button{height:70px}.page-padded{padding:16px 10px!important}
 }
 @media(max-width:420px){.reference-events{grid-template-columns:1fr}.reference-event-row{min-height:40px}.reference-event-row .event-copy small{display:block}.reference-gallery{height:130px}.reference-gallery-stack{grid-template-rows:1fr 1fr}}
+
+/* Align authenticated controls with the reference top navigation */
+.topbar{position:fixed;top:7px;right:14px;height:48px;margin:0;padding:0}
+.topbar-right #connection-pill,.topbar-right #discord-pill{display:none!important}
+.topbar-right{height:46px;padding:0 5px}
+.reference-hero-crest{position:relative}
+.reference-main-nav{padding-right:190px}
+@media(max-width:760px){.topbar{top:8px;right:7px}.reference-main-nav{padding-right:120px}}
