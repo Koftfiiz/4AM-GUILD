@@ -2447,23 +2447,41 @@ function getOfficialWarRounds(dateValue) {
 function formatWarDateDisplay(dateValue) {
   if(!dateValue)return "";
   const parts=String(dateValue).split("-");
-  return parts.length===3?`${parts[2]}/${parts[1]}/${parts[0]}`:"";
+  return parts.length===3?parts[2]+"/"+parts[1]+"/"+parts[0]:"";
+}
+function parseWarDateDisplay(value) {
+  const match=String(value||"").trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(!match)return "";
+  const day=Number(match[1]),month=Number(match[2]),year=Number(match[3]);
+  const date=new Date(year,month-1,day);
+  if(date.getFullYear()!==year||date.getMonth()!==month-1||date.getDate()!==day)return "";
+  return String(year)+"-"+String(month).padStart(2,"0")+"-"+String(day).padStart(2,"0");
 }
 function updateWarCreateMode() {
-  const mode = document.querySelector('input[name="war-mode"]:checked')?.value || "official";
-  const isPractice = mode === "practice";
-  $("war-raid-count-wrap")?.classList.toggle("hidden", !isPractice);
+  const mode=document.querySelector('input[name="war-mode"]:checked')?.value||"official";
+  const isPractice=mode==="practice";
+  $("war-raid-count-wrap")?.classList.toggle("hidden",!isPractice);
   const dateInput=$("war-event-date"),timeInput=$("war-start-time"),scheduleNote=$("war-create-schedule-note");
   const dateDisplay=$("war-event-date-display"),timeDisplay=$("war-start-time-display");
-  if(dateInput){dateInput.disabled=!isPractice;if(!isPractice)dateInput.value=getUpcomingWarSaturday();dateInput.classList.toggle("hidden",!isPractice);}
+  if(dateInput){dateInput.disabled=!isPractice;if(!isPractice)dateInput.value=getUpcomingWarSaturday();dateInput.classList.add("hidden");}
   const rounds=isPractice?[]:getOfficialWarRounds(dateInput?.value);
-  if(timeInput){timeInput.disabled=!isPractice;if(!isPractice)timeInput.value=rounds[0]||"20:00";timeInput.classList.toggle("hidden",!isPractice);}
-  if(dateDisplay){dateDisplay.value=formatWarDateDisplay(dateInput?.value);dateDisplay.classList.toggle("hidden",isPractice);}
-  if(timeDisplay){timeDisplay.value=isPractice?"":(rounds.length===2?`รอบแรก ${rounds[0]} น. / รอบสอง ${rounds[1]} น.`:`รอบเดียว ${rounds[0]||"20:00"} น.`);timeDisplay.classList.toggle("hidden",isPractice);}
+  if(timeInput){timeInput.disabled=!isPractice;if(!isPractice)timeInput.value=rounds[0]||"20:00";timeInput.classList.add("hidden");}
+  if(dateDisplay){dateDisplay.value=formatWarDateDisplay(dateInput?.value);dateDisplay.readOnly=!isPractice;dateDisplay.placeholder="dd/mm/yyyy";}
+  if(timeDisplay){timeDisplay.value=isPractice?(timeInput?.value||""):(rounds.length===2?"รอบแรก "+rounds[0]+" น. / รอบสอง "+rounds[1]+" น.":"รอบเดียว "+(rounds[0]||"20:00")+" น.");timeDisplay.readOnly=!isPractice;timeDisplay.placeholder="00:00";}
   const raidCount=isPractice?Number($("war-raid-count")?.value||4):2;
   const summary=$("war-create-capacity");
-  if(summary)summary.textContent=isPractice?`ซ้อมวอร์: ${raidCount} Raid · ${raidCount*5} ปาร์ตี้ · รองรับ ${raidCount*30} คน`:`วอร์จริงวันเสาร์ ${formatWarDateDisplay(dateInput?.value)} · ${rounds.length} รอบ (${rounds.join(" / ")}) น. · 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน`;
-  if(scheduleNote)scheduleNote.textContent=isPractice?"ซ้อมวอร์: เลือกวันและเวลาได้เอง":(rounds.length===2?"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด · รอบ 1 เวลา 20:00 น. / รอบ 2 เวลา 20:30 น.":"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด · วอร์ 1 รอบ เวลา 20:00 น.");
+  if(summary)summary.textContent=isPractice?"ซ้อมวอร์: "+raidCount+" Raid · "+(raidCount*5)+" ปาร์ตี้ · รองรับ "+(raidCount*30)+" คน":"วอร์จริงวันเสาร์ "+formatWarDateDisplay(dateInput?.value)+" · "+rounds.length+" รอบ ("+rounds.join(" / ")+") น. · 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน";
+  if(scheduleNote)scheduleNote.textContent=isPractice?"ซ้อมวอร์: กรอกวันที่ dd/mm/yyyy และเวลา 00:00–23:59 ได้เอง":(rounds.length===2?"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด · รอบ 1 เวลา 20:00 น. / รอบ 2 เวลา 20:30 น.":"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด · วอร์ 1 รอบ เวลา 20:00 น.");
+}
+function syncPracticeDateDisplay(){
+  const display=$("war-event-date-display"),dateInput=$("war-event-date");if(!display||!dateInput)return;
+  const parsed=parseWarDateDisplay(display.value);dateInput.value=parsed;
+  display.setCustomValidity(parsed||!display.value.trim()?"":"กรุณากรอกวันที่รูปแบบ dd/mm/yyyy เช่น 09/11/2026");
+}
+function syncPracticeTimeDisplay(){
+  const display=$("war-start-time-display"),timeInput=$("war-start-time");if(!display||!timeInput)return;
+  const value=String(display.value||"").trim(),valid=/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(value);
+  timeInput.value=valid?value:"";display.setCustomValidity(valid||!value?"":"กรุณากรอกเวลาในรูปแบบ 00:00–23:59");
 }
 
 async function handleWarCreate(event) {
@@ -3031,7 +3049,7 @@ function registerWarCreationEvents(){
   ["war-create-close","war-create-cancel"].forEach(id=>$(id)?.addEventListener("click",()=>$("war-create-panel")?.classList.add("hidden")));
   $("war-back-to-list")?.addEventListener("click",()=>{$("war-detail-stage")?.classList.add("hidden");$("war-events")?.scrollIntoView({behavior:"smooth",block:"start"});});
   $("war-confirm-draft")?.addEventListener("click",confirmWarDraft);$("war-publish-event")?.addEventListener("click",publishWarEvent);$("war-export-image")?.addEventListener("click",exportWarImage);$("war-sync-discord")?.addEventListener("click",()=>alert("Discord Bot Sync ยังไม่เปิดใช้งานในขณะนี้"));
-  document.querySelectorAll('input[name="war-mode"]').forEach(input=>input.addEventListener("change",updateWarCreateMode));$("war-raid-count")?.addEventListener("change",updateWarCreateMode);$("war-create-form")?.addEventListener("submit",handleWarCreate);
+  document.querySelectorAll('input[name="war-mode"]').forEach(input=>input.addEventListener("change",updateWarCreateMode));$("war-raid-count")?.addEventListener("change",updateWarCreateMode);$("war-create-form")?.addEventListener("submit",handleWarCreate);$("war-event-date-display")?.addEventListener("input",syncPracticeDateDisplay);$("war-event-date-display")?.addEventListener("blur",()=>{syncPracticeDateDisplay();const input=$("war-event-date-display"),parsed=$("war-event-date")?.value;if(parsed)input.value=formatWarDateDisplay(parsed);});$("war-start-time-display")?.addEventListener("input",syncPracticeTimeDisplay);$("war-start-time-display")?.addEventListener("blur",syncPracticeTimeDisplay);
   const dateInput=$("war-event-date");if(dateInput){const now=new Date(),today=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);dateInput.min=today;}updateWarCreateMode();
 }
 
