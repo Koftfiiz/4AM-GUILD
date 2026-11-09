@@ -4457,10 +4457,16 @@ function sanitizeGuildRuleHTML(html){
  const out=parsed.createElement("div");[...parsed.body.childNodes].forEach(n=>out.appendChild(clean(n)));return out.innerHTML;
 }
 function renderGuildRuleCard(key,html){
- const content=$("rule-content-"+key),edit=document.querySelector('[data-rule-edit="'+key+'"]'),add=document.querySelector('[data-rule-add="'+key+'"]');
+ const content=$("rule-content-"+key);
+ const edit=document.querySelector('[data-rule-edit="'+key+'"]');
+ const remove=document.querySelector('[data-rule-delete="'+key+'"]');
+ const add=document.querySelector('[data-rule-add="'+key+'"]');
  const has=Boolean(String(html||"").trim());
+ const canManage=isManagement();
  if(content)content.innerHTML=has?sanitizeGuildRuleHTML(html):'<div class="empty-state"><span>◈</span><h3>ยังไม่มีรายละเอียด</h3><p>ฝ่ายบริหารสามารถเพิ่มรายละเอียดของหัวข้อนี้ได้</p></div>';
- edit?.classList.toggle("hidden",!has||!isManagement());add?.classList.toggle("hidden",has||!isManagement());
+ edit?.classList.toggle("hidden",!has||!canManage);
+ remove?.classList.toggle("hidden",!has||!canManage);
+ add?.classList.toggle("hidden",has||!canManage);
 }
 async function loadGuildRules(){
  const {data,error}=await supabaseClient.from("guild_rule_details").select("rule_key,content_html,updated_at").in("rule_key",GUILD_RULE_KEYS);
@@ -4485,8 +4491,28 @@ async function uploadGuildRuleImage(key,file){
 function registerGuildRuleEvents(){
  const page=$("page-rules");if(!page||page.dataset.eventsReady==="true")return;page.dataset.eventsReady="true";
  page.addEventListener("click",async event=>{
-  const add=event.target.closest("[data-rule-add]"),edit=event.target.closest("[data-rule-edit]"),cancel=event.target.closest("[data-rule-cancel]"),save=event.target.closest("[data-rule-save]"),cmd=event.target.closest("[data-rule-command]"),emoji=event.target.closest("[data-rule-emoji]"),image=event.target.closest("[data-rule-image]");
+  const add=event.target.closest("[data-rule-add]"),edit=event.target.closest("[data-rule-edit]"),remove=event.target.closest("[data-rule-delete]"),cancel=event.target.closest("[data-rule-cancel]"),save=event.target.closest("[data-rule-save]"),cmd=event.target.closest("[data-rule-command]"),emoji=event.target.closest("[data-rule-emoji]"),image=event.target.closest("[data-rule-image]");
   if(add){openGuildRuleEditor(add.dataset.ruleAdd);return;}if(edit){openGuildRuleEditor(edit.dataset.ruleEdit);return;}
+  if(remove){
+   const k=remove.dataset.ruleDelete;
+   if(!isManagement()||!GUILD_RULE_KEYS.includes(k))return;
+   const card=remove.closest(".rule-card"),heading=card?.querySelector(".panel-heading h3")?.textContent||"หัวข้อนี้";
+   if(!window.confirm("ต้องการลบรายละเอียด "+heading+" ใช่หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้"))return;
+   remove.disabled=true;
+   try{
+    const {error}=await supabaseClient.from("guild_rule_details").delete().eq("rule_key",k);
+    if(error)throw error;
+    delete guildRulesCache[k];
+    $("rule-editor-"+k)?.classList.add("hidden");
+    renderGuildRuleCard(k,"");
+    const msg=document.querySelector('[data-rule-message="'+k+'"]');
+    if(msg){msg.textContent="ลบรายละเอียดเรียบร้อยแล้ว";msg.className="message success";}
+   }catch(error){
+    console.error("Delete guild rule:",error);
+    alert("ลบรายละเอียดไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));
+   }finally{remove.disabled=false;}
+   return;
+  }
   if(cancel){const k=cancel.dataset.ruleCancel;$("rule-editor-"+k)?.classList.add("hidden");renderGuildRuleCard(k,guildRulesCache[k]?.content_html||"");return;}
   if(cmd){const k=cmd.closest(".rule-card")?.dataset.ruleCard,body=document.querySelector('[data-rule-editor="'+k+'"]');if(body){body.focus();document.execCommand(cmd.dataset.ruleCommand,false,null);}return;}
   if(emoji){const k=emoji.closest(".rule-card")?.dataset.ruleCard,body=document.querySelector('[data-rule-editor="'+k+'"]'),value=window.prompt("พิมพ์หรือวางอีโมจิ","✨");if(body&&value){body.focus();document.execCommand("insertText",false,value);}return;}
