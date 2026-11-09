@@ -4430,14 +4430,26 @@ button:not(.feedback-notification-button),
 @media(max-width:700px){.activity-datetime-grid{grid-template-columns:1fr}.activity-date-time-row{grid-template-columns:minmax(0,1fr) 112px}.activity-comment-form{align-items:stretch;flex-direction:column}.activity-comment-form button{width:100%}.activity-comment-heading{align-items:flex-start;flex-direction:column;gap:3px}}
 
 
-/* Guild War native date/time picker controls */
+/* Guild War click-to-open date and time pickers */
 .war-picker-control{position:relative;display:flex;align-items:stretch;width:100%;min-width:0;}
-.war-picker-control .war-schedule-display{flex:1 1 auto;width:100%;min-width:0;padding-right:54px!important;cursor:default;}
-.war-picker-button{position:absolute;right:5px;top:50%;transform:translateY(-50%);z-index:2;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:5px;background:rgba(190,145,65,.13);color:var(--gold-light);font-size:25px;line-height:1;cursor:pointer;}
-.war-picker-button:hover:not(:disabled){background:rgba(190,145,65,.25);}
-.war-picker-button:disabled{opacity:.35;cursor:not-allowed;}
-.war-native-picker-input{position:absolute!important;left:8px!important;top:50%!important;width:2px!important;height:2px!important;min-height:2px!important;opacity:0!important;pointer-events:none!important;padding:0!important;border:0!important;}
+.war-picker-control .war-schedule-display{flex:1 1 auto;width:100%;min-width:0;cursor:pointer;padding-right:14px!important;}
+.war-schedule-display:disabled{cursor:default;}
+.war-native-picker-input{position:absolute!important;left:0!important;top:0!important;width:1px!important;height:1px!important;min-height:1px!important;opacity:0!important;pointer-events:none!important;padding:0!important;border:0!important;}
 
+
+/* Custom calendar popover for practice Guild War */
+.war-date-picker-popover{position:absolute;left:0;top:calc(100% + 8px);z-index:31;width:min(320px,calc(100vw - 48px));padding:14px;border:1px solid rgba(216,176,106,.42);border-radius:9px;background:#130c0e;box-shadow:0 14px 36px rgba(0,0,0,.55);color:#f3e6d5}
+.war-date-picker-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.war-date-picker-heading strong{font-size:14px;color:#f3e6d5}
+.war-calendar-nav{width:34px;height:32px;border:1px solid rgba(216,176,106,.3);border-radius:5px;background:rgba(216,176,106,.08);color:#e8c98f;font-size:23px;line-height:1;cursor:pointer}
+.war-calendar-weekdays,.war-calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;text-align:center}
+.war-calendar-weekdays{margin-bottom:6px;color:#d8b06a;font-size:11px;font-weight:700}
+.war-calendar-weekdays span{padding:5px 0}
+.war-calendar-day,.war-calendar-empty{min-width:0;height:36px}
+.war-calendar-day{border:1px solid transparent;border-radius:5px;background:#211619;color:#f3e6d5;font:inherit;cursor:pointer}
+.war-calendar-day:hover:not(:disabled){border-color:#d8b06a;background:rgba(216,176,106,.16)}
+.war-calendar-day.is-selected{border-color:#d8b06a;background:#8e2632;color:#fff;font-weight:800}
+.war-calendar-day:disabled{opacity:.25;cursor:not-allowed}
 
 /* Custom 24-hour time picker for practice Guild War */
 .war-time-picker-popover{position:absolute;right:0;top:calc(100% + 8px);z-index:30;width:min(310px,calc(100vw - 48px));padding:15px;border:1px solid rgba(216,176,106,.42);border-radius:9px;background:#130c0e;box-shadow:0 14px 36px rgba(0,0,0,.55)}
