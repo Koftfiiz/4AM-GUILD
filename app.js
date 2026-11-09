@@ -3297,7 +3297,7 @@ function sanitizeGuildActivityHTML(html){
 function activityDateLabel(value){
  if(!value)return "";
  const date=new Date(value);if(Number.isNaN(date.getTime()))return "";
- return new Intl.DateTimeFormat("th-TH",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(date);
+ return new Intl.DateTimeFormat("th-TH",{day:"2-digit",month:"2-digit",year:"numeric",calendar:"gregory",numberingSystem:"latn",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(date);
 }
 function activityInputDate(value){
  if(!value)return "";
@@ -4009,7 +4009,7 @@ function openGuildPage(pageName) {
   if (pageName === "war-stats") loadWarMatchRecords();
   if (pageName === "war-attendance-stats") loadWarAttendanceStatistics();
   if (pageName === "rules") loadGuildRules();
-  if (pageName === "activities") loadGuildActivities();
+  if (pageName === "activities") { subscribeToGuildActivityRealtime(); loadGuildActivities(); }
   if (pageName === "feedback") loadGuildFeedback();
 }
 
