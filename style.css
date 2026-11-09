@@ -4645,3 +4645,33 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 /* Empty party slots: keep only the ADD action, in regular font weight */
 #page-war .war-empty-slot-number{display:none!important}
 #page-war .party-slot .war-slot-add-button{font-weight:400!important;letter-spacing:.02em}
+
+
+/* 4AM GUILD — post-war reward registration */
+.reward-events-panel{margin-bottom:22px}
+.reward-create-form{display:grid;gap:12px;margin:18px 0;padding:18px;border:1px solid rgba(225,175,155,.22);border-radius:10px;background:rgba(5,5,8,.34)}
+.reward-create-form .form-group{display:grid;gap:6px}
+.reward-create-form input,.reward-create-form select,.reward-create-form textarea{width:100%;min-height:42px;padding:10px 12px;color:#fff;background:rgba(0,0,0,.35);border:1px solid rgba(226,165,144,.28);border-radius:6px}
+.reward-create-form select option{color:#171219}
+.reward-events-list{display:grid;gap:12px;margin-top:16px}
+.reward-event-card{padding:18px;border:1px solid rgba(226,165,144,.23);border-radius:10px;background:linear-gradient(120deg,rgba(34,13,20,.58),rgba(8,8,12,.48));backdrop-filter:blur(12px)}
+.reward-event-title-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.reward-event-title-row h4{margin:0;color:#fff1e8;font-size:18px}
+.reward-status{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:800}
+.reward-status.is-open{color:#a8f1c8;background:rgba(46,170,105,.14);border:1px solid rgba(80,205,135,.35)}
+.reward-status.is-closed{color:#ffc1c7;background:rgba(170,46,62,.14);border:1px solid rgba(205,80,95,.35)}
+.reward-war-reference,.reward-event-description{margin:9px 0;color:#d9c7c4;font-size:13px}
+.reward-war-reference strong{color:#f1d2a3}
+.reward-event-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin:12px 0;color:#cdbdbd;font-size:12px}
+.reward-event-meta strong{color:#f3d9b5}
+.reward-event-actions,.reward-manager-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.reward-manager-actions{margin-left:auto}
+.reward-registered-label{color:#9be2b5;font-size:12px;font-weight:800}
+.reward-ineligible-label{color:#e5aab0;font-size:12px}
+.reward-participants-panel{margin-top:18px;padding:16px;border:1px solid rgba(226,165,144,.25);border-radius:10px;background:rgba(7,7,10,.42)}
+.reward-participants-list{display:grid;gap:6px}
+.reward-participant-row{display:grid;grid-template-columns:28px minmax(100px,1fr) auto auto auto;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px solid rgba(255,255,255,.07);color:#f7e9e3}
+.reward-participant-number{color:#d7ad75;font-weight:900}
+.reward-participant-row small,.reward-participant-row time,.reward-source-label{color:#c3afb0;font-size:11px}
+@media(max-width:650px){.reward-participant-row{grid-template-columns:24px 1fr auto}.reward-participant-row time,.reward-source-label{grid-column:2/-1}.reward-manager-actions{margin-left:0}.reward-event-actions{align-items:flex-start}}
+
