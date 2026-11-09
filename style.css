@@ -4539,3 +4539,31 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 .war-modal-class-tabs{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.war-modal-class-tabs button{display:grid;place-items:center;min-width:38px;height:38px;padding:4px 7px;color:#f8e6dd;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:5px;font-size:11px;font-weight:900}.war-modal-class-tabs img{width:27px;height:27px;object-fit:contain}.war-modal-class-tabs button.is-active{border-color:#e6b84f;background:rgba(160,40,50,.35)}
 .war-modal-member-list{display:grid;gap:7px;max-height:330px;overflow:auto}.war-modal-member-option{display:flex;align-items:center;gap:11px;width:100%;padding:10px;color:#fff;text-align:left;background:rgba(0,0,0,.26);border:1px solid color-mix(in srgb,var(--class-color) 45%,transparent);border-radius:6px}.war-modal-member-option:hover{background:color-mix(in srgb,var(--class-color) 12%,rgba(0,0,0,.35));border-color:var(--class-color)}.war-modal-member-option img{width:32px;height:32px;object-fit:contain}.war-modal-member-option span{display:grid;gap:3px;flex:1}.war-modal-member-option small{color:#d1bcb7;font-size:11px}.war-modal-member-option b{color:var(--class-color);font-size:11px}.war-modal-status{min-height:18px;margin:10px 0 0;color:#ffb6bd;font-size:12px}
 @media(max-width:650px){#page-war .war-assignment-search-row{align-items:stretch}#page-war .war-count-chip{margin-left:0}.war-assignment-modal-panel{padding:20px 15px}}
+
+/* PARTY ASSIGNMENT — reference-matched raid roster cards */
+#page-war .raid-section{padding:12px 0 18px;margin:0 0 20px;background:transparent;border:0;box-shadow:none;backdrop-filter:none}
+#page-war .raid-title{display:flex;align-items:center;gap:12px;margin:0 0 10px;padding:0 2px}
+#page-war .raid-title h2{font-size:21px;line-height:1.15;letter-spacing:1.2px;font-weight:900}
+#page-war .raid-title p{display:none}
+#page-war .raid-grid{display:grid;grid-template-columns:repeat(5,minmax(380px,1fr));gap:8px;align-items:start;overflow-x:auto;padding:0 0 8px;scrollbar-width:thin}
+#page-war .party-card{display:grid;grid-template-rows:34px auto;gap:0;min-width:380px;min-height:0;padding:0;background:transparent;border:0;border-radius:0;box-shadow:none;backdrop-filter:none}
+#page-war .party-card:hover{background:transparent;border:0}
+#page-war .party-header{display:flex;align-items:center;justify-content:center;gap:6px;margin:0;padding:0 0 7px;border:0}
+#page-war .party-header h3{font-size:16px;line-height:1;font-weight:900;color:#fff}
+#page-war .party-count{font-size:12px;font-weight:600;color:rgba(220,218,230,.45)}
+#page-war .party-slots{display:grid;grid-template-rows:repeat(6,108px);gap:6px}
+#page-war .party-slot.war-member-slot{display:flex;align-items:center;gap:13px;min-width:0;min-height:108px;height:108px;padding:12px 10px;border:1px solid color-mix(in srgb,var(--class-color) 92%,transparent);border-radius:11px;background:color-mix(in srgb,var(--class-color) 17%,rgba(18,17,30,.92));box-shadow:inset 0 1px rgba(255,255,255,.035);transition:border-color .16s,background .16s,box-shadow .16s}
+#page-war .party-slot.war-member-slot:hover{border-color:var(--class-color);background:color-mix(in srgb,var(--class-color) 22%,rgba(18,17,30,.92));box-shadow:0 0 14px color-mix(in srgb,var(--class-color) 20%,transparent)}
+#page-war .war-slot-class-icon{display:block;width:58px;height:58px;flex:0 0 58px;object-fit:contain}
+#page-war .war-member-identity{display:flex;flex:1 1 auto;min-width:0;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;text-align:left}
+#page-war .war-member-identity .slot-member-name{display:block;max-width:100%;overflow:hidden;color:#fff;font-size:15px;line-height:1.25;font-weight:850;text-overflow:ellipsis;white-space:nowrap}
+#page-war .war-member-class{color:var(--class-color);font-size:12px;line-height:1.15;font-weight:950;letter-spacing:1px;text-transform:uppercase}
+#page-war .war-member-skills{display:flex;flex:0 0 auto;align-items:center;gap:6px;min-width:0}
+#page-war .war-member-slot-edit{position:absolute;right:8px;bottom:5px;font-size:8px;opacity:0;transition:opacity .15s}
+#page-war .war-member-slot{position:relative}
+#page-war .war-member-slot:hover .war-member-slot-edit{opacity:.72}
+#page-war .party-slot:not(.war-member-slot){display:flex;align-items:center;gap:12px;min-height:108px;height:108px;padding:12px 14px;border:1px dashed rgba(225,205,220,.22);border-radius:11px;background:rgba(18,17,30,.42)}
+#page-war .war-empty-slot-number{display:grid;place-items:center;width:26px;height:26px;flex:0 0 26px;border-radius:50%;color:rgba(255,255,255,.55);background:rgba(255,255,255,.07);font-size:12px;font-weight:800}
+#page-war .party-slot .war-slot-add-button{height:44px;min-height:44px;width:100%;font-size:14px}
+#page-war .party-slot .slot-empty{font-size:12px;color:rgba(240,232,240,.45)}
+@media(max-width:900px){#page-war .raid-grid{grid-template-columns:repeat(5,minmax(350px,1fr))}#page-war .party-card{min-width:350px}}
