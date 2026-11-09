@@ -4751,3 +4751,6 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 @media(max-width:700px){.number-guess-hero{min-height:190px;padding:24px 18px}.number-guess-orb{right:-28px;width:112px;height:112px;opacity:.65}.number-guess-hero-content{max-width:75%}.number-guess-stats{gap:6px}.number-guess-stat{padding:10px 8px}.number-guess-stat strong{font-size:23px}.number-guess-grid{gap:4px}.number-guess-cell{aspect-ratio:1.05;border-radius:3px}.number-guess-grid-wrap{padding:9px}.number-guess-selection-bar{align-items:flex-start;flex-direction:column}.number-guess-selection-bar p{text-align:left}.number-guess-rules{gap:8px 12px}.number-guess-participant{grid-template-columns:40px 1fr auto}.number-guess-participant time{grid-column:2/-1}}
 @media(prefers-reduced-motion:reduce){.number-guess-orb:before,.number-guess-orb:after{animation:none}.number-guess-cell{transition:none}}
 
+
+/* Guild activities parent label follows primary sidebar typography */
+.sidebar .nav-parent[data-toggle-submenu="guild-activities-submenu"] > span:not(.nav-chevron){font-weight:700}
