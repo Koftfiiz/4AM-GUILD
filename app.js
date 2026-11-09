@@ -36,6 +36,7 @@ let warAttendanceEvents = [];
 let warAttendanceEventId = null;
 let warRealtimeChannel = null;
 let registrationBusy = false;
+let warArrangeMode = false;
 
 const $ = (id) => document.getElementById(id);
 
@@ -2235,6 +2236,8 @@ function renderWarLayout(eventId = selectedWarEventId) {
   if(!event){selectedWarEventId=null;currentWarParties=[];currentWarPartyAssignments=[];currentWarAssignmentEventId=null;if(summary)summary.innerHTML="";if(boards)boards.innerHTML="";stage?.classList.add("hidden");return;}
   selectedWarEventId=event.id;
   const config=getWarEventConfig(event),letters=["A","B","C","D"].slice(0,config.raidCount);
+  warArrangeMode = false;
+  const modifyButton=$("war-modify-toggle");if(modifyButton){modifyButton.classList.add("is-inactive");modifyButton.innerHTML='<svg class="icon"><use href="#i-edit"/></svg><span>แก้ไข</span>';modifyButton.setAttribute("aria-pressed","false");}
   stage?.classList.remove("hidden");
   if(summary)summary.innerHTML=`
     <article class="stat-card stat-card-sm"><div class="stat-icon"><svg class="icon"><use href="#i-swords"/></svg></div><div class="stat-info"><span class="stat-label">TOTAL CAPACITY</span><div class="stat-value"><strong>${config.raidCount*30}</strong></div><small>${config.mode==="practice"?"Practice War":"Official War"}</small></div></article>
@@ -2261,7 +2264,7 @@ async function loadSelectedWarEvent(eventId) {
 }
 function renderAllWarParties() {
   const event=allWarEvents.find(item=>item.id===currentWarAssignmentEventId);if(!event)return;
-  const config=getWarEventConfig(event),editable=isManagement()&&!event.is_published;
+  const config=getWarEventConfig(event),editable=isManagement()&&!event.is_published&&warArrangeMode;
   ["A","B","C","D"].slice(0,config.raidCount).forEach(letter=>renderRaid(`raid-${letter.toLowerCase()}`,letter,currentWarParties.filter(party=>party.raid===letter),{editable}));
 }
 
@@ -2327,13 +2330,16 @@ function renderRaid(containerId, raidName, parties = [], options = {}) {
             return `
               <div class="party-slot party-slot-editor" data-war-slot>
                 <span class="slot-number">${position}</span>
-                <select class="war-slot-class" aria-label="เลือกอาชีพช่อง ${position}" data-party-id="${escapeHTML(party.id)}" data-position="${position}">
-                  <option value="">อาชีพ</option>${classOptions}
-                </select>
-                <img class="war-slot-class-icon hidden" alt="" data-war-class-icon>
-                <select class="war-slot-member" aria-label="เลือกสมาชิกช่อง ${position}" disabled data-party-id="${escapeHTML(party.id)}" data-position="${position}">
-                  <option value="">เลือกสมาชิก</option>
-                </select>
+                <button class="war-slot-add-button" type="button" data-war-add-slot aria-label="เพิ่มสมาชิกช่อง ${position}">＋ ADD</button>
+                <div class="war-slot-picker hidden" data-war-slot-picker>
+                  <select class="war-slot-class" aria-label="เลือกอาชีพช่อง ${position}" data-party-id="${escapeHTML(party.id)}" data-position="${position}">
+                    <option value="">เลือกอาชีพ</option>${classOptions}
+                  </select>
+                  <img class="war-slot-class-icon hidden" alt="" data-war-class-icon>
+                  <select class="war-slot-member" aria-label="เลือกสมาชิกช่อง ${position}" disabled data-party-id="${escapeHTML(party.id)}" data-position="${position}">
+                    <option value="">เลือกสมาชิก</option>
+                  </select>
+                </div>
               </div>`;
           }).join("")}
         </div>
@@ -3176,7 +3182,19 @@ function subscribeToWarRealtime() {
 
 function registerWarCreationEvents(){
   $("war-raid-boards")?.addEventListener("change",handleWarSlotChange);
-  $("war-raid-boards")?.addEventListener("click",event=>{const button=event.target.closest("[data-war-remove]");if(button)removeWarPartyMember(button.dataset.warRemove,button);});
+  $("war-raid-boards")?.addEventListener("click",event=>{
+    const addButton=event.target.closest("[data-war-add-slot]");
+    if(addButton){const slot=addButton.closest("[data-war-slot]");addButton.classList.add("hidden");slot?.querySelector("[data-war-slot-picker]")?.classList.remove("hidden");slot?.querySelector(".war-slot-class")?.focus();return;}
+    const button=event.target.closest("[data-war-remove]");if(button)removeWarPartyMember(button.dataset.warRemove,button);
+  });
+  $("war-modify-toggle")?.addEventListener("click",()=>{
+    const activeWar=allWarEvents.find(item=>item.id===currentWarAssignmentEventId);
+    if(!isManagement()||!activeWar||activeWar.is_published)return;
+    warArrangeMode=!warArrangeMode;
+    const button=$("war-modify-toggle");
+    if(button){button.classList.toggle("is-inactive",!warArrangeMode);button.innerHTML=warArrangeMode?'<svg class="icon"><use href="#i-check"/></svg><span>เสร็จสิ้น</span>':'<svg class="icon"><use href="#i-edit"/></svg><span>แก้ไข</span>';button.setAttribute("aria-pressed",String(warArrangeMode));}
+    renderAllWarParties();
+  });
   $("war-events")?.addEventListener("click",event=>{
     const deleteButton=event.target.closest("[data-war-delete]");
     if(deleteButton){deleteWarEvent(deleteButton.dataset.warDelete,deleteButton);return;}
