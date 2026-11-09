@@ -2622,6 +2622,10 @@ async function exportWarImage(){
   if(!event||!event.is_draft_confirmed)return;
   const config=getWarEventConfig(event),width=1600,raidNames=["A","B","C","D"].slice(0,config.raidCount);
   const height=330+config.raidCount*510,esc=value=>escapeHTML(String(value??""));
+  const roundTimes=config.rounds?.length?config.rounds:[formatTime(event.start_time)];
+  const dateTimeLabel=config.mode==="official"
+    ? `${formatDate(event.event_date)} ${roundTimes.map((time,index)=>`รอบ ${index+1} เวลา ${time} น.`).join(" | ")}`
+    : `${formatDate(event.event_date)} เวลา ${formatTime(event.start_time)} น.`;
   const toDataUrl=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});
   try{
     const [background,logo,fontCss]=await Promise.all([
@@ -2645,10 +2649,9 @@ async function exportWarImage(){
       <image x="70" y="61" width="96" height="96" preserveAspectRatio="xMidYMid meet" href="${logo}" xlink:href="${logo}"/>
       <text x="185" y="119" fill="#ffffff" font-size="48" font-family="Noto Sans Thai" font-weight="900" letter-spacing="3">4AM GUILD</text>
       <path d="M185 133 H530" stroke="#e21b35" stroke-width="5"/>
-      <text x="185" y="158" fill="#d6cdd0" font-size="19" font-family="Noto Sans Thai" font-weight="700" letter-spacing="2">THE OUTRAGEOUS</text>
       <text x="1515" y="101" text-anchor="end" fill="#ff4054" font-size="21" font-family="Noto Sans Thai" font-weight="900" letter-spacing="3">GUILD WAR ROSTER</text>
       <text x="1515" y="139" text-anchor="end" fill="#ffffff" font-size="22" font-family="Noto Sans Thai" font-weight="700">${esc(event.event_name)}</text>
-      <text x="1515" y="163" text-anchor="end" fill="#c9bfc2" font-size="17" font-family="Noto Sans Thai">${esc(formatDate(event.event_date))}  ·  ${esc(formatTime(event.start_time))} น.</text>`];
+      <text x="1515" y="163" text-anchor="end" fill="#c9bfc2" font-size="16" font-family="Noto Sans Thai" font-weight="600">${esc(dateTimeLabel)}</text>`];
     let y=220;
     for(const [raidIndex,raid] of raidNames.entries()){
       parts.push(`<rect x="48" y="${y}" width="1504" height="42" rx="6" fill="url(#redAccent)" stroke="#ef263f" stroke-opacity=".95" stroke-width="2"/>
@@ -2677,7 +2680,7 @@ async function exportWarImage(){
       }
       y+=510;
     }
-    parts.push(`<text x="800" y="${height-35}" text-anchor="middle" fill="#c7bfc1" font-size="15" font-family="Noto Sans Thai" letter-spacing="3">4AM vs ${esc(event.event_name.replace(/^4AM\s+vs\s+/i,""))}</text></svg>`);
+    parts.push(`<text x="800" y="${height-42}" text-anchor="middle" fill="#ffffff" font-size="32" font-family="Noto Sans Thai" font-weight="900" letter-spacing="4">4AM vs ${esc(event.event_name.replace(/^4AM\s+vs\s+/i,""))}</text></svg>`);
     const svg=parts.join("");
     const svgWithFonts=fontCss?svg.replace(">",`><style>${fontCss}</style>`):svg;
     const svgUrl=URL.createObjectURL(new Blob([svgWithFonts],{type:"image/svg+xml;charset=utf-8"}));
