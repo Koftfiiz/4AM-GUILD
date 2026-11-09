@@ -4641,3 +4641,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
   }
   #app-layout.sidebar-collapsed .sidebar .nav-subitem{min-height:42px}
 }
+
+/* Empty party slots: keep only the ADD action, in regular font weight */
+#page-war .war-empty-slot-number{display:none!important}
+#page-war .party-slot .war-slot-add-button{font-weight:400!important;letter-spacing:.02em}
