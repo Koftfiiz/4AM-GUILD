@@ -2677,7 +2677,7 @@ async function exportWarImage(){
       }
       y+=510;
     }
-    parts.push(`<text x="800" y="${height-35}" text-anchor="middle" fill="#c7bfc1" font-size="15" font-family="Noto Sans Thai" letter-spacing="3">4AM GUILD  ·  THE OUTRAGEOUS</text></svg>`);
+    parts.push(`<text x="800" y="${height-35}" text-anchor="middle" fill="#c7bfc1" font-size="15" font-family="Noto Sans Thai" letter-spacing="3">4AM vs ${esc(event.event_name.replace(/^4AM\\s+vs\\s+/i,""))}</text></svg>`);
     const svg=parts.join("");
     const svgWithFonts=fontCss?svg.replace(">",`><style>${fontCss}</style>`):svg;
     const svgUrl=URL.createObjectURL(new Blob([svgWithFonts],{type:"image/svg+xml;charset=utf-8"}));
