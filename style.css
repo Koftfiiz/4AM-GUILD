@@ -3418,8 +3418,11 @@ body #registration-screen.login-card::after {
 .war-create-panel .form-group > label { color:var(--muted); font-size:15px; font-weight:600; }
 .war-create-panel input:not([type=radio]), .war-create-panel select { width:100%; min-height:50px; padding:10px 14px; color:var(--text); background:rgba(0,0,0,.35); border:1px solid var(--line); border-radius:6px; font-size:17px; }
 .war-event-fields { display:grid; grid-template-columns:1fr; gap:8px; }
-.war-schedule-fields { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
-.war-schedule-fields .form-group { min-width:0; }
+.war-schedule-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; width:100%; align-items:start; }
+.war-schedule-fields .form-group { min-width:0; width:100%; }
+.war-schedule-fields .war-schedule-display { display:block; width:100%; min-width:0; max-width:100%; box-sizing:border-box; margin:0; }
+.war-schedule-fields .war-time-input-wrap { width:100%; min-width:0; }
+.war-schedule-fields .war-time-input-wrap input { width:100%; min-width:0; max-width:100%; box-sizing:border-box; }
 .war-opponent-row { justify-items:center; text-align:center; margin-top:3px; }
 .war-opponent-row > label { text-align:center; }
 .war-vs-field { display:flex; align-items:center; justify-content:center; gap:18px; width:100%; }
