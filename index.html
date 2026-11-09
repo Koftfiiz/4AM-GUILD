@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=war-signup-two-saturdays-round-display-picker-fix-20261110";;
+          app.src = "app.js?v=duck-race-number-guess-demo-20261110";;
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -228,7 +228,7 @@
           <div id="guild-activities-submenu" class="nav-submenu">
             <button class="nav-subitem" data-page="activities">
               <span class="nav-subitem-dot"></span>
-              <span>มินิเกมแจกของรางวัล</span>
+              <span>Duck Race</span>
             </button>
             <button class="nav-subitem" data-page="number-guess">
               <span class="nav-subitem-dot"></span>
@@ -750,10 +750,9 @@
         <section class="number-guess-admin-panel panel hidden" id="number-guess-admin-panel">
           <div class="panel-heading">
             <div><span class="panel-kicker">MANAGEMENT CONTROL</span><h3>เปิดกิจกรรมทายตัวเลข</h3></div>
-            <button type="button" class="btn btn-primary" id="number-guess-create-open">＋ สร้างกิจกรรม</button>
+            <div class="number-guess-admin-actions"><button type="button" class="btn btn-outline btn-sm" id="number-guess-demo-reset">ล้างกิจกรรมทดลอง</button><button type="button" class="btn btn-primary" id="number-guess-create-open">＋ สร้างกิจกรรม</button></div>
           </div>
           <form id="number-guess-create-form" class="number-guess-create-form hidden">
-            <div class="form-group"><label for="number-guess-war-select">อ้างอิงรายชื่อ Guild War</label><select id="number-guess-war-select" required><option value="">กำลังโหลดรายการวอร์...</option></select></div>
             <div class="form-group"><label for="number-guess-title">ชื่อกิจกรรม</label><input id="number-guess-title" maxlength="120" required placeholder="เช่น 4AM Lucky Number #01"></div>
             <div class="form-group"><label for="number-guess-close">เวลาปิดรับตัวเลข</label><input id="number-guess-close" type="datetime-local" required></div>
             <div class="number-guess-form-actions"><button type="button" class="btn btn-outline" id="number-guess-create-cancel">ยกเลิก</button><button type="submit" class="btn btn-primary" id="number-guess-create-submit">เปิดกิจกรรม</button></div>
@@ -771,9 +770,14 @@
             <div class="number-guess-stat"><span>CLAIMED</span><strong id="number-guess-claimed-count">—</strong><small>หมายเลขถูกเลือกแล้ว</small></div>
             <div class="number-guess-stat"><span>AVAILABLE</span><strong id="number-guess-available-count">—</strong><small>หมายเลขที่ยังว่าง</small></div>
           </div>
+          <div class="number-guess-player-entry">
+            <label for="number-guess-player-name">ชื่อที่ใช้ทดลอง (ไม่ต้องเชื่อมบัญชี)</label>
+            <input id="number-guess-player-name" maxlength="32" autocomplete="off" placeholder="พิมพ์ชื่อเล่นของคุณ">
+            <small>ชื่อเดียวกันเลือกได้หนึ่งหมายเลขต่อกิจกรรม · ข้อมูลเก็บในเบราว์เซอร์นี้</small>
+          </div>
           <div class="number-guess-selection-bar">
             <div><span class="number-guess-selection-label">YOUR NUMBER</span><strong id="number-guess-own-number">--</strong></div>
-            <p id="number-guess-selection-hint">เลือกหมายเลขที่ยังว่างได้หนึ่งหมายเลข</p>
+            <p id="number-guess-selection-hint">ใส่ชื่อเล่นแล้วเลือกหมายเลขที่ยังว่างได้หนึ่งหมายเลข</p>
           </div>
           <div class="number-guess-grid-wrap">
             <div class="number-guess-grid-heading"><span>SELECT YOUR LUCKY NUMBER</span><span>00 / 99</span></div>
@@ -789,7 +793,7 @@
           <div class="number-guess-rules">
             <span>◈ ONE MEMBER / ONE NUMBER</span>
             <span>◈ DUPLICATE NUMBERS BLOCKED</span>
-            <span>◈ WAR ROSTER ONLY · MAIN + RESERVE</span>
+            <span>◈ DEMO MODE · NO GUILD ROSTER LINK</span>
           </div>
           <p class="number-guess-feedback" id="number-guess-feedback" aria-live="polite"></p>
         </section>
@@ -802,34 +806,40 @@
       <!-- ============ GUILD ACTIVITIES ============ -->
       <section id="page-activities" class="page page-padded hidden">
         <div class="page-intro">
-          <span class="section-kicker">GUILD COMMUNITY</span>
-          <h1>มินิเกมแจกของรางวัล</h1>
-          <p>ลงทะเบียนร่วมกิจกรรมและเล่นมินิเกมลุ้นรางวัลหลัง Guild War</p>
+          <span class="section-kicker">4AM GUILD · MINI GAME</span>
+          <h1>Duck Race</h1>
+          <p>มินิเกมแข่งเป็ดลุ้นรางวัล · ทดลองหน้าตาและระบบการแข่งขันโดยยังไม่เชื่อมรายชื่อสมาชิก</p>
         </div>
 
-
-        <section class="panel reward-events-panel" aria-label="กิจกรรมแจกของรางวัล">
-          <div class="panel-heading activities-heading">
+        <section class="duck-race-shell panel" aria-label="Duck Race demo">
+          <div class="duck-race-heading">
             <div>
-              <span class="panel-kicker">4AM GUILD · POST WAR REWARDS</span>
-              <h3>กิจกรรมแจกของรางวัล</h3>
-              <p class="muted">ลงทะเบียนผ่าน Discord หรือเว็บไซต์ได้ รายชื่อจะซิงก์เข้าฐานข้อมูลเดียวกัน</p>
+              <span class="duck-race-kicker">4AM DUCK RACE · ARCADE PREVIEW</span>
+              <h2 id="duck-race-title">4AM DUCK RACE</h2>
+              <p id="duck-race-prize">รางวัลเซอร์ไพรส์</p>
             </div>
-            <button type="button" class="btn btn-primary management-only is-role-hidden" data-management-only aria-hidden="true" id="reward-create-open">＋ เปิดกิจกรรม</button>
+            <span class="duck-race-demo-badge">DEMO MODE</span>
           </div>
-          <form id="reward-create-form" class="reward-create-form hidden">
-            <div class="form-group"><label for="reward-war-event-select">Guild War ที่ใช้ตรวจสอบสิทธิ์</label><select id="reward-war-event-select" required><option value="">กำลังโหลดรายการวอร์...</option></select></div>
-            <div class="form-group"><label for="reward-title-input">ชื่อกิจกรรมแจกของรางวัล</label><input id="reward-title-input" maxlength="120" required placeholder="เช่น Post War Reward #01"></div>
-            <div class="form-group"><label for="reward-description-input">รายละเอียด / ของรางวัล</label><textarea id="reward-description-input" rows="2" maxlength="1000" placeholder="รายละเอียดของรางวัล (ไม่บังคับ)"></textarea></div>
-            <div class="form-group"><label for="reward-close-input">กำหนดเวลาปิดลงชื่อ</label><input id="reward-close-input" type="datetime-local" required></div>
-            <div class="rule-editor-actions"><button type="button" class="btn btn-outline" id="reward-create-cancel">ยกเลิก</button><button type="submit" class="btn btn-primary" id="reward-create-submit">เปิดกิจกรรม</button></div>
-            <p class="message" id="reward-create-message"></p>
-          </form>
-          <div id="reward-events-list" class="reward-events-list" aria-live="polite"><div class="empty-state"><span>◷</span><h3>กำลังโหลดกิจกรรมแจกของรางวัล</h3><p>กรุณารอสักครู่</p></div></div>
-          <section id="reward-participants-panel" class="reward-participants-panel hidden">
-            <div class="panel-heading"><div><span class="panel-kicker">REGISTERED PLAYERS</span><h3 id="reward-participants-title">รายชื่อผู้ลงทะเบียน</h3></div><button type="button" class="btn btn-outline btn-sm" id="reward-participants-close">ปิด</button></div>
-            <div id="reward-participants-list" class="reward-participants-list"></div>
+          <div class="duck-race-notice"><strong>โหมดทดลอง</strong><span>ยังไม่เชื่อมรายชื่อวอร์หรือบัญชีสมาชิก ผลการแข่งขันจะถูกจำลองในเบราว์เซอร์นี้เท่านั้น</span></div>
+          <section class="duck-race-admin panel hidden" id="duck-race-admin">
+            <div class="panel-heading"><div><span class="panel-kicker">MANAGEMENT CONTROL</span><h3>ตั้งค่าการแข่งขัน</h3></div></div>
+            <form id="duck-race-form" class="duck-race-form">
+              <div class="form-group"><label for="duck-race-title-input">ชื่อการแข่งขัน</label><input id="duck-race-title-input" maxlength="80" value="4AM DUCK RACE" required></div>
+              <div class="form-group"><label for="duck-race-prize-input">ของรางวัล</label><input id="duck-race-prize-input" maxlength="120" value="รางวัลเซอร์ไพรส์" required></div>
+              <div class="form-group"><label for="duck-race-count-input">จำนวนเป็ด</label><select id="duck-race-count-input"><option value="4">4 ตัว</option><option value="6" selected>6 ตัว</option><option value="8">8 ตัว</option></select></div>
+              <div class="duck-race-form-actions"><button type="button" class="btn btn-outline" id="duck-race-cancel">ยกเลิก</button><button type="submit" class="btn btn-primary">บันทึกการตั้งค่า</button></div>
+              <p id="duck-race-form-message" class="message"></p>
+            </form>
           </section>
+          <div class="duck-race-track-header"><span>START</span><span>FINISH</span></div>
+          <div id="duck-race-track" class="duck-race-track" aria-live="polite"></div>
+          <div class="duck-race-result" id="duck-race-result"><span class="duck-race-result-icon">🏁</span><div><strong>พร้อมลงสนามหรือยัง?</strong><p>กดเริ่มการแข่งขันเพื่อดูเป็ดทั้งสนามแข่งกัน</p></div></div>
+          <div class="duck-race-controls">
+            <button type="button" class="btn btn-primary" id="duck-race-start">▶ เริ่มการแข่งขัน</button>
+            <button type="button" class="btn btn-outline" id="duck-race-reset">↻ รีเซ็ตสนาม</button>
+            <button type="button" class="btn btn-outline management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-settings">⚙ ตั้งค่าเกม</button>
+          </div>
+          <p class="duck-race-footnote">หมายเหตุ: ตอนนี้เป็น Prototype สำหรับดูหน้าตาและทดสอบ Animation เท่านั้น ยังไม่มีการลงทะเบียนผู้เล่น การสุ่มผู้ชนะจากรายชื่อ หรือการแจกของรางวัลจริง</p>
         </section>
         <section class="panel activities-panel">
           <div class="panel-heading activities-heading">
@@ -885,7 +895,7 @@
       <!-- ============ GUILD RULES ============ -->
 <section id="page-rules" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">GUILD GUIDELINES</span><h1>กฎกิลด์</h1><p>อ่านข้อกำหนดและแนวทางการอยู่ร่วมกันของสมาชิก 4AM</p></div><div class="settings-grid rule-cards-grid">
 <section class="panel rule-card" data-rule-card="regulations">
-<div class="panel-heading"><div><span class="panel-kicker">GUILD REGULATIONS</span><h3>กฎระเบียบกิลด์</h3></div><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden management-only" data-management-only aria-hidden="true" data-rule-edit="regulations" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button><button type="button" class="btn btn-outline btn-sm rule-delete-btn hidden management-only" data-management-only aria-hidden="true" data-rule-delete="regulations" title="ลบรายละเอียดกฎ">ลบ</button></div>
+<div class="panel-heading"><div><span class="panel-kicker">GUILD REGULATIONS</span><h3>กฎระเบียบกิลด์</h3></div><div class="rule-card-actions"><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden management-only" data-management-only aria-hidden="true" data-rule-edit="regulations" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button><button type="button" class="btn btn-outline btn-sm rule-delete-btn hidden management-only" data-management-only aria-hidden="true" data-rule-delete="regulations" title="ลบรายละเอียดกฎ">ลบ</button></div></div>
 <div class="rule-content" id="rule-content-regulations"><div class="empty-state"><span>◈</span><h3>ยังไม่มีรายละเอียด</h3><p>รายละเอียดของหัวข้อนี้จะแสดงที่นี่</p></div></div>
 <button type="button" class="btn btn-primary rule-add-btn management-only is-role-hidden" data-management-only aria-hidden="true" data-rule-add="regulations">＋ เพิ่มรายละเอียด</button>
 <div class="rule-editor hidden" id="rule-editor-regulations">
@@ -895,7 +905,7 @@
 <div class="rule-editor-actions"><button type="button" class="btn btn-outline" data-rule-cancel="regulations">ยกเลิก</button><button type="button" class="btn btn-primary" data-rule-save="regulations">บันทึกรายละเอียด</button></div><p class="message" data-rule-message="regulations"></p></div></section>
 
 <section class="panel rule-card" data-rule-card="war">
-<div class="panel-heading"><div><span class="panel-kicker">EVENT &amp; GUILD WAR RULES</span><h3>กฎกิจกรรมและกิลด์วอร์</h3></div><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden management-only" data-management-only aria-hidden="true" data-rule-edit="war" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button><button type="button" class="btn btn-outline btn-sm rule-delete-btn hidden management-only" data-management-only aria-hidden="true" data-rule-delete="war" title="ลบรายละเอียดกฎ">ลบ</button></div>
+<div class="panel-heading"><div><span class="panel-kicker">EVENT &amp; GUILD WAR RULES</span><h3>กฎกิจกรรมและกิลด์วอร์</h3></div><div class="rule-card-actions"><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden management-only" data-management-only aria-hidden="true" data-rule-edit="war" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button><button type="button" class="btn btn-outline btn-sm rule-delete-btn hidden management-only" data-management-only aria-hidden="true" data-rule-delete="war" title="ลบรายละเอียดกฎ">ลบ</button></div></div>
 <div class="rule-content" id="rule-content-war"><div class="empty-state"><span>◈</span><h3>ยังไม่มีรายละเอียด</h3><p>รายละเอียดของหัวข้อนี้จะแสดงที่นี่</p></div></div>
 <button type="button" class="btn btn-primary rule-add-btn" data-rule-add="war">＋ เพิ่มรายละเอียด</button>
 <div class="rule-editor hidden" id="rule-editor-war">
@@ -905,7 +915,7 @@
 <div class="rule-editor-actions"><button type="button" class="btn btn-outline" data-rule-cancel="war">ยกเลิก</button><button type="button" class="btn btn-primary" data-rule-save="war">บันทึกรายละเอียด</button></div><p class="message" data-rule-message="war"></p></div></section>
 
 <section class="panel rule-card" data-rule-card="discord">
-<div class="panel-heading"><div><span class="panel-kicker">DISCORD RULES</span><h3>กฎ Discord กิลด์</h3></div><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden management-only" data-management-only aria-hidden="true" data-rule-edit="discord" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button><button type="button" class="btn btn-outline btn-sm rule-delete-btn hidden management-only" data-management-only aria-hidden="true" data-rule-delete="discord" title="ลบรายละเอียดกฎ">ลบ</button></div>
+<div class="panel-heading"><div><span class="panel-kicker">DISCORD RULES</span><h3>กฎ Discord กิลด์</h3></div><div class="rule-card-actions"><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden management-only" data-management-only aria-hidden="true" data-rule-edit="discord" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button><button type="button" class="btn btn-outline btn-sm rule-delete-btn hidden management-only" data-management-only aria-hidden="true" data-rule-delete="discord" title="ลบรายละเอียดกฎ">ลบ</button></div></div>
 <div class="rule-content" id="rule-content-discord"><div class="empty-state"><span>◈</span><h3>ยังไม่มีรายละเอียด</h3><p>รายละเอียดของหัวข้อนี้จะแสดงที่นี่</p></div></div>
 <button type="button" class="btn btn-primary rule-add-btn" data-rule-add="discord">＋ เพิ่มรายละเอียด</button>
 <div class="rule-editor hidden" id="rule-editor-discord">
