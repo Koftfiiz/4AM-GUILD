@@ -1,0 +1,159 @@
+/* 4AM GUILD — Fantasy Dashboard Rebuild
+   A complete visual layer for the existing application markup.
+   Keeps all data hooks, IDs, page selectors and permissions intact. */
+:root{
+  --f-bg:#080b12;--f-panel:rgba(16,22,34,.82);--f-panel-2:rgba(22,29,43,.88);
+  --f-line:rgba(210,174,112,.22);--f-gold:#d7b16d;--f-gold-hi:#f3dca7;
+  --f-red:#9e2637;--f-red-hi:#d94a59;--f-text:#f2eee8;--f-muted:#9ca8b8;
+  --f-blue:#91a9c9;--f-shadow:0 22px 70px rgba(0,0,0,.42);
+  --f-radius:18px;--f-display:"Cinzel","Noto Sans Thai",serif;
+  --f-body:"IBM Plex Sans Thai","Noto Sans Thai",sans-serif;
+}
+html{background:var(--f-bg)}
+body{font-family:var(--f-body)!important;color:var(--f-text);background:#080b12}
+body::before{background:linear-gradient(115deg,rgba(5,8,15,.94),rgba(8,12,21,.82) 48%,rgba(10,8,13,.94)),url("assets/4am-web-bg.jpg") center/cover fixed no-repeat!important}
+body::after{background:radial-gradient(ellipse at 78% 0%,rgba(151,42,54,.17),transparent 42%),radial-gradient(ellipse at 12% 35%,rgba(50,83,119,.12),transparent 38%),linear-gradient(180deg,transparent 65%,rgba(4,6,10,.5))!important}
+*,*::before,*:after{font-family:var(--f-body)!important}
+button,input,select,textarea{font-family:var(--f-body)!important}
+.app-layout{min-height:100vh;background:transparent}
+.sidebar{background:linear-gradient(180deg,rgba(9,14,23,.97),rgba(7,10,17,.97))!important;border-right:1px solid var(--f-line)!important;box-shadow:16px 0 55px rgba(0,0,0,.24);backdrop-filter:blur(24px);padding:18px 13px!important}
+.sidebar-brand{position:relative;margin:0 0 24px!important;padding:15px 10px 18px!important;border:1px solid var(--f-line);border-radius:17px;background:linear-gradient(145deg,rgba(183,137,68,.1),rgba(22,29,43,.42));box-shadow:inset 0 1px rgba(255,255,255,.05),0 12px 28px rgba(0,0,0,.2)}
+.sidebar-brand:after{content:"✦  THE NIGHT BELONGS TO US  ✦";display:block;margin-top:10px;color:#bca477;font-size:8px;letter-spacing:2px;text-align:center}
+.sidebar-brand img{width:68px!important;height:68px!important;object-fit:contain;filter:drop-shadow(0 0 16px rgba(207,166,96,.22))}
+.sidebar-brand strong{font-family:var(--f-display)!important;letter-spacing:2px;color:var(--f-gold-hi);font-size:15px}
+.sidebar-brand small{color:#8793a5;letter-spacing:2px;font-size:9px}
+.sidebar-divider{margin:20px 9px 9px!important;border-color:rgba(215,177,109,.15)!important}
+.sidebar-divider span{color:#8e9aae!important;letter-spacing:2px;font-size:9px}
+.nav-item,.nav-subitem{border-radius:11px!important;color:#aab4c3!important;transition:all .2s ease}
+.nav-item{height:44px!important;margin:3px 0;padding:0 13px!important}
+.nav-item .icon{font-size:17px;color:#8799b3}
+.nav-item:hover,.nav-subitem:hover{color:#fff!important;background:rgba(215,177,109,.09)!important;transform:translateX(2px)}
+.nav-item.active,.nav-subitem.active{color:var(--f-gold-hi)!important;background:linear-gradient(100deg,rgba(158,38,55,.27),rgba(215,177,109,.09))!important;border:1px solid rgba(215,177,109,.2);box-shadow:inset 3px 0 var(--f-gold),0 8px 22px rgba(0,0,0,.16)}
+.nav-item.active .icon{color:var(--f-gold)}
+.nav-submenu{border-left:1px solid rgba(215,177,109,.22)!important;margin-left:19px!important}
+.nav-subitem{min-height:35px!important;font-size:12px}
+.sidebar-art{border:1px solid var(--f-line);border-radius:15px;background:linear-gradient(145deg,rgba(123,36,48,.25),rgba(16,24,38,.7));min-height:92px;margin-top:20px}
+.sidebar-slogan b{font-family:var(--f-display)!important;color:var(--f-gold);letter-spacing:4px}
+.sidebar-slogan span{font-size:8px;letter-spacing:2px;color:#a7b0bf}
+.main-area{min-width:0;margin-left:var(--sidebar-width);padding:0 28px 50px}
+.topbar{height:76px!important;position:sticky!important;top:0;z-index:40;margin:0 -28px 18px!important;padding:0 30px!important;background:linear-gradient(180deg,rgba(8,12,20,.94),rgba(8,12,20,.72))!important;border-bottom:1px solid rgba(215,177,109,.14);backdrop-filter:blur(22px)}
+.topbar:before{content:"4AM  /  GUILD COMMAND";margin-right:auto;color:#c7ad7d;font:600 11px var(--f-display);letter-spacing:2px}
+.topbar-right{gap:11px}
+.conn-item,.user-chip,.feedback-notification-button{background:rgba(255,255,255,.035)!important;border:1px solid rgba(215,177,109,.17)!important;border-radius:12px!important;color:#c3ccd8!important;min-height:38px}
+.conn-discord{color:#b9c5ff!important}
+.feedback-notification-button{width:40px;height:40px}
+.user-avatar{border:1px solid rgba(215,177,109,.5);box-shadow:0 0 14px rgba(215,177,109,.13)}
+.user-dropdown,.feedback-notification-panel{background:rgba(12,18,29,.98)!important;border:1px solid var(--f-line)!important;box-shadow:var(--f-shadow)!important}
+.page{animation:fantasyReveal .35s ease both}
+@keyframes fantasyReveal{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* Dashboard hero becomes the cinematic guild landing panel */
+.page-dashboard{max-width:1600px;margin:0 auto}
+.dashboard-hero{height:clamp(330px,34vw,475px)!important;min-height:330px!important;position:relative;overflow:hidden;border:1px solid rgba(215,177,109,.34)!important;border-radius:22px!important;margin:0 0 22px!important;background:
+ linear-gradient(90deg,rgba(5,8,14,.96) 0%,rgba(7,10,17,.78) 42%,rgba(8,11,18,.12) 100%),
+ linear-gradient(0deg,rgba(5,8,14,.76),transparent 52%),
+ url("assets/4am-web-bg.jpg") center 42%/cover no-repeat!important;
+ box-shadow:0 28px 80px rgba(0,0,0,.5),inset 0 0 90px rgba(0,0,0,.24)}
+.dashboard-hero:before{content:"";position:absolute;inset:13px;border:1px solid rgba(226,190,126,.25);border-radius:15px;pointer-events:none}
+.dashboard-hero:after{content:"✦  ✧  ✦";position:absolute;right:6%;top:12%;font-size:22px;letter-spacing:18px;color:rgba(242,215,164,.6);text-shadow:0 0 24px #d9b36e}
+.hero-content{position:absolute!important;left:6%!important;top:25%!important;z-index:2;margin:0!important;padding:0!important;text-align:left!important}
+.hero-welcome{color:#d2b981!important;font-size:12px!important;letter-spacing:4px!important;text-transform:uppercase}
+.hero-content h1{font:700 clamp(42px,6vw,78px)/1.05 var(--f-display)!important;letter-spacing:5px!important;color:#f5e7c7!important;text-shadow:0 5px 35px rgba(0,0,0,.8),0 0 32px rgba(218,176,101,.2);margin:12px 0!important}
+.hero-subtitle{justify-content:flex-start!important;gap:13px!important;color:#d7b16d!important;letter-spacing:4px!important;font-size:11px!important}
+.hero-subtitle i{width:35px!important;background:linear-gradient(90deg,transparent,#c49c5d)!important}
+.hero-quote{left:6%!important;right:auto!important;bottom:12%!important;max-width:510px;padding:15px 20px!important;border-left:2px solid var(--f-gold)!important;background:linear-gradient(90deg,rgba(7,11,18,.72),transparent)!important;color:#d6d0c4!important;font-size:13px!important;line-height:1.9}
+.dash-body{padding:0 0 35px!important;max-width:none!important}
+.stats-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:15px!important;margin:0 0 20px!important}
+.stat-card{position:relative;overflow:hidden;min-height:116px!important;grid-template-columns:62px 1fr!important;padding:20px!important;border:1px solid var(--f-line)!important;border-radius:16px!important;background:linear-gradient(135deg,rgba(25,34,49,.9),rgba(12,18,29,.88))!important;box-shadow:0 15px 35px rgba(0,0,0,.22)!important}
+.stat-card:after{content:"";position:absolute;right:-35px;top:-45px;width:120px;height:120px;border:1px solid rgba(215,177,109,.1);border-radius:50%;box-shadow:0 0 0 15px rgba(215,177,109,.025),0 0 0 30px rgba(215,177,109,.018)}
+.stat-icon{width:52px!important;height:52px!important;border:1px solid rgba(215,177,109,.24);border-radius:14px!important;background:rgba(215,177,109,.08)!important;color:var(--f-gold)!important;font-size:27px!important}
+.stat-label{color:#9eabbc!important;font-size:11px!important;letter-spacing:.5px}
+.stat-value strong{font:700 28px var(--f-display)!important;color:#f2e5c8!important}
+.stat-value em,.stat-info small{color:#8492a6!important}
+.dashboard-columns{grid-template-columns:minmax(0,1.35fr) minmax(300px,.85fr)!important;gap:17px!important;margin-bottom:18px}
+.dash-card,.panel{position:relative;border:1px solid var(--f-line)!important;border-radius:17px!important;background:linear-gradient(145deg,rgba(20,28,42,.9),rgba(11,17,28,.9))!important;box-shadow:0 16px 42px rgba(0,0,0,.25)!important;backdrop-filter:blur(18px)}
+.dash-card{padding:21px!important}
+.dash-card-head,.panel-heading{border-bottom:1px solid rgba(215,177,109,.14)!important;padding-bottom:14px!important;margin-bottom:17px!important}
+.dash-card-head h3,.panel-heading h3{color:#ead9b7!important;font:600 14px var(--f-display)!important;letter-spacing:.8px}
+.dash-card-head h3 .icon{color:var(--f-gold)}
+.head-link,.head-btn{color:#cdb47e!important}
+.announcement-body{min-height:190px;border:1px solid rgba(215,177,109,.15);border-radius:13px;padding:22px;background:linear-gradient(110deg,rgba(105,28,41,.25),rgba(12,18,28,.45)),url("assets/4am-web-bg.jpg") center/cover}
+.announcement-text h4{font:600 21px var(--f-display)!important;color:#f2e5c8!important}
+.announcement-text p{color:#b9c3d0;line-height:1.9}
+.badge-important{background:rgba(157,39,55,.25)!important;border:1px solid rgba(220,94,104,.35);color:#f1b3ad!important}
+.profile-content,.profile-card-body{color:#c2ccda}
+.quick-panel{margin-top:18px}
+.quick-grid{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:11px!important}
+.quick-tile{min-height:100px!important;display:flex;flex-direction:column;align-items:flex-start!important;justify-content:center;padding:16px!important;border:1px solid rgba(215,177,109,.16)!important;border-radius:13px!important;background:linear-gradient(145deg,rgba(35,45,62,.68),rgba(12,18,28,.78))!important;color:#cbd4df!important;text-align:left!important}
+.quick-tile .icon{font-size:24px!important;color:var(--f-gold)!important;margin-bottom:10px}
+.quick-tile:hover{transform:translateY(-4px);border-color:rgba(215,177,109,.5)!important;box-shadow:0 12px 26px rgba(0,0,0,.3),0 0 22px rgba(215,177,109,.08)}
+/* Every internal module uses the same fantasy command-center language */
+.page-padded{max-width:1500px;margin:0 auto;padding:18px 0 42px!important}
+.page-intro{position:relative;padding:22px 26px!important;margin-bottom:20px!important;border:1px solid var(--f-line)!important;border-radius:16px!important;background:linear-gradient(100deg,rgba(91,28,41,.28),rgba(17,25,39,.86) 52%,rgba(12,18,29,.8))!important;box-shadow:var(--f-shadow)}
+.page-intro:after{content:"✦  4AM GUILD";position:absolute;right:25px;top:50%;transform:translateY(-50%);font:600 11px var(--f-display);letter-spacing:3px;color:rgba(215,177,109,.48)}
+.section-kicker,.panel-kicker{color:#c6a76e!important;letter-spacing:2.2px!important;font-size:9px!important}
+.page-intro h1{font:700 30px var(--f-display)!important;color:#f0e2c3!important;letter-spacing:1px}
+.page-intro p{color:#9eacbf!important}
+.panel{padding:22px!important}
+.panel-heading h3{font-size:17px!important}
+input,select,textarea{background:rgba(5,10,18,.72)!important;border:1px solid rgba(151,169,193,.24)!important;border-radius:10px!important;color:#edf0f4!important}
+input:focus,select:focus,textarea:focus{outline:none!important;border-color:rgba(215,177,109,.7)!important;box-shadow:0 0 0 3px rgba(215,177,109,.1)!important}
+input::placeholder,textarea::placeholder{color:#738196!important}
+.btn{border-radius:10px!important;letter-spacing:.3px}
+.btn-primary{background:linear-gradient(135deg,#a42d40,#6d1d2c)!important;border:1px solid rgba(226,177,109,.55)!important;color:#fff1d7!important;box-shadow:0 8px 22px rgba(110,24,39,.28)!important}
+.btn-primary:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn-outline,.btn-ghost{border:1px solid rgba(215,177,109,.27)!important;background:rgba(215,177,109,.055)!important;color:#d7c49e!important}
+.member-card,.portfolio-card,.activity-card,.rule-card,.war-event-card,.war-party-card{border:1px solid var(--f-line)!important;border-radius:15px!important;background:linear-gradient(145deg,rgba(25,34,49,.88),rgba(11,17,28,.9))!important;box-shadow:0 12px 30px rgba(0,0,0,.2)!important}
+.member-card:hover,.portfolio-card:hover,.activity-card:hover{border-color:rgba(215,177,109,.48)!important;transform:translateY(-3px);box-shadow:0 18px 38px rgba(0,0,0,.32)!important}
+.members-list,.portfolio-grid{gap:13px!important}
+.member-toolbar{margin:15px 0}
+.war-create-toolbar,.war-event-list,.raid-section,.war-layout,.war-attendance-panel{border-color:var(--f-line)!important}
+.raid-section{background:rgba(12,19,30,.72)!important;border:1px solid var(--f-line)!important;border-radius:15px!important}
+.war-party{background:rgba(22,31,46,.72)!important;border:1px solid rgba(215,177,109,.16)!important;border-radius:12px!important}
+.war-party-header{color:#e7d6b2!important}
+.guild-rich-table th,.war-record-table th,.war-attendance-member-table th{background:rgba(215,177,109,.08)!important;color:#e6d4ad!important}
+.guild-rich-table td,.war-record-table td,.war-attendance-member-table td{border-color:rgba(215,177,109,.12)!important}
+.login-screen{background:#070b13!important}
+.login-bg{background:linear-gradient(90deg,rgba(5,8,14,.88),rgba(5,8,14,.38)),url("assets/4am-web-bg.jpg") center/cover!important}
+.login-card{background:rgba(10,16,26,.88)!important;border:1px solid rgba(215,177,109,.35)!important;border-radius:22px!important;box-shadow:0 30px 90px rgba(0,0,0,.6),inset 0 1px rgba(255,255,255,.05)!important;backdrop-filter:blur(24px)}
+.login-heading h1{font:700 34px var(--f-display)!important;letter-spacing:3px;color:#f1dfb9!important}
+.login-heading p,.login-footer{color:#a99a7b!important;letter-spacing:2px}
+.login-emblem img{filter:drop-shadow(0 0 22px rgba(215,177,109,.25))}
+@media(max-width:1100px){
+ .main-area{padding:0 18px 35px}
+ .topbar{margin:0 -18px 16px!important;padding:0 20px!important}
+ .dashboard-columns{grid-template-columns:1fr!important}
+ .quick-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+ .dashboard-hero{height:350px!important}
+}
+@media(max-width:850px){
+ .main-area{margin-left:var(--sidebar-width);padding:0 13px 28px}
+ .topbar{margin:0 -13px 13px!important;padding:0 13px!important}
+ .topbar:before{font-size:8px;letter-spacing:1px}
+ .dashboard-hero{height:300px!important}
+ .hero-content{left:7%!important;top:25%!important}
+ .hero-content h1{font-size:clamp(34px,7vw,58px)!important}
+ .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
+@media(max-width:600px){
+ .main-area{padding:0 10px 22px}
+ .topbar{height:58px!important;margin:0 -10px 10px!important;padding:0 10px!important}
+ .topbar:before{content:"4AM GUILD";font-size:8px}
+ .dashboard-hero{height:245px!important;min-height:245px!important;border-radius:15px!important}
+ .dashboard-hero:before{inset:8px}
+ .hero-content{left:7%!important;top:26%!important}
+ .hero-content h1{font-size:31px!important;letter-spacing:2px!important}
+ .hero-welcome{font-size:9px!important;letter-spacing:2px!important}
+ .hero-subtitle{font-size:8px!important;letter-spacing:2px!important}
+ .hero-quote{left:6%!important;bottom:8%!important;font-size:9px!important;padding:7px 10px!important}
+ .stats-grid{grid-template-columns:1fr!important;gap:9px!important}
+ .stat-card{min-height:82px!important;padding:12px!important;grid-template-columns:46px 1fr!important}
+ .stat-icon{width:40px!important;height:40px!important}
+ .dash-card,.panel{padding:14px!important}
+ .quick-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .quick-tile{min-height:80px!important;padding:12px!important;font-size:11px}
+ .page-intro{padding:16px!important}
+ .page-intro:after{display:none}
+ .page-intro h1{font-size:23px!important}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important;scroll-behavior:auto!important}}
