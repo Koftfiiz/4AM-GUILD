@@ -120,3 +120,9 @@ input,select,textarea,.rule-editor-body{background:rgba(7,10,17,.88)!important;b
 .reference-hero-crest{position:relative}
 .reference-main-nav{padding-right:190px}
 @media(max-width:760px){.topbar{top:8px;right:7px}.reference-main-nav{padding-right:120px}}
+
+.reference-management-nav{margin-top:12px;padding-top:9px;border-top:1px solid rgba(219,172,100,.18)}
+.reference-management-nav>span{display:block;padding:0 7px 5px;color:#b89a6a;font-size:9px;letter-spacing:.14em}
+.reference-management-nav>.nav-item{width:100%;display:flex;align-items:center;gap:8px;text-align:left;padding:8px 7px;margin:2px 0;border:1px solid transparent;border-radius:6px;background:transparent;color:#d4d0cc;font-size:10px}
+.reference-management-nav>.nav-item .icon{color:#d9b879}
+.reference-management-nav>.nav-item:hover{background:rgba(207,159,80,.12);border-color:rgba(222,177,105,.3)}
