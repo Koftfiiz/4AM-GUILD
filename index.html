@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=war-evidence-20261110">
+  <link rel="stylesheet" href="style.css?v=reward-registration-20261110">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=war-evidence-20261110";
+          app.src = "app.js?v=reward-registration-20261110";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -717,6 +717,30 @@
           <p>ประกาศข่าวสาร สร้างกิจกรรม และติดตามเรื่องราวภายใน 4AM</p>
         </div>
 
+
+        <section class="panel reward-events-panel" aria-label="กิจกรรมแจกของรางวัล">
+          <div class="panel-heading activities-heading">
+            <div>
+              <span class="panel-kicker">4AM GUILD · POST WAR REWARDS</span>
+              <h3>กิจกรรมแจกของรางวัล</h3>
+              <p class="muted">ลงทะเบียนผ่าน Discord หรือเว็บไซต์ได้ รายชื่อจะซิงก์เข้าฐานข้อมูลเดียวกัน</p>
+            </div>
+            <button type="button" class="btn btn-primary management-only is-role-hidden" data-management-only aria-hidden="true" id="reward-create-open">＋ เปิดกิจกรรม</button>
+          </div>
+          <form id="reward-create-form" class="reward-create-form hidden">
+            <div class="form-group"><label for="reward-war-event-select">Guild War ที่ใช้ตรวจสอบสิทธิ์</label><select id="reward-war-event-select" required><option value="">กำลังโหลดรายการวอร์...</option></select></div>
+            <div class="form-group"><label for="reward-title-input">ชื่อกิจกรรมแจกของรางวัล</label><input id="reward-title-input" maxlength="120" required placeholder="เช่น Post War Reward #01"></div>
+            <div class="form-group"><label for="reward-description-input">รายละเอียด / ของรางวัล</label><textarea id="reward-description-input" rows="2" maxlength="1000" placeholder="รายละเอียดของรางวัล (ไม่บังคับ)"></textarea></div>
+            <div class="form-group"><label for="reward-close-input">กำหนดเวลาปิดลงชื่อ</label><input id="reward-close-input" type="datetime-local" required></div>
+            <div class="rule-editor-actions"><button type="button" class="btn btn-outline" id="reward-create-cancel">ยกเลิก</button><button type="submit" class="btn btn-primary" id="reward-create-submit">เปิดกิจกรรม</button></div>
+            <p class="message" id="reward-create-message"></p>
+          </form>
+          <div id="reward-events-list" class="reward-events-list" aria-live="polite"><div class="empty-state"><span>◷</span><h3>กำลังโหลดกิจกรรมแจกของรางวัล</h3><p>กรุณารอสักครู่</p></div></div>
+          <section id="reward-participants-panel" class="reward-participants-panel hidden">
+            <div class="panel-heading"><div><span class="panel-kicker">REGISTERED PLAYERS</span><h3 id="reward-participants-title">รายชื่อผู้ลงทะเบียน</h3></div><button type="button" class="btn btn-outline btn-sm" id="reward-participants-close">ปิด</button></div>
+            <div id="reward-participants-list" class="reward-participants-list"></div>
+          </section>
+        </section>
         <section class="panel activities-panel">
           <div class="panel-heading activities-heading">
             <div>
