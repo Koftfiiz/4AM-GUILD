@@ -85,7 +85,8 @@ const PAGE_TITLES = {
   "war-attendance-stats": "สถิติการเข้าร่วมวอร์",
   rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
-  activities: "กิจกรรมกิลด์",
+  activities: "มินิเกมแจกของรางวัล",
+  "number-guess": "กิจกรรมทายตัวเลข",
   feedback: "แจ้งปัญหา / Feedback",
   settings: "ตั้งค่าบัญชี",
   "system-management": "System Management"
@@ -3953,6 +3954,139 @@ function registerRewardEvents(){
  });
 }
 
+
+// ==========================================
+// 4AM GUILD — CYBERPUNK NUMBER GUESS (00–99)
+// Database RPC enforces one number per member and
+// one member per number with unique constraints.
+// ==========================================
+let numberGuessCurrentEvent=null;
+let numberGuessRealtimeChannel=null;
+let numberGuessWarOptions=[];
+
+function setNumberGuessFeedback(message,type="info"){
+ const node=$("number-guess-feedback");if(!node)return;
+ node.textContent=message;node.dataset.type=type;node.classList.toggle("is-error",type==="error");node.classList.toggle("is-success",type==="success");
+}
+function renderNumberGuessGrid(eventData){
+ const grid=$("number-guess-grid");if(!grid)return;
+ if(!eventData?.event_id){
+  grid.innerHTML='<div class="number-guess-empty">NO ACTIVE EVENT<br><small>ยังไม่มีกิจกรรมทายตัวเลขที่เปิดรับอยู่</small></div>';
+  $("number-guess-own-number").textContent="--";
+  $("number-guess-claimed-count").textContent="0";
+  $("number-guess-available-count").textContent="100";
+  return;
+ }
+ const taken=Array.isArray(eventData.taken_numbers)?eventData.taken_numbers:[];
+ const myNumber=eventData.my_number===null||eventData.my_number===undefined?null:Number(eventData.my_number);
+ const takenSet=new Set(taken.map(item=>Number(typeof item==="object"?item.number:item)));
+ const closed=eventData.status!=="open"||new Date(eventData.signup_closes_at).getTime()<=Date.now();
+ const eligible=Boolean(eventData.eligible);
+ $("number-guess-own-number").textContent=myNumber===null?"--":String(myNumber).padStart(2,"0");
+ $("number-guess-claimed-count").textContent=String(takenSet.size);
+ $("number-guess-available-count").textContent=String(100-takenSet.size);
+ $("number-guess-selection-hint").textContent=myNumber===null?(eligible&&!closed?"เลือกหมายเลขว่างได้หนึ่งหมายเลขเท่านั้น":"ยังไม่สามารถเลือกหมายเลขได้"):("คุณได้เลือกหมายเลข "+String(myNumber).padStart(2,"0")+" แล้ว");
+ const state=$("number-guess-event-state");
+ state.innerHTML='<span class="number-guess-state-icon">'+(closed?"◈":"⌁")+'</span><div><strong>'+escapeHTML(eventData.title||"กิจกรรมทายตัวเลข")+'</strong><p>'+escapeHTML(eventData.war_event_name||"Guild War")+' · ปิดรับ '+escapeHTML(activityDateLabel(eventData.signup_closes_at))+' · '+(closed?"ปิดรับหมายเลข": "กำลังเปิดรับหมายเลข")+'</p></div><span class="number-guess-event-status '+(closed?"closed":"open")+'">'+(closed?"CLOSED":"LIVE")+'</span>';
+ if(!eligible&&!isManagement())setNumberGuessFeedback("บัญชีของคุณไม่มีชื่อในรายชื่อวอร์ที่ใช้อ้างอิง จึงยังเลือกหมายเลขไม่ได้","error");
+ else if(closed)setNumberGuessFeedback("กิจกรรมนี้ปิดรับหมายเลขแล้ว","info");
+ else if(myNumber!==null)setNumberGuessFeedback("บันทึกหมายเลขของคุณแล้ว หมายเลขนี้ไม่สามารถเปลี่ยนหรือเลือกซ้ำได้","success");
+ else setNumberGuessFeedback("ระบบพร้อมแล้ว เลือกหมายเลขที่ยังว่างได้เลย","info");
+ grid.innerHTML=Array.from({length:100},(_,number)=>{
+  const isMine=myNumber===number,claimed=takenSet.has(number),disabled=closed||!eligible||claimed||myNumber!==null;
+  const cls=isMine?"is-mine":claimed?"is-taken":"is-available";
+  const label=String(number).padStart(2,"0");
+  const owner=claimed&&!isMine?(taken.find(item=>Number(typeof item==="object"?item.number:item)===number)?.character_name||"ถูกเลือกแล้ว"):"";
+  return '<button type="button" class="number-guess-cell '+cls+'" data-guess-number="'+number+'" '+(disabled?'disabled':'')+' aria-label="หมายเลข '+label+(isMine?' หมายเลขของคุณ':claimed?' มีผู้เลือกแล้ว':' ว่าง')+'" title="'+escapeHTML(owner||label)+'"><span>'+label+'</span>'+(isMine?'<i>YOU</i>':claimed?'<i>TAKEN</i>':'')+'</button>';
+ }).join("");
+}
+async function loadNumberGuessEvent(){
+ const grid=$("number-guess-grid");if(grid)grid.innerHTML='<div class="number-guess-loading">SYNCING NEON GRID...</div>';
+ try{
+  const {data,error}=await supabaseClient.rpc("get_number_guess_overview");
+  if(error)throw error;
+  numberGuessCurrentEvent=data?.[0]||data||null;
+  if(numberGuessCurrentEvent&&!numberGuessCurrentEvent.event_id&&numberGuessCurrentEvent.id)numberGuessCurrentEvent.event_id=numberGuessCurrentEvent.id;
+  renderNumberGuessGrid(numberGuessCurrentEvent);
+  $("number-guess-admin-panel")?.classList.toggle("hidden",!isManagement());
+  $("number-guess-management-list")?.classList.toggle("hidden",!isManagement()||!numberGuessCurrentEvent?.event_id);
+  if(isManagement()&&numberGuessCurrentEvent?.event_id)loadNumberGuessParticipants();
+ }catch(error){
+  console.error("Number guess load:",error);
+  if(grid)grid.innerHTML='<div class="number-guess-empty">DATABASE NOT READY<br><small>'+escapeHTML(error.message||"กรุณาติดตั้ง SQL ของกิจกรรมทายตัวเลข")+'</small></div>';
+  setNumberGuessFeedback("ยังโหลดกิจกรรมไม่ได้ กรุณาตรวจสอบ SQL และ RPC ของระบบทายตัวเลข","error");
+ }
+}
+function subscribeToNumberGuessRealtime(){
+ if(numberGuessRealtimeChannel){supabaseClient.removeChannel(numberGuessRealtimeChannel);numberGuessRealtimeChannel=null;}
+ if(!currentUser)return;
+ numberGuessRealtimeChannel=supabaseClient.channel("4am-number-guess-"+currentUser.id)
+  .on("postgres_changes",{event:"*",schema:"public",table:"number_guess_events"},()=>{if(!$("page-number-guess")?.classList.contains("hidden"))loadNumberGuessEvent();})
+  .on("postgres_changes",{event:"*",schema:"public",table:"number_guess_entries"},()=>{if(!$("page-number-guess")?.classList.contains("hidden"))loadNumberGuessEvent();})
+  .subscribe();
+}
+async function claimNumberGuessNumber(number,button){
+ if(!numberGuessCurrentEvent?.event_id||!currentUser)return;
+ if(button){button.disabled=true;button.classList.add("is-pending");}
+ setNumberGuessFeedback("กำลังจองหมายเลข "+String(number).padStart(2,"0")+" ...","info");
+ try{
+  const {data,error}=await supabaseClient.rpc("claim_number_guess_number",{p_event_id:numberGuessCurrentEvent.event_id,p_number:number});
+  if(error)throw error;
+  if(data?.success===false)throw new Error(data.message||"ไม่สามารถเลือกหมายเลขนี้ได้");
+  setNumberGuessFeedback(data?.message||"เลือกหมายเลขสำเร็จ","success");
+  await loadNumberGuessEvent();
+ }catch(error){
+  console.error("Claim number error:",error);
+  setNumberGuessFeedback(error.message||"หมายเลขนี้ถูกเลือกไปแล้ว หรือคุณไม่มีสิทธิ์","error");
+  await loadNumberGuessEvent();
+ }finally{if(button){button.disabled=false;button.classList.remove("is-pending");}}
+}
+async function loadNumberGuessWarOptions(){
+ const select=$("number-guess-war-select");if(!select)return;
+ const {data,error}=await supabaseClient.from("war_events").select("id,event_name,event_date,is_published").eq("is_published",true).order("event_date",{ascending:false}).limit(30);
+ if(error){select.innerHTML='<option value="">โหลดรายการวอร์ไม่สำเร็จ</option>';return;}
+ numberGuessWarOptions=data||[];
+ select.innerHTML='<option value="">เลือก Guild War</option>'+numberGuessWarOptions.map(row=>'<option value="'+escapeHTML(row.id)+'">'+escapeHTML(row.event_name)+' · '+escapeHTML(formatDate(row.event_date))+'</option>').join("");
+}
+async function loadNumberGuessParticipants(){
+ if(!isManagement()||!numberGuessCurrentEvent?.event_id)return;
+ const box=$("number-guess-participants");if(!box)return;
+ const {data,error}=await supabaseClient.rpc("get_number_guess_participants",{p_event_id:numberGuessCurrentEvent.event_id});
+ if(error){box.innerHTML='<p class="muted">'+escapeHTML(error.message)+'</p>';return;}
+ box.innerHTML=(data||[]).length?(data||[]).map(row=>'<div class="number-guess-participant"><strong>'+String(row.number).padStart(2,"0")+'</strong><span>'+escapeHTML(row.character_name||"สมาชิก")+'</span><small>'+escapeHTML(row.roster_type||"Guild War")+'</small><time>'+escapeHTML(activityDateLabel(row.created_at))+'</time></div>').join(""):'<p class="muted">ยังไม่มีสมาชิกเลือกหมายเลข</p>';
+}
+function registerNumberGuessEvents(){
+ const page=$("page-number-guess");if(!page||page.dataset.ready==="true")return;page.dataset.ready="true";
+ $("number-guess-grid")?.addEventListener("click",event=>{
+  const button=event.target.closest("[data-guess-number]");if(!button||button.disabled)return;
+  claimNumberGuessNumber(Number(button.dataset.guessNumber),button);
+ });
+ $("number-guess-create-open")?.addEventListener("click",async()=>{
+  if(!isManagement())return;
+  $("number-guess-create-form")?.classList.remove("hidden");
+  await loadNumberGuessWarOptions();
+ });
+ $("number-guess-create-cancel")?.addEventListener("click",()=>$("number-guess-create-form")?.classList.add("hidden"));
+ $("number-guess-create-form")?.addEventListener("submit",async event=>{
+  event.preventDefault();if(!isManagement())return;
+  const button=$("number-guess-create-submit"),message=$("number-guess-create-message");
+  const warId=$("number-guess-war-select").value,title=$("number-guess-title").value.trim(),closeValue=$("number-guess-close").value;
+  const closeAt=new Date(closeValue);
+  if(!warId||!title||!closeValue||Number.isNaN(closeAt.getTime())||closeAt.getTime()<=Date.now()){message.textContent="กรุณากรอกข้อมูลให้ครบและเลือกเวลาปิดในอนาคต";message.className="message error";return;}
+  button.disabled=true;button.textContent="กำลังเปิด...";
+  try{
+   const {data,error}=await supabaseClient.rpc("create_number_guess_event",{p_war_event_id:warId,p_title:title,p_signup_closes_at:closeAt.toISOString()});
+   if(error)throw error;
+   if(data?.success===false)throw new Error(data.message||"เปิดกิจกรรมไม่สำเร็จ");
+   event.currentTarget.reset();event.currentTarget.classList.add("hidden");
+   await loadNumberGuessEvent();
+  }catch(error){message.textContent=error.message||"เปิดกิจกรรมไม่สำเร็จ";message.className="message error";}
+  finally{button.disabled=false;button.textContent="เปิดกิจกรรม";}
+ });
+ $("number-guess-refresh-list")?.addEventListener("click",loadNumberGuessParticipants);
+}
+registerNumberGuessEvents();
+
 registerRewardEvents();
 
 registerGuildActivityEvents();
@@ -4457,6 +4591,7 @@ function openGuildPage(pageName) {
   if (pageName === "war-attendance-stats") loadWarAttendanceStatistics();
   if (pageName === "rules") loadGuildRules();
   if (pageName === "activities") { subscribeToGuildActivityRealtime(); loadGuildActivities(); subscribeToRewardRealtime(); loadRewardEvents(); }
+  if (pageName === "number-guess") { loadNumberGuessEvent(); subscribeToNumberGuessRealtime(); }
   if (pageName === "feedback") loadGuildFeedback();
 }
 
