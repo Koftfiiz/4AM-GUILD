@@ -3503,10 +3503,9 @@ function registerGuildActivityEvents(){
   if(!content)return;
   button.disabled=true;button.textContent="กำลังส่ง...";
   try{
-   const {error}=await supabaseClient.from("guild_activity_comments").insert({activity_id:form.dataset.activityCommentForm,user_id:currentUser.id,content});
+   const {data:inserted,error}=await supabaseClient.from("guild_activity_comments").insert({activity_id:form.dataset.activityCommentForm,user_id:currentUser.id,content}).select("id").single();
    if(error)throw error;
-   const {data:inserted,error:fetchError}=await supabaseClient.from("guild_activity_comments").select("id").eq("activity_id",form.dataset.activityCommentForm).eq("user_id",currentUser.id).order("created_at",{ascending:false}).limit(1).maybeSingle();
-   if(!fetchError&&inserted?.id){const notified=await notifyGuildActivityDiscord("comment",inserted.id);if(!notified)console.warn("Comment saved, but Discord notification was not delivered");}
+   const notified=await notifyGuildActivityDiscord("comment",inserted.id);if(!notified)console.warn("Comment saved, but Discord notification was not delivered");
    textarea.value="";await loadGuildActivityComments();
   }catch(error){console.error("Submit activity comment:",error);alert("ส่งความคิดเห็นไม่สำเร็จ: "+error.message);}
   finally{button.disabled=false;button.textContent="ส่งความคิดเห็น";}
