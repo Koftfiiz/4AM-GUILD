@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css?v=sidebar-navigation-order-20261110">
+  <link rel="stylesheet" href="reference-redesign.css?v=reference-dashboard-20261110">
 
   <script>
     (function loadGuildApp() {
@@ -161,6 +162,29 @@
 
   <!-- ===================== MAIN APPLICATION ===================== -->
   <div id="app-layout" class="app-layout hidden">
+
+    <!-- REFERENCE TOP NAVIGATION -->
+    <header class="reference-topnav">
+      <a class="reference-brand" href="#" aria-label="4AM GUILD">
+        <img src="assets/4am-guild-logo.png" alt="4AM">
+        <span><b>4AM</b><small>GUILD</small></span>
+      </a>
+      <nav class="reference-main-nav" aria-label="เมนูหลัก">
+        <button class="nav-item active" data-page="dashboard"><svg class="icon"><use href="#i-home"/></svg><span>หน้าหลัก</span></button>
+        <button class="nav-item" data-page="rules"><svg class="icon"><use href="#i-shield-check"/></svg><span>เกี่ยวกับกิลด์</span></button>
+        <button class="nav-item" data-page="members"><svg class="icon"><use href="#i-users"/></svg><span>สมาชิก</span></button>
+        <button class="nav-item" data-page="portfolio"><svg class="icon"><use href="#i-folder-image"/></svg><span>แฟ้มผลงาน</span></button>
+        <button class="nav-item" data-page="guild-activities"><svg class="icon"><use href="#i-calendar"/></svg><span>กิจกรรม</span></button>
+        <button class="nav-item" data-page="war-attendance"><svg class="icon"><use href="#i-swords"/></svg><span>สงครามกิลด์</span></button>
+        <button class="nav-item" data-page="guild-news"><svg class="icon"><use href="#i-megaphone"/></svg><span>ข่าวสาร</span></button>
+        <button class="nav-item" data-page="community-board"><svg class="icon"><use href="#i-party-popper"/></svg><span>ติดต่อเรา</span></button>
+      </nav>
+      <div class="reference-topnav-user">
+        <span class="topnav-member-label">MEMBER ACCESS</span>
+        <div class="topnav-user-avatar"><img id="topnav-avatar" src="assets/default-avatar.jpg" alt=""></div>
+        <button class="feedback-notification-button" id="feedback-notification-toggle-top" type="button" aria-label="การแจ้งเตือน"><svg class="icon"><use href="#i-bell"/></svg></button>
+      </div>
+    </header>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
@@ -325,130 +349,100 @@
 
       <!-- ============ DASHBOARD ============ -->
       <section id="page-dashboard" class="page page-dashboard">
-
-        <section class="dashboard-hero">
-          <div class="hero-content">
-            <span class="hero-welcome">ยินดีต้อนรับสู่</span>
+        <section class="reference-hero">
+          <div class="reference-hero-art"></div>
+          <div class="reference-hero-shade"></div>
+          <div class="reference-hero-crest"><img src="assets/4am-guild-logo.png" alt="4AM Guild crest"></div>
+          <div class="reference-hero-copy">
+            <span class="reference-eyebrow">SWORD OF JUSTICE · TIDEBORN DREAMS</span>
             <h1>4AM GUILD</h1>
-            <div class="hero-subtitle">
-              <i></i>
-              <span>SWORD OF JUSTICE</span>
-              <i></i>
+            <p class="reference-motto">Together We Rise</p>
+            <p class="reference-quote">“มากกว่ากิลด์ คือครอบครัวเดียวกัน”</p>
+            <div class="reference-hero-actions">
+              <button class="btn btn-primary" data-go-page="members"><svg class="icon"><use href="#i-users"/></svg> สมาชิกกิลด์</button>
+              <a class="btn btn-discord" href="https://discord.com/channels/1482056434572198139" target="_blank" rel="noopener noreferrer"><svg class="icon icon-fill"><use href="#i-discord"/></svg> เข้าร่วม Discord</a>
             </div>
           </div>
-
-          <blockquote class="hero-quote">
-            “ร่วมเป็นส่วนหนึ่งของครอบครัว 4AM<br>
-            ก้าวไปด้วยกัน สู่ความแข็งแกร่งที่มากกว่า”
-          </blockquote>
+          <aside class="reference-events">
+            <div class="reference-panel-heading"><h2><svg class="icon"><use href="#i-calendar"/></svg> กิจกรรมสำคัญ</h2><button data-go-page="guild-activities">ดูกิจกรรมทั้งหมด ›</button></div>
+            <button class="reference-event-row" data-go-page="war-signup"><span class="event-emblem event-war"><svg class="icon"><use href="#i-swords"/></svg></span><span class="event-copy"><b>Guild War</b><small>ลงชื่อและตรวจสอบตารางวอร์</small></span><span class="event-arrow">›</span></button>
+            <button class="reference-event-row" data-go-page="guild-activities"><span class="event-emblem event-raid">✹</span><span class="event-copy"><b>Boss Raid</b><small>ติดตามกิจกรรมบอสเรด</small></span><span class="event-arrow">›</span></button>
+            <button class="reference-event-row" data-go-page="guild-activities"><span class="event-emblem event-siege">♜</span><span class="event-copy"><b>Territory Siege</b><small>ข่าวสารและกิจกรรมกิลด์</small></span><span class="event-arrow">›</span></button>
+          </aside>
         </section>
 
-        <div class="dash-body">
-
-          <!-- STATS -->
-          <div class="stats-grid">
-            <article class="stat-card">
-              <div class="stat-icon"><svg class="icon"><use href="#i-users"/></svg></div>
-              <div class="stat-info">
-                <span class="stat-label">สมาชิกทั้งหมด</span>
-                <div class="stat-value"><strong id="stat-members">--</strong><em>คน</em></div>
-                <small>Guild Members</small>
+        <div class="reference-dashboard-layout">
+          <aside class="reference-left-rail">
+            <section class="reference-rail-panel">
+              <h2>เมนูหลัก</h2>
+              <button class="nav-item active" data-page="dashboard"><svg class="icon"><use href="#i-home"/></svg> หน้าหลัก</button>
+              <button class="nav-item" data-page="rules"><svg class="icon"><use href="#i-shield-check"/></svg> เกี่ยวกับกิลด์</button>
+              <button class="nav-item" data-page="members"><svg class="icon"><use href="#i-users"/></svg> สมาชิก</button>
+              <button class="nav-item" data-page="portfolio"><svg class="icon"><use href="#i-folder-image"/></svg> แฟ้มผลงาน</button>
+              <button class="nav-item" data-page="guild-activities"><svg class="icon"><use href="#i-calendar"/></svg> กิจกรรม</button>
+              <button class="nav-item" data-page="war-attendance"><svg class="icon"><use href="#i-swords"/></svg> สงครามกิลด์</button>
+              <button class="nav-item" data-page="guild-news"><svg class="icon"><use href="#i-megaphone"/></svg> ข่าวสาร</button>
+              <button class="nav-item" data-page="community-board"><svg class="icon"><use href="#i-party-popper"/></svg> ติดต่อเรา</button>
+              <button class="nav-item" data-page="feedback"><svg class="icon"><use href="#i-megaphone"/></svg> แจ้งปัญหา / Feedback</button>
+              <button class="nav-item" data-page="settings"><svg class="icon"><use href="#i-gear"/></svg> ตั้งค่าบัญชี</button>
+              <div class="reference-management-nav">
+                <span>MANAGEMENT</span>
+                <button class="nav-item management-only" data-page="war" data-management-only><svg class="icon"><use href="#i-swords"/></svg> จัดทีม Guild War</button>
+                <button class="nav-item management-only" data-page="war-stats" data-management-only><svg class="icon"><use href="#i-crown"/></svg> สถิติกิลด์วอร์</button>
+                <button class="nav-item management-only" data-page="war-attendance-stats" data-management-only><svg class="icon"><use href="#i-calendar"/></svg> สถิติการเข้าร่วม</button>
+                <button class="nav-item developer-only is-role-hidden" data-page="system-management" data-developer-only aria-hidden="true"><svg class="icon"><use href="#i-gear"/></svg> System Management</button>
               </div>
-            </article>
+              <div class="reference-rail-social"><span>เชื่อมต่อกับเรา</span><a href="https://discord.com/channels/1482056434572198139" target="_blank" rel="noopener noreferrer">Discord</a><a href="https://line.me/" target="_blank" rel="noopener noreferrer">LINE</a><a href="https://www.facebook.com/" target="_blank" rel="noopener noreferrer">Facebook</a></div>
+            </section>
+          </aside>
 
-            <article class="stat-card">
-              <div class="stat-icon is-discord"><svg class="icon icon-fill"><use href="#i-discord"/></svg></div>
-              <div class="stat-info">
-                <span class="stat-label">บัญชี Discord ที่เชื่อมแล้ว</span>
-                <div class="stat-value"><strong id="stat-discord">--</strong><em>บัญชี</em></div>
-                <small>Connected Accounts</small>
-              </div>
-            </article>
+          <div class="reference-dashboard-main">
+            <section class="reference-stats-strip">
+              <article class="reference-stat"><span class="reference-stat-icon"><svg class="icon"><use href="#i-users"/></svg></span><span><small>สมาชิกทั้งหมด</small><b><strong id="stat-members">--</strong> คน</b></span></article>
+              <article class="reference-stat"><span class="reference-stat-icon is-green"><svg class="icon"><use href="#i-user"/></svg></span><span><small>บัญชี Discord ที่เชื่อมแล้ว</small><b><strong id="stat-discord">--</strong> บัญชี</b></span></article>
+              <article class="reference-stat"><span class="reference-stat-icon"><svg class="icon"><use href="#i-crown"/></svg></span><span><small>ตำแหน่งของคุณ</small><b id="stat-role">--</b></span></article>
+              <article class="reference-stat"><span class="reference-stat-icon"><svg class="icon"><use href="#i-star"/></svg></span><span><small>สถานะกิลด์</small><b>STRONGER TOGETHER</b></span></article>
+            </section>
 
-            <article class="stat-card">
-              <div class="stat-icon"><svg class="icon icon-fill"><use href="#i-crown"/></svg></div>
-              <div class="stat-info">
-                <span class="stat-label">สถานะบัญชีของคุณ</span>
-                <div class="stat-value is-text"><strong id="stat-role">--</strong></div>
-                <small>Your Guild Role</small>
-              </div>
-            </article>
-          </div>
-
-          <!-- ANNOUNCEMENT + PROFILE -->
-          <div class="dashboard-columns">
-            <article class="dash-card announcement-card">
-              <header class="dash-card-head">
-                <h3><svg class="icon"><use href="#i-megaphone"/></svg> ประกาศจากกิลด์</h3>
-                <button type="button" class="head-link" data-go-page="activities">
-                  ดูทั้งหมด <svg class="icon"><use href="#i-chevron-right"/></svg>
-                </button>
-              </header>
-
-              <!-- แก้ข้อความประกาศได้ที่ส่วนนี้ -->
-              <div class="announcement-body">
-                <div class="announcement-text">
-                  <span class="badge-important">ประกาศสำคัญ</span>
-                  <h4>Guild War รอบหน้า เตรียมพร้อม!</h4>
-                  <p>
-                    ลงชื่อได้ตั้งแต่วันที่ 13 พฤศจิกายน 2569<br>
-                  <h1>4AM vs ...</h1>
-                  </p>
-                  <div class="announcement-date">
-                    <svg class="icon"><use href="#i-clock"/></svg>
-                    9 พ.ย. 2569 00:00 น.
+            <div class="reference-content-grid">
+              <section class="reference-panel reference-gallery-panel">
+                <div class="reference-panel-heading"><h2>ภาพกิจกรรมล่าสุด</h2><button data-go-page="guild-activities">ดูกิจกรรมทั้งหมด ›</button></div>
+                <div class="reference-gallery">
+                  <button class="reference-gallery-feature" data-go-page="guild-activities"><img src="assets/hero-bg.jpg" alt="ภาพบรรยากาศแฟนตาซีของกิลด์"><span class="gallery-caption"><b>4AM GUILD</b><small>Our Journey · Together We Rise</small></span></button>
+                  <div class="reference-gallery-stack">
+                    <button data-go-page="guild-activities"><img src="assets/announcement-bg.jpg" alt="บรรยากาศกิจกรรมกิลด์"><span>Guild Activities</span></button>
+                    <button data-go-page="war-attendance"><img src="assets/sidebar-art.jpg" alt="บรรยากาศการผจญภัย"><span>Guild War</span></button>
                   </div>
                 </div>
-              </div>
-            </article>
+              </section>
 
-            <article class="dash-card profile-card">
-              <header class="dash-card-head">
-                <h3><svg class="icon"><use href="#i-user"/></svg> ข้อมูลบัญชีของคุณ</h3>
-                <button type="button" class="head-btn" data-go-page="settings">
-                  <svg class="icon"><use href="#i-edit"/></svg> แก้ไข
-                </button>
-              </header>
-
-              <div id="dashboard-profile" class="profile-content">
-                <p class="muted">กำลังโหลดข้อมูล...</p>
-              </div>
-            </article>
-          </div>
-
-          <!-- QUICK MENU -->
-          <section class="dash-card quick-panel">
-            <header class="dash-card-head">
-              <h3><svg class="icon"><use href="#i-bolt"/></svg> เมนูด่วน</h3>
-            </header>
-
-            <div class="quick-grid">
-              <button class="quick-tile" data-go-page="war">
-                <svg class="icon"><use href="#i-swords"/></svg>
-                <span>จัดทีม Guild War</span>
-              </button>
-
-              <button class="quick-tile" data-go-page="members">
-                <svg class="icon"><use href="#i-users"/></svg>
-                <span>ดูรายชื่อสมาชิก</span>
-              </button>
-
-              <button class="quick-tile" data-go-page="portfolio">
-                <svg class="icon"><use href="#i-image"/></svg>
-                <span>แฟ้มผลงาน</span>
-              </button>
-
-              <button class="quick-tile" data-go-page="activities">
-                <svg class="icon"><use href="#i-calendar"/></svg>
-                <span>กิจกรรมกิลด์</span>
-              </button>
-
-              <button class="quick-tile" data-go-page="settings">
-                <svg class="icon"><use href="#i-gear"/></svg>
-                <span>ตั้งค่าบัญชี</span>
-              </button>
+              <section class="reference-panel reference-leaderboard">
+                <div class="reference-panel-heading"><h2>สมาชิกกิลด์</h2><button data-go-page="members">ดูทั้งหมด ›</button></div>
+                <div class="reference-member-feature">
+                  <div class="reference-member-avatar"><img id="topnav-avatar-copy" src="assets/default-avatar.jpg" alt=""></div>
+                  <div><b id="reference-member-name">ยินดีต้อนรับสมาชิก</b><small id="reference-member-position">4AM GUILD MEMBER</small></div>
+                </div>
+                <div id="dashboard-profile" class="reference-profile-data"><p class="muted">กำลังโหลดข้อมูล...</p></div>
+                <button class="reference-outline-action" data-go-page="settings">จัดการโปรไฟล์ของฉัน</button>
+              </section>
             </div>
-          </section>
+
+            <div class="reference-bottom-grid">
+              <section class="reference-panel reference-builds-panel">
+                <div class="reference-panel-heading"><h2>แฟ้มผลงานยอดนิยม</h2><button data-go-page="portfolio">ดูทั้งหมด ›</button></div>
+                <div class="reference-builds">
+                  <button data-go-page="portfolio"><img src="assets/class-icon/Ironclad.png" alt=""><span>Character Builds</span></button>
+                  <button data-go-page="portfolio"><img src="assets/class-icon/Celestune.png" alt=""><span>Class Showcase</span></button>
+                  <button data-go-page="portfolio"><img src="assets/class-icon/Numina.png" alt=""><span>Member Gallery</span></button>
+                  <button data-go-page="portfolio"><img src="assets/class-icon/Sylph.png" alt=""><span>Build Collection</span></button>
+                </div>
+              </section>
+              <section class="reference-panel reference-news-panel">
+                <div class="reference-panel-heading"><h2>ข่าวสารล่าสุด</h2><button data-go-page="guild-news">ดูทั้งหมด ›</button></div>
+                <button class="reference-news-card" data-go-page="guild-news"><img src="assets/announcement-bg.jpg" alt=""><span><b>Guild News</b><small>ติดตามประกาศและข่าวสารล่าสุดจาก 4AM GUILD</small></span></button>
+              </section>
+            </div>
+          </div>
         </div>
       </section>
 
