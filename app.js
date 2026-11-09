@@ -2618,12 +2618,76 @@ function getThaiFontCss() {
   return thaiFontCssPromise;
 }
 async function exportWarImage(){
-  const event=allWarEvents.find(item=>item.id===selectedWarEventId);if(!event||!event.is_draft_confirmed)return;
-  const config=getWarEventConfig(event),width=1600,height=240+config.raidCount*510,esc=value=>escapeHTML(value);
-  const parts=[`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><rect width="100%" height="100%" fill="#100b0d"/><rect x="24" y="24" width="1552" height="${height-48}" rx="22" fill="#1b1114" stroke="#b88b48" stroke-width="3"/><text x="70" y="88" fill="#d6ad68" font-size="48" font-family="Noto Sans Thai" font-weight="700">4AM GUILD</text><text x="70" y="137" fill="#fff0df" font-size="30" font-family="Noto Sans Thai" font-weight="700">${esc(event.event_name)}</text><text x="70" y="178" fill="#c9b6a5" font-size="21" font-family="Noto Sans Thai">${esc(formatDate(event.event_date))} · ${esc(formatTime(event.start_time))}</text>`];
-  let y=220;for(const raid of ["A","B","C","D"].slice(0,config.raidCount)){parts.push(`<text x="70" y="${y}" fill="#d6ad68" font-size="30" font-family="Noto Sans Thai" font-weight="700">RAID ${raid}</text>`);y+=18;for(let p=1;p<=5;p++){const party=currentWarParties.find(item=>item.raid===raid&&Number(item.party_number)===p),assigned=party?.war_party_members||[],x=70+(p-1)*300;parts.push(`<rect x="${x}" y="${y}" width="280" height="430" rx="12" fill="#25171b" stroke="#74552f" stroke-width="2"/><text x="${x+16}" y="${y+35}" fill="#e3bd7b" font-size="23" font-family="Noto Sans Thai" font-weight="700">${raid}${p} · ${assigned.length}/6</text>`);for(let slot=1;slot<=6;slot++){const assignment=assigned.find(item=>Number(item.position)===slot),member=allMembers.find(item=>item.user_id===assignment?.member_id);parts.push(`<text x="${x+16}" y="${y+88+(slot-1)*55}" fill="${member?"#fff0df":"#8d7a72"}" font-size="17" font-family="Noto Sans Thai">${slot}. ${esc(member?getMemberName(member):"Empty Slot")}</text><text x="${x+16}" y="${y+111+(slot-1)*55}" fill="#c9a76d" font-size="12" font-family="Noto Sans Thai">${esc(member?getMemberClass(member):"")}</text>`);}}y+=470;}
-  parts.push("</svg>");const fontCss=await getThaiFontCss();if(fontCss)parts[0]=parts[0].replace(/^<svg[^>]*>/,tag=>tag+"<style>"+fontCss+"</style>");const svgUrl=URL.createObjectURL(new Blob([parts.join("")],{type:"image/svg+xml;charset=utf-8"}));
-  try{const img=new Image();img.src=svgUrl;await img.decode();const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;canvas.getContext("2d").drawImage(img,0,0);const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));if(!png)throw Error("PNG export failed");const url=URL.createObjectURL(png),link=document.createElement("a");link.href=url;link.download=`4AM-War-${event.event_date}.png`;link.click();URL.revokeObjectURL(url);}catch(error){alert("บันทึกรูปไม่สำเร็จ: "+error.message);}finally{URL.revokeObjectURL(svgUrl);}
+  const event=allWarEvents.find(item=>item.id===selectedWarEventId);
+  if(!event||!event.is_draft_confirmed)return;
+  const config=getWarEventConfig(event),width=1600,raidNames=["A","B","C","D"].slice(0,config.raidCount);
+  const height=330+config.raidCount*510,esc=value=>escapeHTML(String(value??""));
+  const toDataUrl=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});
+  try{
+    const [background,fontCss]=await Promise.all([
+      fetch("assets/4am-web-bg.jpg").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ assets/4am-web-bg.jpg");return response.blob();}).then(toDataUrl),
+      getThaiFontCss()
+    ]);
+    const parts=[`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+      <defs>
+        <linearGradient id="goldLine" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4d99b"/><stop offset=".48" stop-color="#b88b48"/><stop offset="1" stop-color="#70451f"/></linearGradient>
+        <linearGradient id="cardFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#211317" stop-opacity=".96"/><stop offset="1" stop-color="#090709" stop-opacity=".96"/></linearGradient>
+        <linearGradient id="redAccent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#641722"/><stop offset=".55" stop-color="#a52c3a"/><stop offset="1" stop-color="#421018"/></linearGradient>
+      </defs>
+      <image x="0" y="0" width="1600" height="${height}" preserveAspectRatio="xMidYMid slice" href="${background}" xlink:href="${background}"/>
+      <rect width="1600" height="${height}" fill="#080608" opacity=".76"/>
+      <rect x="24" y="24" width="1552" height="${height-48}" rx="24" fill="#10090c" fill-opacity=".62" stroke="url(#goldLine)" stroke-width="3"/>
+      <path d="M48 188 H1552" stroke="#b88b48" stroke-opacity=".55" stroke-width="2"/>
+      <rect x="48" y="48" width="1504" height="122" rx="14" fill="#090709" fill-opacity=".72" stroke="#8d2632" stroke-opacity=".85" stroke-width="2"/>
+      <text x="82" y="99" fill="#e8c98f" font-size="42" font-family="Noto Sans Thai" font-weight="700" letter-spacing="4">4AM GUILD</text>
+      <text x="82" y="145" fill="#fff0df" font-size="28" font-family="Noto Sans Thai" font-weight="700">${esc(event.event_name)}</text>
+      <text x="1515" y="101" text-anchor="end" fill="#e8c98f" font-size="19" font-family="Noto Sans Thai" font-weight="700">GUILD WAR ROSTER</text>
+      <text x="1515" y="139" text-anchor="end" fill="#e8d9ca" font-size="20" font-family="Noto Sans Thai">${esc(formatDate(event.event_date))}  ·  ${esc(formatTime(event.start_time))} น.</text>`];
+    let y=220;
+    for(const [raidIndex,raid] of raidNames.entries()){
+      parts.push(`<rect x="48" y="${y}" width="1504" height="42" rx="8" fill="url(#redAccent)" stroke="#bd8d50" stroke-opacity=".75" stroke-width="1.5"/>
+        <text x="70" y="${y+29}" fill="#ffe4b0" font-size="25" font-family="Noto Sans Thai" font-weight="700" letter-spacing="2">RAID ${raid}</text>
+        <text x="1525" y="${y+28}" text-anchor="end" fill="#f3d8aa" font-size="16" font-family="Noto Sans Thai">${raidIndex+1} / ${raidNames.length}</text>`);
+      const cardY=y+56;
+      for(let p=1;p<=5;p++){
+        const party=currentWarParties.find(item=>item.raid===raid&&Number(item.party_number)===p);
+        const assigned=party?.war_party_members||[],x=60+(p-1)*300;
+        parts.push(`<rect x="${x}" y="${cardY}" width="284" height="426" rx="12" fill="url(#cardFill)" stroke="#a77a42" stroke-opacity=".9" stroke-width="2"/>
+          <path d="M${x+1} ${cardY+54} H${x+283}" stroke="#8e2935" stroke-width="3"/>
+          <text x="${x+16}" y="${cardY+35}" fill="#f0d49d" font-size="23" font-family="Noto Sans Thai" font-weight="700">${raid}${p}</text>
+          <text x="${x+266}" y="${cardY+34}" text-anchor="end" fill="#d9b77c" font-size="17" font-family="Noto Sans Thai" font-weight="700">${assigned.length}/6</text>`);
+        for(let slot=1;slot<=6;slot++){
+          const assignment=assigned.find(item=>Number(item.position)===slot);
+          const member=allMembers.find(item=>item.user_id===assignment?.member_id);
+          const rowY=cardY+91+(slot-1)*54;
+          if(slot>1)parts.push(`<path d="M${x+14} ${rowY-22} H${x+270}" stroke="#8d6b50" stroke-opacity=".28"/>`);
+          parts.push(`<circle cx="${x+25}" cy="${rowY-5}" r="12" fill="${member?"#8f2632":"#34272a"}" stroke="#c49a5b" stroke-opacity=".8"/>
+            <text x="${x+25}" y="${rowY}" text-anchor="middle" fill="#fff0df" font-size="13" font-family="Noto Sans Thai" font-weight="700">${slot}</text>
+            <text x="${x+47}" y="${rowY-3}" fill="${member?"#fff0df":"#8f8580"}" font-size="16" font-family="Noto Sans Thai" font-weight="700">${esc(member?getMemberName(member):"ว่าง")}</text>
+            <text x="${x+47}" y="${rowY+17}" fill="${member?"#d6b579":"#766b68"}" font-size="12" font-family="Noto Sans Thai">${esc(member?getMemberClass(member):"รอสมาชิก")}</text>`);
+        }
+      }
+      y+=510;
+    }
+    parts.push(`<text x="800" y="${height-35}" text-anchor="middle" fill="#d7bd96" font-size="15" font-family="Noto Sans Thai" letter-spacing="2">THE OUTRAGEOUS  ·  4AM GUILD</text></svg>`);
+    const svg=parts.join("");
+    const svgWithFonts=fontCss?svg.replace("<svg ",`<svg `).replace(">",`><style>${fontCss}</style>`):svg;
+    const svgUrl=URL.createObjectURL(new Blob([svgWithFonts],{type:"image/svg+xml;charset=utf-8"}));
+    try{
+      const img=new Image();img.src=svgUrl;await img.decode();
+      const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
+      const context=canvas.getContext("2d");if(!context)throw Error("ไม่สามารถสร้าง Canvas ได้");
+      context.drawImage(img,0,0);
+      const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
+      if(!png)throw Error("PNG export failed");
+      const url=URL.createObjectURL(png),link=document.createElement("a");
+      link.href=url;link.download=`4AM-War-${event.event_date}.png`;link.click();
+      setTimeout(()=>URL.revokeObjectURL(url),1000);
+    }finally{URL.revokeObjectURL(svgUrl);}
+  }catch(error){
+    console.error("War image export failed:",error);
+    alert("บันทึกรูปไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));
+  }
 }
 async function loadWarAttendance(){
   const container=$("war-attendance-content");if(!container)return;container.innerHTML='<p class="muted">กำลังโหลดวอร์ที่เผยแพร่แล้ว...</p>';
