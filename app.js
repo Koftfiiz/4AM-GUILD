@@ -37,6 +37,7 @@ let warAttendanceEventId = null;
 let warRealtimeChannel = null;
 let registrationBusy = false;
 let warArrangeMode = false;
+let warAssignmentFilter="all",warAssignmentClassFilter="all",warAssignmentSearch="",warAssignmentSignups=[],warAssignmentLeaves=[],warAssignmentModalSlot=null;
 
 const $ = (id) => document.getElementById(id);
 
@@ -2236,8 +2237,7 @@ function renderWarLayout(eventId = selectedWarEventId) {
   if(!event){selectedWarEventId=null;currentWarParties=[];currentWarPartyAssignments=[];currentWarAssignmentEventId=null;if(summary)summary.innerHTML="";if(boards)boards.innerHTML="";stage?.classList.add("hidden");return;}
   selectedWarEventId=event.id;
   const config=getWarEventConfig(event),letters=["A","B","C","D"].slice(0,config.raidCount);
-  warArrangeMode = false;
-  const modifyButton=$("war-modify-toggle");if(modifyButton){modifyButton.classList.add("is-inactive");modifyButton.disabled=Boolean(event.is_published)||!isManagement();modifyButton.title=event.is_published?"วอร์ที่เผยแพร่แล้วไม่สามารถแก้ไขได้":"";modifyButton.innerHTML='<svg class="icon"><use href="#i-edit"/></svg><span>แก้ไข</span>';modifyButton.setAttribute("aria-pressed","false");}
+  warArrangeMode=false;warAssignmentFilter="all";warAssignmentClassFilter="all";warAssignmentSearch="";warAssignmentSignups=[];warAssignmentLeaves=[];closeWarAssignmentModal();
   stage?.classList.remove("hidden");
   if(summary)summary.innerHTML=`
     <article class="stat-card stat-card-sm"><div class="stat-icon"><svg class="icon"><use href="#i-swords"/></svg></div><div class="stat-info"><span class="stat-label">TOTAL CAPACITY</span><div class="stat-value"><strong>${config.raidCount*30}</strong></div><small>${config.mode==="practice"?"Practice War":"Official War"}</small></div></article>
@@ -2249,25 +2249,29 @@ function renderWarLayout(eventId = selectedWarEventId) {
   $("war-export-image")?.classList.toggle("hidden",!confirmed);
   const sync=$("war-sync-discord");sync?.classList.toggle("hidden",!confirmed);if(sync){sync.disabled=true;sync.title="Discord Bot integration ยังไม่เปิดใช้งาน";}
   const label=$("war-detail-stage-label");if(label)label.textContent=published?"PUBLISHED · สมาชิกมองเห็นแล้ว":confirmed?"DRAFT · ยืนยันรายชื่อแล้ว":"กำลังจัดตี้ · ยังไม่ยืนยัน";
-  const notice=$("war-edit-notice");if(notice)notice.textContent=published?"วอร์นี้เผยแพร่แล้ว จึงเปิดดูรายชื่อได้อย่างเดียว":"เลือก Class ก่อน แล้วเลือกสมาชิกที่มี Class ตรงกันในแต่ละช่อง";
-  if(boards)boards.innerHTML=letters.map((letter,index)=>`<div class="raid-section"><div class="raid-title"><span class="raid-badge ${index?"raid-b":""}">${letter}</span><div><h2>Raid ${letter}</h2><p>${config.mode==="practice"?"Practice battle formation":"Official battle formation"}</p></div></div><div id="raid-${letter.toLowerCase()}" class="raid-grid"></div></div>`).join("");
-  loadSelectedWarEvent(event.id);
+  const notice=$("war-edit-notice");if(notice)notice.textContent=published?"วอร์นี้เผยแพร่แล้ว · เปิดดูรายชื่อได้อย่างเดียว":"เลือก + ADD เพื่อจัดสมาชิกผ่านหน้าต่าง Party Management";
+  if(boards)boards.innerHTML=letters.map((letter,index)=>`<div class="raid-section" data-raid-section="${letter}"><div class="raid-title"><span class="raid-badge ${index?"raid-b":""}">${letter}</span><div><h2>Raid ${letter}</h2><p>${config.mode==="practice"?"Practice battle formation":"Official battle formation"}</p></div></div><div id="raid-${letter.toLowerCase()}" class="raid-grid"></div></div>`).join("");
+  renderWarAssignmentToolbar(config.raidCount);loadSelectedWarEvent(event.id);
 }
 
-async function loadSelectedWarEvent(eventId) {
-  currentWarAssignmentEventId=eventId;
-  const {data:parties,error}=await supabaseClient.from("war_parties").select(`id,event_id,raid,party_number,party_name,war_party_members(id,member_id,position)`).eq("event_id",eventId).order("party_number",{ascending:true});
-  if(error){console.error("War party loading error:",error);currentWarParties=[];currentWarPartyAssignments=[];alert("โหลดรายชื่อปาร์ตี้ไม่สำเร็จ: "+error.message);return;}
-  currentWarParties=parties||[];
-  currentWarPartyAssignments=currentWarParties.flatMap(party=>(party.war_party_members||[]).map(member=>({...member,party_id:party.id,raid:party.raid,party_number:party.party_number})));
-  renderAllWarParties();
+async function loadSelectedWarEvent(eventId){
+ currentWarAssignmentEventId=eventId;
+ const [p,s,l]=await Promise.all([
+  supabaseClient.from("war_parties").select(`id,event_id,raid,party_number,party_name,war_party_members(id,member_id,position)`).eq("event_id",eventId).order("party_number",{ascending:true}),
+  supabaseClient.from("war_signups").select("id,event_id,member_id,raid,status,queue_position").eq("event_id",eventId).neq("status","cancelled"),
+  supabaseClient.from("war_leave_requests").select("id,event_id,member_id,status").eq("event_id",eventId)
+ ]);
+ if(p.error){console.error("War party loading error:",p.error);currentWarParties=[];currentWarPartyAssignments=[];alert("โหลดรายชื่อปาร์ตี้ไม่สำเร็จ: "+p.error.message);return;}
+ currentWarParties=p.data||[];warAssignmentSignups=s.error?[]:(s.data||[]);warAssignmentLeaves=l.error?[]:(l.data||[]);
+ currentWarPartyAssignments=currentWarParties.flatMap(party=>(party.war_party_members||[]).map(member=>({...member,party_id:party.id,raid:party.raid,party_number:party.party_number})));
+ renderWarAssignmentToolbar(getWarEventConfig(allWarEvents.find(item=>item.id===eventId)).raidCount);renderAllWarParties();
 }
-function renderAllWarParties() {
-  const event=allWarEvents.find(item=>item.id===currentWarAssignmentEventId);if(!event)return;
-  const config=getWarEventConfig(event),editable=isManagement()&&!event.is_published&&warArrangeMode;
-  ["A","B","C","D"].slice(0,config.raidCount).forEach(letter=>renderRaid(`raid-${letter.toLowerCase()}`,letter,currentWarParties.filter(party=>party.raid===letter),{editable}));
+function renderAllWarParties(){
+ const event=allWarEvents.find(item=>item.id===currentWarAssignmentEventId);if(!event)return;
+ const config=getWarEventConfig(event),editable=isManagement()&&!event.is_published;
+ ["A","B","C","D"].slice(0,config.raidCount).forEach(letter=>renderRaid(`raid-${letter.toLowerCase()}`,letter,currentWarParties.filter(p=>p.raid===letter),{editable}));
+ applyWarAssignmentMemberFilters();
 }
-
 function getAssignedWarMemberIds(exceptAssignmentId = null) {
   return new Set(currentWarPartyAssignments
     .filter(item => item.id !== exceptAssignmentId)
@@ -2285,153 +2289,51 @@ function getWarMemberOptions(className, selectedMemberId = "") {
     .join("");
 }
 
-function renderRaid(containerId, raidName, parties = [], options = {}) {
-  const container = $(containerId);
-  if (!container) return;
-  const canArrange = options.editable === true;
-
-  container.innerHTML = Array.from({ length: 5 }, (_, index) => {
-    const partyNumber = index + 1;
-    const party = parties.find(item => Number(item.party_number) === partyNumber);
-    const members = party?.war_party_members || [];
-
-    return `
-      <article class="party-card">
-        <div class="party-header">
-          <div class="party-heading-fields">
-            <h3>${raidName}${partyNumber}</h3>
-            ${party?.party_name && party.party_name !== `${raidName}${partyNumber}` ? `<small class="war-party-role-label">${escapeHTML(party.party_name)}</small>` : ""}
-          </div>
-          <span class="party-count">${members.length} / 6</span>
-        </div>
-        <div class="party-slots">
-          ${Array.from({ length: 6 }, (_, slotIndex) => {
-            const position = slotIndex + 1;
-            const slot = members.find(item => Number(item.position) === position);
-            const member = allMembers.find(item => item.user_id === slot?.member_id);
-            if (slot && member) {
-              const info = getClassInfo(getMemberClass(member));
-              return `
-                <div class="party-slot party-slot-filled">
-                  <span class="slot-number">${position}</span>
-                  <img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath || "")}" alt="${escapeHTML(info?.name || "")}" title="${escapeHTML(info?.name || "")}">
-                  <span class="slot-member-name">${escapeHTML(getMemberName(member))}</span>
-                  ${canArrange ? `<button class="war-slot-remove" type="button" data-war-remove="${escapeHTML(slot.id)}" aria-label="นำสมาชิกออก" title="นำสมาชิกออก">×</button>` : ""}
-                </div>`;
-            }
-
-            if (!canArrange || !party) {
-              return `<div class="party-slot"><span class="slot-number">${position}</span><span class="slot-empty">Empty Slot</span></div>`;
-            }
-
-            const classOptions = CLASS_DATA.map(info =>
-              `<option value="${escapeHTML(info.name)}">${escapeHTML(info.name)}</option>`
-            ).join("");
-            return `
-              <div class="party-slot party-slot-editor" data-war-slot>
-                <span class="slot-number">${position}</span>
-                <button class="war-slot-add-button" type="button" data-war-add-slot aria-label="เพิ่มสมาชิกช่อง ${position}">＋ ADD</button>
-                <div class="war-slot-picker hidden" data-war-slot-picker>
-                  <select class="war-slot-class" aria-label="เลือกอาชีพช่อง ${position}" data-party-id="${escapeHTML(party.id)}" data-position="${position}">
-                    <option value="">เลือกอาชีพ</option>${classOptions}
-                  </select>
-                  <img class="war-slot-class-icon hidden" alt="" data-war-class-icon>
-                  <select class="war-slot-member" aria-label="เลือกสมาชิกช่อง ${position}" disabled data-party-id="${escapeHTML(party.id)}" data-position="${position}">
-                    <option value="">เลือกสมาชิก</option>
-                  </select>
-                </div>
-              </div>`;
-          }).join("")}
-        </div>
-      </article>`;
-  }).join("");
+function renderRaid(containerId,raidName,parties=[],options={}){
+ const container=$(containerId);if(!container)return;const canArrange=options.editable===true;
+ container.innerHTML=Array.from({length:5},(_,i)=>{const n=i+1,p=parties.find(x=>Number(x.party_number)===n),members=p?.war_party_members||[];
+ return `<article class="party-card" data-party-card data-raid="${raidName}"><div class="party-header"><div class="party-heading-fields"><h3>${raidName}${n}</h3>${p?.party_name&&p.party_name!==`${raidName}${n}`?`<small class="war-party-role-label">${escapeHTML(p.party_name)}</small>`:""}</div><span class="party-count">${members.length} / 6</span></div><div class="party-slots">${Array.from({length:6},(_,j)=>{const pos=j+1,slot=members.find(x=>Number(x.position)===pos),member=allMembers.find(x=>x.user_id===slot?.member_id);
+ if(slot&&member){const info=getClassInfo(getMemberClass(member));return `<button class="party-slot party-slot-filled war-member-slot" type="button" data-war-manage-slot data-assignment-id="${escapeHTML(slot.id)}" data-party-id="${escapeHTML(p.id)}" data-position="${pos}" style="--class-color:${info?.color||"#aaa"}" ${canArrange?"":"disabled"}><span class="slot-number">${pos}</span><img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath||"")}" alt=""><span class="slot-member-name">${escapeHTML(getMemberName(member))}</span><span class="war-member-slot-edit">${canArrange?"MANAGE":""}</span></button>`;}
+ return `<div class="party-slot ${canArrange&&p?"party-slot-editor":""}"><span class="slot-number">${pos}</span>${canArrange&&p?`<button class="war-slot-add-button" type="button" data-war-add-slot data-party-id="${escapeHTML(p.id)}" data-position="${pos}">＋ ADD</button>`:'<span class="slot-empty">Empty Slot</span>'}</div>`;
+ }).join("")}</div></article>`;}).join("");
 }
-
-async function handleWarSlotChange(event) {
-  const classSelect = event.target.closest(".war-slot-class");
-  if (classSelect) {
-    const slot = classSelect.closest("[data-war-slot]");
-    const memberSelect = slot?.querySelector(".war-slot-member");
-    const icon = slot?.querySelector("[data-war-class-icon]");
-    const info = getClassInfo(classSelect.value);
-    if (icon) {
-      icon.src = info?.iconPath || "";
-      icon.alt = info?.name || "";
-      icon.classList.toggle("hidden", !info);
-    }
-    if (memberSelect) {
-      memberSelect.innerHTML = `<option value="">เลือกสมาชิก</option>${info ? getWarMemberOptions(info.name) : ""}`;
-      memberSelect.disabled = !info;
-    }
-    return;
-  }
-
-  const memberSelect = event.target.closest(".war-slot-member");
-  if (!memberSelect || !memberSelect.value) return;
-  const activeWar = allWarEvents.find(item => item.id === currentWarAssignmentEventId);
-  if (!isManagement() || !activeWar || activeWar.is_published) return;
-
-  const memberId = memberSelect.value;
-  const partyId = memberSelect.dataset.partyId;
-  const position = Number(memberSelect.dataset.position);
-  const party = currentWarParties.find(item => item.id === partyId);
-  if (!party) return;
-
-  if (getAssignedWarMemberIds().has(memberId)) {
-    memberSelect.value = "";
-    alert("สมาชิกคนนี้ถูกจัดลงปาร์ตี้อื่นในวอร์รอบนี้แล้ว");
-    return;
-  }
-  if ((party.war_party_members || []).length >= 6) {
-    memberSelect.value = "";
-    alert("ปาร์ตี้นี้เต็มแล้ว");
-    return;
-  }
-
-  memberSelect.disabled = true;
-  try {
-    const { data, error } = await supabaseClient
-      .from("war_party_members")
-      .insert({ party_id: partyId, member_id: memberId, position })
-      .select()
-      .single();
-    if (error) throw error;
-
-    party.war_party_members = [...(party.war_party_members || []), data];
-    currentWarPartyAssignments.push({ ...data, party_id: partyId, raid: party.raid, party_number: party.party_number });
-    renderAllWarParties();
-  } catch (error) {
-    console.error("War member assignment failed:", error);
-    alert("จัดสมาชิกไม่สำเร็จ: " + (error.message || "กรุณาลองใหม่"));
-    memberSelect.disabled = false;
-    memberSelect.value = "";
-  }
+function warMemberStatus(id){const signup=warAssignmentSignups.find(x=>x.member_id===id),leave=warAssignmentLeaves.find(x=>x.member_id===id&&x.status!=="rejected");return {signup,leave,reserve:!!signup&&Number(signup.queue_position)>=61,raid:signup?.raid||""};}
+function renderWarAssignmentToolbar(raidCount=2){
+ const root=$("war-assignment-toolbar");if(!root)return;const active=allMembers.filter(x=>x.active===true),reserve=warAssignmentSignups.filter(x=>Number(x.queue_position)>=61).length;
+ const teams=["A","B","C","D"].slice(0,raidCount).map(x=>`<button class="war-filter-chip" data-war-filter="${x}" type="button">Team ${x}</button>`).join("");
+ const classes=CLASS_DATA.map(info=>{const count=active.filter(x=>getMemberClass(x).toLowerCase()===info.name.toLowerCase()).length;return `<button class="war-class-filter" data-war-class-filter="${escapeHTML(info.name)}" type="button" title="${escapeHTML(info.name)}"><img src="${escapeHTML(info.iconPath)}" alt=""><span>${count}</span></button>`;}).join("");
+ root.innerHTML=`<div class="war-assignment-filter-row"><div class="war-filter-group"><button class="war-filter-chip is-active" data-war-filter="all" type="button">All Parties</button>${teams}<button class="war-filter-chip" data-war-filter="leave" type="button">Leave · ${warAssignmentLeaves.filter(x=>x.status!=="rejected").length}</button><button class="war-filter-chip" data-war-filter="reserve" type="button">Reserve · ${reserve}</button></div></div><div class="war-assignment-search-row"><label class="war-assignment-search"><span>⌕</span><input id="war-assignment-search" type="search" placeholder="ค้นหาชื่อตัวละคร หรือ UID..." value="${escapeHTML(warAssignmentSearch)}"></label><button class="war-count-chip" data-war-filter="all" type="button">TOTAL <strong>${active.length}</strong></button><button class="war-count-chip is-reserve" data-war-filter="reserve" type="button">RESERVE <strong>${reserve}</strong></button></div><div class="war-assignment-class-row"><span class="war-filter-caption">FILTER BY CLASS</span><button class="war-class-filter is-active" data-war-class-filter="all" type="button">ALL</button>${classes}</div><div class="war-assignment-results" id="war-assignment-results"></div>`;
+ applyWarAssignmentMemberFilters();
 }
-
-async function removeWarPartyMember(assignmentId, button) {
-  const activeWar = allWarEvents.find(item => item.id === currentWarAssignmentEventId);
-  if (!isManagement() || !activeWar || activeWar.is_published) return;
-  if (!assignmentId) return;
-  button.disabled = true;
-  try {
-    const { error } = await supabaseClient
-      .from("war_party_members")
-      .delete()
-      .eq("id", assignmentId);
-    if (error) throw error;
-
-    currentWarParties.forEach(party => {
-      party.war_party_members = (party.war_party_members || []).filter(item => item.id !== assignmentId);
-    });
-    currentWarPartyAssignments = currentWarPartyAssignments.filter(item => item.id !== assignmentId);
-    renderAllWarParties();
-  } catch (error) {
-    console.error("War member removal failed:", error);
-    alert("นำสมาชิกออกไม่สำเร็จ: " + (error.message || "กรุณาลองใหม่"));
-    button.disabled = false;
-  }
+function applyWarAssignmentMemberFilters(){
+ const q=warAssignmentSearch.trim().toLowerCase(),members=allMembers.filter(m=>m.active===true).filter(m=>{const st=warMemberStatus(m.user_id);if(warAssignmentFilter==="leave"&&!st.leave)return false;if(warAssignmentFilter==="reserve"&&!st.reserve)return false;if(["A","B","C","D"].includes(warAssignmentFilter)&&st.raid!==warAssignmentFilter)return false;if(warAssignmentClassFilter!=="all"&&getMemberClass(m).toLowerCase()!==warAssignmentClassFilter.toLowerCase())return false;return !q||getMemberName(m).toLowerCase().includes(q)||String(m.game_uid||"").includes(q);});
+ const out=$("war-assignment-results");if(out){out.innerHTML=members.length?members.slice(0,40).map(m=>{const info=getClassInfo(getMemberClass(m)),st=warMemberStatus(m.user_id);return `<button class="war-assignment-member-pill" data-war-pool-member="${escapeHTML(m.user_id)}" type="button" style="--class-color:${info?.color||"#aaa"}"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span>${escapeHTML(getMemberName(m))}</span><small>${st.leave?"LEAVE":st.reserve?"RESERVE":st.raid?"TEAM "+st.raid:"UNASSIGNED"}</small></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่ตรงกับตัวกรอง</p>';if(members.length>40)out.insertAdjacentHTML("beforeend",`<small class="war-assignment-more">แสดง 40 จาก ${members.length} คน · ใช้ช่องค้นหาเพื่อจำกัดผลลัพธ์</small>`);}
+ document.querySelectorAll("[data-war-filter]").forEach(b=>b.classList.toggle("is-active",b.dataset.warFilter===warAssignmentFilter));document.querySelectorAll("[data-war-class-filter]").forEach(b=>b.classList.toggle("is-active",b.dataset.warClassFilter===warAssignmentClassFilter));
+ document.querySelectorAll("[data-raid-section]").forEach(s=>s.classList.toggle("hidden",warAssignmentFilter==="leave"||warAssignmentFilter==="reserve"||(warAssignmentFilter!=="all"&&s.dataset.raidSection!==warAssignmentFilter)));
 }
-
+function closeWarAssignmentModal(){$("war-assignment-modal")?.remove();warAssignmentModalSlot=null;}
+function openWarAssignmentModal(partyId,position,assignmentId=null){
+ const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event||event.is_published)return;const party=currentWarParties.find(x=>x.id===partyId);if(!party)return;
+ const assignment=assignmentId?currentWarPartyAssignments.find(x=>x.id===assignmentId):null,current=assignment?allMembers.find(x=>x.user_id===assignment.member_id):null;
+ closeWarAssignmentModal();warAssignmentModalSlot={partyId,position,assignmentId};const modal=document.createElement("div");modal.id="war-assignment-modal";modal.className="war-assignment-modal";
+ modal.innerHTML=`<div class="war-assignment-modal-backdrop" data-war-modal-close></div><section class="war-assignment-modal-panel" role="dialog" aria-modal="true"><button class="war-modal-close" data-war-modal-close type="button">×</button><span class="panel-kicker">PARTY MANAGEMENT</span><h3>${party.raid}${party.party_number} · SLOT ${position}</h3><p class="war-modal-subtitle">${assignment?"จัดการสมาชิกในช่องนี้":"เลือกสมาชิกเพื่อเพิ่มลง Party"}</p>${current?`<div class="war-modal-current-member"><img src="${escapeHTML(getClassInfo(getMemberClass(current))?.iconPath||"")}" alt=""><div><strong>${escapeHTML(getMemberName(current))}</strong><small>${escapeHTML(getMemberClass(current))} · UID ${escapeHTML(current.game_uid||"—")}</small></div><button class="btn btn-danger btn-sm" data-war-modal-remove type="button">นำออก</button></div>`:""}<label class="war-modal-search">ค้นหาชื่อ / UID<input id="war-modal-member-search" type="search" placeholder="พิมพ์ชื่อหรือตัวเลข UID"></label><div class="war-modal-class-tabs"><button class="is-active" data-war-modal-class="all" type="button">ALL</button>${CLASS_DATA.map(x=>`<button data-war-modal-class="${escapeHTML(x.name)}" type="button"><img src="${escapeHTML(x.iconPath)}" alt=""></button>`).join("")}</div><div class="war-modal-member-list" id="war-modal-member-list"></div><p class="war-modal-status" id="war-modal-status"></p></section>`;document.body.appendChild(modal);renderWarAssignmentModalMembers();
+}
+function renderWarAssignmentModalMembers(){
+ const list=$("war-modal-member-list");if(!list||!warAssignmentModalSlot)return;const assigned=getAssignedWarMemberIds(warAssignmentModalSlot.assignmentId),q=String($("war-modal-member-search")?.value||"").toLowerCase(),cls=$("war-assignment-modal")?.dataset.classFilter||"all";
+ const members=allMembers.filter(m=>m.active===true&&!assigned.has(m.user_id)).filter(m=>cls==="all"||getMemberClass(m).toLowerCase()===cls.toLowerCase()).filter(m=>!q||getMemberName(m).toLowerCase().includes(q)||String(m.game_uid||"").includes(q)).sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));
+ list.innerHTML=members.length?members.map(m=>{const info=getClassInfo(getMemberClass(m));return `<button class="war-modal-member-option" data-war-modal-assign="${escapeHTML(m.user_id)}" style="--class-color:${info?.color||"#aaa"}" type="button"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span><strong>${escapeHTML(getMemberName(m))}</strong><small>${escapeHTML(getMemberClass(m))} · UID ${escapeHTML(m.game_uid||"—")}</small></span><b>ADD</b></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่สามารถเพิ่มได้</p>';
+}
+async function assignWarMemberToSlot(id){
+ const slot=warAssignmentModalSlot;if(!slot)return;const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event||event.is_published)return;const party=currentWarParties.find(x=>x.id===slot.partyId);if(!party)return;
+ if(getAssignedWarMemberIds(slot.assignmentId).has(id)){alert("สมาชิกคนนี้ถูกจัดลงปาร์ตี้อื่นในวอร์รอบนี้แล้ว");return;}
+ try{const r=slot.assignmentId?await supabaseClient.from("war_party_members").update({member_id:id}).eq("id",slot.assignmentId).select().single():await supabaseClient.from("war_party_members").insert({party_id:slot.partyId,member_id:id,position:slot.position}).select().single();if(r.error)throw r.error;await loadSelectedWarEvent(currentWarAssignmentEventId);closeWarAssignmentModal();}
+ catch(e){console.error(e);const status=$("war-modal-status");if(status)status.textContent="บันทึกไม่สำเร็จ: "+(e.message||"กรุณาลองใหม่");}
+}
+async function removeWarPartyMember(id,button){
+ const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event||event.is_published||!id)return;if(button){button.disabled=true;button.textContent="กำลังนำออก...";}
+ try{const r=await supabaseClient.from("war_party_members").delete().eq("id",id);if(r.error)throw r.error;await loadSelectedWarEvent(currentWarAssignmentEventId);closeWarAssignmentModal();}
+ catch(e){alert("นำสมาชิกออกไม่สำเร็จ: "+(e.message||"กรุณาลองใหม่"));if(button)button.disabled=false;}
+}
 // ==========================================
 // GUILD WAR - CREATE EVENT
 // ==========================================
@@ -3181,20 +3083,11 @@ function subscribeToWarRealtime() {
 }
 
 function registerWarCreationEvents(){
-  $("war-raid-boards")?.addEventListener("change",handleWarSlotChange);
-  $("war-raid-boards")?.addEventListener("click",event=>{
-    const addButton=event.target.closest("[data-war-add-slot]");
-    if(addButton){const slot=addButton.closest("[data-war-slot]");addButton.classList.add("hidden");slot?.querySelector("[data-war-slot-picker]")?.classList.remove("hidden");slot?.querySelector(".war-slot-class")?.focus();return;}
-    const button=event.target.closest("[data-war-remove]");if(button)removeWarPartyMember(button.dataset.warRemove,button);
-  });
-  $("war-modify-toggle")?.addEventListener("click",()=>{
-    const activeWar=allWarEvents.find(item=>item.id===currentWarAssignmentEventId);
-    if(!isManagement()||!activeWar||activeWar.is_published)return;
-    warArrangeMode=!warArrangeMode;
-    const button=$("war-modify-toggle");
-    if(button){button.classList.toggle("is-inactive",!warArrangeMode);button.innerHTML=warArrangeMode?'<svg class="icon"><use href="#i-check"/></svg><span>เสร็จสิ้น</span>':'<svg class="icon"><use href="#i-edit"/></svg><span>แก้ไข</span>';button.setAttribute("aria-pressed",String(warArrangeMode));}
-    renderAllWarParties();
-  });
+ $("war-raid-boards")?.addEventListener("click",e=>{const add=e.target.closest("[data-war-add-slot]"),manage=e.target.closest("[data-war-manage-slot]");if(add)openWarAssignmentModal(add.dataset.partyId,Number(add.dataset.position));else if(manage)openWarAssignmentModal(manage.dataset.partyId,Number(manage.dataset.position),manage.dataset.assignmentId);});
+ $("war-assignment-toolbar")?.addEventListener("click",e=>{const f=e.target.closest("[data-war-filter]"),c=e.target.closest("[data-war-class-filter]"),pool=e.target.closest("[data-war-pool-member]");if(f){warAssignmentFilter=f.dataset.warFilter||"all";applyWarAssignmentMemberFilters();}if(c){warAssignmentClassFilter=c.dataset.warClassFilter||"all";applyWarAssignmentMemberFilters();}if(pool){const p=currentWarParties.find(x=>x.raid===warAssignmentFilter&&(x.war_party_members||[]).length<6)||currentWarParties.find(x=>(x.war_party_members||[]).length<6);if(!p){alert("ไม่พบ Party ที่ว่าง");return;}const used=new Set((p.war_party_members||[]).map(x=>Number(x.position))),pos=[1,2,3,4,5,6].find(x=>!used.has(x));if(pos)openWarAssignmentModal(p.id,pos);}});
+ $("war-assignment-toolbar")?.addEventListener("input",e=>{if(e.target.id==="war-assignment-search"){warAssignmentSearch=e.target.value;applyWarAssignmentMemberFilters();}});
+ document.body.addEventListener("click",e=>{if(e.target.closest("[data-war-modal-close]")){closeWarAssignmentModal();return;}const add=e.target.closest("[data-war-modal-assign]"),remove=e.target.closest("[data-war-modal-remove]"),cls=e.target.closest("[data-war-modal-class]");if(add){assignWarMemberToSlot(add.dataset.warModalAssign);return;}if(remove&&warAssignmentModalSlot?.assignmentId){removeWarPartyMember(warAssignmentModalSlot.assignmentId,remove);return;}if(cls){const modal=$("war-assignment-modal");if(modal)modal.dataset.classFilter=cls.dataset.warModalClass||"all";modal?.querySelectorAll("[data-war-modal-class]").forEach(b=>b.classList.toggle("is-active",b===cls));renderWarAssignmentModalMembers();}});
+ document.body.addEventListener("input",e=>{if(e.target.id==="war-modal-member-search")renderWarAssignmentModalMembers();});
   $("war-events")?.addEventListener("click",event=>{
     const deleteButton=event.target.closest("[data-war-delete]");
     if(deleteButton){deleteWarEvent(deleteButton.dataset.warDelete,deleteButton);return;}
