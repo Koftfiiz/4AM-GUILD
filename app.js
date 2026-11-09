@@ -3918,242 +3918,146 @@ function registerGuildActivityEvents(){
 }
 
 // ==========================================
-// 4AM GUILD — POST WAR REWARD REGISTRATION
-// Discord Bot and website share the same Supabase records.
+// 4AM GUILD — DUCK RACE + NUMBER GUESS DEMO MODES
+// These prototypes intentionally do not use war rosters or Supabase RPC.
+// Demo state is local to the current browser only.
 // ==========================================
-let rewardEventsCache=[];
-let rewardWarEventsCache=[];
-let rewardRealtimeChannel=null;
-
-async function loadRewardWarEventOptions(){
- const select=$("reward-war-event-select");if(!select)return;
- const {data,error}=await supabaseClient.from("war_events")
-  .select("id,event_name,event_date,is_published")
-  .eq("is_published",true).order("event_date",{ascending:false}).limit(30);
- if(error){select.innerHTML='<option value="">โหลดรายการวอร์ไม่สำเร็จ</option>';return;}
- rewardWarEventsCache=data||[];
- select.innerHTML='<option value="">เลือก Guild War</option>'+rewardWarEventsCache.map(event=>'<option value="'+escapeHTML(event.id)+'">'+escapeHTML(event.event_name)+' · '+escapeHTML(formatDate(event.event_date))+'</option>').join("");
-}
-
-function renderRewardEvents(){
- const list=$("reward-events-list");if(!list)return;
- if(!rewardEventsCache.length){
-  list.innerHTML='<div class="empty-state"><span>🎁</span><h3>ยังไม่มีกิจกรรมแจกของรางวัล</h3><p>'+(isManagement()?'กด “เปิดกิจกรรม” เพื่อสร้างกิจกรรมหลัง Guild War':'รอฝ่ายบริหารเปิดกิจกรรมแจกของรางวัล')+'</p></div>';return;
- }
- list.innerHTML=rewardEventsCache.map(item=>{
-  const id=escapeHTML(item.event_id),title=escapeHTML(item.title||"กิจกรรมแจกของรางวัล");
-  const warName=escapeHTML(item.war_event_name||"Guild War");
-  const closeLabel=item.signup_closes_at?activityDateLabel(item.signup_closes_at):"ไม่ระบุ";
-  const closed=item.status!=="open"||!item.signup_closes_at||Date.now()>=new Date(item.signup_closes_at).getTime();
-  const signed=Boolean(item.my_signup);
-  const eligible=Boolean(item.eligible);
-  const status=closed?(item.status==="completed"?"เสร็จสิ้น":"ปิดรับสมัคร"):"เปิดรับสมัคร";
-  const statusClass=closed?"is-closed":"is-open";
-  let action="";
-  if(!closed&&eligible){
-   action=signed
-    ?'<button type="button" class="btn btn-outline btn-sm" data-reward-cancel="'+id+'">ยกเลิกการลงชื่อ</button><span class="reward-registered-label">✓ ลงชื่อแล้ว</span>'
-    :'<button type="button" class="btn btn-primary btn-sm" data-reward-register="'+id+'">ลงชื่อเข้าร่วม</button>';
-  }else if(!eligible){
-   action='<span class="reward-ineligible-label">ไม่มีสิทธิ์ · ไม่อยู่ในรายชื่อวอร์นี้</span>';
-  }else{
-   action='<span class="reward-registered-label">'+(signed?'✓ ลงชื่อสำเร็จ':'ปิดรับสมัครแล้ว')+'</span>';
-  }
-  const managerActions=isManagement()
-   ?'<div class="reward-manager-actions"><button type="button" class="btn btn-outline btn-sm" data-reward-participants="'+id+'">ดูรายชื่อ ('+Number(item.participant_count||0)+')</button>'+(closed?'':'<button type="button" class="btn btn-danger btn-sm" data-reward-close="'+id+'">ปิดรับสมัคร</button>')+'</div>'
-   :'';
-  return '<article class="reward-event-card"><div class="reward-event-card-main"><div class="reward-event-title-row"><h4>'+title+'</h4><span class="reward-status '+statusClass+'">'+status+'</span></div><p class="reward-war-reference">อ้างอิงรายชื่อจาก: <strong>'+warName+'</strong></p>'+(item.description?'<p class="reward-event-description">'+escapeHTML(item.description)+'</p>':'')+'<div class="reward-event-meta"><span>ปิดลงชื่อ: '+escapeHTML(closeLabel)+'</span><strong>ผู้ลงชื่อ '+Number(item.participant_count||0)+' คน</strong></div><div class="reward-event-actions">'+action+managerActions+'</div></div></article>';
- }).join("");
-}
-
-async function loadRewardEvents(){
- const list=$("reward-events-list");if(list)list.innerHTML='<div class="empty-state"><span>◷</span><h3>กำลังโหลดกิจกรรมแจกของรางวัล</h3><p>กรุณารอสักครู่</p></div>';
- const {data,error}=await supabaseClient.rpc("get_reward_event_overview");
- if(error){
-  console.error("Reward event overview:",error);
-  if(list)list.innerHTML='<div class="system-role-error">ยังไม่ได้ติดตั้งระบบฐานข้อมูลกิจกรรมแจกของรางวัล หรือ RPC มีปัญหา: '+escapeHTML(error.message)+'<br>กรุณาติดตั้ง SQL: 4AM_GUILD_REWARD_EVENT_DUAL_REGISTRATION</div>';
-  return;
- }
- rewardEventsCache=data||[];
- renderRewardEvents();
-}
-
-function subscribeToRewardRealtime(){
- if(rewardRealtimeChannel){supabaseClient.removeChannel(rewardRealtimeChannel);rewardRealtimeChannel=null;}
- if(!currentUser)return;
- rewardRealtimeChannel=supabaseClient.channel("4am-reward-events-"+currentUser.id)
-  .on("postgres_changes",{event:"*",schema:"public",table:"reward_events"},()=>loadRewardEvents())
-  .on("postgres_changes",{event:"*",schema:"public",table:"reward_event_signups"},()=>loadRewardEvents())
-  .subscribe();
-}
-
-async function showRewardParticipants(eventId){
- if(!isManagement())return;
- const panel=$("reward-participants-panel"),list=$("reward-participants-list");
- if(!panel||!list)return;
- panel.classList.remove("hidden");list.innerHTML='<p class="muted">กำลังโหลดรายชื่อ...</p>';
- const {data,error}=await supabaseClient.rpc("get_reward_event_participants",{p_event_id:eventId});
- if(error){list.innerHTML='<p class="message error">'+escapeHTML(error.message)+'</p>';return;}
- const event=rewardEventsCache.find(row=>row.event_id===eventId);
- $("reward-participants-title").textContent="รายชื่อผู้ลงทะเบียน · "+(event?.title||"กิจกรรม");
- list.innerHTML=(data||[]).length?(data||[]).map((row,index)=>'<div class="reward-participant-row"><span class="reward-participant-number">'+(index+1)+'</span><strong>'+escapeHTML(row.character_name||row.nickname||"สมาชิก")+'</strong><small>'+escapeHTML(row.roster_type|| (row.queue_position>=61?'ตัวสำรอง':'ตัวจริง'))+'</small><time>'+escapeHTML(activityDateLabel(row.created_at))+'</time><span class="reward-source-label">'+(row.source==="discord"?"Discord":"เว็บไซต์")+'</span></div>').join(""):'<p class="muted">ยังไม่มีผู้ลงทะเบียน</p>';
- panel.scrollIntoView({behavior:"smooth",block:"nearest"});
-}
-
-async function handleRewardRegistration(eventId,action,button){
- if(!currentUser||!currentMember?.active){alert("กรุณาเข้าสู่ระบบด้วยบัญชีสมาชิกกิลด์");return;}
- if(button){button.disabled=true;button.textContent="กำลังบันทึก...";}
- try{
-  const rpc=action==="register"?"register_reward_event":"cancel_reward_event_signup";
-  const {data,error}=await supabaseClient.rpc(rpc,{p_event_id:eventId});
-  if(error)throw error;
-  if(data&&data.success===false)throw new Error(data.message||"ไม่สามารถดำเนินการได้");
-  await loadRewardEvents();
- }catch(error){console.error("Reward registration:",error);alert(error.message||"บันทึกการลงชื่อไม่สำเร็จ");}
- finally{if(button)button.disabled=false;}
-}
-
-function registerRewardEvents(){
- const page=$("page-activities");if(!page||page.dataset.rewardEventsReady==="true")return;
- page.dataset.rewardEventsReady="true";
- $("reward-create-open")?.addEventListener("click",async()=>{
-  if(!isManagement())return;
-  const form=$("reward-create-form");form?.classList.remove("hidden");
-  await loadRewardWarEventOptions();
- });
- $("reward-create-cancel")?.addEventListener("click",()=>{$("reward-create-form")?.classList.add("hidden");});
- $("reward-participants-close")?.addEventListener("click",()=>{$("reward-participants-panel")?.classList.add("hidden");});
- $("reward-create-form")?.addEventListener("submit",async event=>{
-  event.preventDefault();if(!isManagement())return;
-  const form=event.currentTarget,button=$("reward-create-submit"),message=$("reward-create-message");
-  const warId=$("reward-war-event-select").value,title=$("reward-title-input").value.trim(),description=$("reward-description-input").value.trim(),closeValue=$("reward-close-input").value;
-  if(!warId||!title||!closeValue){message.textContent="กรุณากรอกข้อมูลให้ครบ";message.className="message error";return;}
-  const closeAt=new Date(closeValue);
-  if(Number.isNaN(closeAt.getTime())||closeAt.getTime()<=Date.now()){message.textContent="เวลาปิดรับสมัครต้องเป็นเวลาในอนาคต";message.className="message error";return;}
-  button.disabled=true;button.textContent="กำลังเปิดกิจกรรม...";
-  try{
-   const {data,error}=await supabaseClient.rpc("create_reward_event",{p_war_event_id:warId,p_title:title,p_description:description,p_signup_closes_at:closeAt.toISOString()});
-   if(error)throw error;
-   form.reset();form.classList.add("hidden");await loadRewardEvents();
-   alert("เปิดกิจกรรมแจกของรางวัลแล้ว");
-  }catch(error){message.textContent=error.message||"เปิดกิจกรรมไม่สำเร็จ";message.className="message error";}
-  finally{button.disabled=false;button.textContent="เปิดกิจกรรม";}
- });
- $("reward-events-list")?.addEventListener("click",async event=>{
-  const register=event.target.closest("[data-reward-register]"),cancel=event.target.closest("[data-reward-cancel]"),close=event.target.closest("[data-reward-close]"),participants=event.target.closest("[data-reward-participants]");
-  if(register){await handleRewardRegistration(register.dataset.rewardRegister,"register",register);return;}
-  if(cancel){if(!window.confirm("ต้องการยกเลิกการลงชื่อกิจกรรมนี้หรือไม่?"))return;await handleRewardRegistration(cancel.dataset.rewardCancel,"cancel",cancel);return;}
-  if(close){
-   if(!isManagement()||!window.confirm("ปิดรับสมัครกิจกรรมนี้ใช่หรือไม่?"))return;
-   close.disabled=true;
-   const {error}=await supabaseClient.rpc("close_reward_event",{p_event_id:close.dataset.rewardClose});
-   if(error){alert("ปิดกิจกรรมไม่สำเร็จ: "+error.message);close.disabled=false;}else await loadRewardEvents();
-   return;
-  }
-  if(participants){await showRewardParticipants(participants.dataset.rewardParticipants);return;}
- });
-}
-
-
-// ==========================================
-// 4AM GUILD — CYBERPUNK NUMBER GUESS (00–99)
-// Database RPC enforces one number per member and
-// one member per number with unique constraints.
-// ==========================================
+const DUCK_RACE_DEMO_KEY="4am-guild:duck-race-demo:v1";
+const NUMBER_GUESS_DEMO_KEY="4am-guild:number-guess-demo:v1";
+let duckRaceDemo={title:"4AM DUCK RACE",prize:"รางวัลเซอร์ไพรส์",duckCount:6};
+let duckRaceRunning=false;
+let duckRaceTimer=null;
 let numberGuessCurrentEvent=null;
-let numberGuessRealtimeChannel=null;
-let numberGuessWarOptions=[];
+
+function readDemoStorage(key,fallback){
+ try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback;}
+ catch(error){console.warn("Demo storage unavailable:",error);return fallback;}
+}
+function writeDemoStorage(key,value){
+ try{localStorage.setItem(key,JSON.stringify(value));return true;}
+ catch(error){console.warn("Demo storage unavailable:",error);return false;}
+}
+function loadDuckRaceDemo(){
+ duckRaceDemo=readDemoStorage(DUCK_RACE_DEMO_KEY,duckRaceDemo)||duckRaceDemo;
+ $("duck-race-admin")?.classList.toggle("hidden",!isManagement());
+ $("duck-race-title").textContent=duckRaceDemo.title||"4AM DUCK RACE";
+ $("duck-race-prize").textContent="🏆 "+(duckRaceDemo.prize||"รางวัลเซอร์ไพรส์");
+ $("duck-race-title-input").value=duckRaceDemo.title||"4AM DUCK RACE";
+ $("duck-race-prize-input").value=duckRaceDemo.prize||"รางวัลเซอร์ไพรส์";
+ $("duck-race-count-input").value=String(duckRaceDemo.duckCount||6);
+ renderDuckRaceTrack(false);
+}
+function renderDuckRaceTrack(running,winnerIndex=-1){
+ const track=$("duck-race-track");if(!track)return;
+ const count=Math.max(4,Math.min(8,Number(duckRaceDemo.duckCount)||6));
+ const colors=["#f5c84c","#62d8f0","#ff8c9d","#a78bfa","#8de0a2","#f2a65a","#f1f1f1","#df86d8"];
+ track.innerHTML=Array.from({length:count},(_,i)=>{
+  const name="เป็ด "+String(i+1).padStart(2,"0");
+  const duration=(3.7+((i*37+13)%19)/10).toFixed(2);
+  return '<div class="duck-race-lane'+(winnerIndex===i?' is-winner':'')+'" data-duck-lane="'+i+'"><span class="duck-race-lane-number">'+String(i+1).padStart(2,"0")+'</span><div class="duck-race-lane-track"><div class="duck-race-progress" style="--duck-color:'+colors[i]+';--duck-duration:'+duration+'s;--duck-progress:'+(running?'100%':'0%')+'"><span class="duck-race-emoji">🦆</span></div></div><span class="duck-race-lane-name">'+name+'</span></div>';
+ }).join("");
+ if(running)track.querySelectorAll(".duck-race-progress").forEach(node=>node.classList.add("is-racing"));
+}
+function resetDuckRaceDemo(){
+ if(duckRaceTimer)clearTimeout(duckRaceTimer);
+ duckRaceTimer=null;duckRaceRunning=false;renderDuckRaceTrack(false);
+ const result=$("duck-race-result");
+ if(result)result.innerHTML='<span class="duck-race-result-icon">🏁</span><div><strong>พร้อมลงสนามหรือยัง?</strong><p>กดเริ่มการแข่งขันเพื่อดูเป็ดทั้งสนามแข่งกัน</p></div>';
+ const start=$("duck-race-start");if(start){start.disabled=false;start.textContent="▶ เริ่มการแข่งขัน";}
+}
+function startDuckRaceDemo(){
+ if(duckRaceRunning)return;
+ duckRaceRunning=true;
+ const start=$("duck-race-start");if(start){start.disabled=true;start.textContent="กำลังแข่งขัน...";}
+ const result=$("duck-race-result");
+ if(result)result.innerHTML='<span class="duck-race-result-icon">🚦</span><div><strong>เริ่มการแข่งขัน!</strong><p>เป็ดทุกตัวกำลังเร่งความเร็วเข้าสู่เส้นชัย...</p></div>';
+ renderDuckRaceTrack(true);
+ const count=Math.max(4,Math.min(8,Number(duckRaceDemo.duckCount)||6));
+ duckRaceTimer=setTimeout(()=>{
+  const winner=Math.floor(Math.random()*count);
+  duckRaceRunning=false;duckRaceTimer=null;
+  renderDuckRaceTrack(false,winner);
+  const winnerName="เป็ด "+String(winner+1).padStart(2,"0");
+  if(result)result.innerHTML='<span class="duck-race-result-icon">🏆</span><div><strong>ผู้ชนะคือ '+winnerName+'!</strong><p>คว้ารางวัล: '+escapeHTML(duckRaceDemo.prize||"รางวัลเซอร์ไพรส์")+'</p></div>';
+  if(start){start.disabled=false;start.textContent="▶ แข่งอีกครั้ง";}
+ },5200);
+}
+function registerDuckRaceEvents(){
+ const page=$("page-activities");if(!page||page.dataset.duckRaceReady==="true")return;page.dataset.duckRaceReady="true";
+ $("duck-race-settings")?.addEventListener("click",()=>{if(isManagement())$("duck-race-admin")?.classList.toggle("hidden");});
+ $("duck-race-cancel")?.addEventListener("click",()=>$("duck-race-admin")?.classList.add("hidden"));
+ $("duck-race-form")?.addEventListener("submit",event=>{
+  event.preventDefault();if(!isManagement())return;
+  const title=$("duck-race-title-input").value.trim(),prize=$("duck-race-prize-input").value.trim(),count=Number($("duck-race-count-input").value);
+  if(!title||!prize||![4,6,8].includes(count)){$("duck-race-form-message").textContent="กรุณากรอกชื่อการแข่งขัน ของรางวัล และจำนวนเป็ด";$("duck-race-form-message").className="message error";return;}
+  duckRaceDemo={title,prize,duckCount:count};writeDemoStorage(DUCK_RACE_DEMO_KEY,duckRaceDemo);
+  $("duck-race-admin").classList.add("hidden");$("duck-race-title").textContent=title;$("duck-race-prize").textContent="🏆 "+prize;resetDuckRaceDemo();
+ });
+ $("duck-race-start")?.addEventListener("click",startDuckRaceDemo);
+ $("duck-race-reset")?.addEventListener("click",resetDuckRaceDemo);
+}
+registerDuckRaceEvents();
 
 function setNumberGuessFeedback(message,type="info"){
  const node=$("number-guess-feedback");if(!node)return;
  node.textContent=message;node.dataset.type=type;node.classList.toggle("is-error",type==="error");node.classList.toggle("is-success",type==="success");
 }
+function loadNumberGuessEvent(){
+ numberGuessCurrentEvent=readDemoStorage(NUMBER_GUESS_DEMO_KEY,null);
+ renderNumberGuessGrid(numberGuessCurrentEvent);
+ $("number-guess-admin-panel")?.classList.toggle("hidden",!isManagement());
+ $("number-guess-management-list")?.classList.toggle("hidden",!isManagement()||!numberGuessCurrentEvent);
+ renderNumberGuessParticipants();
+}
 function renderNumberGuessGrid(eventData){
  const grid=$("number-guess-grid");if(!grid)return;
  if(!eventData?.event_id){
-  grid.innerHTML='<div class="number-guess-empty">NO ACTIVE EVENT<br><small>ยังไม่มีกิจกรรมทายตัวเลขที่เปิดรับอยู่</small></div>';
-  $("number-guess-own-number").textContent="--";
-  $("number-guess-claimed-count").textContent="0";
-  $("number-guess-available-count").textContent="100";
+  grid.innerHTML='<div class="number-guess-empty">NO DEMO EVENT<br><small>ฝ่ายบริหารสามารถสร้างกิจกรรมทดลองได้</small></div>';
+  $("number-guess-own-number").textContent="--";$("number-guess-claimed-count").textContent="0";$("number-guess-available-count").textContent="100";
+  $("number-guess-event-state").innerHTML='<span class="number-guess-state-icon">⌁</span><div><strong>ยังไม่มีกิจกรรมทดลอง</strong><p>DEMO MODE · ไม่เชื่อมรายชื่อ Guild War</p></div><span class="number-guess-event-status closed">READY</span>';
+  $("number-guess-selection-hint").textContent="รอฝ่ายบริหารสร้างกิจกรรม";
+  setNumberGuessFeedback("สร้างกิจกรรมทดลองได้โดยไม่ต้องเลือกรอบวอร์หรือเชื่อมรายชื่อสมาชิก","info");
   return;
  }
- const taken=Array.isArray(eventData.taken_numbers)?eventData.taken_numbers:[];
- const myNumber=eventData.my_number===null||eventData.my_number===undefined?null:Number(eventData.my_number);
- const takenSet=new Set(taken.map(item=>Number(typeof item==="object"?item.number:item)));
+ const entries=Array.isArray(eventData.entries)?eventData.entries:[];
+ const playerName=$("number-guess-player-name")?.value.trim()||"";
+ const own=entries.find(row=>row.nickname.toLowerCase()===playerName.toLowerCase());
+ const takenSet=new Set(entries.map(row=>Number(row.number)));
  const closed=eventData.status!=="open"||new Date(eventData.signup_closes_at).getTime()<=Date.now();
- const eligible=Boolean(eventData.eligible);
- $("number-guess-own-number").textContent=myNumber===null?"--":String(myNumber).padStart(2,"0");
+ $("number-guess-own-number").textContent=own?String(own.number).padStart(2,"0"):"--";
  $("number-guess-claimed-count").textContent=String(takenSet.size);
  $("number-guess-available-count").textContent=String(100-takenSet.size);
- $("number-guess-selection-hint").textContent=myNumber===null?(eligible&&!closed?"เลือกหมายเลขว่างได้หนึ่งหมายเลขเท่านั้น":"ยังไม่สามารถเลือกหมายเลขได้"):("คุณได้เลือกหมายเลข "+String(myNumber).padStart(2,"0")+" แล้ว");
- const state=$("number-guess-event-state");
- state.innerHTML='<span class="number-guess-state-icon">'+(closed?"◈":"⌁")+'</span><div><strong>'+escapeHTML(eventData.title||"กิจกรรมทายตัวเลข")+'</strong><p>'+escapeHTML(eventData.war_event_name||"Guild War")+' · ปิดรับ '+escapeHTML(activityDateLabel(eventData.signup_closes_at))+' · '+(closed?"ปิดรับหมายเลข": "กำลังเปิดรับหมายเลข")+'</p></div><span class="number-guess-event-status '+(closed?"closed":"open")+'">'+(closed?"CLOSED":"LIVE")+'</span>';
- if(!eligible&&!isManagement())setNumberGuessFeedback("บัญชีของคุณไม่มีชื่อในรายชื่อวอร์ที่ใช้อ้างอิง จึงยังเลือกหมายเลขไม่ได้","error");
- else if(closed)setNumberGuessFeedback("กิจกรรมนี้ปิดรับหมายเลขแล้ว","info");
- else if(myNumber!==null)setNumberGuessFeedback("บันทึกหมายเลขของคุณแล้ว หมายเลขนี้ไม่สามารถเปลี่ยนหรือเลือกซ้ำได้","success");
+ $("number-guess-selection-hint").textContent=own?"คุณเลือกหมายเลข "+String(own.number).padStart(2,"0")+" แล้ว":(playerName?(closed?"กิจกรรมปิดรับแล้ว":"เลือกหมายเลขว่างได้หนึ่งหมายเลข"):"กรุณาใส่ชื่อเล่นก่อนเลือกหมายเลข");
+ $("number-guess-event-state").innerHTML='<span class="number-guess-state-icon">⌁</span><div><strong>'+escapeHTML(eventData.title)+'</strong><p>ปิดรับ '+escapeHTML(activityDateLabel(eventData.signup_closes_at))+' · '+(closed?"ปิดรับหมายเลข":"กำลังเปิดรับหมายเลข")+' · โหมดทดลอง</p></div><span class="number-guess-event-status '+(closed?"closed":"open")+'">'+(closed?"CLOSED":"LIVE")+'</span>';
+ if(closed)setNumberGuessFeedback("กิจกรรมปิดรับหมายเลขแล้ว","info");
+ else if(own)setNumberGuessFeedback("ชื่อ "+playerName+" เลือกหมายเลข "+String(own.number).padStart(2,"0")+" แล้ว","success");
+ else if(!playerName)setNumberGuessFeedback("ใส่ชื่อเล่นเพื่อเริ่มทดลองเลือกหมายเลข","info");
  else setNumberGuessFeedback("ระบบพร้อมแล้ว เลือกหมายเลขที่ยังว่างได้เลย","info");
  grid.innerHTML=Array.from({length:100},(_,number)=>{
-  const isMine=myNumber===number,claimed=takenSet.has(number),disabled=closed||!eligible||claimed||myNumber!==null;
-  const cls=isMine?"is-mine":claimed?"is-taken":"is-available";
-  const label=String(number).padStart(2,"0");
-  const owner=claimed&&!isMine?(taken.find(item=>Number(typeof item==="object"?item.number:item)===number)?.character_name||"ถูกเลือกแล้ว"):"";
-  return '<button type="button" class="number-guess-cell '+cls+'" data-guess-number="'+number+'" '+(disabled?'disabled':'')+' aria-label="หมายเลข '+label+(isMine?' หมายเลขของคุณ':claimed?' มีผู้เลือกแล้ว':' ว่าง')+'" title="'+escapeHTML(owner||label)+'"><span>'+label+'</span>'+(isMine?'<i>YOU</i>':claimed?'<i>TAKEN</i>':'')+'</button>';
+  const entry=entries.find(row=>Number(row.number)===number),isMine=Boolean(entry&&own&&entry.nickname.toLowerCase()===playerName.toLowerCase()),claimed=Boolean(entry),disabled=closed||!playerName||claimed||Boolean(own);
+  const cls=isMine?"is-mine":claimed?"is-taken":"is-available",label=String(number).padStart(2,"0"),owner=claimed?entry.nickname:"";
+  return '<button type="button" class="number-guess-cell '+cls+'" data-guess-number="'+number+'" '+(disabled?'disabled':'')+' aria-label="หมายเลข '+label+(claimed?' ถูกเลือกแล้ว':' ว่าง')+'" title="'+escapeHTML(owner||label)+'"><span>'+label+'</span>'+(isMine?'<i>YOU</i>':claimed?'<i>TAKEN</i>':'')+'</button>';
  }).join("");
 }
-async function loadNumberGuessEvent(){
- const grid=$("number-guess-grid");if(grid)grid.innerHTML='<div class="number-guess-loading">SYNCING NEON GRID...</div>';
- try{
-  const {data,error}=await supabaseClient.rpc("get_number_guess_overview");
-  if(error)throw error;
-  numberGuessCurrentEvent=data?.[0]||data||null;
-  if(numberGuessCurrentEvent&&!numberGuessCurrentEvent.event_id&&numberGuessCurrentEvent.id)numberGuessCurrentEvent.event_id=numberGuessCurrentEvent.id;
-  renderNumberGuessGrid(numberGuessCurrentEvent);
-  $("number-guess-admin-panel")?.classList.toggle("hidden",!isManagement());
-  $("number-guess-management-list")?.classList.toggle("hidden",!isManagement()||!numberGuessCurrentEvent?.event_id);
-  if(isManagement()&&numberGuessCurrentEvent?.event_id)loadNumberGuessParticipants();
- }catch(error){
-  console.error("Number guess load:",error);
-  if(grid)grid.innerHTML='<div class="number-guess-empty">DATABASE NOT READY<br><small>'+escapeHTML(error.message||"กรุณาติดตั้ง SQL ของกิจกรรมทายตัวเลข")+'</small></div>';
-  setNumberGuessFeedback("ยังโหลดกิจกรรมไม่ได้ กรุณาตรวจสอบ SQL และ RPC ของระบบทายตัวเลข","error");
- }
-}
-function subscribeToNumberGuessRealtime(){
- if(numberGuessRealtimeChannel){supabaseClient.removeChannel(numberGuessRealtimeChannel);numberGuessRealtimeChannel=null;}
- if(!currentUser)return;
- numberGuessRealtimeChannel=supabaseClient.channel("4am-number-guess-"+currentUser.id)
-  .on("postgres_changes",{event:"*",schema:"public",table:"number_guess_events"},()=>{if(!$("page-number-guess")?.classList.contains("hidden"))loadNumberGuessEvent();})
-  .on("postgres_changes",{event:"*",schema:"public",table:"number_guess_entries"},()=>{if(!$("page-number-guess")?.classList.contains("hidden"))loadNumberGuessEvent();})
-  .subscribe();
-}
-async function claimNumberGuessNumber(number,button){
- if(!numberGuessCurrentEvent?.event_id||!currentUser)return;
- if(button){button.disabled=true;button.classList.add("is-pending");}
- setNumberGuessFeedback("กำลังจองหมายเลข "+String(number).padStart(2,"0")+" ...","info");
- try{
-  const {data,error}=await supabaseClient.rpc("claim_number_guess_number",{p_event_id:numberGuessCurrentEvent.event_id,p_number:number});
-  if(error)throw error;
-  if(data?.success===false)throw new Error(data.message||"ไม่สามารถเลือกหมายเลขนี้ได้");
-  setNumberGuessFeedback(data?.message||"เลือกหมายเลขสำเร็จ","success");
-  await loadNumberGuessEvent();
- }catch(error){
-  console.error("Claim number error:",error);
-  setNumberGuessFeedback(error.message||"หมายเลขนี้ถูกเลือกไปแล้ว หรือคุณไม่มีสิทธิ์","error");
-  await loadNumberGuessEvent();
- }finally{if(button){button.disabled=false;button.classList.remove("is-pending");}}
-}
-async function loadNumberGuessWarOptions(){
- const select=$("number-guess-war-select");if(!select)return;
- const {data,error}=await supabaseClient.from("war_events").select("id,event_name,event_date,is_published").eq("is_published",true).order("event_date",{ascending:false}).limit(30);
- if(error){select.innerHTML='<option value="">โหลดรายการวอร์ไม่สำเร็จ</option>';return;}
- numberGuessWarOptions=data||[];
- select.innerHTML='<option value="">เลือก Guild War</option>'+numberGuessWarOptions.map(row=>'<option value="'+escapeHTML(row.id)+'">'+escapeHTML(row.event_name)+' · '+escapeHTML(formatDate(row.event_date))+'</option>').join("");
-}
-async function loadNumberGuessParticipants(){
- if(!isManagement()||!numberGuessCurrentEvent?.event_id)return;
+function renderNumberGuessParticipants(){
  const box=$("number-guess-participants");if(!box)return;
- const {data,error}=await supabaseClient.rpc("get_number_guess_participants",{p_event_id:numberGuessCurrentEvent.event_id});
- if(error){box.innerHTML='<p class="muted">'+escapeHTML(error.message)+'</p>';return;}
- box.innerHTML=(data||[]).length?(data||[]).map(row=>'<div class="number-guess-participant"><strong>'+String(row.number).padStart(2,"0")+'</strong><span>'+escapeHTML(row.character_name||"สมาชิก")+'</span><small>'+escapeHTML(row.roster_type||"Guild War")+'</small><time>'+escapeHTML(activityDateLabel(row.created_at))+'</time></div>').join(""):'<p class="muted">ยังไม่มีสมาชิกเลือกหมายเลข</p>';
+ const entries=numberGuessCurrentEvent?.entries||[];
+ box.innerHTML=entries.length?entries.slice().sort((a,b)=>a.number-b.number).map(row=>'<div class="number-guess-participant"><strong>'+String(row.number).padStart(2,"0")+'</strong><span>'+escapeHTML(row.nickname)+'</span><small>DEMO PLAYER</small><time>'+escapeHTML(activityDateLabel(row.created_at))+'</time></div>').join(""):'<p class="muted">ยังไม่มีผู้ทดลองเลือกหมายเลข</p>';
+}
+function claimNumberGuessNumber(number,button){
+ const eventData=numberGuessCurrentEvent;if(!eventData?.event_id)return;
+ const nickname=$("number-guess-player-name").value.trim();
+ if(!nickname){setNumberGuessFeedback("กรุณาพิมพ์ชื่อเล่นก่อนเลือกหมายเลข","error");$("number-guess-player-name").focus();return;}
+ if(nickname.length>32){setNumberGuessFeedback("ชื่อเล่นยาวได้ไม่เกิน 32 ตัวอักษร","error");return;}
+ if(new Date(eventData.signup_closes_at).getTime()<=Date.now()){setNumberGuessFeedback("กิจกรรมปิดรับหมายเลขแล้ว","error");return;}
+ const entries=eventData.entries||[];
+ if(entries.some(row=>row.nickname.toLowerCase()===nickname.toLowerCase())){setNumberGuessFeedback("ชื่อนี้เลือกหมายเลขไปแล้ว","error");return;}
+ if(entries.some(row=>Number(row.number)===number)){setNumberGuessFeedback("หมายเลขนี้ถูกเลือกไปแล้ว กรุณาเลือกหมายเลขอื่น","error");return;}
+ if(button){button.disabled=true;button.classList.add("is-pending");}
+ eventData.entries.push({number,nickname,created_at:new Date().toISOString()});
+ writeDemoStorage(NUMBER_GUESS_DEMO_KEY,eventData);numberGuessCurrentEvent=eventData;
+ renderNumberGuessGrid(eventData);renderNumberGuessParticipants();
+ setNumberGuessFeedback("บันทึกหมายเลข "+String(number).padStart(2,"0")+" สำหรับ "+nickname+" แล้ว (เฉพาะเบราว์เซอร์นี้)","success");
 }
 function registerNumberGuessEvents(){
  const page=$("page-number-guess");if(!page||page.dataset.ready==="true")return;page.dataset.ready="true";
@@ -4161,33 +4065,29 @@ function registerNumberGuessEvents(){
   const button=event.target.closest("[data-guess-number]");if(!button||button.disabled)return;
   claimNumberGuessNumber(Number(button.dataset.guessNumber),button);
  });
- $("number-guess-create-open")?.addEventListener("click",async()=>{
-  if(!isManagement())return;
-  $("number-guess-create-form")?.classList.remove("hidden");
-  await loadNumberGuessWarOptions();
- });
+ $("number-guess-player-name")?.addEventListener("input",()=>renderNumberGuessGrid(numberGuessCurrentEvent));
+ $("number-guess-create-open")?.addEventListener("click",()=>{if(isManagement())$("number-guess-create-form")?.classList.remove("hidden");});
  $("number-guess-create-cancel")?.addEventListener("click",()=>$("number-guess-create-form")?.classList.add("hidden"));
- $("number-guess-create-form")?.addEventListener("submit",async event=>{
+ $("number-guess-demo-reset")?.addEventListener("click",()=>{
+  if(!isManagement()||!window.confirm("ล้างกิจกรรมทดลองและหมายเลขทั้งหมดใช่หรือไม่?"))return;
+  localStorage.removeItem(NUMBER_GUESS_DEMO_KEY);numberGuessCurrentEvent=null;loadNumberGuessEvent();
+ });
+ $("number-guess-create-form")?.addEventListener("submit",event=>{
   event.preventDefault();if(!isManagement())return;
   const button=$("number-guess-create-submit"),message=$("number-guess-create-message");
-  const warId=$("number-guess-war-select").value,title=$("number-guess-title").value.trim(),closeValue=$("number-guess-close").value;
-  const closeAt=new Date(closeValue);
-  if(!warId||!title||!closeValue||Number.isNaN(closeAt.getTime())||closeAt.getTime()<=Date.now()){message.textContent="กรุณากรอกข้อมูลให้ครบและเลือกเวลาปิดในอนาคต";message.className="message error";return;}
-  button.disabled=true;button.textContent="กำลังเปิด...";
-  try{
-   const {data,error}=await supabaseClient.rpc("create_number_guess_event",{p_war_event_id:warId,p_title:title,p_signup_closes_at:closeAt.toISOString()});
-   if(error)throw error;
-   if(data?.success===false)throw new Error(data.message||"เปิดกิจกรรมไม่สำเร็จ");
-   event.currentTarget.reset();event.currentTarget.classList.add("hidden");
-   await loadNumberGuessEvent();
-  }catch(error){message.textContent=error.message||"เปิดกิจกรรมไม่สำเร็จ";message.className="message error";}
-  finally{button.disabled=false;button.textContent="เปิดกิจกรรม";}
+  const title=$("number-guess-title").value.trim(),closeValue=$("number-guess-close").value,closeAt=new Date(closeValue);
+  if(!title||!closeValue||Number.isNaN(closeAt.getTime())||closeAt.getTime()<=Date.now()){message.textContent="กรุณากรอกชื่อกิจกรรมและเวลาปิดรับในอนาคต";message.className="message error";return;}
+  numberGuessCurrentEvent={event_id:"demo-"+Date.now(),title,signup_closes_at:closeAt.toISOString(),status:"open",entries:[]};
+  writeDemoStorage(NUMBER_GUESS_DEMO_KEY,numberGuessCurrentEvent);
+  event.currentTarget.reset();event.currentTarget.classList.add("hidden");loadNumberGuessEvent();
+  message.textContent="สร้างกิจกรรมทดลองเรียบร้อยแล้ว";message.className="message success";
+  button.textContent="เปิดกิจกรรม";
  });
- $("number-guess-refresh-list")?.addEventListener("click",loadNumberGuessParticipants);
+ $("number-guess-refresh-list")?.addEventListener("click",renderNumberGuessParticipants);
 }
 registerNumberGuessEvents();
 
-registerRewardEvents();
+
 
 registerGuildActivityEvents();
 
@@ -4722,8 +4622,8 @@ function openGuildPage(pageName) {
   if (pageName === "war-stats") loadWarMatchRecords();
   if (pageName === "war-attendance-stats") loadWarAttendanceStatistics();
   if (pageName === "rules") loadGuildRules();
-  if (pageName === "activities") { subscribeToGuildActivityRealtime(); loadGuildActivities(); subscribeToRewardRealtime(); loadRewardEvents(); }
-  if (pageName === "number-guess") { loadNumberGuessEvent(); subscribeToNumberGuessRealtime(); }
+  if (pageName === "activities") { subscribeToGuildActivityRealtime(); loadGuildActivities(); loadDuckRaceDemo(); }
+  if (pageName === "number-guess") { loadNumberGuessEvent(); }
   if (pageName === "feedback") loadGuildFeedback();
 }
 
