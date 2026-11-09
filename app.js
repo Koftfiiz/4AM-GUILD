@@ -3029,7 +3029,7 @@ function isDoubleOfficialSaturday(dateValue){
 }
 async function updateWarSignupTimeForDate(){
   const type=$("war-signup-type")?.value;
-  const date=$("war-signup-event-date")?.value;
+  const date=parseDisplayDate($("war-signup-event-date")?.value);
   const input=$("war-signup-start-time");
   const note=$("war-signup-time-note");
   if(!input)return;
@@ -3069,13 +3069,12 @@ async function startEditWarSignupEvent(id){
   const {data,error}=await supabaseClient.from("war_events").select("id,event_name,registration_type,event_date,start_time,signup_opens_at,signup_closes_at,description").eq("id",id).single();
   if(error){alert("โหลด Event ไม่สำเร็จ: "+error.message);return;}
   $("war-signup-edit-id").value=data.id;$("war-signup-event-name").value=data.event_name||"";
-  $("war-signup-type").value=data.registration_type||"official";$("war-signup-event-date").value=String(data.event_date||"").slice(0,10);
-  $("war-signup-start-time").value=formatTime(data.start_time)==="-"?"":formatTime(data.start_time);
-  const toLocal=v=>{if(!v)return "";const d=new Date(v);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16);};
-  $("war-signup-opens-at").value=toLocal(data.signup_opens_at);$("war-signup-closes-at").value=toLocal(data.signup_closes_at);
+  $("war-signup-type").value=data.registration_type||"official";$("war-signup-event-date").value=formatDisplayDate(String(data.event_date||"").slice(0,10));
+  $("war-signup-start-time").value=formatTime(data.start_time)==="-"?"":formatTime(data.start_time).slice(0,5);
+  $("war-signup-opens-at").value=formatDisplayDateTime(data.signup_opens_at);$("war-signup-closes-at").value=formatDisplayDateTime(data.signup_closes_at);
   $("war-signup-description").value=data.description||"";
   $("war-signup-create-confirm").textContent="บันทึกการแก้ไข Event";$("war-signup-create-form").classList.remove("hidden");$("war-signup-create-form").classList.add("is-editing");
-  $("war-signup-start-time").readOnly=data.registration_type==="official";
+  $("war-signup-start-time").readOnly=data.registration_type==="official";updateWarSignupTimeForDate();
   $("war-signup-create-form").scrollIntoView({behavior:"smooth",block:"center"});
 }
 async function deleteWarSignupEvent(id,button){
@@ -3088,10 +3087,10 @@ async function deleteWarSignupEvent(id,button){
 async function createWarSignupEvent(form){
   if(!isManagement())return;
   const button=$("war-signup-create-confirm"),message=$("war-signup-create-message");
-  const name=$("war-signup-event-name").value.trim(),type=$("war-signup-type").value,date=$("war-signup-event-date").value;
+  const name=$("war-signup-event-name").value.trim(),type=$("war-signup-type").value,date=parseDisplayDate($("war-signup-event-date").value);
   const startTime=$("war-signup-start-time").value,opens=$("war-signup-opens-at").value,closes=$("war-signup-closes-at").value;
   const description=$("war-signup-description").value.trim(),editId=$("war-signup-edit-id").value;
-  const openDate=new Date(opens),closeDate=new Date(closes),showError=t=>{message.textContent=t;message.className="message error";};
+  const openDate=parseDisplayDateTime(opens),closeDate=parseDisplayDateTime(closes),showError=t=>{message.textContent=t;message.className="message error";};
   if(!name||!date||!startTime||!opens||!closes){showError("กรุณากรอกข้อมูลที่จำเป็นให้ครบ");return;}
   if(type==="official"){
     const selectedDate=new Date(date+"T12:00:00");
@@ -3109,7 +3108,7 @@ async function createWarSignupEvent(form){
       return;
     }
   }
-  if(Number.isNaN(openDate.getTime())||Number.isNaN(closeDate.getTime())||closeDate<=openDate){showError("เวลาปิดรับสมัครต้องอยู่หลังเวลาเริ่มลงชื่อ");return;}
+  if(!openDate||!closeDate||closeDate<=openDate){showError("กรุณาระบุวันที่และเวลาให้ถูกต้อง และเวลาปิดรับสมัครต้องอยู่หลังเวลาเริ่มลงชื่อ");return;}
   if(closeDate<=new Date()){showError("เวลาปิดรับสมัครต้องเป็นเวลาในอนาคต");return;}
   button.disabled=true;button.textContent=editId?"กำลังบันทึกการแก้ไข...":"กำลังสร้าง Event...";
   try{
@@ -3128,7 +3127,7 @@ function registerWarRecordAndAttendanceEvents(){
   $("war-signup-refresh")?.addEventListener("click",loadWarSignups);
   $("war-signup-add")?.addEventListener("click",()=>{if(isManagement()){resetWarSignupForm();$("war-signup-create-form")?.classList.toggle("hidden");}});
   $("war-signup-create-cancel")?.addEventListener("click",()=>{resetWarSignupForm();$("war-signup-create-form")?.classList.add("hidden");});
-  $("war-signup-event-date")?.addEventListener("change",updateWarSignupTimeForDate);
+  $("war-signup-event-date")?.addEventListener("change",()=>{const iso=parseDisplayDate($("war-signup-event-date").value);if(iso)$("war-signup-event-date").value=formatDisplayDate(iso);updateWarSignupTimeForDate();});
   $("war-signup-type")?.addEventListener("change",updateWarSignupTimeForDate);
   $("war-signup-start-time")?.addEventListener("click",()=>{if($("war-signup-type")?.value==="practice")$("war-signup-start-time").readOnly=false;});
   $("war-signup-create-form")?.addEventListener("submit",async e=>{e.preventDefault();await createWarSignupEvent(e.currentTarget);});
@@ -3455,57 +3454,95 @@ function initializeGuildRichTextEnhancements(){
 function closeGlobalDateTimePicker(){
  document.querySelector(".global-date-time-popover")?.remove();
 }
+function parseDisplayDate(value){
+ const match=String(value||"").trim().match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+ return match?match[3]+"-"+match[2]+"-"+match[1]:"";
+}
+function formatDisplayDate(iso){
+ const match=String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+ return match?match[3]+"/"+match[2]+"/"+match[1]:"";
+}
+function parseDisplayDateTime(value){
+ const match=String(value||"").trim().match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/);
+ if(!match)return null;
+ const day=Number(match[1]),month=Number(match[2]),year=Number(match[3]),hour=Number(match[4]),minute=Number(match[5]);
+ if(year<1000||month<1||month>12||day<1||day>31||hour>23||minute>59)return null;
+ const date=new Date(year,month-1,day,hour,minute,0,0);
+ return date.getFullYear()===year&&date.getMonth()===month-1&&date.getDate()===day&&date.getHours()===hour&&date.getMinutes()===minute?date:null;
+}
+function formatDisplayDateTime(value){
+ if(!value)return "";
+ const date=new Date(value);if(Number.isNaN(date.getTime()))return "";
+ return formatDisplayDate(date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0"))+" "+String(date.getHours()).padStart(2,"0")+":"+String(date.getMinutes()).padStart(2,"0");
+}
 function globalPickerDateValue(input){
  const value=String(input.value||"");
+ if(input.matches("[data-activity-datetime-input]"))return parseDisplayDate(value.slice(0,10));
  if(input.type==="datetime-local")return value.slice(0,10);
  if(input.type==="date")return value;
- const match=value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
- return match?match[3]+"-"+match[2]+"-"+match[1]:"";
+ return parseDisplayDate(value);
 }
 function globalPickerTimeValue(input){
  const value=String(input.value||"");
+ if(input.matches("[data-activity-datetime-input]"))return value.slice(11,16);
  if(input.type==="datetime-local")return value.slice(11,16);
  return /^\d{2}:\d{2}$/.test(value)?value:"";
 }
 function setGlobalPickerValue(input,dateValue,timeValue){
- if(input.type==="date")input.value=dateValue;
+ if(input.matches("[data-activity-datetime-input]"))input.value=formatDisplayDate(dateValue)+" "+timeValue;
+ else if(input.type==="date")input.value=dateValue;
  else if(input.type==="time")input.value=timeValue;
  else if(input.type==="datetime-local")input.value=dateValue+"T"+timeValue;
- else if(input.matches("[data-activity-date-input]"))input.value=dateValue?dateValue.slice(8,10)+"/"+dateValue.slice(5,7)+"/"+dateValue.slice(0,4):"";
+ else if(input.matches("[data-activity-date-input]"))input.value=formatDisplayDate(dateValue);
  else if(input.matches("[data-activity-time-input]"))input.value=timeValue;
  input.dispatchEvent(new Event("input",{bubbles:true}));
  input.dispatchEvent(new Event("change",{bubbles:true}));
+}
+function getNextFourWarSaturdays(){
+ const today=new Date();today.setHours(0,0,0,0);
+ const daysUntilSaturday=(6-today.getDay()+7)%7||7;
+ return Array.from({length:4},(_,index)=>{
+  const date=new Date(today);date.setDate(today.getDate()+daysUntilSaturday+index*7);
+  return date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0");
+ });
 }
 function openGlobalDatePicker(input){
  if(!input||input.disabled||(input.readOnly&&!input.matches("[data-activity-date-input]")))return;
  closeGlobalDateTimePicker();
  const wrapper=input.closest(".form-group")||input.parentElement;if(!wrapper)return;
+ const isOfficialWarDate=input.matches("[data-war-signup-date]")&&$("war-signup-type")?.value==="official";
+ const allowedWarDates=isOfficialWarDate?getNextFourWarSaturdays():null;
  let dateValue=globalPickerDateValue(input);
- const initial=dateValue?new Date(dateValue+"T12:00:00"):new Date();
- let view=new Date(initial.getFullYear(),initial.getMonth(),1);
+ if(allowedWarDates&&!allowedWarDates.includes(dateValue))dateValue="";
  let chosenDate=dateValue||"";
  let chosenTime=globalPickerTimeValue(input)||"20:00";
- const isDateTime=input.type==="datetime-local";
+ const isDateTime=input.type==="datetime-local"||input.matches("[data-activity-datetime-input]");
  const panel=document.createElement("div");panel.className="war-date-picker-popover global-date-time-popover";
  const render=()=>{
+  if(allowedWarDates){
+   panel.innerHTML='<div class="war-date-picker-heading"><strong>เลือกวันเสาร์ 4 ครั้งถัดไป</strong></div><div class="war-calendar-grid war-next-saturdays">'+allowedWarDates.map(iso=>'<button type="button" class="war-calendar-day'+(iso===chosenDate?' is-selected':'')+'" data-global-date="'+iso+'">'+formatDisplayDate(iso)+'</button>').join("")+'</div>';
+   panel.querySelectorAll("[data-global-date]").forEach(btn=>btn.addEventListener("click",()=>{setGlobalPickerValue(input,btn.dataset.globalDate,"");closeGlobalDateTimePicker();}));
+   wrapper.appendChild(panel);return;
+  }
   const year=view.getFullYear(),month=view.getMonth(),offset=(new Date(year,month,1).getDay()+6)%7,days=new Date(year,month+1,0).getDate();
   const label=new Intl.DateTimeFormat("th-TH",{month:"long",year:"numeric"}).format(view);
   const cells=Array.from({length:offset},()=>'<span class="war-calendar-empty"></span>');
   for(let day=1;day<=days;day++){
    const iso=year+"-"+String(month+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
-   const min=input.min?(input.min.slice(0,10)):"";
-   cells.push('<button type="button" class="war-calendar-day'+(iso===chosenDate?' is-selected':'')+'" data-global-date="'+iso+'"'+(min&&iso<min?' disabled':'')+'>'+day+'</button>');
+   cells.push('<button type="button" class="war-calendar-day'+(iso===chosenDate?' is-selected':'')+'" data-global-date="'+iso+'">'+day+'</button>');
   }
   panel.innerHTML='<div class="war-date-picker-heading"><button type="button" class="war-calendar-nav" data-global-month="-1">‹</button><strong>'+label+'</strong><button type="button" class="war-calendar-nav" data-global-month="1">›</button></div><div class="war-calendar-weekdays"><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span><span>อา</span></div><div class="war-calendar-grid">'+cells.join("")+'</div>'+(isDateTime?'<div class="global-picker-time-row"><label>เวลา</label><select class="global-picker-hour">'+Array.from({length:24},(_,i)=>'<option value="'+String(i).padStart(2,"0")+'"'+(String(i).padStart(2,"0")===chosenTime.slice(0,2)?' selected':'')+'>'+String(i).padStart(2,"0")+'</option>').join("")+'</select><span>:</span><select class="global-picker-minute">'+Array.from({length:60},(_,i)=>'<option value="'+String(i).padStart(2,"0")+'"'+(String(i).padStart(2,"0")===chosenTime.slice(3,5)?' selected':'')+'>'+String(i).padStart(2,"0")+'</option>').join("")+'</select></div><div class="war-time-picker-actions"><button type="button" class="war-time-picker-cancel">ยกเลิก</button><button type="button" class="war-time-picker-confirm">ยืนยัน</button></div>':'');
   panel.querySelectorAll("[data-global-month]").forEach(btn=>btn.addEventListener("click",()=>{view=new Date(year,month+Number(btn.dataset.globalMonth),1);render();}));
   panel.querySelectorAll("[data-global-date]").forEach(btn=>btn.addEventListener("click",()=>{chosenDate=btn.dataset.globalDate;if(isDateTime){panel.querySelectorAll("[data-global-date]").forEach(x=>x.classList.toggle("is-selected",x.dataset.globalDate===chosenDate));}else{setGlobalPickerValue(input,chosenDate,"");closeGlobalDateTimePicker();}}));
   if(isDateTime){
-   panel.querySelector(".global-picker-hour").addEventListener("change",e=>{chosenTime=e.target.value+":"+chosenTime.slice(3,5);});
-   panel.querySelector(".global-picker-minute").addEventListener("change",e=>{chosenTime=chosenTime.slice(0,3)+e.target.value;});
+   panel.querySelector(".global-picker-hour").addEventListener("change",event=>{chosenTime=event.target.value+":"+chosenTime.slice(3,5);});
+   panel.querySelector(".global-picker-minute").addEventListener("change",event=>{chosenTime=chosenTime.slice(0,3)+event.target.value;});
    panel.querySelector(".war-time-picker-cancel").addEventListener("click",closeGlobalDateTimePicker);
    panel.querySelector(".war-time-picker-confirm").addEventListener("click",()=>{if(!chosenDate){alert("กรุณาเลือกวันที่");return;}setGlobalPickerValue(input,chosenDate,chosenTime);closeGlobalDateTimePicker();});
   }
  };
+ const initial=dateValue?new Date(dateValue+"T12:00:00"):new Date();
+ let view=new Date(initial.getFullYear(),initial.getMonth(),1);
  wrapper.appendChild(panel);render();
 }
 function openGlobalTimePicker(input){
@@ -3522,13 +3559,13 @@ function openGlobalTimePicker(input){
 function initializeGlobalDateTimePickers(){
  if(document.documentElement.dataset.globalDateTimeReady==="true")return;
  document.documentElement.dataset.globalDateTimeReady="true";
- document.querySelectorAll('input[type="date"],input[type="time"],input[type="datetime-local"],[data-activity-date-input],[data-activity-time-input]').forEach(input=>{
+ document.querySelectorAll('input[type="date"],input[type="time"],input[type="datetime-local"],[data-activity-date-input],[data-activity-time-input],[data-activity-datetime-input]').forEach(input=>{
   if(input.classList.contains("war-native-picker-input"))return;
   input.style.cursor="pointer";
-  if(input.matches("[data-activity-date-input],[data-activity-time-input]"))input.readOnly=true;
+  if(input.matches("[data-activity-date-input],[data-activity-time-input],[data-activity-datetime-input]"))input.readOnly=true;
  });
  document.addEventListener("click",event=>{
-  const input=event.target.closest('input[type="date"],input[type="time"],input[type="datetime-local"],[data-activity-date-input],[data-activity-time-input]');
+  const input=event.target.closest('input[type="date"],input[type="time"],input[type="datetime-local"],[data-activity-date-input],[data-activity-time-input],[data-activity-datetime-input]');
   if(!input||input.classList.contains("war-native-picker-input"))return;
   event.preventDefault();event.stopPropagation();
   if(input.type==="time"||input.matches("[data-activity-time-input]"))openGlobalTimePicker(input);
