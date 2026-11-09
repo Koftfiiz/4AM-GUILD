@@ -4484,3 +4484,39 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
   font-weight:500;
   line-height:1.5;
 }
+
+
+/* 4AM GUILD WAR — translucent five-party roster layout */
+#page-war .war-detail-stage { background:rgba(8,5,7,.40); border-color:rgba(210,75,88,.42); backdrop-filter:blur(12px); }
+#page-war .war-roster-toolbar { display:flex; align-items:center; justify-content:space-between; gap:18px; margin:14px 0 22px; padding:14px 18px; border:1px solid rgba(220,90,105,.35); border-radius:8px; background:rgba(12,7,10,.48); backdrop-filter:blur(10px); }
+#page-war .war-edit-notice { margin:0; color:#f1e5df; font-size:16px; line-height:1.55; }
+#page-war .war-modify-toggle { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-width:126px; min-height:48px; padding:9px 18px; color:#fff4e8; border:1px solid rgba(230,180,120,.72); background:linear-gradient(135deg,rgba(103,24,37,.92),rgba(38,12,19,.94)); font-size:17px; font-weight:800; white-space:nowrap; }
+#page-war .war-modify-toggle .icon { width:20px; height:20px; }
+#page-war .war-modify-toggle.is-inactive { color:#f5dcae; }
+#page-war .raid-section { padding:20px; margin-bottom:24px; background:rgba(7,5,8,.43); border:1px solid rgba(204,75,91,.48); box-shadow:0 12px 32px rgba(0,0,0,.22),inset 0 1px 0 rgba(255,255,255,.035); backdrop-filter:blur(11px); }
+#page-war .raid-title { margin-bottom:18px; }
+#page-war .raid-title h2 { font-size:25px; font-weight:800; }
+#page-war .raid-title p { font-size:15px; color:#e1d3d2; }
+#page-war .raid-grid { grid-template-columns:repeat(5,minmax(190px,1fr)); gap:12px; align-items:stretch; overflow-x:auto; padding-bottom:4px; }
+#page-war .party-card { min-width:190px; min-height:0; padding:13px; background:rgba(11,8,11,.48); border:1px solid rgba(214,93,105,.48); border-radius:7px; box-shadow:inset 0 1px 0 rgba(255,255,255,.045),0 6px 18px rgba(0,0,0,.18); backdrop-filter:blur(9px); }
+#page-war .party-card:hover { background:rgba(20,9,13,.62); border-color:rgba(240,172,122,.78); }
+#page-war .party-header { margin-bottom:12px; padding-bottom:10px; }
+#page-war .party-header h3 { font-size:23px; font-weight:850; }
+#page-war .party-count { color:#fff0e6; font-size:15px; font-weight:800; }
+#page-war .party-slots { gap:7px; }
+#page-war .party-slot { min-height:48px; gap:8px; padding:7px 8px; background:rgba(5,5,7,.48); border:1px solid rgba(230,170,150,.20); border-radius:5px; }
+#page-war .slot-number { width:25px; height:25px; flex:0 0 25px; font-size:14px; font-weight:900; color:#fff; background:rgba(164,27,45,.82); }
+#page-war .war-slot-class-icon { width:29px; height:29px; flex:0 0 29px; }
+#page-war .slot-member-name { color:#fff; font-size:15px; font-weight:750; text-shadow:0 1px 3px #000; }
+#page-war .slot-empty { color:#e0d3d5; font-size:14px; font-weight:650; }
+#page-war .war-slot-remove { margin-left:auto; }
+#page-war .party-slot-editor { display:grid; grid-template-columns:26px minmax(0,1fr); gap:7px; }
+#page-war .war-slot-add-button { min-height:38px; width:100%; padding:5px 10px; color:#ffe6b8; background:rgba(120,22,38,.34); border:1px dashed rgba(240,183,126,.7); border-radius:5px; font-size:15px; font-weight:850; letter-spacing:.5px; }
+#page-war .war-slot-add-button:hover { background:rgba(157,28,47,.62); border-style:solid; }
+#page-war .war-slot-picker { grid-column:1 / -1; display:grid; grid-template-columns:minmax(0,.85fr) 28px minmax(0,1.15fr); align-items:center; gap:7px; width:100%; }
+#page-war .war-slot-picker.hidden { display:none !important; }
+#page-war .party-slot-editor select { height:42px; min-width:0; width:100%; padding:5px 7px; font-size:14px; font-weight:700; }
+#page-war .party-slot-editor .war-slot-class-icon { width:26px; height:26px; }
+@media(max-width:1200px) { #page-war .raid-grid { grid-template-columns:repeat(3,minmax(190px,1fr)); } }
+@media(max-width:850px) { #page-war .raid-grid { grid-template-columns:repeat(2,minmax(190px,1fr)); } }
+@media(max-width:600px) { #page-war .war-roster-toolbar { align-items:stretch; flex-direction:column; } #page-war .war-modify-toggle { width:100%; } #page-war .raid-grid { grid-template-columns:minmax(0,1fr); overflow:visible; } #page-war .party-card { min-width:0; } }
