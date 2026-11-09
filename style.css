@@ -4632,3 +4632,12 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
   .sidebar-backdrop{position:fixed;inset:0;z-index:29;background:rgba(0,0,0,.56);backdrop-filter:blur(2px)}
   #app-layout.mobile-sidebar-open .sidebar-backdrop{display:block}
 }
+
+@media(min-width:851px){
+  #app-layout.sidebar-collapsed .sidebar .nav-group{position:relative}
+  #app-layout.sidebar-collapsed .sidebar .nav-group:hover .nav-submenu,
+  #app-layout.sidebar-collapsed .sidebar .nav-group:focus-within .nav-submenu{
+    position:absolute;left:100%;top:0;z-index:45;display:grid!important;min-width:218px;margin:0;padding:8px;border:1px solid rgba(190,140,90,.28);border-radius:0 12px 12px 0;background:rgba(12,7,10,.97);box-shadow:12px 12px 28px rgba(0,0,0,.42);backdrop-filter:blur(16px)
+  }
+  #app-layout.sidebar-collapsed .sidebar .nav-subitem{min-height:42px}
+}
