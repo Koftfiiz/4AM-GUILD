@@ -2808,7 +2808,7 @@ async function loadWarSignups(){
     return '<article class="war-signup-card"><div class="war-signup-card-top"><div class="war-signup-card-heading"><h3>'+escapeHTML(event.event_name)+'</h3><p>'+formatDate(event.event_date)+' · เริ่มวอร์ '+formatTime(event.start_time)+'</p></div><div class="war-signup-badges"><span class="war-signup-state '+stateClass+'">'+stateLabel+'</span><span class="war-signup-type">'+typeLabel+'</span></div></div>'+managementActions+
       '<div class="war-signup-event-meta"><span>เริ่มลงชื่อ: '+warSignupDateTime(event.signup_opens_at)+'</span><span>ปิดรับ: '+warSignupDateTime(event.signup_closes_at)+'</span><span>ผู้ลงชื่อ: '+capacity+'</span></div>'+
       (event.description?'<p class="war-signup-description">'+escapeHTML(String(event.description).replace(/\[\[WAR_CONFIG:[\s\S]*?\]\]/,"").trim())+'</p>':"")+
-      '<div class="war-signup-card-bottom"><div class="war-signup-action">'+action+'</div>'+(state==="closed"?'<button class="btn btn-outline btn-sm war-signup-evidence-btn" type="button" data-war-signup-evidence="'+escapeHTML(event.id)+'">↓ ดาวน์โหลดภาพหลักฐานการลงชื่อ</button>':"")+'</div>'+rosterHtml+(leaveRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดรายชื่อผู้แจ้งลาไม่ได้ กรุณาตรวจสอบ SQL ระบบแจ้งลาวอร์</p>':"")+(attendanceRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดสถานะขาดวอร์ไม่ได้ กรุณาติดตั้ง SQL ระบบสรุปการเข้า war</p>':"")+summary+'</article>';
+      '<div class="war-signup-card-bottom"><div class="war-signup-action">'+action+'</div>'+(state==="closed"?'<button class="btn btn-outline btn-sm war-signup-evidence-btn" type="button" data-war-signup-evidence="'+escapeHTML(event.id)+'">บันทึกไฟล์รูปภาพ</button>':"")+'</div>'+rosterHtml+(leaveRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดรายชื่อผู้แจ้งลาไม่ได้ กรุณาตรวจสอบ SQL ระบบแจ้งลาวอร์</p>':"")+(attendanceRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดสถานะขาดวอร์ไม่ได้ กรุณาติดตั้ง SQL ระบบสรุปการเข้า war</p>':"")+summary+'</article>';
   }).join("");
 }
 
@@ -2868,7 +2868,7 @@ async function exportWarSignupEvidence(eventId,button){
     link.href=url;link.download="4AM-War-Registration-"+String(event.event_date||"").slice(0,10)+".png";document.body.appendChild(link);link.click();link.remove();
     setTimeout(()=>URL.revokeObjectURL(url),1500);
   }catch(error){console.error("War signup evidence export failed:",error);alert("ดาวน์โหลดภาพหลักฐานไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));}
-  finally{if(button){button.disabled=false;button.textContent="↓ ดาวน์โหลดภาพหลักฐานการลงชื่อ";}}
+  finally{if(button){button.disabled=false;button.textContent="บันทึกไฟล์รูปภาพ";}}
 }
 
 function renderWarSignupRoster(signups,members,leaveRows,attendanceRows){
