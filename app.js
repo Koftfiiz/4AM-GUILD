@@ -2219,7 +2219,7 @@ function getWarEventConfig(event) {
     const raidCount = config.mode === "practice"
       ? Math.min(4, Math.max(1, Number(config.raidCount) || 1))
       : 2;
-    return { mode: config.mode === "practice" ? "practice" : "official", raidCount };
+    return { mode: config.mode === "practice" ? "practice" : "official", raidCount, rounds:Array.isArray(config.rounds)?config.rounds:[] };
   } catch {
     return { mode: "official", raidCount: 2 };
   }
@@ -2434,15 +2434,28 @@ function setWarCreateMessage(message, isError = false) {
   box.classList.add(isError ? "error" : "success");
 }
 
+function getUpcomingWarSaturday() {
+  const now = new Date();
+  const daysUntilSaturday = (6 - now.getDay() + 7) % 7;
+  const saturday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSaturday);
+  return String(saturday.getFullYear()) + "-" + String(saturday.getMonth()+1).padStart(2,"0") + "-" + String(saturday.getDate()).padStart(2,"0");
+}
+function getOfficialWarRounds(dateValue) {
+  if (!dateValue) return [];
+  return isDoubleOfficialSaturday(dateValue) ? ["20:00","20:30"] : ["20:00"];
+}
 function updateWarCreateMode() {
   const mode = document.querySelector('input[name="war-mode"]:checked')?.value || "official";
   const isPractice = mode === "practice";
   $("war-raid-count-wrap")?.classList.toggle("hidden", !isPractice);
-  const raidCount = isPractice ? Number($("war-raid-count")?.value || 4) : 2;
-  const capacity = raidCount * 30;
-  const label = isPractice ? "ซ้อมวอร์" : "วอร์จริง";
-  const summary = $("war-create-capacity");
-  if (summary) summary.textContent = `${label}: ${raidCount} Raid · ${raidCount * 5} ปาร์ตี้ · รองรับ ${capacity} คน`;
+  const dateInput=$("war-event-date"),timeInput=$("war-start-time"),scheduleNote=$("war-create-schedule-note");
+  if(dateInput){dateInput.disabled=!isPractice;if(!isPractice)dateInput.value=getUpcomingWarSaturday();}
+  const rounds=isPractice?[]:getOfficialWarRounds(dateInput?.value);
+  if(timeInput){timeInput.disabled=!isPractice;if(!isPractice)timeInput.value=rounds[0]||"20:00";}
+  const raidCount=isPractice?Number($("war-raid-count")?.value||4):2;
+  const summary=$("war-create-capacity");
+  if(summary)summary.textContent=isPractice?`ซ้อมวอร์: ${raidCount} Raid · ${raidCount*5} ปาร์ตี้ · รองรับ ${raidCount*30} คน`:`วอร์จริงวันเสาร์ ${formatDate(dateInput?.value)} · ${rounds.length} รอบ (${rounds.join(" / ")}) น. · 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน`;
+  if(scheduleNote)scheduleNote.textContent=isPractice?"ซ้อมวอร์: เลือกวันและเวลาได้เอง":(rounds.length===2?"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด · รอบ 1 เวลา 20:00 น. / รอบ 2 เวลา 20:30 น.":"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด · วอร์ 1 รอบ เวลา 20:00 น.");
 }
 
 async function handleWarCreate(event) {
@@ -2451,10 +2464,12 @@ async function handleWarCreate(event) {
   const raidCount=mode==="practice"?Number($("war-raid-count")?.value||4):2;
   const opponent=String($("war-opponent")?.value||"").trim(),eventDate=$("war-event-date")?.value,startTime=String($("war-start-time")?.value||"").trim(),submit=$("war-create-submit");
   if(!opponent||!eventDate||!startTime){setWarCreateMessage("กรุณากรอกชื่อกิลด์คู่แข่ง วันที่ และเวลาเริ่มวอร์ให้ครบ",true);return;}
+  if(mode==="official"){const requiredDate=getUpcomingWarSaturday(),rounds=getOfficialWarRounds(requiredDate);if(eventDate!==requiredDate||startTime!==rounds[0]){setWarCreateMessage("วอร์จริงต้องใช้วันเสาร์ที่ใกล้ที่สุดและเวลา "+rounds[0]+" น. ตามตาราง",true);return;}}
   if(!Number.isInteger(raidCount)||raidCount<1||raidCount>4){setWarCreateMessage("จำนวน Raid ต้องอยู่ระหว่าง 1–4",true);return;}
   submit.disabled=true;submit.textContent="กำลังสร้าง...";setWarCreateMessage("กำลังสร้างกิจกรรมและเตรียมช่องปาร์ตี้...");
   try{
-    const metadata=`[[WAR_CONFIG:${JSON.stringify({mode,raidCount})}]]`;
+    const rounds=mode==="official"?getOfficialWarRounds(eventDate):[startTime];
+     const metadata=`[[WAR_CONFIG:${JSON.stringify({mode,raidCount,rounds})}]]`;
     const {data:createdEvent,error:eventError}=await supabaseClient.from("war_events").insert({event_name:`4AM vs ${opponent}`,event_date:eventDate,start_time:startTime,description:metadata,status:"open",is_draft_confirmed:false,is_published:false}).select().single();
     if(eventError)throw eventError;
     const rows=[];["A","B","C","D"].slice(0,raidCount).forEach(raid=>{for(let n=1;n<=5;n++)rows.push({event_id:createdEvent.id,raid,party_number:n});});
