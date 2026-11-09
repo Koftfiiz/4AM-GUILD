@@ -2206,7 +2206,11 @@ function renderWarEvents() {
     const config=getWarEventConfig(event), stage=getWarEventStage(event);
     const description=String(event.description||"").replace(/\[\[WAR_CONFIG:\s*\{.*?\}\s*\]\]/g,"").trim();
     const label=stage==="published"?"PUBLISHED":stage==="draft"?"DRAFT":"กำลังจัดตี้";
-    return `<article class="war-event-card war-event-card-selectable"><div class="war-event-main"><h3>${escapeHTML(event.event_name)}</h3><p>${formatDate(event.event_date)} · ${formatTime(event.start_time)} · ${config.mode==="practice"?"Practice War":"Official War"} · ${config.raidCount} Raid${config.rounds?.length ? ` · ${config.rounds.length} รอบ (${config.rounds.join(" / ")})` : ""}</p>${description?`<small>${escapeHTML(description)}</small>`:""}</div><div class="war-event-actions"><span class="war-stage-badge war-stage-${stage}">${label}</span><button class="btn btn-outline btn-sm" type="button" data-war-open="${escapeHTML(event.id)}">${stage==="published"?"ดูรายละเอียด":"จัดการตี้"}</button><button class="btn btn-danger btn-sm" type="button" data-war-delete="${escapeHTML(event.id)}">ลบวอร์</button></div></article>`;
+    const partyCount=config.raidCount*5,memberCapacity=config.raidCount*30;
+    const eventDetail=config.mode==="practice"
+      ? `ซ้อมวอร์ ${formatDate(event.event_date)} · ${formatTime(event.start_time)} น. · ${config.raidCount} Raid · ${partyCount} ปาร์ตี้ · รองรับ ${memberCapacity} คน`
+      : `วอร์จริงวันเสาร์ ${formatDate(event.event_date)} · ${config.rounds?.length||1} รอบ (${(config.rounds?.length?config.rounds:[formatTime(event.start_time)]).join(" / ")}) น. · ${config.raidCount} Raid · ${partyCount} ปาร์ตี้ · รองรับ ${memberCapacity} คน`;
+    return `<article class="war-event-card war-event-card-selectable"><div class="war-event-main"><h3>${escapeHTML(event.event_name)}</h3><p>${eventDetail}</p>${description?`<small>${escapeHTML(description)}</small>`:""}</div><div class="war-event-actions"><span class="war-stage-badge war-stage-${stage}">${label}</span><button class="btn btn-outline btn-sm" type="button" data-war-open="${escapeHTML(event.id)}">${stage==="published"?"ดูรายละเอียด":"จัดการตี้"}</button><button class="btn btn-danger btn-sm" type="button" data-war-delete="${escapeHTML(event.id)}">ลบวอร์</button></div></article>`;
   }).join("");
 }
 
