@@ -2237,7 +2237,7 @@ function renderWarLayout(eventId = selectedWarEventId) {
   selectedWarEventId=event.id;
   const config=getWarEventConfig(event),letters=["A","B","C","D"].slice(0,config.raidCount);
   warArrangeMode = false;
-  const modifyButton=$("war-modify-toggle");if(modifyButton){modifyButton.classList.add("is-inactive");modifyButton.innerHTML='<svg class="icon"><use href="#i-edit"/></svg><span>แก้ไข</span>';modifyButton.setAttribute("aria-pressed","false");}
+  const modifyButton=$("war-modify-toggle");if(modifyButton){modifyButton.classList.add("is-inactive");modifyButton.disabled=Boolean(event.is_published)||!isManagement();modifyButton.title=event.is_published?"วอร์ที่เผยแพร่แล้วไม่สามารถแก้ไขได้":"";modifyButton.innerHTML='<svg class="icon"><use href="#i-edit"/></svg><span>แก้ไข</span>';modifyButton.setAttribute("aria-pressed","false");}
   stage?.classList.remove("hidden");
   if(summary)summary.innerHTML=`
     <article class="stat-card stat-card-sm"><div class="stat-icon"><svg class="icon"><use href="#i-swords"/></svg></div><div class="stat-info"><span class="stat-label">TOTAL CAPACITY</span><div class="stat-value"><strong>${config.raidCount*30}</strong></div><small>${config.mode==="practice"?"Practice War":"Official War"}</small></div></article>
