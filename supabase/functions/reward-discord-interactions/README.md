@@ -11,7 +11,7 @@ Supabase automatically provides `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` t
 
 ## Deploy
 
-Create an Edge Function named `reward-discord-interactions` and use the source in this folder. Disable JWT verification for this function because Discord sends signed interaction requests, not Supabase user JWTs. The function verifies Discord's Ed25519 signature itself.
+Create an Edge Function named `reward-discord-interactions` and use the source in this folder. Set the Discord Developer Portal → General Information → Interactions Endpoint URL to `https://qbjixpcbzklrkcneluej.supabase.co/functions/v1/reward-discord-interactions`. Disable JWT verification for this function because Discord sends signed interaction requests, not Supabase user JWTs. The function verifies Discord's Ed25519 signature itself.
 
 ## Register the guild slash command
 
