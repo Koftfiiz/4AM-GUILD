@@ -4684,72 +4684,9 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 #guild-activities-submenu .nav-subitem.active{color:#fff;background:linear-gradient(90deg,rgba(190,30,46,.25),rgba(125,16,30,.12));box-shadow:inset 2px 0 0 #ed5364}
 #guild-activities-submenu .nav-subitem:last-child.active{background:linear-gradient(90deg,rgba(0,220,255,.13),rgba(123,75,255,.08));box-shadow:inset 2px 0 0 #00e5ff;color:#d8fbff}
 #guild-activities-submenu .nav-subitem:last-child.active .nav-subitem-dot{background:#00e5ff;border-color:#00e5ff;box-shadow:0 0 8px #00e5ff}
-.number-guess-hero{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;min-height:210px;margin-bottom:22px;padding:30px 34px;border:1px solid rgba(0,229,255,.35);border-radius:14px;background:radial-gradient(ellipse at 80% 50%,rgba(112,32,255,.22),transparent 45%),linear-gradient(115deg,rgba(4,15,28,.97),rgba(10,8,27,.94) 60%,rgba(25,8,38,.96));box-shadow:0 0 30px rgba(0,229,255,.08),inset 0 0 35px rgba(0,229,255,.035)}
-.number-guess-hero-grid{position:absolute;inset:0;z-index:-1;opacity:.18;background-image:linear-gradient(rgba(0,229,255,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.25) 1px,transparent 1px);background-size:28px 28px;mask-image:linear-gradient(90deg,transparent,#000 30%,#000)}
-.number-guess-hero-content{position:relative;z-index:1}
-.number-guess-eyebrow,.number-guess-grid-heading,.number-guess-stat>span,.number-guess-selection-label{font:700 11px var(--font);letter-spacing:2px;color:#00e5ff;text-shadow:0 0 12px rgba(0,229,255,.55)}
-.number-guess-hero h1{margin:9px 0 5px;color:#f2fbff;font-size:clamp(27px,4vw,39px);font-weight:900;text-shadow:0 0 18px rgba(0,229,255,.25)}
-.number-guess-hero p{margin:0;color:#a9c7d5;font-size:14px}
-.number-guess-live-indicator{display:inline-flex;align-items:center;gap:8px;margin-top:18px;padding:6px 11px;border:1px solid rgba(0,229,255,.32);border-radius:4px;color:#9bf5ff;font:700 10px var(--font);letter-spacing:1.5px;background:rgba(0,229,255,.06)}
-.number-guess-live-indicator i{width:7px;height:7px;border-radius:50%;background:#00f0a8;box-shadow:0 0 10px #00f0a8}
-.number-guess-orb{position:absolute;right:9%;top:50%;transform:translateY(-50%);width:136px;height:136px;display:grid;place-items:center;border:1px solid rgba(0,229,255,.6);border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,.12),rgba(8,8,30,.1) 65%);box-shadow:0 0 22px rgba(0,229,255,.22),inset 0 0 22px rgba(0,229,255,.15)}
-.number-guess-orb:before,.number-guess-orb:after{content:"";position:absolute;inset:-13px;border:1px dashed rgba(0,229,255,.36);border-radius:50%;animation:numberGuessSpin 24s linear infinite}
-.number-guess-orb:after{inset:12px;border-style:solid;border-color:rgba(186,60,255,.4);animation-direction:reverse}
-.number-guess-orb span{font:900 76px var(--font);color:#dffcff;text-shadow:0 0 9px #00e5ff,0 0 28px #00e5ff}
-@keyframes numberGuessSpin{to{transform:rotate(360deg)}}
-.number-guess-admin-panel,.number-guess-console,.number-guess-management-list{border:1px solid rgba(0,229,255,.19)!important;background:linear-gradient(145deg,rgba(8,18,31,.86),rgba(13,8,26,.9))!important;box-shadow:0 10px 35px rgba(0,0,0,.22),inset 0 0 24px rgba(0,229,255,.025)}
-.number-guess-create-form{display:grid;gap:12px;padding:18px;margin-top:14px;border:1px solid rgba(0,229,255,.2);background:rgba(0,0,0,.22);border-radius:8px}
-.number-guess-create-form .form-group{display:grid;gap:6px}
-.number-guess-create-form input,.number-guess-create-form select{min-height:42px;padding:10px 12px;color:#f4fcff;background:#07101b;border:1px solid rgba(0,229,255,.3);border-radius:5px}
-.number-guess-create-form select option{color:#111}
-.number-guess-form-actions{display:flex;justify-content:flex-end;gap:9px}
-.number-guess-event-state{display:flex;align-items:center;gap:13px;min-height:66px;padding:5px 0 16px;border-bottom:1px solid rgba(0,229,255,.16)}
-.number-guess-state-icon{display:grid;place-items:center;width:42px;height:42px;border:1px solid rgba(0,229,255,.38);border-radius:8px;color:#00e5ff;font-size:25px;text-shadow:0 0 12px #00e5ff;background:rgba(0,229,255,.07)}
-.number-guess-event-state strong{color:#e8faff;font-size:16px}
-.number-guess-event-state p{margin:4px 0 0;color:#91aebd;font-size:12px}
-.number-guess-event-status{margin-left:auto;padding:5px 9px;border-radius:4px;font:800 10px var(--font);letter-spacing:1px}
-.number-guess-event-status.open{color:#71ffd0;border:1px solid rgba(60,255,188,.4);background:rgba(60,255,188,.07);box-shadow:0 0 12px rgba(60,255,188,.08)}
-.number-guess-event-status.closed{color:#ff9db7;border:1px solid rgba(255,70,130,.35);background:rgba(255,70,130,.07)}
-.number-guess-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
-.number-guess-stat{display:grid;gap:3px;padding:13px 15px;border:1px solid rgba(0,229,255,.16);border-radius:7px;background:linear-gradient(140deg,rgba(0,229,255,.055),rgba(150,50,255,.035))}
-.number-guess-stat>span{font-size:9px;letter-spacing:1.5px}
-.number-guess-stat strong{font:900 27px var(--font);color:#f2fcff;text-shadow:0 0 12px rgba(0,229,255,.3)}
-.number-guess-stat small{font-size:10px;color:#8ba6b5}
-.number-guess-selection-bar{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:18px 0;padding:14px 17px;border:1px solid rgba(182,70,255,.32);border-radius:7px;background:linear-gradient(100deg,rgba(103,37,183,.14),rgba(0,229,255,.045))}
-.number-guess-selection-bar>div{display:flex;align-items:center;gap:13px}
-.number-guess-selection-bar strong{font:900 30px var(--font);color:#f7eaff;text-shadow:0 0 14px #b94cff}
-.number-guess-selection-bar p{margin:0;color:#a7b9c7;font-size:12px;text-align:right}
-.number-guess-grid-wrap{padding:15px;border:1px solid rgba(0,229,255,.16);border-radius:8px;background:rgba(0,5,14,.38)}
-.number-guess-grid-heading{display:flex;justify-content:space-between;margin-bottom:13px;font-size:10px}
-.number-guess-grid-heading span:last-child{color:#9b7dff}
-.number-guess-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px}
-.number-guess-cell{position:relative;display:grid;place-items:center;min-width:0;aspect-ratio:1.15;border:1px solid rgba(0,229,255,.3);border-radius:5px;background:linear-gradient(145deg,rgba(5,35,51,.78),rgba(7,12,30,.92));color:#c9faff;font:800 clamp(12px,1.7vw,17px) var(--font);cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s,background .16s}
-.number-guess-cell.is-available:hover:not(:disabled){z-index:1;transform:translateY(-2px) scale(1.04);border-color:#00f0ff;background:rgba(0,229,255,.17);color:#fff;box-shadow:0 0 8px rgba(0,229,255,.55),inset 0 0 12px rgba(0,229,255,.12)}
-.number-guess-cell.is-mine{border-color:#e6a4ff;background:linear-gradient(145deg,rgba(145,52,255,.45),rgba(30,13,70,.9));color:#fff;box-shadow:0 0 12px rgba(188,79,255,.55),inset 0 0 12px rgba(188,79,255,.18)}
-.number-guess-cell.is-taken{border-color:rgba(255,65,118,.24);background:repeating-linear-gradient(135deg,rgba(55,18,37,.85),rgba(55,18,37,.85) 5px,rgba(30,13,28,.9) 5px,rgba(30,13,28,.9) 10px);color:#a36c81;cursor:not-allowed;opacity:.72}
-.number-guess-cell:disabled{cursor:not-allowed}
-.number-guess-cell i{position:absolute;bottom:2px;font:700 7px var(--font);letter-spacing:.7px;font-style:normal}
-.number-guess-cell.is-mine i{color:#f5d6ff}
-.number-guess-cell.is-taken i{color:#e77b9d}
-.number-guess-cell.is-pending{opacity:.55;filter:brightness(1.5)}
-.number-guess-loading,.number-guess-empty{grid-column:1/-1;display:grid;place-items:center;min-height:170px;text-align:center;color:#8cefff;font:800 13px var(--font);letter-spacing:2px}
-.number-guess-empty small{color:#8ca5b7;font-size:12px;font-weight:400;letter-spacing:0}
-.number-guess-legend{display:flex;gap:20px;flex-wrap:wrap;margin:13px 2px;color:#a6bac5;font-size:11px}
-.number-guess-legend span{display:flex;align-items:center;gap:7px}
-.number-guess-legend i{width:9px;height:9px;display:inline-block;border-radius:2px}
 .legend-available{border:1px solid #00e5ff;background:rgba(0,229,255,.15);box-shadow:0 0 7px rgba(0,229,255,.4)}
 .legend-selected{background:#b94cff;box-shadow:0 0 7px #b94cff}
 .legend-taken{background:#9b526b}
-.number-guess-rules{display:flex;gap:9px 20px;flex-wrap:wrap;padding:12px 0 0;border-top:1px solid rgba(0,229,255,.12);color:#718b9d;font:700 9px var(--font);letter-spacing:1px}
-.number-guess-feedback{min-height:22px;margin:12px 0 0;color:#91cbd6;font-size:12px}
-.number-guess-feedback.is-error{color:#ff8ba8}
-.number-guess-feedback.is-success{color:#8effd0}
-.number-guess-participant{display:grid;grid-template-columns:48px minmax(100px,1fr) auto auto;align-items:center;gap:12px;padding:10px 8px;border-bottom:1px solid rgba(0,229,255,.1)}
-.number-guess-participant>strong{font:900 20px var(--font);color:#c6a0ff;text-shadow:0 0 10px rgba(190,80,255,.45)}
-.number-guess-participant span{color:#e6f7fc;font-weight:600}
-.number-guess-participant small,.number-guess-participant time{color:#849ba9;font-size:10px}
-@media(max-width:700px){.number-guess-hero{min-height:190px;padding:24px 18px}.number-guess-orb{right:-28px;width:112px;height:112px;opacity:.65}.number-guess-hero-content{max-width:75%}.number-guess-stats{gap:6px}.number-guess-stat{padding:10px 8px}.number-guess-stat strong{font-size:23px}.number-guess-grid{gap:4px}.number-guess-cell{aspect-ratio:1.05;border-radius:3px}.number-guess-grid-wrap{padding:9px}.number-guess-selection-bar{align-items:flex-start;flex-direction:column}.number-guess-selection-bar p{text-align:left}.number-guess-rules{gap:8px 12px}.number-guess-participant{grid-template-columns:40px 1fr auto}.number-guess-participant time{grid-column:2/-1}}
-@media(prefers-reduced-motion:reduce){.number-guess-orb:before,.number-guess-orb:after{animation:none}.number-guess-cell{transition:none}}
 
 
 /* Guild activities parent label follows primary sidebar typography */
@@ -4763,94 +4700,13 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 @media(max-width:560px){.rule-card .panel-heading{align-items:flex-start;flex-wrap:wrap}.rule-card-actions{margin-left:auto;gap:14px}}
 
 /* 4AM DUCK RACE — local prototype UI */
-.duck-race-shell{overflow:hidden;border:1px solid rgba(235,175,91,.28)!important;background:radial-gradient(ellipse at 82% 5%,rgba(255,191,75,.12),transparent 34%),linear-gradient(145deg,rgba(25,13,17,.96),rgba(9,10,15,.98))!important}
-.duck-race-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;padding:4px 0 18px}
-.duck-race-kicker{color:#e8bd72;font:800 10px var(--font);letter-spacing:2px}
-.duck-race-heading h2{margin:7px 0 3px;color:#fff0d6;font-size:clamp(25px,4vw,36px);font-weight:900}
-.duck-race-heading p{margin:0;color:#d4b58b}
-.duck-race-demo-badge{padding:6px 11px;border:1px solid rgba(255,194,99,.38);border-radius:30px;background:rgba(255,181,73,.08);color:#f2c779;font:800 10px var(--font);letter-spacing:1.4px}
-.duck-race-notice{display:flex;gap:12px;align-items:flex-start;margin:0 0 18px;padding:12px 14px;border:1px solid rgba(245,184,91,.18);border-radius:8px;background:rgba(245,184,91,.055);color:#bdaea2;font-size:12px}
-.duck-race-notice strong{flex:0 0 auto;color:#f0c77f}
-.duck-race-admin{margin:0 0 18px;padding:15px;border:1px solid rgba(245,184,91,.2)!important;background:rgba(0,0,0,.2)!important}
-.duck-race-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.duck-race-form .form-group{display:grid;gap:6px}
-.duck-race-form input,.duck-race-form select{width:100%;min-height:42px;padding:9px 11px;border:1px solid rgba(224,173,92,.3);border-radius:6px;background:#100c10;color:#f7eee5}
-.duck-race-form-actions{grid-column:1/-1;display:flex;justify-content:flex-end;gap:9px}
-.duck-race-form-message{grid-column:1/-1}
-.duck-race-track-header{display:flex;justify-content:space-between;margin:8px 4px 7px;color:#b89b76;font:800 9px var(--font);letter-spacing:2px}
-.duck-race-track{display:grid;gap:7px;padding:13px;border:1px solid rgba(232,183,111,.2);border-radius:10px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.018) 0,rgba(255,255,255,.018) 1px,transparent 1px,transparent 49px),linear-gradient(100deg,rgba(24,28,29,.95),rgba(20,17,21,.95))}
-.duck-race-lane{display:grid;grid-template-columns:28px minmax(0,1fr) 65px;align-items:center;gap:10px;min-height:48px;padding:4px 7px;border-bottom:1px dashed rgba(255,255,255,.09)}
-.duck-race-lane:last-child{border-bottom:0}
-.duck-race-lane-number{color:#8e7c72;font:800 10px var(--font)}
-.duck-race-lane-track{position:relative;height:34px;overflow:hidden;border-left:2px solid rgba(245,194,110,.35);border-right:4px double #e9c27e;border-radius:3px;background:repeating-linear-gradient(90deg,rgba(255,255,255,.045) 0,rgba(255,255,255,.045) 1px,transparent 1px,transparent 42px),rgba(0,0,0,.2)}
-.duck-race-progress{display:flex;align-items:center;width:var(--duck-progress,0%);height:100%;transition:width 4.8s cubic-bezier(.12,.72,.22,1);filter:drop-shadow(0 0 5px var(--duck-color))}
-.duck-race-progress.is-racing{width:calc(100% - 12px)}
-.duck-race-emoji{display:grid;place-items:center;width:32px;height:30px;border-radius:50%;background:color-mix(in srgb,var(--duck-color) 22%,transparent);font-size:25px;transform:scaleX(-1)}
-.duck-race-lane-name{color:#d8c8b5;font-size:11px;text-align:right}
-.duck-race-lane.is-winner{border-radius:6px;background:rgba(239,190,92,.12)}
-.duck-race-lane.is-winner .duck-race-lane-name{color:#ffda8b;font-weight:900}
-.duck-race-result{display:flex;align-items:center;gap:13px;min-height:76px;margin:16px 0;padding:14px 17px;border:1px solid rgba(238,188,104,.22);border-radius:9px;background:linear-gradient(100deg,rgba(201,143,62,.11),rgba(0,0,0,.16))}
-.duck-race-result-icon{font-size:30px}
-.duck-race-result strong{color:#ffe0a0;font-size:16px}
-.duck-race-result p{margin:3px 0 0;color:#b9a99b;font-size:12px}
-.duck-race-controls{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
-.duck-race-footnote{margin:15px 0 0;color:#8e8180;font-size:11px;text-align:center}
-@media(max-width:700px){.duck-race-form{grid-template-columns:1fr}.duck-race-form-actions{grid-column:auto}.duck-race-heading{flex-direction:column}.duck-race-lane{grid-template-columns:22px minmax(0,1fr) 48px;gap:6px}.duck-race-track{padding:8px}.duck-race-controls{display:grid;grid-template-columns:1fr}.duck-race-controls .btn{width:100%}}
 
 /* Number guess demo identity + management controls */
-.number-guess-admin-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.number-guess-player-entry{display:grid;gap:6px;margin:16px 0 10px;padding:13px 15px;border:1px solid rgba(0,229,255,.17);border-radius:7px;background:rgba(0,229,255,.035)}
-.number-guess-player-entry label{color:#bcecf3;font-size:12px;font-weight:800}
-.number-guess-player-entry input{width:100%;max-width:420px;min-height:42px;padding:9px 12px;border:1px solid rgba(0,229,255,.3);border-radius:5px;background:#07101b;color:#f4fcff}
-.number-guess-player-entry small{color:#829ca9;font-size:11px}
-@media(max-width:650px){.number-guess-admin-actions{width:100%}.number-guess-admin-actions .btn{flex:1}}
 
 /* 4AM DUCK RACE — live multi-client race */
-.duck-race-time-group{grid-column:1/-1;display:grid;gap:7px}.duck-race-time-inputs{display:grid;grid-template-columns:minmax(0,1fr) 16px minmax(0,1fr) 16px minmax(0,1fr);align-items:end;gap:8px;max-width:520px}.duck-race-time-inputs>label{display:grid;gap:5px;color:#cbb99f;font-size:11px}.duck-race-time-inputs input{width:100%;min-width:0;min-height:42px;padding:8px;border:1px solid rgba(224,173,92,.3);border-radius:6px;background:#100c10;color:#fff;text-align:center;font-size:17px;font-weight:800}.duck-race-participant-options{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.duck-race-names-wrap{grid-column:1/-1;display:grid;gap:6px}.duck-race-names-wrap textarea{width:100%;padding:11px;border:1px solid rgba(224,173,92,.3);border-radius:7px;background:#100c10;color:#fff;resize:vertical}.duck-race-names-wrap small,.duck-race-war-note{color:#bda98f;font-size:11px}.duck-race-war-note{grid-column:1/-1;margin:0;padding:10px;border-radius:7px;background:rgba(80,145,220,.08)}.duck-race-live-summary{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:10px 0;padding:11px 13px;border:1px solid rgba(232,183,111,.18);border-radius:8px;background:rgba(0,0,0,.2);color:#cbb99f;font-size:12px}.duck-race-live-summary #duck-race-clock{font:900 18px var(--font);font-variant-numeric:tabular-nums;color:#ffe0a0}.duck-race-status-pill{padding:5px 9px;border-radius:20px;background:rgba(255,255,255,.08);font:800 9px var(--font);letter-spacing:1px}.duck-race-status-pill[data-status="running"]{background:rgba(43,176,105,.16);color:#8ee2ae}.duck-race-status-pill[data-status="paused"]{background:rgba(230,164,63,.16);color:#ffd18a}.duck-race-status-pill[data-status="finished"]{background:rgba(91,147,222,.16);color:#a9ceff}.duck-race-lane-track{overflow:hidden}.duck-race-progress{width:0;transition:width .12s linear;will-change:width}.duck-race-progress.is-finished{filter:drop-shadow(0 0 7px var(--duck-color))}.duck-race-emoji{flex:0 0 32px}.duck-race-lane-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.duck-race-empty{padding:26px 12px;text-align:center;color:#9f9084;font-size:12px}.duck-race-controls .btn:disabled{opacity:.38;cursor:not-allowed;filter:grayscale(.5)}.duck-race-controls #duck-race-pause{border-color:rgba(235,173,76,.5);background:rgba(180,112,24,.16);color:#ffd28a}.duck-race-track{max-height:70vh;overflow-y:auto}
-@media(max-width:700px){.duck-race-participant-options{grid-template-columns:1fr}.duck-race-time-inputs{max-width:none}.duck-race-live-summary{align-items:flex-start}.duck-race-lane{grid-template-columns:22px minmax(0,1fr) 58px;gap:6px}}
 
 
 /* 4AM DUCK RACE — bright swimming-pool race scene */
-.duck-race-track{position:relative;display:grid;gap:9px;max-height:72vh;overflow-y:auto;padding:17px 15px;border:5px solid #f3d28b;border-radius:18px;background:linear-gradient(180deg,#a9e8f4 0%,#64c9e7 42%,#39a9d0 100%);box-shadow:inset 0 0 0 3px rgba(255,255,255,.55),0 10px 28px rgba(0,0,0,.2)}
-.duck-race-lane{position:relative;display:grid;grid-template-columns:30px minmax(0,1fr) 105px;align-items:center;gap:10px;min-height:66px;padding:5px 9px;border:1px solid rgba(255,255,255,.72);border-radius:12px;background:linear-gradient(90deg,rgba(15,125,177,.2),rgba(255,255,255,.13));box-shadow:inset 0 1px 8px rgba(255,255,255,.24)}
-.duck-race-lane-number{color:#f8ffff;font:900 10px var(--font);text-shadow:0 1px 3px #14799e}
-.duck-race-lane-track{position:relative;height:53px;overflow:hidden;border:1px solid rgba(255,255,255,.7);border-radius:28px;background:repeating-linear-gradient(0deg,rgba(255,255,255,.13) 0 2px,transparent 2px 13px),linear-gradient(180deg,#42b9df,#168bbd 55%,#42b6d8);box-shadow:inset 0 4px 9px rgba(0,66,110,.24),0 2px 4px rgba(0,73,111,.14)}
-.duck-race-water-shimmer{position:absolute;inset:0;opacity:.55;background:repeating-linear-gradient(115deg,transparent 0 24px,rgba(255,255,255,.32) 25px 28px,transparent 29px 54px);background-size:110px 100%;animation:duck-water-flow 2.8s linear infinite}
-.duck-race-progress{position:relative;z-index:2;display:flex;align-items:center;justify-content:flex-end;height:100%;min-width:39px;transition:width .12s linear;filter:none;will-change:width}
-.duck-race-emoji{position:relative;z-index:3;display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;border:2px solid rgba(255,255,255,.78);border-radius:50%;background:radial-gradient(circle at 35% 25%,#fff9d5,var(--duck-color) 70%);font-size:29px;line-height:1;transform:scaleX(-1);filter:drop-shadow(0 3px 2px rgba(0,52,83,.25));animation:duck-bob .58s ease-in-out infinite alternate}
-.duck-race-wake{position:absolute;right:30px;bottom:8px;width:35px;height:11px;border-top:3px solid rgba(255,255,255,.85);border-radius:50%;transform:rotate(-8deg);animation:duck-wake .42s ease-in-out infinite alternate}
-.duck-race-bubbles{position:absolute;right:27px;top:4px;color:rgba(255,255,255,.9);font-size:14px;letter-spacing:3px;animation:duck-bubbles .8s ease-out infinite}
-.duck-race-lane-finish{position:absolute;right:4px;top:50%;z-index:4;transform:translateY(-50%);font-size:22px;filter:drop-shadow(0 1px 2px rgba(0,0,0,.25))}
-.duck-race-lane-name{overflow:hidden;color:#fff;font-size:11px;font-weight:900;text-align:right;text-overflow:ellipsis;white-space:nowrap;text-shadow:0 1px 3px #126a91}
-.duck-race-lane.is-winner{background:rgba(255,225,130,.42);border-color:#fff0a7}
-.duck-race-lane.is-winner .duck-race-lane-name{color:#fff4b7}
-.duck-race-lane.is-winner .duck-race-emoji{animation:duck-win .28s ease-in-out infinite alternate}
-.duck-race-track-header{margin:8px 4px 7px;color:#aeeeff}
-.duck-race-empty{padding:36px 12px;border:2px dashed rgba(255,255,255,.7);border-radius:12px;background:rgba(255,255,255,.15);color:#fff;font-size:14px;font-weight:800;text-shadow:0 1px 3px #14799e}
-@keyframes duck-bob{from{translate:0 -2px;rotate:-5deg}to{translate:0 3px;rotate:5deg}}
-@keyframes duck-wake{from{scale:.65 1;opacity:.35}to{scale:1.2 1;opacity:.9}}
-@keyframes duck-bubbles{0%{translate:0 8px;opacity:0}35%{opacity:.9}100%{translate:-9px -7px;opacity:0}}
-@keyframes duck-water-flow{from{background-position:0 0}to{background-position:110px 0}}
-@keyframes duck-win{from{translate:0 -2px;rotate:-10deg}to{translate:0 3px;rotate:10deg}}
-@media(prefers-reduced-motion:reduce){.duck-race-water-shimmer,.duck-race-emoji,.duck-race-wake,.duck-race-bubbles{animation:none!important}}
-@media(max-width:700px){.duck-race-lane{grid-template-columns:23px minmax(0,1fr) 70px;gap:6px;min-height:60px;padding:4px}.duck-race-lane-track{height:48px}.duck-race-emoji{flex-basis:37px;width:37px;height:37px;font-size:25px}.duck-race-track{padding:10px 7px}}
 
 
 /* Duck Race controls live inside the arcade scene, opened by the in-game gear */
-.duck-race-shell{position:relative}
-.duck-race-admin{position:absolute;z-index:30;inset:86px 18px 76px;display:block;overflow:auto;margin:0;padding:clamp(14px,2.5vw,26px);border:3px solid #f1d18c!important;border-radius:18px;background:linear-gradient(155deg,#fffdf2,#e8f7fa)!important;box-shadow:0 18px 65px rgba(0,42,73,.48);color:#173b50}
-.duck-race-admin.hidden{display:none!important}
-.duck-race-admin .panel-heading{margin-bottom:16px}
-.duck-race-admin .panel-kicker{color:#1985aa}
-.duck-race-admin h3{color:#143d53;font-size:22px}
-.duck-race-form{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.duck-race-form .form-group label,.duck-race-time-group>label{color:#22536a;font-weight:800}
-.duck-race-form input,.duck-race-form select,.duck-race-time-inputs input,.duck-race-names-wrap textarea{border:1px solid #9bcbd9;background:#fff;color:#173b50;border-radius:9px}
-.duck-race-time-inputs>label{color:#22536a}
-.duck-race-names-wrap small,.duck-race-war-note{color:#38677a}
-.duck-race-war-note{background:#dff4f9}
-.duck-race-form-actions{align-items:center}
-.duck-race-form-message{color:#22536a}
-.duck-race-controls #duck-race-settings{border:1px solid #f2d28e;background:#fff8df;color:#6a4b16;font-weight:900}
-.duck-race-controls #duck-race-settings:hover{background:#ffedb5}
-@media(max-width:700px){.duck-race-admin{inset:75px 8px 70px;padding:13px}.duck-race-form{grid-template-columns:1fr}.duck-race-form-actions{grid-column:1/-1}.duck-race-time-group,.duck-race-participant-options{grid-column:1/-1}}

@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=duck-race-in-game-ui-20261110">
+  <link rel="stylesheet" href="style.css?v=guild-community-cleanup-20261110">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=duck-race-in-game-ui-20261110";;
+          app.src = "app.js?v=guild-community-cleanup-20261110";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -220,20 +220,15 @@
         </button>
 
         <div class="nav-group">
-          <button class="nav-item nav-parent" type="button" data-toggle-submenu="guild-activities-submenu" aria-expanded="false">
+          <button class="nav-item nav-parent" type="button" data-toggle-submenu="guild-community-submenu" aria-expanded="false">
             <svg class="icon"><use href="#i-party-popper"/></svg>
-            <span>กิจกรรมกิลด์</span>
+            <span>Guild Community</span>
             <span class="nav-chevron">⌄</span>
           </button>
-          <div id="guild-activities-submenu" class="nav-submenu">
-            <button class="nav-subitem" data-page="activities">
-              <span class="nav-subitem-dot"></span>
-              <span>Duck Race</span>
-            </button>
-            <button class="nav-subitem" data-page="number-guess">
-              <span class="nav-subitem-dot"></span>
-              <span>กิจกรรมทายตัวเลข</span>
-            </button>
+          <div id="guild-community-submenu" class="nav-submenu">
+            <button class="nav-subitem" data-page="community-board"><span class="nav-subitem-dot"></span><span>Community Board</span></button>
+            <button class="nav-subitem" data-page="guild-news"><span class="nav-subitem-dot"></span><span>Guild News</span></button>
+            <button class="nav-subitem" data-page="guild-activities"><span class="nav-subitem-dot"></span><span>Guild Activities</span></button>
           </div>
         </div>
         
@@ -734,112 +729,19 @@
       </section>
 
 
-      <!-- ============ CYBERPUNK NUMBER GUESS ============ -->
-      <section id="page-number-guess" class="page page-padded hidden">
-        <div class="number-guess-hero">
-          <div class="number-guess-hero-grid"></div>
-          <div class="number-guess-hero-content">
-            <span class="number-guess-eyebrow">4AM GUILD · NEON CHANCE SYSTEM</span>
-            <h1>กิจกรรมทายตัวเลข</h1>
-            <p>ทดลองเลือกหมายเลข 00–99 · ไม่ต้องเชื่อมรายชื่อสมาชิกหรือ Guild War</p>
-            <div class="number-guess-live-indicator"><i></i> LOCAL DEMO GRID</div>
-          </div>
-          <div class="number-guess-orb" aria-hidden="true"><span>?</span></div>
-        </div>
-
-        <section class="number-guess-admin-panel panel hidden" id="number-guess-admin-panel">
-          <div class="panel-heading">
-            <div><span class="panel-kicker">MANAGEMENT CONTROL</span><h3>เปิดกิจกรรมทายตัวเลข</h3></div>
-            <div class="number-guess-admin-actions"><button type="button" class="btn btn-outline btn-sm" id="number-guess-demo-reset">ล้างกิจกรรมทดลอง</button><button type="button" class="btn btn-primary" id="number-guess-create-open">＋ สร้างกิจกรรม</button></div>
-          </div>
-          <form id="number-guess-create-form" class="number-guess-create-form hidden">
-            <div class="form-group"><label for="number-guess-title">ชื่อกิจกรรม</label><input id="number-guess-title" maxlength="120" required placeholder="เช่น 4AM Lucky Number #01"></div>
-            <div class="form-group"><label for="number-guess-close">เวลาปิดรับตัวเลข</label><input id="number-guess-close" type="datetime-local" required></div>
-            <div class="number-guess-form-actions"><button type="button" class="btn btn-outline" id="number-guess-create-cancel">ยกเลิก</button><button type="submit" class="btn btn-primary" id="number-guess-create-submit">เปิดกิจกรรม</button></div>
-            <p class="message" id="number-guess-create-message"></p>
-          </form>
-        </section>
-
-        <section class="number-guess-console panel" aria-label="ตารางเลือกหมายเลข">
-          <div id="number-guess-event-state" class="number-guess-event-state">
-            <span class="number-guess-state-icon">⌁</span>
-            <div><strong>กำลังเชื่อมต่อระบบกิจกรรม</strong><p>กำลังตรวจสอบกิจกรรมที่เปิดอยู่...</p></div>
-          </div>
-          <div class="number-guess-stats">
-            <div class="number-guess-stat"><span>NUMBERS</span><strong>100</strong><small>00 — 99</small></div>
-            <div class="number-guess-stat"><span>CLAIMED</span><strong id="number-guess-claimed-count">—</strong><small>หมายเลขถูกเลือกแล้ว</small></div>
-            <div class="number-guess-stat"><span>AVAILABLE</span><strong id="number-guess-available-count">—</strong><small>หมายเลขที่ยังว่าง</small></div>
-          </div>
-          <div class="number-guess-player-entry">
-            <label for="number-guess-player-name">ชื่อที่ใช้ทดลอง (ไม่ต้องเชื่อมบัญชี)</label>
-            <input id="number-guess-player-name" maxlength="32" autocomplete="off" placeholder="พิมพ์ชื่อเล่นของคุณ">
-            <small>ชื่อเดียวกันเลือกได้หนึ่งหมายเลขต่อกิจกรรม · ข้อมูลเก็บในเบราว์เซอร์นี้</small>
-          </div>
-          <div class="number-guess-selection-bar">
-            <div><span class="number-guess-selection-label">YOUR NUMBER</span><strong id="number-guess-own-number">--</strong></div>
-            <p id="number-guess-selection-hint">ใส่ชื่อเล่นแล้วเลือกหมายเลขที่ยังว่างได้หนึ่งหมายเลข</p>
-          </div>
-          <div class="number-guess-grid-wrap">
-            <div class="number-guess-grid-heading"><span>SELECT YOUR LUCKY NUMBER</span><span>00 / 99</span></div>
-            <div class="number-guess-grid" id="number-guess-grid" aria-label="เลือกตัวเลข 00 ถึง 99">
-              <div class="number-guess-loading">กำลังโหลดตารางหมายเลข...</div>
-            </div>
-          </div>
-          <div class="number-guess-legend">
-            <span><i class="legend-available"></i> ว่าง</span>
-            <span><i class="legend-selected"></i> หมายเลขของคุณ</span>
-            <span><i class="legend-taken"></i> มีผู้เลือกแล้ว</span>
-          </div>
-          <div class="number-guess-rules">
-            <span>◈ ONE MEMBER / ONE NUMBER</span>
-            <span>◈ DUPLICATE NUMBERS BLOCKED</span>
-            <span>◈ DEMO MODE · NO GUILD ROSTER LINK</span>
-          </div>
-          <p class="number-guess-feedback" id="number-guess-feedback" aria-live="polite"></p>
-        </section>
-        <section class="number-guess-management-list panel hidden" id="number-guess-management-list">
-          <div class="panel-heading"><div><span class="panel-kicker">REGISTRATION LOG</span><h3>รายชื่อผู้เลือกหมายเลข</h3></div><button class="btn btn-outline btn-sm" id="number-guess-refresh-list">รีเฟรช</button></div>
-          <div id="number-guess-participants"></div>
-        </section>
-      </section>
-
       <!-- ============ GUILD ACTIVITIES ============ -->
-      <section id="page-activities" class="page page-padded hidden">
-        <div class="page-intro">
-          <span class="section-kicker">4AM GUILD · MINI GAME</span>
-          <h1>Duck Race</h1>
-          <p>มินิเกมแข่งเป็ดลุ้นรางวัล · ทดลองหน้าตาและระบบการแข่งขันโดยยังไม่เชื่อมรายชื่อสมาชิก</p>
+      <section id="page-community" class="page page-padded hidden">
+        <div class="page-intro community-page-intro">
+          <span class="section-kicker" id="community-page-kicker">COMMUNITY BOARD</span>
+          <h1 id="community-page-title">Community Board</h1>
+          <p id="community-page-description">พื้นที่พูดคุย แสดงความคิดเห็น และติดตามเรื่องราวของสมาชิกกิลด์</p>
         </div>
-
-        <section class="duck-race-shell panel" aria-label="4AM Duck Race">
-          <div class="duck-race-heading"><div><span class="duck-race-kicker">4AM GUILD · LIVE ARCADE</span><h2 id="duck-race-title">4AM DUCK RACE</h2><p id="duck-race-prize">รอผู้จัดสร้างการแข่งขัน</p></div><span class="duck-race-demo-badge" id="duck-race-live-badge">LIVE RACE</span></div>
-          <div class="duck-race-notice"><strong>LIVE</strong><span>สมาชิกที่เข้าสู่ระบบทุกคนสามารถรับชมสนามเดียวกันแบบเรียลไทม์ การตั้งค่าและควบคุมสงวนสิทธิ์ Developer, Leader และ Management</span></div>
-          <div class="duck-race-live-summary" id="duck-race-live-summary"><span class="duck-race-status-pill" id="duck-race-status">WAITING</span><span id="duck-race-count-label">ยังไม่มีผู้เข้าแข่งขัน</span><span id="duck-race-clock">00:00:00</span></div>
-          <div class="duck-race-track-header"><span>START</span><span>FINISH</span></div><div id="duck-race-track" class="duck-race-track" aria-live="polite"><div class="duck-race-empty">รอ Management สร้างการแข่งขัน Duck Race</div></div>
-          <section class="duck-race-admin panel hidden" id="duck-race-admin"><div class="panel-heading"><div><span class="panel-kicker">MANAGEMENT CONTROL</span><h3>ตั้งค่าการแข่งขัน</h3></div></div>
-            <form id="duck-race-form" class="duck-race-form">
-              <div class="form-group"><label for="duck-race-mode">โหมดการแข่งขัน</label><select id="duck-race-mode"><option value="free">FREE RACE · กรอกรายชื่อเอง</option><option value="war">WAR RACE · ดึงจาก War Signup</option></select></div>
-              <div class="form-group duck-race-war-source hidden" id="duck-race-war-source-wrap"><label for="duck-race-war-source">เลือกรอบวอร์</label><select id="duck-race-war-source"><option value="">กำลังโหลดรอบวอร์...</option></select></div>
-              <div class="form-group"><label for="duck-race-title-input">ชื่อการแข่งขัน</label><input id="duck-race-title-input" maxlength="80" value="4AM DUCK RACE" required></div>
-              <div class="form-group"><label for="duck-race-prize-input">ของรางวัล (ไม่บังคับ)</label><input id="duck-race-prize-input" maxlength="120" placeholder="เช่น รางวัลเซอร์ไพรส์"></div>
-              <div class="duck-race-time-group"><label>ระยะเวลาการแข่งขัน</label><div class="duck-race-time-inputs"><label>ชั่วโมง<input id="duck-race-hours" type="number" min="0" max="23" value="0"></label><span>:</span><label>นาที<input id="duck-race-minutes" type="number" min="0" max="59" value="1"></label><span>:</span><label>วินาที<input id="duck-race-seconds" type="number" min="0" max="59" value="0"></label></div></div>
-              <div class="duck-race-participant-options" id="duck-race-free-options"><div class="form-group"><label for="duck-race-participant-mode">วิธีกำหนดผู้เข้าร่วม</label><select id="duck-race-participant-mode"><option value="count">กำหนดจำนวนอย่างเดียว</option><option value="names">กรอกชื่ออย่างเดียว</option><option value="both">กำหนดจำนวนและกรอกชื่อ</option></select></div>
-                <div class="form-group" id="duck-race-count-wrap"><label for="duck-race-count-input">จำนวนเป็ด / ผู้เข้าร่วม (สูงสุด 120)</label><input id="duck-race-count-input" type="number" min="1" max="120" value="10"></div>
-                <div class="form-group duck-race-names-wrap hidden" id="duck-race-names-wrap"><label for="duck-race-names-input">รายชื่อผู้เข้าร่วม (หนึ่งชื่อต่อบรรทัด)</label><textarea id="duck-race-names-input" rows="5" maxlength="6000" placeholder="Garrett&#10;Garlen&#10;OutRaGeOuZ"></textarea><small id="duck-race-name-count">0 รายชื่อ</small></div>
-              </div>
-              <p class="duck-race-war-note hidden" id="duck-race-war-note">ระบบจะนำสมาชิกที่ลงชื่อ War Signup ในรอบที่เลือกมาเป็นผู้เข้าแข่งขันโดยอัตโนมัติ</p>
-              <div class="duck-race-form-actions"><button type="button" class="btn btn-outline" id="duck-race-cancel">ยกเลิก</button><button type="submit" class="btn btn-primary" id="duck-race-set">SET · สร้างสนาม</button></div><p id="duck-race-form-message" class="message"></p>
-            </form></section>
-          <div class="duck-race-result" id="duck-race-result"><span class="duck-race-result-icon">🏁</span><div><strong>สนามยังไม่เริ่ม</strong><p>เมื่อผู้จัดกด SET สนามแข่งขันจะปรากฏที่นี่สำหรับสมาชิกทุกคน</p></div></div>
-          <div class="duck-race-controls"><button type="button" class="btn btn-primary management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-start" disabled>▶ START</button><button type="button" class="btn btn-warning management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-pause" disabled>Ⅱ PAUSE</button><button type="button" class="btn btn-outline management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-continue" disabled>▶ CONTINUE</button><button type="button" class="btn btn-outline management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-reset" disabled>↻ RESET</button><button type="button" class="btn btn-outline management-only is-role-hidden" data-management-only aria-hidden="true" id="duck-race-settings">⚙ ตั้งค่าเกม</button></div>
-          <p class="duck-race-footnote">การแข่งขันและสถานะจะซิงก์ผ่าน Supabase Realtime ไปยังสมาชิกทุกคนที่เปิดหน้า Duck Race อยู่</p>
-        </section>
         <section class="panel activities-panel">
           <div class="panel-heading activities-heading">
             <div>
-              <span class="panel-kicker">COMMUNITY BOARD</span>
-              <h3>ข่าวสารและกิจกรรม</h3>
-              <p class="muted">สมาชิกทุกคนสามารถอ่านกิจกรรมที่เผยแพร่โดยกิลด์ได้</p>
+              <span class="panel-kicker" id="community-feed-kicker">COMMUNITY BOARD</span>
+              <h3 id="community-feed-title">โพสต์จากชุมชนกิลด์</h3>
+              <p class="muted" id="community-feed-description">สมาชิกสามารถอ่านและแสดงความคิดเห็นในแต่ละโพสต์ได้</p>
             </div>
             <button type="button" class="btn btn-primary management-only is-role-hidden" data-management-only aria-hidden="true" id="activity-add-button">＋ เพิ่มกิจกรรม</button>
           </div>

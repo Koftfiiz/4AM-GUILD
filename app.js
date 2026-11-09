@@ -85,8 +85,9 @@ const PAGE_TITLES = {
   "war-attendance-stats": "สถิติการเข้าร่วมวอร์",
   rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
-  activities: "มินิเกมแจกของรางวัล",
-  "number-guess": "กิจกรรมทายตัวเลข",
+  "community-board": "Community Board",
+  "guild-news": "Guild News",
+  "guild-activities": "Guild Activities",
   feedback: "แจ้งปัญหา / Feedback",
   settings: "ตั้งค่าบัญชี",
   "system-management": "System Management"
@@ -3732,11 +3733,18 @@ async function notifyGuildActivityDiscord(kind,id){
 }
 function renderGuildActivities(){
  const list=$("guild-activities-list");if(!list)return;
- if(!guildActivitiesCache.length){
-  list.innerHTML='<div class="empty-state"><span>◷</span><h3>ยังไม่มีกิจกรรม</h3><p>'+(isManagement()?'กด “เพิ่มกิจกรรม” เพื่อสร้างข่าวสารหรือกิจกรรมแรกของกิลด์':'ขณะนี้ยังไม่มีข่าวสารหรือกิจกรรมที่เผยแพร่')+'</p></div>';
+ const view=window.activeGuildCommunityView||"community-board";
+ const visibleItems=guildActivitiesCache.filter(item=>{
+  if(view==="guild-news")return !item.starts_at&&!item.ends_at;
+  if(view==="guild-activities")return Boolean(item.starts_at||item.ends_at);
+  return true;
+ });
+ if(!visibleItems.length){
+  const emptyCopy=view==="guild-news"?"ยังไม่มีข่าวสารที่เผยแพร่":view==="guild-activities"?"ยังไม่มีกิจกรรมที่มีกำหนดการ":"ยังไม่มีโพสต์ใน Community Board";
+  list.innerHTML='<div class="empty-state"><span>◷</span><h3>'+emptyCopy+'</h3><p>'+(isManagement()?'กด “เพิ่มกิจกรรม” เพื่อเผยแพร่เนื้อหาใหม่':'ขณะนี้ยังไม่มีเนื้อหาที่เผยแพร่')+'</p></div>';
   return;
  }
- list.innerHTML=guildActivitiesCache.map(item=>{
+ list.innerHTML=visibleItems.map(item=>{
   const id=escapeHTML(item.id),title=escapeHTML(item.title||"กิจกรรมกิลด์");
   const actions=isManagement()?'<div class="activity-card-actions"><button type="button" class="btn btn-outline btn-sm" data-activity-edit="'+id+'">แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-activity-delete="'+id+'">ลบ</button></div>':"";
   const comments=(guildActivityCommentsCache[item.id]||[]).map(comment=>{
@@ -3779,8 +3787,8 @@ function subscribeToGuildActivityRealtime(){
  if(guildActivityRealtimeChannel){supabaseClient.removeChannel(guildActivityRealtimeChannel);guildActivityRealtimeChannel=null;}
  if(!currentUser)return;
  guildActivityRealtimeChannel=supabaseClient.channel("guild-activities-live-"+currentUser.id)
-  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activities"},()=>{if(!$("page-activities")?.classList.contains("hidden"))loadGuildActivities();})
-  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activity_comments"},()=>{if(!$("page-activities")?.classList.contains("hidden"))loadGuildActivityComments();})
+  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activities"},()=>{if(!$("page-community")?.classList.contains("hidden"))loadGuildActivities();})
+  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activity_comments"},()=>{if(!$("page-community")?.classList.contains("hidden"))loadGuildActivityComments();})
   .subscribe();
 }
 function openGuildActivityEditor(id=null){
@@ -3819,7 +3827,7 @@ function closeGuildActivityEditor(){
  $("activity-add-button")?.classList.toggle("hidden",!isManagement());
 }
 function registerGuildActivityEvents(){
- const page=$("page-activities");if(!page||page.dataset.eventsReady==="true")return;page.dataset.eventsReady="true";
+ const page=$("page-community");if(!page||page.dataset.eventsReady==="true")return;page.dataset.eventsReady="true";
  renderActivityEmojiPicker();
  page.addEventListener("input",event=>{
   if(event.target.matches("[data-activity-date-input]"))event.target.value=formatActivityDateInput(event.target.value);
@@ -3916,123 +3924,6 @@ function registerGuildActivityEvents(){
   finally{input.value="";if(button){button.disabled=false;button.textContent="▧ รูปภาพ";}}
  });
 }
-
-// ==========================================
-// 4AM GUILD — DUCK RACE (SUPABASE REALTIME)
-// ==========================================
-const NUMBER_GUESS_DEMO_KEY="4am-guild:number-guess-demo:v1";
-let duckRaceEvent=null,duckRaceParticipants=[],duckRaceChannel=null,duckRaceTicker=null,duckRaceBusy=false,duckRaceFinishing=false;
-let duckRaceReady=false;
-const DUCK_RACE_COLORS=["#f5c84c","#62d8f0","#ff8c9d","#a78bfa","#8de0a2","#f2a65a","#f1f1f1","#df86d8","#f08c5c","#76c7b8"];
-function duckRaceIsManager(){return isManagement();}
-function duckRaceFormatClock(v){const n=Math.max(0,Math.ceil(v)),h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=n%60;return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":");}
-function duckRaceElapsed(e=duckRaceEvent,now=Date.now()){if(!e)return 0;const saved=Math.max(0,Number(e.elapsed_seconds)||0);if(e.status!=="running"||!e.started_at)return saved;return Math.min(Number(e.duration_seconds)||0,saved+Math.max(0,(now-new Date(e.started_at).getTime())/1000));}
-function duckRaceWinner(){return duckRaceParticipants.length?[...duckRaceParticipants].sort((a,b)=>Number(a.finish_ratio)-Number(b.finish_ratio))[0]:null;}
-function setDuckRaceMessage(msg,type="info"){const n=$("duck-race-form-message");if(n){n.textContent=msg;n.className="message "+(type==="error"?"error":type==="success"?"success":"");}}
-function setDuckRaceModeFields(){const mode=$("duck-race-mode")?.value||"free",pm=$("duck-race-participant-mode")?.value||"count";$("duck-race-war-source-wrap")?.classList.toggle("hidden",mode!=="war");$("duck-race-free-options")?.classList.toggle("hidden",mode==="war");$("duck-race-war-note")?.classList.toggle("hidden",mode!=="war");$("duck-race-count-wrap")?.classList.toggle("hidden",pm==="names");$("duck-race-names-wrap")?.classList.toggle("hidden",pm==="count"||mode==="war");}
-function duckRaceParseNames(){return String($("duck-race-names-input")?.value||"").split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean);}
-async function loadDuckRaceWarSources(){const s=$("duck-race-war-source");if(!s)return;const {data,error}=await supabaseClient.from("war_events").select("id,event_name,event_date,is_published").eq("is_published",true).order("event_date",{ascending:false});if(error){s.innerHTML='<option value="">โหลดรอบวอร์ไม่สำเร็จ</option>';console.error(error);return;}s.innerHTML=(data||[]).map(e=>'<option value="'+escapeHTML(e.id)+'">'+escapeHTML(e.event_name||"Guild War")+' · '+escapeHTML(formatDate(e.event_date))+'</option>').join("")||'<option value="">ไม่มีรอบวอร์ที่เผยแพร่</option>';}
-function renderDuckRaceTrack(){const t=$("duck-race-track");if(!t)return;if(!duckRaceEvent||!duckRaceParticipants.length){t.innerHTML='<div class="duck-race-empty">🦆 รอ Management สร้างการแข่งขัน Duck Race</div>';return;}t.innerHTML=duckRaceParticipants.map((p,i)=>'<div class="duck-race-lane" data-duck-lane="'+i+'"><span class="duck-race-lane-number">'+String(i+1).padStart(3,"0")+'</span><div class="duck-race-lane-track"><div class="duck-race-water-shimmer"></div><div class="duck-race-progress" data-finish-ratio="'+Number(p.finish_ratio)+'" style="--duck-color:'+DUCK_RACE_COLORS[i%DUCK_RACE_COLORS.length]+';width:0%"><span class="duck-race-wake"></span><span class="duck-race-bubbles">• · •</span><span class="duck-race-emoji" role="img" aria-label="เป็ดของ '+escapeHTML(p.display_name)+'">🦆</span></div><span class="duck-race-lane-finish">🏁</span></div><span class="duck-race-lane-name" title="'+escapeHTML(p.display_name)+'">'+escapeHTML(p.display_name)+'</span></div>').join("");tickDuckRace();}
-function renderDuckRaceState(){const e=duckRaceEvent,admin=$("duck-race-admin"),settings=$("duck-race-settings");if(admin){admin.classList.add("hidden");admin.setAttribute("aria-hidden","true");}if(settings)settings.classList.toggle("hidden",!duckRaceIsManager());if(!e){$("duck-race-title").textContent="4AM DUCK RACE";$("duck-race-prize").textContent="รอผู้จัดสร้างการแข่งขัน";$("duck-race-status").textContent="WAITING";$("duck-race-status").dataset.status="waiting";$("duck-race-count-label").textContent="ยังไม่มีผู้เข้าแข่งขัน";$("duck-race-clock").textContent="00:00:00";$("duck-race-result").innerHTML='<span class="duck-race-result-icon">🏁</span><div><strong>สนามยังไม่เริ่ม</strong><p>เมื่อผู้จัดกด SET สนามแข่งขันจะปรากฏที่นี่สำหรับสมาชิกทุกคน</p></div>';$("duck-race-start").disabled=true;$("duck-race-pause").disabled=true;$("duck-race-continue").disabled=true;$("duck-race-reset").disabled=true;renderDuckRaceTrack();return;}const elapsed=duckRaceElapsed(),duration=Math.max(1,Number(e.duration_seconds)||1),done=e.status==="finished"||elapsed>=duration,state=done?"finished":e.status||"setup",mgr=duckRaceIsManager();$("duck-race-title").textContent=e.title||"4AM DUCK RACE";$("duck-race-prize").textContent=e.prize?"🏆 "+e.prize:(e.mode==="war"?"WAR RACE":"FREE RACE");$("duck-race-status").textContent=state.toUpperCase();$("duck-race-status").dataset.status=state;$("duck-race-count-label").textContent=duckRaceParticipants.length+" ผู้เข้าแข่งขัน · "+(e.mode==="war"?"WAR RACE":"FREE RACE");$("duck-race-start").disabled=!mgr||state!=="setup";$("duck-race-pause").disabled=!mgr||state!=="running";$("duck-race-continue").disabled=!mgr||state!=="paused";$("duck-race-reset").disabled=!mgr||state==="setup";if(done){const w=duckRaceWinner();$("duck-race-result").innerHTML='<span class="duck-race-result-icon">🏆</span><div><strong>ผู้ชนะ: '+escapeHTML(w?.display_name||"-")+'</strong><p>การแข่งขันสิ้นสุดแล้ว · '+escapeHTML(e.title||"Duck Race")+'</p></div>';}else if(state==="running")$("duck-race-result").innerHTML='<span class="duck-race-result-icon">🚦</span><div><strong>การแข่งขันกำลังดำเนินอยู่</strong><p>สมาชิกทุกคนกำลังรับชมสนามเดียวกันแบบเรียลไทม์</p></div>';else if(state==="paused")$("duck-race-result").innerHTML='<span class="duck-race-result-icon">⏸️</span><div><strong>หยุดการแข่งขันชั่วคราว</strong><p>รอผู้จัดกด CONTINUE เพื่อแข่งขันต่อ</p></div>';else $("duck-race-result").innerHTML='<span class="duck-race-result-icon">🏁</span><div><strong>สนามพร้อมแข่งขัน</strong><p>ผู้เข้าแข่งขัน '+duckRaceParticipants.length+' คน · กด START เพื่อเริ่ม</p></div>';tickDuckRace();}
-function tickDuckRace(){if(!duckRaceEvent)return;const elapsed=duckRaceElapsed(),duration=Math.max(1,Number(duckRaceEvent.duration_seconds)||1),remaining=Math.max(0,duration-elapsed),done=duckRaceEvent.status==="finished"||elapsed>=duration,clock=$("duck-race-clock");if(clock)clock.textContent=duckRaceFormatClock(remaining);document.querySelectorAll("#duck-race-track .duck-race-progress").forEach((node)=>{const ratio=Math.min(1,Math.max(.1,Number(node.dataset.finishRatio)||.9)),progress=Math.min(100,elapsed/(duration*ratio)*100);node.style.width=progress.toFixed(2)+"%";node.classList.toggle("is-finished",progress>=100);const lane=node.closest(".duck-race-lane");if(lane){lane.classList.toggle("is-winner",progress>=100&&done);lane.classList.toggle("is-swimming",duckRaceEvent.status==="running"&&progress<100);}});if(done&&duckRaceEvent.status!=="finished"){const w=duckRaceWinner();$("duck-race-status").textContent="FINISHED";$("duck-race-status").dataset.status="finished";$("duck-race-result").innerHTML='<span class="duck-race-result-icon">🏆</span><div><strong>ผู้ชนะ: '+escapeHTML(w?.display_name||"-")+'</strong><p>การแข่งขันสิ้นสุดแล้ว · '+escapeHTML(duckRaceEvent.title||"Duck Race")+'</p></div>';$("duck-race-start").disabled=true;$("duck-race-pause").disabled=true;$("duck-race-continue").disabled=true;$("duck-race-reset").disabled=!duckRaceIsManager();}}
-async function loadDuckRaceCurrent(){const {data,error}=await supabaseClient.from("duck_race_events").select("*").order("created_at",{ascending:false}).limit(1).maybeSingle();if(error){console.error("Duck Race load:",error);setDuckRaceMessage("ยังไม่ได้ติดตั้ง SQL ระบบ Duck Race หรือสิทธิ์ฐานข้อมูลไม่ถูกต้อง: "+error.message,"error");duckRaceEvent=null;duckRaceParticipants=[];renderDuckRaceState();return;}duckRaceEvent=data||null;if(duckRaceEvent){const p=await supabaseClient.from("duck_race_participants").select("*").eq("event_id",duckRaceEvent.id).order("lane_number",{ascending:true});if(p.error){console.error(p.error);duckRaceParticipants=[];}else duckRaceParticipants=p.data||[];}else duckRaceParticipants=[];renderDuckRaceState();}
-function subscribeToDuckRaceRealtime(){if(duckRaceChannel)supabaseClient.removeChannel(duckRaceChannel);duckRaceChannel=supabaseClient.channel("4am-duck-race-live").on("postgres_changes",{event:"*",schema:"public",table:"duck_race_events"},()=>loadDuckRaceCurrent()).on("postgres_changes",{event:"*",schema:"public",table:"duck_race_participants"},payload=>{if(!duckRaceEvent||payload.new?.event_id===duckRaceEvent.id||payload.old?.event_id===duckRaceEvent.id)loadDuckRaceCurrent();}).subscribe();if(duckRaceTicker)clearInterval(duckRaceTicker);duckRaceTicker=setInterval(()=>{if(!duckRaceEvent)return;tickDuckRace();if(duckRaceIsManager()&&!duckRaceFinishing&&duckRaceEvent.status==="running"&&duckRaceElapsed()>=Number(duckRaceEvent.duration_seconds)){duckRaceFinishing=true;supabaseClient.from("duck_race_events").update({status:"finished",elapsed_seconds:Number(duckRaceEvent.duration_seconds),updated_at:new Date().toISOString()}).eq("id",duckRaceEvent.id).eq("status","running").then(({error})=>{if(error)console.warn(error);else loadDuckRaceCurrent();}).finally(()=>{duckRaceFinishing=false;});}},100);}
-async function createDuckRaceEvent(){if(!duckRaceIsManager()||duckRaceBusy)return;duckRaceBusy=true;const button=$("duck-race-set");if(button){button.disabled=true;button.textContent="กำลังสร้างสนาม...";}try{const mode=$("duck-race-mode").value,title=$("duck-race-title-input").value.trim(),prize=$("duck-race-prize-input").value.trim(),h=Number($("duck-race-hours").value)||0,m=Number($("duck-race-minutes").value)||0,s=Number($("duck-race-seconds").value)||0,duration=h*3600+m*60+s;if(!title)throw Error("กรุณากรอกชื่อการแข่งขัน");if(!Number.isInteger(duration)||duration<1||duration>86400)throw Error("กำหนดเวลาได้ตั้งแต่ 1 วินาที ถึง 24 ชั่วโมง");let names=[];if(mode==="war"){const warId=$("duck-race-war-source").value;if(!warId)throw Error("กรุณาเลือกรอบวอร์");const signups=await supabaseClient.from("war_signups").select("member_id,queue_position,status").eq("event_id",warId).neq("status","cancelled").order("queue_position",{ascending:true});if(signups.error)throw signups.error;const ids=[...new Set((signups.data||[]).map(x=>x.member_id))];if(!ids.length)throw Error("รอบวอร์นี้ยังไม่มีสมาชิกลงชื่อ");const members=await supabaseClient.from("guild_members").select("user_id,character_name,nickname,active").in("user_id",ids).eq("active",true);if(members.error)throw members.error;const map=new Map((members.data||[]).map(x=>[x.user_id,x.character_name||x.nickname||"สมาชิก"]));names=ids.map(id=>map.get(id)).filter(Boolean);}else{const pm=$("duck-race-participant-mode").value,requested=Number($("duck-race-count-input").value);names=duckRaceParseNames();let count=0;if(pm==="count"){count=requested;names=[];}else if(pm==="names")count=names.length;else{count=requested;if(!names.length)throw Error("โหมดกำหนดจำนวนและกรอกชื่อ ต้องใส่อย่างน้อย 1 ชื่อ");if(names.length>count)throw Error("จำนวนรายชื่อมากกว่าจำนวนเป็ดที่กำหนด");}if(!Number.isInteger(count)||count<1||count>120)throw Error("จำนวนผู้เข้าร่วมต้องอยู่ระหว่าง 1–120 คน");while(names.length<count)names.push("เป็ด "+String(names.length+1).padStart(2,"0"));}if(!names.length||names.length>120)throw Error("จำนวนผู้เข้าแข่งขันต้องอยู่ระหว่าง 1–120 คน");const ins=await supabaseClient.from("duck_race_events").insert({mode,title,prize:prize||null,duration_seconds:duration,status:"setup",created_by:currentUser.id,elapsed_seconds:0,source_war_event_id:mode==="war"?$("duck-race-war-source").value:null}).select("*").single();if(ins.error)throw ins.error;const rows=names.map((name,i)=>({event_id:ins.data.id,lane_number:i+1,display_name:name.slice(0,80),finish_ratio:Number((.72+Math.random()*.28).toFixed(5))}));const p=await supabaseClient.from("duck_race_participants").insert(rows);if(p.error){await supabaseClient.from("duck_race_events").delete().eq("id",ins.data.id);throw p.error;}$("duck-race-admin").classList.add("hidden");$("duck-race-admin").setAttribute("aria-hidden","true");$("duck-race-admin").dataset.forceOpen="false";setDuckRaceMessage("สร้างสนามแข่งขันเรียบร้อยแล้ว สมาชิกทุกคนสามารถเข้าชมได้","success");await loadDuckRaceCurrent();}catch(error){console.error(error);setDuckRaceMessage(error.message||"สร้างการแข่งขันไม่สำเร็จ","error");}finally{duckRaceBusy=false;if(button){button.disabled=false;button.textContent="SET · สร้างสนาม";}}}
-async function updateDuckRaceState(patch){if(!duckRaceIsManager()||!duckRaceEvent||duckRaceBusy)return;duckRaceBusy=true;try{const {error}=await supabaseClient.from("duck_race_events").update({...patch,updated_at:new Date().toISOString()}).eq("id",duckRaceEvent.id);if(error)throw error;await loadDuckRaceCurrent();}catch(error){alert("เปลี่ยนสถานะการแข่งขันไม่สำเร็จ: "+error.message);}finally{duckRaceBusy=false;}}
-async function startDuckRace(){if(duckRaceEvent?.status==="setup")await updateDuckRaceState({status:"running",started_at:new Date().toISOString(),paused_at:null,elapsed_seconds:0});}
-async function pauseDuckRace(){if(duckRaceEvent?.status==="running")await updateDuckRaceState({status:"paused",paused_at:new Date().toISOString(),elapsed_seconds:duckRaceElapsed()});}
-async function continueDuckRace(){if(duckRaceEvent?.status==="paused")await updateDuckRaceState({status:"running",started_at:new Date().toISOString(),paused_at:null});}
-async function resetDuckRace(){if(!duckRaceEvent||!duckRaceIsManager()||!confirm("รีเซ็ตสนามนี้กลับไปก่อนเริ่มการแข่งขันใช่ไหม?"))return;await updateDuckRaceState({status:"setup",started_at:null,paused_at:null,elapsed_seconds:0});}
-function loadDuckRaceDemo(){const page=$("page-activities");if(page?.dataset.duckRaceReady==="true"){loadDuckRaceCurrent();return;}if(page)page.dataset.duckRaceReady="true";const admin=$("duck-race-admin");if(admin){admin.classList.toggle("hidden",!duckRaceIsManager());admin.setAttribute("aria-hidden",String(!duckRaceIsManager()));admin.dataset.forceOpen="false";admin.setAttribute("aria-hidden","true");}$("duck-race-mode")?.addEventListener("change",setDuckRaceModeFields);$("duck-race-participant-mode")?.addEventListener("change",setDuckRaceModeFields);$("duck-race-names-input")?.addEventListener("input",()=>{const n=duckRaceParseNames().length,label=$("duck-race-name-count");if(label)label.textContent=n+" รายชื่อ";});$("duck-race-settings")?.addEventListener("click",()=>{if(!duckRaceIsManager())return;const panel=$("duck-race-admin");const opening=panel.classList.contains("hidden");panel.classList.toggle("hidden",!opening);panel.setAttribute("aria-hidden",String(!opening));panel.dataset.forceOpen=String(opening);});$("duck-race-cancel")?.addEventListener("click",()=>{const panel=$("duck-race-admin");panel?.classList.add("hidden");panel?.setAttribute("aria-hidden","true");if(panel)panel.dataset.forceOpen="false";});$("duck-race-form")?.addEventListener("submit",e=>{e.preventDefault();createDuckRaceEvent();});$("duck-race-start")?.addEventListener("click",startDuckRace);$("duck-race-pause")?.addEventListener("click",pauseDuckRace);$("duck-race-continue")?.addEventListener("click",continueDuckRace);$("duck-race-reset")?.addEventListener("click",resetDuckRace);setDuckRaceModeFields();loadDuckRaceWarSources();loadDuckRaceCurrent();subscribeToDuckRaceRealtime();}
-function setNumberGuessFeedback(message,type="info"){
- const node=$("number-guess-feedback");if(!node)return;
- node.textContent=message;node.dataset.type=type;node.classList.toggle("is-error",type==="error");node.classList.toggle("is-success",type==="success");
-}
-function loadNumberGuessEvent(){
- numberGuessCurrentEvent=readDemoStorage(NUMBER_GUESS_DEMO_KEY,null);
- renderNumberGuessGrid(numberGuessCurrentEvent);
- $("number-guess-admin-panel")?.classList.toggle("hidden",!isManagement());
- $("number-guess-management-list")?.classList.toggle("hidden",!isManagement()||!numberGuessCurrentEvent);
- renderNumberGuessParticipants();
-}
-function renderNumberGuessGrid(eventData){
- const grid=$("number-guess-grid");if(!grid)return;
- if(!eventData?.event_id){
-  grid.innerHTML='<div class="number-guess-empty">NO DEMO EVENT<br><small>ฝ่ายบริหารสามารถสร้างกิจกรรมทดลองได้</small></div>';
-  $("number-guess-own-number").textContent="--";$("number-guess-claimed-count").textContent="0";$("number-guess-available-count").textContent="100";
-  $("number-guess-event-state").innerHTML='<span class="number-guess-state-icon">⌁</span><div><strong>ยังไม่มีกิจกรรมทดลอง</strong><p>DEMO MODE · ไม่เชื่อมรายชื่อ Guild War</p></div><span class="number-guess-event-status closed">READY</span>';
-  $("number-guess-selection-hint").textContent="รอฝ่ายบริหารสร้างกิจกรรม";
-  setNumberGuessFeedback("สร้างกิจกรรมทดลองได้โดยไม่ต้องเลือกรอบวอร์หรือเชื่อมรายชื่อสมาชิก","info");
-  return;
- }
- const entries=Array.isArray(eventData.entries)?eventData.entries:[];
- const playerName=$("number-guess-player-name")?.value.trim()||"";
- const own=entries.find(row=>row.nickname.toLowerCase()===playerName.toLowerCase());
- const takenSet=new Set(entries.map(row=>Number(row.number)));
- const closed=eventData.status!=="open"||new Date(eventData.signup_closes_at).getTime()<=Date.now();
- $("number-guess-own-number").textContent=own?String(own.number).padStart(2,"0"):"--";
- $("number-guess-claimed-count").textContent=String(takenSet.size);
- $("number-guess-available-count").textContent=String(100-takenSet.size);
- $("number-guess-selection-hint").textContent=own?"คุณเลือกหมายเลข "+String(own.number).padStart(2,"0")+" แล้ว":(playerName?(closed?"กิจกรรมปิดรับแล้ว":"เลือกหมายเลขว่างได้หนึ่งหมายเลข"):"กรุณาใส่ชื่อเล่นก่อนเลือกหมายเลข");
- $("number-guess-event-state").innerHTML='<span class="number-guess-state-icon">⌁</span><div><strong>'+escapeHTML(eventData.title)+'</strong><p>ปิดรับ '+escapeHTML(activityDateLabel(eventData.signup_closes_at))+' · '+(closed?"ปิดรับหมายเลข":"กำลังเปิดรับหมายเลข")+' · โหมดทดลอง</p></div><span class="number-guess-event-status '+(closed?"closed":"open")+'">'+(closed?"CLOSED":"LIVE")+'</span>';
- if(closed)setNumberGuessFeedback("กิจกรรมปิดรับหมายเลขแล้ว","info");
- else if(own)setNumberGuessFeedback("ชื่อ "+playerName+" เลือกหมายเลข "+String(own.number).padStart(2,"0")+" แล้ว","success");
- else if(!playerName)setNumberGuessFeedback("ใส่ชื่อเล่นเพื่อเริ่มทดลองเลือกหมายเลข","info");
- else setNumberGuessFeedback("ระบบพร้อมแล้ว เลือกหมายเลขที่ยังว่างได้เลย","info");
- grid.innerHTML=Array.from({length:100},(_,number)=>{
-  const entry=entries.find(row=>Number(row.number)===number),isMine=Boolean(entry&&own&&entry.nickname.toLowerCase()===playerName.toLowerCase()),claimed=Boolean(entry),disabled=closed||!playerName||claimed||Boolean(own);
-  const cls=isMine?"is-mine":claimed?"is-taken":"is-available",label=String(number).padStart(2,"0"),owner=claimed?entry.nickname:"";
-  return '<button type="button" class="number-guess-cell '+cls+'" data-guess-number="'+number+'" '+(disabled?'disabled':'')+' aria-label="หมายเลข '+label+(claimed?' ถูกเลือกแล้ว':' ว่าง')+'" title="'+escapeHTML(owner||label)+'"><span>'+label+'</span>'+(isMine?'<i>YOU</i>':claimed?'<i>TAKEN</i>':'')+'</button>';
- }).join("");
-}
-function renderNumberGuessParticipants(){
- const box=$("number-guess-participants");if(!box)return;
- const entries=numberGuessCurrentEvent?.entries||[];
- box.innerHTML=entries.length?entries.slice().sort((a,b)=>a.number-b.number).map(row=>'<div class="number-guess-participant"><strong>'+String(row.number).padStart(2,"0")+'</strong><span>'+escapeHTML(row.nickname)+'</span><small>DEMO PLAYER</small><time>'+escapeHTML(activityDateLabel(row.created_at))+'</time></div>').join(""):'<p class="muted">ยังไม่มีผู้ทดลองเลือกหมายเลข</p>';
-}
-function claimNumberGuessNumber(number,button){
- const eventData=numberGuessCurrentEvent;if(!eventData?.event_id)return;
- const nickname=$("number-guess-player-name").value.trim();
- if(!nickname){setNumberGuessFeedback("กรุณาพิมพ์ชื่อเล่นก่อนเลือกหมายเลข","error");$("number-guess-player-name").focus();return;}
- if(nickname.length>32){setNumberGuessFeedback("ชื่อเล่นยาวได้ไม่เกิน 32 ตัวอักษร","error");return;}
- if(new Date(eventData.signup_closes_at).getTime()<=Date.now()){setNumberGuessFeedback("กิจกรรมปิดรับหมายเลขแล้ว","error");return;}
- const entries=eventData.entries||[];
- if(entries.some(row=>row.nickname.toLowerCase()===nickname.toLowerCase())){setNumberGuessFeedback("ชื่อนี้เลือกหมายเลขไปแล้ว","error");return;}
- if(entries.some(row=>Number(row.number)===number)){setNumberGuessFeedback("หมายเลขนี้ถูกเลือกไปแล้ว กรุณาเลือกหมายเลขอื่น","error");return;}
- if(button){button.disabled=true;button.classList.add("is-pending");}
- eventData.entries.push({number,nickname,created_at:new Date().toISOString()});
- writeDemoStorage(NUMBER_GUESS_DEMO_KEY,eventData);numberGuessCurrentEvent=eventData;
- renderNumberGuessGrid(eventData);renderNumberGuessParticipants();
- setNumberGuessFeedback("บันทึกหมายเลข "+String(number).padStart(2,"0")+" สำหรับ "+nickname+" แล้ว (เฉพาะเบราว์เซอร์นี้)","success");
-}
-function registerNumberGuessEvents(){
- const page=$("page-number-guess");if(!page||page.dataset.ready==="true")return;page.dataset.ready="true";
- $("number-guess-grid")?.addEventListener("click",event=>{
-  const button=event.target.closest("[data-guess-number]");if(!button||button.disabled)return;
-  claimNumberGuessNumber(Number(button.dataset.guessNumber),button);
- });
- $("number-guess-player-name")?.addEventListener("input",()=>renderNumberGuessGrid(numberGuessCurrentEvent));
- $("number-guess-create-open")?.addEventListener("click",()=>{if(isManagement())$("number-guess-create-form")?.classList.remove("hidden");});
- $("number-guess-create-cancel")?.addEventListener("click",()=>$("number-guess-create-form")?.classList.add("hidden"));
- $("number-guess-demo-reset")?.addEventListener("click",()=>{
-  if(!isManagement()||!window.confirm("ล้างกิจกรรมทดลองและหมายเลขทั้งหมดใช่หรือไม่?"))return;
-  localStorage.removeItem(NUMBER_GUESS_DEMO_KEY);numberGuessCurrentEvent=null;loadNumberGuessEvent();
- });
- $("number-guess-create-form")?.addEventListener("submit",event=>{
-  event.preventDefault();if(!isManagement())return;
-  const button=$("number-guess-create-submit"),message=$("number-guess-create-message");
-  const title=$("number-guess-title").value.trim(),closeValue=$("number-guess-close").value,closeAt=new Date(closeValue);
-  if(!title||!closeValue||Number.isNaN(closeAt.getTime())||closeAt.getTime()<=Date.now()){message.textContent="กรุณากรอกชื่อกิจกรรมและเวลาปิดรับในอนาคต";message.className="message error";return;}
-  numberGuessCurrentEvent={event_id:"demo-"+Date.now(),title,signup_closes_at:closeAt.toISOString(),status:"open",entries:[]};
-  writeDemoStorage(NUMBER_GUESS_DEMO_KEY,numberGuessCurrentEvent);
-  event.currentTarget.reset();event.currentTarget.classList.add("hidden");loadNumberGuessEvent();
-  message.textContent="สร้างกิจกรรมทดลองเรียบร้อยแล้ว";message.className="message success";
-  button.textContent="เปิดกิจกรรม";
- });
- $("number-guess-refresh-list")?.addEventListener("click",renderNumberGuessParticipants);
-}
-registerNumberGuessEvents();
-
 
 
 registerGuildActivityEvents();
@@ -4526,9 +4417,18 @@ function openGuildPage(pageName) {
     page.classList.add("hidden");
   });
 
-  const targetPage = $("page-" + pageName);
-  if (targetPage) {
-    targetPage.classList.remove("hidden");
+  const communityViews = ["community-board", "guild-news", "guild-activities"];
+  const isCommunityView = communityViews.includes(pageName);
+  const targetPage = $(isCommunityView ? "page-community" : "page-" + pageName);
+  if (targetPage) targetPage.classList.remove("hidden");
+  if (isCommunityView) {
+    window.activeGuildCommunityView = pageName;
+    const copy = {
+      "community-board": ["COMMUNITY BOARD", "Community Board", "พื้นที่พูดคุย แสดงความคิดเห็น และติดตามเรื่องราวของสมาชิกกิลด์", "COMMUNITY BOARD", "โพสต์จากชุมชนกิลด์", "สมาชิกสามารถอ่านและแสดงความคิดเห็นในแต่ละโพสต์ได้"],
+      "guild-news": ["GUILD NEWS", "Guild News", "ประกาศ ข่าวสาร และข้อมูลสำคัญจากฝ่ายบริหาร", "GUILD NEWS", "ข่าวสารจากกิลด์", "แสดงโพสต์ข่าวสารที่ไม่มีการกำหนดวันจัดกิจกรรม"],
+      "guild-activities": ["GUILD ACTIVITIES", "Guild Activities", "ติดตามกิจกรรมและกำหนดการของ 4AM GUILD", "GUILD ACTIVITIES", "กิจกรรมและกำหนดการ", "แสดงโพสต์ที่มีกำหนดวันหรือเวลาเริ่มต้นและสิ้นสุด"]
+    }[pageName];
+    ["community-page-kicker","community-page-title","community-page-description","community-feed-kicker","community-feed-title","community-feed-description"].forEach((id,index)=>{const node=$(id);if(node)node.textContent=copy[index];});
   }
 
   document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
@@ -4541,11 +4441,11 @@ function openGuildPage(pageName) {
   warParent?.classList.toggle("active", warPage);
   if (warPage && warSubmenu) warSubmenu.classList.add("is-open");
 
-  const guildActivityPage = ["activities", "number-guess"].includes(pageName);
-  const guildActivityParent = document.querySelector('[data-toggle-submenu="guild-activities-submenu"]');
-  const guildActivitySubmenu = $("guild-activities-submenu");
-  guildActivityParent?.classList.toggle("active", guildActivityPage);
-  if (guildActivityPage && guildActivitySubmenu) guildActivitySubmenu.classList.add("is-open");
+  const guildCommunityPage = ["community-board", "guild-news", "guild-activities"].includes(pageName);
+  const guildCommunityParent = document.querySelector('[data-toggle-submenu="guild-community-submenu"]');
+  const guildCommunitySubmenu = $("guild-community-submenu");
+  guildCommunityParent?.classList.toggle("active", guildCommunityPage);
+  if (guildCommunityPage && guildCommunitySubmenu) guildCommunitySubmenu.classList.add("is-open");
 
   document.title = `${PAGE_TITLES[pageName] || "4AM GUILD"} | 4AM GUILD`;
 
@@ -4568,8 +4468,10 @@ function openGuildPage(pageName) {
   if (pageName === "war-stats") loadWarMatchRecords();
   if (pageName === "war-attendance-stats") loadWarAttendanceStatistics();
   if (pageName === "rules") loadGuildRules();
-  if (pageName === "activities") { subscribeToGuildActivityRealtime(); loadGuildActivities(); loadDuckRaceDemo(); }
-  if (pageName === "number-guess") { loadNumberGuessEvent(); }
+  if (["community-board", "guild-news", "guild-activities"].includes(pageName)) {
+    subscribeToGuildActivityRealtime();
+    loadGuildActivities();
+  }
   if (pageName === "feedback") loadGuildFeedback();
 }
 
