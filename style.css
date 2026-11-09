@@ -4604,9 +4604,9 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 #app-layout.sidebar-collapsed .sidebar-slogan b{font-size:22px}
 .sidebar-toggle{position:fixed;z-index:42;top:24px;left:calc(var(--sidebar-width,255px) - 16px);display:grid;place-items:center;width:32px;height:42px;padding:0;border:1px solid rgba(211,158,102,.42);border-radius:10px;background:linear-gradient(145deg,#321018,#11090d);color:#f2c982;box-shadow:0 4px 18px rgba(0,0,0,.35);cursor:pointer;transition:left .24s ease,transform .2s ease}
 .sidebar-toggle:hover{color:#fff;box-shadow:0 0 14px rgba(214,71,80,.3)}
-.sidebar-toggle .icon{width:17px;height:17px}
+.sidebar-toggle .icon{width:17px;height:17px;transform:rotate(180deg)}
 #app-layout.sidebar-collapsed .sidebar-toggle{left:60px}
-#app-layout.sidebar-collapsed .sidebar-toggle .icon{transform:rotate(180deg)}
+#app-layout.sidebar-collapsed .sidebar-toggle .icon{transform:none}
 .sidebar-backdrop{display:none}
 @media(max-width:850px){
   #app-layout{--sidebar-width:0px}
@@ -4626,7 +4626,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
   #app-layout.mobile-sidebar-open .nav-item{justify-content:flex-start;gap:14px;padding:0 16px 0 24px}
   #app-layout.mobile-sidebar-open .nav-item>span{display:inline}
   #app-layout.mobile-sidebar-open .nav-submenu.is-open{display:grid!important}
-  .sidebar-toggle{top:82px;left:12px;width:42px;height:42px;border-radius:12px}
+  .sidebar-toggle{top:82px;left:12px;width:42px;height:42px;border-radius:12px}\n  .sidebar-toggle .icon{transform:none}
   #app-layout.mobile-sidebar-open .sidebar-toggle{left:min(calc(84vw - 22px),233px)}
   #app-layout.mobile-sidebar-open .sidebar-toggle .icon{transform:rotate(180deg)}
   .sidebar-backdrop{position:fixed;inset:0;z-index:29;background:rgba(0,0,0,.56);backdrop-filter:blur(2px)}
