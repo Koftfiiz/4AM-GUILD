@@ -2482,6 +2482,16 @@ function syncPracticeTimeDisplay(){
   const display=$("war-start-time-display"),timeInput=$("war-start-time");if(!display||!timeInput)return;
   display.value=timeInput.value;display.setCustomValidity(timeInput.value?"":"กรุณาเลือกเวลาเริ่มวอร์");
 }
+function openWarNativePicker(input){
+  if(!input||input.disabled)return;
+  try{
+    if(typeof input.showPicker==="function")input.showPicker();
+    else{input.focus();input.click();}
+  }catch(error){
+    input.focus();
+    input.click();
+  }
+}
 function closePracticeTimePicker(){
   document.querySelector(".war-time-picker-popover")?.remove();
 }
