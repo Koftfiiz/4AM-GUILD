@@ -3027,54 +3027,94 @@ function isDoubleOfficialSaturday(dateValue){
   const weeks=Math.round((date-anchor)/(7*86400000));
   return weeks%2===0;
 }
+function getNextTwoWarSaturdays(){
+  const today=new Date();today.setHours(0,0,0,0);
+  const daysUntilSaturday=(6-today.getDay()+7)%7||7;
+  return Array.from({length:2},(_,index)=>{
+    const date=new Date(today);date.setDate(today.getDate()+daysUntilSaturday+index*7);
+    return date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0");
+  });
+}
+function updateWarSignupDateControls(selectedIso="",useDefault=false){
+  const type=$("war-signup-type")?.value||"official";
+  const select=$("war-signup-event-date-select");
+  const practice=$("war-signup-event-date-practice");
+  const canonical=$("war-signup-event-date");
+  if(!select||!practice||!canonical)return;
+  const dates=getNextTwoWarSaturdays();
+  select.innerHTML='<option value="">เลือกวันเสาร์</option>'+dates.map(iso=>'<option value="'+iso+'">วันเสาร์ '+formatDisplayDate(iso)+'</option>').join("");
+  let wanted=selectedIso||parseDisplayDate(canonical.value)||parseDisplayDate(practice.value);
+  if(!dates.includes(wanted))wanted=useDefault?dates[0]:"";
+  select.value=wanted||"";
+  if(wanted&&!practice.value)practice.value=formatDisplayDate(wanted);
+  const isPractice=type==="practice";
+  select.classList.toggle("hidden",isPractice);
+  practice.classList.toggle("hidden",!isPractice);
+  select.required=!isPractice;
+  practice.required=isPractice;
+  canonical.value=isPractice?(parseDisplayDate(practice.value)?practice.value:""):(select.value?formatDisplayDate(select.value):"");
+  const note=$("war-signup-date-note");
+  if(note)note.textContent=isPractice?"ซ้อมวอร์: เลือกวันที่เองได้จากปฏิทิน":"วอร์จริง: เลือกได้เฉพาะ 2 วันเสาร์ที่ใกล้จะถึง";
+}
 async function updateWarSignupTimeForDate(){
   const type=$("war-signup-type")?.value;
   const date=parseDisplayDate($("war-signup-event-date")?.value);
   const input=$("war-signup-start-time");
+  const display=$("war-signup-start-time-display");
   const note=$("war-signup-time-note");
-  if(!input)return;
+  if(!input||!display)return;
   if(type==="practice"){
-    input.readOnly=false;
-    input.required=true;
+    display.readOnly=true;
+    display.setAttribute("data-activity-time-input","");
+    display.value=input.value||"";
+    display.required=true;
     if(note)note.textContent="ซ้อมวอร์: Management กำหนดวันและเวลาเองได้ (24 ชั่วโมง)";
     return;
   }
-  input.readOnly=true;
-  input.required=true;
-  const display=$("war-signup-start-time-display");
+  display.readOnly=true;
+  display.removeAttribute("data-activity-time-input");
+  display.required=true;
   if(!date){
-    input.value="";
-    if(note)note.textContent="วอร์จริงกำหนดเฉพาะวันเสาร์ตามตารางกิลด์";
+    input.value="";display.value="";
+    if(note)note.textContent="กรุณาเลือกวันที่วอร์จากรายการ";
     return;
   }
   const selectedDate=new Date(date+"T12:00:00");
   if(selectedDate.getDay()!==6){
-    input.value="";
+    input.value="";display.value="";
     if(note)note.textContent="วอร์จริงเลือกได้เฉพาะวันเสาร์ตามตารางที่กำหนด";
     return;
   }
   const double=isDoubleOfficialSaturday(date);
   input.value=double?"20:30":"20:00";
+  display.value=double?"รอบแรก 20:00 | รอบสอง 20:30":"รอบเดียว 20:00";
   if(note)note.textContent=double
-    ?"วอร์จริง 2 รอบ · รอบแรก 20:00 น. / รอบสอง 20:30 น. · ลงชื่อเพียงครั้งเดียวเพื่อจัดตี้รอบสอง"
-    :"วอร์จริง 1 รอบ · เวลา 20:00 น. · ลงชื่อเพียงครั้งเดียว";
+    ?"วอร์จริง 2 รอบ · ระบบบันทึกเวลา Event เป็น 20:30 น. (รอบสอง)"
+    :"วอร์จริง 1 รอบ · ระบบบันทึกเวลา Event เป็น 20:00 น.";
 }
 function resetWarSignupForm(){
   $("war-signup-create-form")?.reset();$("war-signup-edit-id").value="";
   $("war-signup-create-confirm").textContent="ยืนยันสร้าง Event ลงชื่อวอร์";
   $("war-signup-create-form")?.classList.remove("is-editing");
+  updateWarSignupDateControls("",true);
+  updateWarSignupTimeForDate();
 }
 async function startEditWarSignupEvent(id){
   if(!isManagement())return;
   const {data,error}=await supabaseClient.from("war_events").select("id,event_name,registration_type,event_date,start_time,signup_opens_at,signup_closes_at,description").eq("id",id).single();
   if(error){alert("โหลด Event ไม่สำเร็จ: "+error.message);return;}
   $("war-signup-edit-id").value=data.id;$("war-signup-event-name").value=data.event_name||"";
-  $("war-signup-type").value=data.registration_type||"official";$("war-signup-event-date").value=formatDisplayDate(String(data.event_date||"").slice(0,10));
+  $("war-signup-type").value=data.registration_type||"official";
+  const eventDate=String(data.event_date||"").slice(0,10);
+  $("war-signup-event-date").value=formatDisplayDate(eventDate);
+  $("war-signup-event-date-practice").value=formatDisplayDate(eventDate);
   $("war-signup-start-time").value=formatTime(data.start_time)==="-"?"":formatTime(data.start_time).slice(0,5);
+  $("war-signup-start-time-display").value=$("war-signup-start-time").value;
   $("war-signup-opens-at").value=formatDisplayDateTime(data.signup_opens_at);$("war-signup-closes-at").value=formatDisplayDateTime(data.signup_closes_at);
   $("war-signup-description").value=data.description||"";
+  updateWarSignupDateControls(eventDate,false);
   $("war-signup-create-confirm").textContent="บันทึกการแก้ไข Event";$("war-signup-create-form").classList.remove("hidden");$("war-signup-create-form").classList.add("is-editing");
-  $("war-signup-start-time").readOnly=data.registration_type==="official";updateWarSignupTimeForDate();
+  updateWarSignupTimeForDate();
   $("war-signup-create-form").scrollIntoView({behavior:"smooth",block:"center"});
 }
 async function deleteWarSignupEvent(id,button){
@@ -3127,9 +3167,26 @@ function registerWarRecordAndAttendanceEvents(){
   $("war-signup-refresh")?.addEventListener("click",loadWarSignups);
   $("war-signup-add")?.addEventListener("click",()=>{if(isManagement()){resetWarSignupForm();$("war-signup-create-form")?.classList.toggle("hidden");}});
   $("war-signup-create-cancel")?.addEventListener("click",()=>{resetWarSignupForm();$("war-signup-create-form")?.classList.add("hidden");});
-  $("war-signup-event-date")?.addEventListener("change",()=>{const iso=parseDisplayDate($("war-signup-event-date").value);if(iso)$("war-signup-event-date").value=formatDisplayDate(iso);updateWarSignupTimeForDate();});
-  $("war-signup-type")?.addEventListener("change",updateWarSignupTimeForDate);
-  $("war-signup-start-time")?.addEventListener("click",()=>{if($("war-signup-type")?.value==="practice")$("war-signup-start-time").readOnly=false;});
+  $("war-signup-event-date-select")?.addEventListener("change",()=>{
+    const iso=$("war-signup-event-date-select").value;
+    $("war-signup-event-date").value=iso?formatDisplayDate(iso):"";
+    updateWarSignupTimeForDate();
+  });
+  $("war-signup-event-date-practice")?.addEventListener("change",()=>{
+    const iso=parseDisplayDate($("war-signup-event-date-practice").value);
+    $("war-signup-event-date").value=iso?formatDisplayDate(iso):"";
+    updateWarSignupTimeForDate();
+  });
+  $("war-signup-type")?.addEventListener("change",()=>{
+    const current=parseDisplayDate($("war-signup-event-date")?.value)||parseDisplayDate($("war-signup-event-date-practice")?.value)||"";
+    updateWarSignupDateControls(current,false);
+    updateWarSignupTimeForDate();
+  });
+  $("war-signup-start-time-display")?.addEventListener("change",()=>{
+    if($("war-signup-type")?.value!=="practice")return;
+    const value=$("war-signup-start-time-display").value.trim();
+    if(/^([01]\\d|2[0-3]):[0-5]\\d$/.test(value))$("war-signup-start-time").value=value;
+  });
   $("war-signup-create-form")?.addEventListener("submit",async e=>{e.preventDefault();await createWarSignupEvent(e.currentTarget);});
   $("war-signup-content")?.addEventListener("click",e=>{
     const join=e.target.closest("[data-war-signup-join]"),edit=e.target.closest("[data-war-signup-edit]"),del=e.target.closest("[data-war-signup-delete]"),evidence=e.target.closest("[data-war-signup-evidence]");
