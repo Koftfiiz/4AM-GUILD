@@ -4675,3 +4675,79 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 .reward-participant-row small,.reward-participant-row time,.reward-source-label{color:#c3afb0;font-size:11px}
 @media(max-width:650px){.reward-participant-row{grid-template-columns:24px 1fr auto}.reward-participant-row time,.reward-source-label{grid-column:2/-1}.reward-manager-actions{margin-left:0}.reward-event-actions{align-items:flex-start}}
 
+
+
+/* ==========================================
+   4AM CYBERPUNK NUMBER GUESS — NEON GRID
+   ========================================== */
+#guild-activities-submenu .nav-subitem{padding-left:59px}
+#guild-activities-submenu .nav-subitem.active{color:#fff;background:linear-gradient(90deg,rgba(190,30,46,.25),rgba(125,16,30,.12));box-shadow:inset 2px 0 0 #ed5364}
+#guild-activities-submenu .nav-subitem:last-child.active{background:linear-gradient(90deg,rgba(0,220,255,.13),rgba(123,75,255,.08));box-shadow:inset 2px 0 0 #00e5ff;color:#d8fbff}
+#guild-activities-submenu .nav-subitem:last-child.active .nav-subitem-dot{background:#00e5ff;border-color:#00e5ff;box-shadow:0 0 8px #00e5ff}
+.number-guess-hero{position:relative;isolation:isolate;overflow:hidden;display:flex;align-items:center;min-height:210px;margin-bottom:22px;padding:30px 34px;border:1px solid rgba(0,229,255,.35);border-radius:14px;background:radial-gradient(ellipse at 80% 50%,rgba(112,32,255,.22),transparent 45%),linear-gradient(115deg,rgba(4,15,28,.97),rgba(10,8,27,.94) 60%,rgba(25,8,38,.96));box-shadow:0 0 30px rgba(0,229,255,.08),inset 0 0 35px rgba(0,229,255,.035)}
+.number-guess-hero-grid{position:absolute;inset:0;z-index:-1;opacity:.18;background-image:linear-gradient(rgba(0,229,255,.25) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.25) 1px,transparent 1px);background-size:28px 28px;mask-image:linear-gradient(90deg,transparent,#000 30%,#000)}
+.number-guess-hero-content{position:relative;z-index:1}
+.number-guess-eyebrow,.number-guess-grid-heading,.number-guess-stat>span,.number-guess-selection-label{font:700 11px var(--font);letter-spacing:2px;color:#00e5ff;text-shadow:0 0 12px rgba(0,229,255,.55)}
+.number-guess-hero h1{margin:9px 0 5px;color:#f2fbff;font-size:clamp(27px,4vw,39px);font-weight:900;text-shadow:0 0 18px rgba(0,229,255,.25)}
+.number-guess-hero p{margin:0;color:#a9c7d5;font-size:14px}
+.number-guess-live-indicator{display:inline-flex;align-items:center;gap:8px;margin-top:18px;padding:6px 11px;border:1px solid rgba(0,229,255,.32);border-radius:4px;color:#9bf5ff;font:700 10px var(--font);letter-spacing:1.5px;background:rgba(0,229,255,.06)}
+.number-guess-live-indicator i{width:7px;height:7px;border-radius:50%;background:#00f0a8;box-shadow:0 0 10px #00f0a8}
+.number-guess-orb{position:absolute;right:9%;top:50%;transform:translateY(-50%);width:136px;height:136px;display:grid;place-items:center;border:1px solid rgba(0,229,255,.6);border-radius:50%;background:radial-gradient(circle,rgba(0,229,255,.12),rgba(8,8,30,.1) 65%);box-shadow:0 0 22px rgba(0,229,255,.22),inset 0 0 22px rgba(0,229,255,.15)}
+.number-guess-orb:before,.number-guess-orb:after{content:"";position:absolute;inset:-13px;border:1px dashed rgba(0,229,255,.36);border-radius:50%;animation:numberGuessSpin 24s linear infinite}
+.number-guess-orb:after{inset:12px;border-style:solid;border-color:rgba(186,60,255,.4);animation-direction:reverse}
+.number-guess-orb span{font:900 76px var(--font);color:#dffcff;text-shadow:0 0 9px #00e5ff,0 0 28px #00e5ff}
+@keyframes numberGuessSpin{to{transform:rotate(360deg)}}
+.number-guess-admin-panel,.number-guess-console,.number-guess-management-list{border:1px solid rgba(0,229,255,.19)!important;background:linear-gradient(145deg,rgba(8,18,31,.86),rgba(13,8,26,.9))!important;box-shadow:0 10px 35px rgba(0,0,0,.22),inset 0 0 24px rgba(0,229,255,.025)}
+.number-guess-create-form{display:grid;gap:12px;padding:18px;margin-top:14px;border:1px solid rgba(0,229,255,.2);background:rgba(0,0,0,.22);border-radius:8px}
+.number-guess-create-form .form-group{display:grid;gap:6px}
+.number-guess-create-form input,.number-guess-create-form select{min-height:42px;padding:10px 12px;color:#f4fcff;background:#07101b;border:1px solid rgba(0,229,255,.3);border-radius:5px}
+.number-guess-create-form select option{color:#111}
+.number-guess-form-actions{display:flex;justify-content:flex-end;gap:9px}
+.number-guess-event-state{display:flex;align-items:center;gap:13px;min-height:66px;padding:5px 0 16px;border-bottom:1px solid rgba(0,229,255,.16)}
+.number-guess-state-icon{display:grid;place-items:center;width:42px;height:42px;border:1px solid rgba(0,229,255,.38);border-radius:8px;color:#00e5ff;font-size:25px;text-shadow:0 0 12px #00e5ff;background:rgba(0,229,255,.07)}
+.number-guess-event-state strong{color:#e8faff;font-size:16px}
+.number-guess-event-state p{margin:4px 0 0;color:#91aebd;font-size:12px}
+.number-guess-event-status{margin-left:auto;padding:5px 9px;border-radius:4px;font:800 10px var(--font);letter-spacing:1px}
+.number-guess-event-status.open{color:#71ffd0;border:1px solid rgba(60,255,188,.4);background:rgba(60,255,188,.07);box-shadow:0 0 12px rgba(60,255,188,.08)}
+.number-guess-event-status.closed{color:#ff9db7;border:1px solid rgba(255,70,130,.35);background:rgba(255,70,130,.07)}
+.number-guess-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
+.number-guess-stat{display:grid;gap:3px;padding:13px 15px;border:1px solid rgba(0,229,255,.16);border-radius:7px;background:linear-gradient(140deg,rgba(0,229,255,.055),rgba(150,50,255,.035))}
+.number-guess-stat>span{font-size:9px;letter-spacing:1.5px}
+.number-guess-stat strong{font:900 27px var(--font);color:#f2fcff;text-shadow:0 0 12px rgba(0,229,255,.3)}
+.number-guess-stat small{font-size:10px;color:#8ba6b5}
+.number-guess-selection-bar{display:flex;align-items:center;justify-content:space-between;gap:15px;margin:18px 0;padding:14px 17px;border:1px solid rgba(182,70,255,.32);border-radius:7px;background:linear-gradient(100deg,rgba(103,37,183,.14),rgba(0,229,255,.045))}
+.number-guess-selection-bar>div{display:flex;align-items:center;gap:13px}
+.number-guess-selection-bar strong{font:900 30px var(--font);color:#f7eaff;text-shadow:0 0 14px #b94cff}
+.number-guess-selection-bar p{margin:0;color:#a7b9c7;font-size:12px;text-align:right}
+.number-guess-grid-wrap{padding:15px;border:1px solid rgba(0,229,255,.16);border-radius:8px;background:rgba(0,5,14,.38)}
+.number-guess-grid-heading{display:flex;justify-content:space-between;margin-bottom:13px;font-size:10px}
+.number-guess-grid-heading span:last-child{color:#9b7dff}
+.number-guess-grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:7px}
+.number-guess-cell{position:relative;display:grid;place-items:center;min-width:0;aspect-ratio:1.15;border:1px solid rgba(0,229,255,.3);border-radius:5px;background:linear-gradient(145deg,rgba(5,35,51,.78),rgba(7,12,30,.92));color:#c9faff;font:800 clamp(12px,1.7vw,17px) var(--font);cursor:pointer;transition:transform .16s,border-color .16s,box-shadow .16s,background .16s}
+.number-guess-cell.is-available:hover:not(:disabled){z-index:1;transform:translateY(-2px) scale(1.04);border-color:#00f0ff;background:rgba(0,229,255,.17);color:#fff;box-shadow:0 0 8px rgba(0,229,255,.55),inset 0 0 12px rgba(0,229,255,.12)}
+.number-guess-cell.is-mine{border-color:#e6a4ff;background:linear-gradient(145deg,rgba(145,52,255,.45),rgba(30,13,70,.9));color:#fff;box-shadow:0 0 12px rgba(188,79,255,.55),inset 0 0 12px rgba(188,79,255,.18)}
+.number-guess-cell.is-taken{border-color:rgba(255,65,118,.24);background:repeating-linear-gradient(135deg,rgba(55,18,37,.85),rgba(55,18,37,.85) 5px,rgba(30,13,28,.9) 5px,rgba(30,13,28,.9) 10px);color:#a36c81;cursor:not-allowed;opacity:.72}
+.number-guess-cell:disabled{cursor:not-allowed}
+.number-guess-cell i{position:absolute;bottom:2px;font:700 7px var(--font);letter-spacing:.7px;font-style:normal}
+.number-guess-cell.is-mine i{color:#f5d6ff}
+.number-guess-cell.is-taken i{color:#e77b9d}
+.number-guess-cell.is-pending{opacity:.55;filter:brightness(1.5)}
+.number-guess-loading,.number-guess-empty{grid-column:1/-1;display:grid;place-items:center;min-height:170px;text-align:center;color:#8cefff;font:800 13px var(--font);letter-spacing:2px}
+.number-guess-empty small{color:#8ca5b7;font-size:12px;font-weight:400;letter-spacing:0}
+.number-guess-legend{display:flex;gap:20px;flex-wrap:wrap;margin:13px 2px;color:#a6bac5;font-size:11px}
+.number-guess-legend span{display:flex;align-items:center;gap:7px}
+.number-guess-legend i{width:9px;height:9px;display:inline-block;border-radius:2px}
+.legend-available{border:1px solid #00e5ff;background:rgba(0,229,255,.15);box-shadow:0 0 7px rgba(0,229,255,.4)}
+.legend-selected{background:#b94cff;box-shadow:0 0 7px #b94cff}
+.legend-taken{background:#9b526b}
+.number-guess-rules{display:flex;gap:9px 20px;flex-wrap:wrap;padding:12px 0 0;border-top:1px solid rgba(0,229,255,.12);color:#718b9d;font:700 9px var(--font);letter-spacing:1px}
+.number-guess-feedback{min-height:22px;margin:12px 0 0;color:#91cbd6;font-size:12px}
+.number-guess-feedback.is-error{color:#ff8ba8}
+.number-guess-feedback.is-success{color:#8effd0}
+.number-guess-participant{display:grid;grid-template-columns:48px minmax(100px,1fr) auto auto;align-items:center;gap:12px;padding:10px 8px;border-bottom:1px solid rgba(0,229,255,.1)}
+.number-guess-participant>strong{font:900 20px var(--font);color:#c6a0ff;text-shadow:0 0 10px rgba(190,80,255,.45)}
+.number-guess-participant span{color:#e6f7fc;font-weight:600}
+.number-guess-participant small,.number-guess-participant time{color:#849ba9;font-size:10px}
+@media(max-width:700px){.number-guess-hero{min-height:190px;padding:24px 18px}.number-guess-orb{right:-28px;width:112px;height:112px;opacity:.65}.number-guess-hero-content{max-width:75%}.number-guess-stats{gap:6px}.number-guess-stat{padding:10px 8px}.number-guess-stat strong{font-size:23px}.number-guess-grid{gap:4px}.number-guess-cell{aspect-ratio:1.05;border-radius:3px}.number-guess-grid-wrap{padding:9px}.number-guess-selection-bar{align-items:flex-start;flex-direction:column}.number-guess-selection-bar p{text-align:left}.number-guess-rules{gap:8px 12px}.number-guess-participant{grid-template-columns:40px 1fr auto}.number-guess-participant time{grid-column:2/-1}}
+@media(prefers-reduced-motion:reduce){.number-guess-orb:before,.number-guess-orb:after{animation:none}.number-guess-cell{transition:none}}
+
