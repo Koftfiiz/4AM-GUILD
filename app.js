@@ -3918,86 +3918,32 @@ function registerGuildActivityEvents(){
 }
 
 // ==========================================
-// 4AM GUILD — DUCK RACE + NUMBER GUESS DEMO MODES
-// These prototypes intentionally do not use war rosters or Supabase RPC.
-// Demo state is local to the current browser only.
+// 4AM GUILD — DUCK RACE (SUPABASE REALTIME)
 // ==========================================
-const DUCK_RACE_DEMO_KEY="4am-guild:duck-race-demo:v1";
 const NUMBER_GUESS_DEMO_KEY="4am-guild:number-guess-demo:v1";
-let duckRaceDemo={title:"4AM DUCK RACE",prize:"รางวัลเซอร์ไพรส์",duckCount:6};
-let duckRaceRunning=false;
-let duckRaceTimer=null;
-let numberGuessCurrentEvent=null;
-
-function readDemoStorage(key,fallback){
- try{const raw=localStorage.getItem(key);return raw?JSON.parse(raw):fallback;}
- catch(error){console.warn("Demo storage unavailable:",error);return fallback;}
-}
-function writeDemoStorage(key,value){
- try{localStorage.setItem(key,JSON.stringify(value));return true;}
- catch(error){console.warn("Demo storage unavailable:",error);return false;}
-}
-function loadDuckRaceDemo(){
- duckRaceDemo=readDemoStorage(DUCK_RACE_DEMO_KEY,duckRaceDemo)||duckRaceDemo;
- $("duck-race-admin")?.classList.toggle("hidden",!isManagement());
- $("duck-race-title").textContent=duckRaceDemo.title||"4AM DUCK RACE";
- $("duck-race-prize").textContent="🏆 "+(duckRaceDemo.prize||"รางวัลเซอร์ไพรส์");
- $("duck-race-title-input").value=duckRaceDemo.title||"4AM DUCK RACE";
- $("duck-race-prize-input").value=duckRaceDemo.prize||"รางวัลเซอร์ไพรส์";
- $("duck-race-count-input").value=String(duckRaceDemo.duckCount||6);
- renderDuckRaceTrack(false);
-}
-function renderDuckRaceTrack(running,winnerIndex=-1){
- const track=$("duck-race-track");if(!track)return;
- const count=Math.max(4,Math.min(8,Number(duckRaceDemo.duckCount)||6));
- const colors=["#f5c84c","#62d8f0","#ff8c9d","#a78bfa","#8de0a2","#f2a65a","#f1f1f1","#df86d8"];
- track.innerHTML=Array.from({length:count},(_,i)=>{
-  const name="เป็ด "+String(i+1).padStart(2,"0");
-  const duration=(3.7+((i*37+13)%19)/10).toFixed(2);
-  return '<div class="duck-race-lane'+(winnerIndex===i?' is-winner':'')+'" data-duck-lane="'+i+'"><span class="duck-race-lane-number">'+String(i+1).padStart(2,"0")+'</span><div class="duck-race-lane-track"><div class="duck-race-progress" style="--duck-color:'+colors[i]+';--duck-duration:'+duration+'s;--duck-progress:0%"><span class="duck-race-emoji">🦆</span></div></div><span class="duck-race-lane-name">'+name+'</span></div>';
- }).join("");
- if(running)requestAnimationFrame(()=>track.querySelectorAll(".duck-race-progress").forEach(node=>node.classList.add("is-racing")));
-}
-function resetDuckRaceDemo(){
- if(duckRaceTimer)clearTimeout(duckRaceTimer);
- duckRaceTimer=null;duckRaceRunning=false;renderDuckRaceTrack(false);
- const result=$("duck-race-result");
- if(result)result.innerHTML='<span class="duck-race-result-icon">🏁</span><div><strong>พร้อมลงสนามหรือยัง?</strong><p>กดเริ่มการแข่งขันเพื่อดูเป็ดทั้งสนามแข่งกัน</p></div>';
- const start=$("duck-race-start");if(start){start.disabled=false;start.textContent="▶ เริ่มการแข่งขัน";}
-}
-function startDuckRaceDemo(){
- if(duckRaceRunning)return;
- duckRaceRunning=true;
- const start=$("duck-race-start");if(start){start.disabled=true;start.textContent="กำลังแข่งขัน...";}
- const result=$("duck-race-result");
- if(result)result.innerHTML='<span class="duck-race-result-icon">🚦</span><div><strong>เริ่มการแข่งขัน!</strong><p>เป็ดทุกตัวกำลังเร่งความเร็วเข้าสู่เส้นชัย...</p></div>';
- renderDuckRaceTrack(true);
- const count=Math.max(4,Math.min(8,Number(duckRaceDemo.duckCount)||6));
- duckRaceTimer=setTimeout(()=>{
-  const winner=Math.floor(Math.random()*count);
-  duckRaceRunning=false;duckRaceTimer=null;
-  renderDuckRaceTrack(false,winner);
-  const winnerName="เป็ด "+String(winner+1).padStart(2,"0");
-  if(result)result.innerHTML='<span class="duck-race-result-icon">🏆</span><div><strong>ผู้ชนะคือ '+winnerName+'!</strong><p>คว้ารางวัล: '+escapeHTML(duckRaceDemo.prize||"รางวัลเซอร์ไพรส์")+'</p></div>';
-  if(start){start.disabled=false;start.textContent="▶ แข่งอีกครั้ง";}
- },5200);
-}
-function registerDuckRaceEvents(){
- const page=$("page-activities");if(!page||page.dataset.duckRaceReady==="true")return;page.dataset.duckRaceReady="true";
- $("duck-race-settings")?.addEventListener("click",()=>{if(isManagement())$("duck-race-admin")?.classList.toggle("hidden");});
- $("duck-race-cancel")?.addEventListener("click",()=>$("duck-race-admin")?.classList.add("hidden"));
- $("duck-race-form")?.addEventListener("submit",event=>{
-  event.preventDefault();if(!isManagement())return;
-  const title=$("duck-race-title-input").value.trim(),prize=$("duck-race-prize-input").value.trim(),count=Number($("duck-race-count-input").value);
-  if(!title||!prize||![4,6,8].includes(count)){$("duck-race-form-message").textContent="กรุณากรอกชื่อการแข่งขัน ของรางวัล และจำนวนเป็ด";$("duck-race-form-message").className="message error";return;}
-  duckRaceDemo={title,prize,duckCount:count};writeDemoStorage(DUCK_RACE_DEMO_KEY,duckRaceDemo);
-  $("duck-race-admin").classList.add("hidden");$("duck-race-title").textContent=title;$("duck-race-prize").textContent="🏆 "+prize;resetDuckRaceDemo();
- });
- $("duck-race-start")?.addEventListener("click",startDuckRaceDemo);
- $("duck-race-reset")?.addEventListener("click",resetDuckRaceDemo);
-}
-registerDuckRaceEvents();
-
+let duckRaceEvent=null,duckRaceParticipants=[],duckRaceChannel=null,duckRaceTicker=null,duckRaceBusy=false,duckRaceFinishing=false;
+let duckRaceReady=false;
+const DUCK_RACE_COLORS=["#f5c84c","#62d8f0","#ff8c9d","#a78bfa","#8de0a2","#f2a65a","#f1f1f1","#df86d8","#f08c5c","#76c7b8"];
+function duckRaceIsManager(){return isManagement();}
+function duckRaceFormatClock(v){const n=Math.max(0,Math.ceil(v)),h=Math.floor(n/3600),m=Math.floor(n%3600/60),s=n%60;return [h,m,s].map(x=>String(x).padStart(2,"0")).join(":");}
+function duckRaceElapsed(e=duckRaceEvent,now=Date.now()){if(!e)return 0;const saved=Math.max(0,Number(e.elapsed_seconds)||0);if(e.status!=="running"||!e.started_at)return saved;return Math.min(Number(e.duration_seconds)||0,saved+Math.max(0,(now-new Date(e.started_at).getTime())/1000));}
+function duckRaceWinner(){return duckRaceParticipants.length?[...duckRaceParticipants].sort((a,b)=>Number(a.finish_ratio)-Number(b.finish_ratio))[0]:null;}
+function setDuckRaceMessage(msg,type="info"){const n=$("duck-race-form-message");if(n){n.textContent=msg;n.className="message "+(type==="error"?"error":type==="success"?"success":"");}}
+function setDuckRaceModeFields(){const mode=$("duck-race-mode")?.value||"free",pm=$("duck-race-participant-mode")?.value||"count";$("duck-race-war-source-wrap")?.classList.toggle("hidden",mode!=="war");$("duck-race-free-options")?.classList.toggle("hidden",mode==="war");$("duck-race-war-note")?.classList.toggle("hidden",mode!=="war");$("duck-race-count-wrap")?.classList.toggle("hidden",pm==="names");$("duck-race-names-wrap")?.classList.toggle("hidden",pm==="count"||mode==="war");}
+function duckRaceParseNames(){return String($("duck-race-names-input")?.value||"").split(/[\n,;]+/).map(x=>x.trim()).filter(Boolean);}
+async function loadDuckRaceWarSources(){const s=$("duck-race-war-source");if(!s)return;const {data,error}=await supabaseClient.from("war_events").select("id,event_name,event_date,is_published").eq("is_published",true).order("event_date",{ascending:false});if(error){s.innerHTML='<option value="">โหลดรอบวอร์ไม่สำเร็จ</option>';console.error(error);return;}s.innerHTML=(data||[]).map(e=>'<option value="'+escapeHTML(e.id)+'">'+escapeHTML(e.event_name||"Guild War")+' · '+escapeHTML(formatDate(e.event_date))+'</option>').join("")||'<option value="">ไม่มีรอบวอร์ที่เผยแพร่</option>';}
+function renderDuckRaceTrack(){const t=$("duck-race-track");if(!t)return;if(!duckRaceEvent||!duckRaceParticipants.length){t.innerHTML='<div class="duck-race-empty">รอ Management สร้างการแข่งขัน Duck Race</div>';return;}const duration=Math.max(1,Number(duckRaceEvent.duration_seconds)||1);t.innerHTML=duckRaceParticipants.map((p,i)=>'<div class="duck-race-lane" data-duck-lane="'+i+'"><span class="duck-race-lane-number">'+String(i+1).padStart(3,"0")+'</span><div class="duck-race-lane-track"><div class="duck-race-progress" data-finish-ratio="'+Number(p.finish_ratio)+'" style="--duck-color:'+DUCK_RACE_COLORS[i%DUCK_RACE_COLORS.length]+';width:0%"><span class="duck-race-emoji">🦆</span></div></div><span class="duck-race-lane-name" title="'+escapeHTML(p.display_name)+'">'+escapeHTML(p.display_name)+'</span></div>').join("");tickDuckRace();}
+function renderDuckRaceState(){const e=duckRaceEvent,admin=$("duck-race-admin"),settings=$("duck-race-settings");if(admin)admin.classList.toggle("hidden",!duckRaceIsManager()&&admin.dataset.forceOpen!=="true");if(settings)settings.classList.toggle("hidden",!duckRaceIsManager());if(!e){$("duck-race-title").textContent="4AM DUCK RACE";$("duck-race-prize").textContent="รอผู้จัดสร้างการแข่งขัน";$("duck-race-status").textContent="WAITING";$("duck-race-status").dataset.status="waiting";$("duck-race-count-label").textContent="ยังไม่มีผู้เข้าแข่งขัน";$("duck-race-clock").textContent="00:00:00";$("duck-race-result").innerHTML='<span class="duck-race-result-icon">🏁</span><div><strong>สนามยังไม่เริ่ม</strong><p>เมื่อผู้จัดกด SET สนามแข่งขันจะปรากฏที่นี่สำหรับสมาชิกทุกคน</p></div>';$("duck-race-start").disabled=true;$("duck-race-pause").disabled=true;$("duck-race-continue").disabled=true;$("duck-race-reset").disabled=true;renderDuckRaceTrack();return;}const elapsed=duckRaceElapsed(),duration=Math.max(1,Number(e.duration_seconds)||1),done=e.status==="finished"||elapsed>=duration,state=done?"finished":e.status||"setup",mgr=duckRaceIsManager();$("duck-race-title").textContent=e.title||"4AM DUCK RACE";$("duck-race-prize").textContent=e.prize?"🏆 "+e.prize:(e.mode==="war"?"WAR RACE":"FREE RACE");$("duck-race-status").textContent=state.toUpperCase();$("duck-race-status").dataset.status=state;$("duck-race-count-label").textContent=duckRaceParticipants.length+" ผู้เข้าแข่งขัน · "+(e.mode==="war"?"WAR RACE":"FREE RACE");$("duck-race-start").disabled=!mgr||state!=="setup";$("duck-race-pause").disabled=!mgr||state!=="running";$("duck-race-continue").disabled=!mgr||state!=="paused";$("duck-race-reset").disabled=!mgr||state==="setup";if(done){const w=duckRaceWinner();$("duck-race-result").innerHTML='<span class="duck-race-result-icon">🏆</span><div><strong>ผู้ชนะ: '+escapeHTML(w?.display_name||"-")+'</strong><p>การแข่งขันสิ้นสุดแล้ว · '+escapeHTML(e.title||"Duck Race")+'</p></div>';}else if(state==="running")$("duck-race-result").innerHTML='<span class="duck-race-result-icon">🚦</span><div><strong>การแข่งขันกำลังดำเนินอยู่</strong><p>สมาชิกทุกคนกำลังรับชมสนามเดียวกันแบบเรียลไทม์</p></div>';else if(state==="paused")$("duck-race-result").innerHTML='<span class="duck-race-result-icon">⏸️</span><div><strong>หยุดการแข่งขันชั่วคราว</strong><p>รอผู้จัดกด CONTINUE เพื่อแข่งขันต่อ</p></div>';else $("duck-race-result").innerHTML='<span class="duck-race-result-icon">🏁</span><div><strong>สนามพร้อมแข่งขัน</strong><p>ผู้เข้าแข่งขัน '+duckRaceParticipants.length+' คน · กด START เพื่อเริ่ม</p></div>';tickDuckRace();}
+function tickDuckRace(){if(!duckRaceEvent)return;const elapsed=duckRaceElapsed(),duration=Math.max(1,Number(duckRaceEvent.duration_seconds)||1),remaining=Math.max(0,duration-elapsed),done=duckRaceEvent.status==="finished"||elapsed>=duration,clock=$("duck-race-clock");if(clock)clock.textContent=duckRaceFormatClock(remaining);document.querySelectorAll("#duck-race-track .duck-race-progress").forEach((node)=>{const ratio=Math.min(1,Math.max(.1,Number(node.dataset.finishRatio)||.9)),progress=Math.min(100,elapsed/(duration*ratio)*100);node.style.width=progress.toFixed(2)+"%";node.classList.toggle("is-finished",progress>=100);});if(done&&duckRaceEvent.status!=="finished"){const w=duckRaceWinner();$("duck-race-status").textContent="FINISHED";$("duck-race-status").dataset.status="finished";$("duck-race-result").innerHTML='<span class="duck-race-result-icon">🏆</span><div><strong>ผู้ชนะ: '+escapeHTML(w?.display_name||"-")+'</strong><p>การแข่งขันสิ้นสุดแล้ว · '+escapeHTML(duckRaceEvent.title||"Duck Race")+'</p></div>';$("duck-race-start").disabled=true;$("duck-race-pause").disabled=true;$("duck-race-continue").disabled=true;$("duck-race-reset").disabled=!duckRaceIsManager();}}
+async function loadDuckRaceCurrent(){const {data,error}=await supabaseClient.from("duck_race_events").select("*").order("created_at",{ascending:false}).limit(1).maybeSingle();if(error){console.error("Duck Race load:",error);setDuckRaceMessage("ยังไม่ได้ติดตั้ง SQL ระบบ Duck Race หรือสิทธิ์ฐานข้อมูลไม่ถูกต้อง: "+error.message,"error");duckRaceEvent=null;duckRaceParticipants=[];renderDuckRaceState();return;}duckRaceEvent=data||null;if(duckRaceEvent){const p=await supabaseClient.from("duck_race_participants").select("*").eq("event_id",duckRaceEvent.id).order("lane_number",{ascending:true});if(p.error){console.error(p.error);duckRaceParticipants=[];}else duckRaceParticipants=p.data||[];}else duckRaceParticipants=[];renderDuckRaceState();}
+function subscribeToDuckRaceRealtime(){if(duckRaceChannel)supabaseClient.removeChannel(duckRaceChannel);duckRaceChannel=supabaseClient.channel("4am-duck-race-live").on("postgres_changes",{event:"*",schema:"public",table:"duck_race_events"},()=>loadDuckRaceCurrent()).on("postgres_changes",{event:"*",schema:"public",table:"duck_race_participants"},payload=>{if(!duckRaceEvent||payload.new?.event_id===duckRaceEvent.id||payload.old?.event_id===duckRaceEvent.id)loadDuckRaceCurrent();}).subscribe();if(duckRaceTicker)clearInterval(duckRaceTicker);duckRaceTicker=setInterval(()=>{if(!duckRaceEvent)return;tickDuckRace();if(duckRaceIsManager()&&!duckRaceFinishing&&duckRaceEvent.status==="running"&&duckRaceElapsed()>=Number(duckRaceEvent.duration_seconds)){duckRaceFinishing=true;supabaseClient.from("duck_race_events").update({status:"finished",elapsed_seconds:Number(duckRaceEvent.duration_seconds),updated_at:new Date().toISOString()}).eq("id",duckRaceEvent.id).eq("status","running").then(({error})=>{if(error)console.warn(error);else loadDuckRaceCurrent();}).finally(()=>{duckRaceFinishing=false;});}},100);}
+async function createDuckRaceEvent(){if(!duckRaceIsManager()||duckRaceBusy)return;duckRaceBusy=true;const button=$("duck-race-set");if(button){button.disabled=true;button.textContent="กำลังสร้างสนาม...";}try{const mode=$("duck-race-mode").value,title=$("duck-race-title-input").value.trim(),prize=$("duck-race-prize-input").value.trim(),h=Number($("duck-race-hours").value)||0,m=Number($("duck-race-minutes").value)||0,s=Number($("duck-race-seconds").value)||0,duration=h*3600+m*60+s;if(!title)throw Error("กรุณากรอกชื่อการแข่งขัน");if(!Number.isInteger(duration)||duration<1||duration>86400)throw Error("กำหนดเวลาได้ตั้งแต่ 1 วินาที ถึง 24 ชั่วโมง");let names=[];if(mode==="war"){const warId=$("duck-race-war-source").value;if(!warId)throw Error("กรุณาเลือกรอบวอร์");const signups=await supabaseClient.from("war_signups").select("member_id,queue_position,status").eq("event_id",warId).neq("status","cancelled").order("queue_position",{ascending:true});if(signups.error)throw signups.error;const ids=[...new Set((signups.data||[]).map(x=>x.member_id))];if(!ids.length)throw Error("รอบวอร์นี้ยังไม่มีสมาชิกลงชื่อ");const members=await supabaseClient.from("guild_members").select("user_id,character_name,nickname,active").in("user_id",ids).eq("active",true);if(members.error)throw members.error;const map=new Map((members.data||[]).map(x=>[x.user_id,x.character_name||x.nickname||"สมาชิก"]));names=ids.map(id=>map.get(id)).filter(Boolean);}else{const pm=$("duck-race-participant-mode").value,requested=Number($("duck-race-count-input").value);names=duckRaceParseNames();let count=0;if(pm==="count"){count=requested;names=[];}else if(pm==="names")count=names.length;else{count=requested;if(!names.length)throw Error("โหมดกำหนดจำนวนและกรอกชื่อ ต้องใส่อย่างน้อย 1 ชื่อ");if(names.length>count)throw Error("จำนวนรายชื่อมากกว่าจำนวนเป็ดที่กำหนด");}if(!Number.isInteger(count)||count<1||count>120)throw Error("จำนวนผู้เข้าร่วมต้องอยู่ระหว่าง 1–120 คน");while(names.length<count)names.push("เป็ด "+String(names.length+1).padStart(2,"0"));}if(!names.length||names.length>120)throw Error("จำนวนผู้เข้าแข่งขันต้องอยู่ระหว่าง 1–120 คน");const ins=await supabaseClient.from("duck_race_events").insert({mode,title,prize:prize||null,duration_seconds:duration,status:"setup",created_by:currentUser.id,elapsed_seconds:0,source_war_event_id:mode==="war"?$("duck-race-war-source").value:null}).select("*").single();if(ins.error)throw ins.error;const rows=names.map((name,i)=>({event_id:ins.data.id,lane_number:i+1,display_name:name.slice(0,80),finish_ratio:Number((.72+Math.random()*.28).toFixed(5))}));const p=await supabaseClient.from("duck_race_participants").insert(rows);if(p.error){await supabaseClient.from("duck_race_events").delete().eq("id",ins.data.id);throw p.error;}$("duck-race-admin").classList.add("hidden");$("duck-race-admin").dataset.forceOpen="false";setDuckRaceMessage("สร้างสนามแข่งขันเรียบร้อยแล้ว สมาชิกทุกคนสามารถเข้าชมได้","success");await loadDuckRaceCurrent();}catch(error){console.error(error);setDuckRaceMessage(error.message||"สร้างการแข่งขันไม่สำเร็จ","error");}finally{duckRaceBusy=false;if(button){button.disabled=false;button.textContent="SET · สร้างสนาม";}}}
+async function updateDuckRaceState(patch){if(!duckRaceIsManager()||!duckRaceEvent||duckRaceBusy)return;duckRaceBusy=true;try{const {error}=await supabaseClient.from("duck_race_events").update({...patch,updated_at:new Date().toISOString()}).eq("id",duckRaceEvent.id);if(error)throw error;await loadDuckRaceCurrent();}catch(error){alert("เปลี่ยนสถานะการแข่งขันไม่สำเร็จ: "+error.message);}finally{duckRaceBusy=false;}}
+async function startDuckRace(){if(duckRaceEvent?.status==="setup")await updateDuckRaceState({status:"running",started_at:new Date().toISOString(),paused_at:null,elapsed_seconds:0});}
+async function pauseDuckRace(){if(duckRaceEvent?.status==="running")await updateDuckRaceState({status:"paused",paused_at:new Date().toISOString(),elapsed_seconds:duckRaceElapsed()});}
+async function continueDuckRace(){if(duckRaceEvent?.status==="paused")await updateDuckRaceState({status:"running",started_at:new Date().toISOString(),paused_at:null});}
+async function resetDuckRace(){if(!duckRaceEvent||!duckRaceIsManager()||!confirm("รีเซ็ตสนามนี้กลับไปก่อนเริ่มการแข่งขันใช่ไหม?"))return;await updateDuckRaceState({status:"setup",started_at:null,paused_at:null,elapsed_seconds:0});}
+function loadDuckRaceDemo(){const page=$("page-activities");if(page?.dataset.duckRaceReady==="true"){loadDuckRaceCurrent();return;}if(page)page.dataset.duckRaceReady="true";const admin=$("duck-race-admin");if(admin){admin.classList.toggle("hidden",!duckRaceIsManager());admin.setAttribute("aria-hidden",String(!duckRaceIsManager()));admin.dataset.forceOpen="false";}$("duck-race-mode")?.addEventListener("change",setDuckRaceModeFields);$("duck-race-participant-mode")?.addEventListener("change",setDuckRaceModeFields);$("duck-race-names-input")?.addEventListener("input",()=>{const n=duckRaceParseNames().length,label=$("duck-race-name-count");if(label)label.textContent=n+" รายชื่อ";});$("duck-race-settings")?.addEventListener("click",()=>{if(!duckRaceIsManager())return;const panel=$("duck-race-admin");panel.classList.toggle("hidden");panel.dataset.forceOpen=String(!panel.classList.contains("hidden"));});$("duck-race-cancel")?.addEventListener("click",()=>{const panel=$("duck-race-admin");panel?.classList.add("hidden");if(panel)panel.dataset.forceOpen="false";});$("duck-race-form")?.addEventListener("submit",e=>{e.preventDefault();createDuckRaceEvent();});$("duck-race-start")?.addEventListener("click",startDuckRace);$("duck-race-pause")?.addEventListener("click",pauseDuckRace);$("duck-race-continue")?.addEventListener("click",continueDuckRace);$("duck-race-reset")?.addEventListener("click",resetDuckRace);setDuckRaceModeFields();loadDuckRaceWarSources();loadDuckRaceCurrent();subscribeToDuckRaceRealtime();}
 function setNumberGuessFeedback(message,type="info"){
  const node=$("number-guess-feedback");if(!node)return;
  node.textContent=message;node.dataset.type=type;node.classList.toggle("is-error",type==="error");node.classList.toggle("is-success",type==="success");
