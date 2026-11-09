@@ -3297,7 +3297,41 @@ function sanitizeGuildActivityHTML(html){
 function activityDateLabel(value){
  if(!value)return "";
  const date=new Date(value);if(Number.isNaN(date.getTime()))return "";
- return formatDate(date.getFullYear()+"-"+String(date.getMonth()+1).padStart(2,"0")+"-"+String(date.getDate()).padStart(2,"0"))+" "+String(date.getHours()).padStart(2,"0")+":"+String(date.getMinutes()).padStart(2,"0");
+ return new Intl.DateTimeFormat("th-TH",{day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(date);
+}
+function activityInputDate(value){
+ if(!value)return "";
+ const date=new Date(value);if(Number.isNaN(date.getTime()))return "";
+ const local=new Date(date.getTime()-date.getTimezoneOffset()*60000);
+ return local.toISOString().slice(0,16);
+}
+function activityDateRange(item){
+ const start=item.starts_at?activityDateLabel(item.starts_at):"ไม่กำหนดเวลาเริ่ม";
+ const end=item.ends_at?activityDateLabel(item.ends_at):"ไม่กำหนดเวลาสิ้นสุด";
+ return start+" – "+end;
+}
+let guildActivityCommentsCache={};
+let guildActivityMembersCache={};
+let guildActivityRealtimeChannel=null;
+let guildActivityEmojiRange=null;
+const GUILD_ACTIVITY_EMOJIS=["😀","😃","😄","😁","😆","🥹","😂","🤣","😊","😍","🥰","😘","😎","🤔","😴","😭","😡","🤯","🥳","🤩","👍","👎","👏","🙌","🙏","💪","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🔥","✨","⭐","🌟","🎉","🎊","🎁","🏆","🥇","⚔️","🛡️","🐉","🌸","🍀","🎮","📢","📌","📅","⏰","✅","❌","❗","💬"];
+function rememberActivityEmojiSelection(){
+ const editor=$("activity-editor-body");if(!editor)return;
+ const selection=window.getSelection();
+ if(selection&&selection.rangeCount&&editor.contains(selection.anchorNode))guildActivityEmojiRange=selection.getRangeAt(0).cloneRange();
+}
+function insertActivityEmoji(value){
+ const editor=$("activity-editor-body");if(!editor)return;
+ editor.focus();
+ const selection=window.getSelection();
+ if(guildActivityEmojiRange){selection.removeAllRanges();selection.addRange(guildActivityEmojiRange);}
+ document.execCommand("insertText",false,value);
+ guildActivityEmojiRange=null;
+ $("activity-emoji-picker")?.classList.add("hidden");
+}
+function renderActivityEmojiPicker(){
+ const picker=$("activity-emoji-picker");if(!picker)return;
+ picker.innerHTML='<div class="activity-emoji-grid">'+GUILD_ACTIVITY_EMOJIS.map((emoji,index)=>'<button type="button" class="activity-emoji-option" data-activity-emoji-value="'+index+'" aria-label="Emoji '+emoji+'">'+emoji+'</button>').join("")+'</div>';
 }
 function renderGuildActivities(){
  const list=$("guild-activities-list");if(!list)return;
@@ -3306,16 +3340,51 @@ function renderGuildActivities(){
   return;
  }
  list.innerHTML=guildActivitiesCache.map(item=>{
-  const id=escapeHTML(item.id),title=escapeHTML(item.title||"กิจกรรมกิลด์"),date=escapeHTML(activityDateLabel(item.updated_at||item.created_at));
-  const actions=isManagement()?'<div class="activity-card-actions"><button type="button" class="btn btn-outline btn-sm" data-activity-edit="'+id+'"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-activity-delete="'+id+'">ลบ</button></div>':"";
-  return '<article class="activity-card" data-activity-card="'+id+'"><header class="activity-card-header"><div class="activity-card-title-wrap"><span class="panel-kicker">4AM GUILD · COMMUNITY</span><h3>'+title+'</h3><time>'+date+'</time></div>'+actions+'</header><div class="activity-card-content">'+sanitizeGuildActivityHTML(item.content_html||"")+'</div></article>';
+  const id=escapeHTML(item.id),title=escapeHTML(item.title||"กิจกรรมกิลด์");
+  const actions=isManagement()?'<div class="activity-card-actions"><button type="button" class="btn btn-outline btn-sm" data-activity-edit="'+id+'">แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-activity-delete="'+id+'">ลบ</button></div>':"";
+  const comments=(guildActivityCommentsCache[item.id]||[]).map(comment=>{
+   const cid=escapeHTML(comment.id),name=escapeHTML(comment.character_name||comment.nickname||"สมาชิกกิลด์"),when=escapeHTML(activityDateLabel(comment.created_at)),content=escapeHTML(comment.content||"");
+   const mine=comment.user_id===currentUser?.id;
+   const controls=(mine||isManagement())?'<div class="activity-comment-actions">'+(mine?'<button type="button" data-activity-comment-edit="'+cid+'">แก้ไข</button>':"")+'<button type="button" data-activity-comment-delete="'+cid+'">ลบ</button></div>':"";
+   return '<article class="activity-comment" data-activity-comment-card="'+cid+'"><div class="activity-comment-heading"><strong>'+name+'</strong><time>'+when+'</time></div><p data-activity-comment-text>'+content+'</p>'+controls+'</article>';
+  }).join("");
+  return '<article class="activity-card" data-activity-card="'+id+'"><header class="activity-card-header"><div class="activity-card-title-wrap"><span class="panel-kicker">4AM GUILD · COMMUNITY</span><h3>'+title+'</h3><time>กำหนดการ: '+escapeHTML(activityDateRange(item))+'</time><small>เผยแพร่เมื่อ '+escapeHTML(activityDateLabel(item.created_at))+'</small></div>'+actions+'</header><div class="activity-card-content">'+sanitizeGuildActivityHTML(item.content_html||"")+'</div><section class="activity-comments"><h4>ความคิดเห็น <span>('+((guildActivityCommentsCache[item.id]||[]).length)+')</span></h4><div class="activity-comments-list">'+(comments||'<p class="activity-comments-empty">ยังไม่มีความคิดเห็น</p>')+'</div><form class="activity-comment-form" data-activity-comment-form="'+id+'"><textarea name="comment" rows="2" maxlength="2000" placeholder="เขียนความคิดเห็น..." required></textarea><button type="submit" class="btn btn-primary btn-sm">ส่งความคิดเห็น</button></form></section></article>';
  }).join("");
+}
+async function loadGuildActivityComments(){
+ const {data,error}=await supabaseClient.from("guild_activity_comments").select("id,activity_id,user_id,content,created_at,updated_at").order("created_at",{ascending:true});
+ if(error){console.error("Load activity comments:",error);return;}
+ const comments=data||[],ids=[...new Set(comments.map(row=>row.user_id).filter(Boolean))];
+ guildActivityMembersCache={};
+ if(ids.length){
+  const {data:members,error:memberError}=await supabaseClient.from("guild_members").select("user_id,character_name,nickname").in("user_id",ids);
+  if(memberError)console.warn("Load activity comment authors:",memberError);
+  (members||[]).forEach(member=>guildActivityMembersCache[member.user_id]=member);
+ }
+ guildActivityCommentsCache={};
+ comments.forEach(comment=>{
+  const member=guildActivityMembersCache[comment.user_id]||{};
+  comment.character_name=member.character_name||"";
+  comment.nickname=member.nickname||"";
+  (guildActivityCommentsCache[comment.activity_id] ||= []).push(comment);
+ });
+ renderGuildActivities();
 }
 async function loadGuildActivities(){
  const list=$("guild-activities-list");if(list)list.innerHTML='<div class="empty-state"><span>◷</span><h3>กำลังโหลดกิจกรรม</h3><p>กรุณารอสักครู่</p></div>';
- const {data,error}=await supabaseClient.from("guild_activities").select("id,title,content_html,created_by,updated_by,created_at,updated_at").order("created_at",{ascending:false});
+ const {data,error}=await supabaseClient.from("guild_activities").select("id,title,content_html,starts_at,ends_at,created_by,updated_by,created_at,updated_at").order("created_at",{ascending:false});
  if(error){console.error("Load guild activities:",error);if(list)list.innerHTML='<div class="empty-state"><span>!</span><h3>โหลดกิจกรรมไม่สำเร็จ</h3><p>'+escapeHTML(error.message)+'</p></div>';return;}
- guildActivitiesCache=data||[];renderGuildActivities();
+ guildActivitiesCache=data||[];
+ await loadGuildActivityComments();
+ renderGuildActivities();
+}
+function subscribeToGuildActivityRealtime(){
+ if(guildActivityRealtimeChannel){supabaseClient.removeChannel(guildActivityRealtimeChannel);guildActivityRealtimeChannel=null;}
+ if(!currentUser)return;
+ guildActivityRealtimeChannel=supabaseClient.channel("guild-activities-live-"+currentUser.id)
+  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activities"},()=>{if(!$("page-activities")?.classList.contains("hidden"))loadGuildActivities();})
+  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activity_comments"},()=>{if(!$("page-activities")?.classList.contains("hidden"))loadGuildActivityComments();})
+  .subscribe();
 }
 function openGuildActivityEditor(id=null){
  if(!isManagement())return;
@@ -3326,6 +3395,8 @@ function openGuildActivityEditor(id=null){
  panel.dataset.editingId=item?.id||"";
  $("activity-editor-title").textContent=item?"แก้ไขกิจกรรม":"สร้างกิจกรรมใหม่";
  title.value=item?.title||"";body.innerHTML=sanitizeGuildActivityHTML(item?.content_html||"");
+ $("activity-starts-input").value=activityInputDate(item?.starts_at);
+ $("activity-ends-input").value=activityInputDate(item?.ends_at);
  if(msg){msg.textContent="";msg.className="message";}
  $("activity-save-button").textContent=item?"บันทึกการแก้ไข":"บันทึกกิจกรรม";
  panel.classList.remove("hidden");$("activity-add-button")?.classList.add("hidden");
@@ -3344,12 +3415,16 @@ async function uploadGuildActivityImage(file){
 function closeGuildActivityEditor(){
  $("activity-editor")?.classList.add("hidden");$("activity-editor")?.removeAttribute("data-editing-id");
  $("activity-title-input").value="";$("activity-editor-body").innerHTML="";
+ $("activity-starts-input").value="";$("activity-ends-input").value="";
+ $("activity-emoji-picker")?.classList.add("hidden");
  $("activity-add-button")?.classList.toggle("hidden",!isManagement());
 }
 function registerGuildActivityEvents(){
  const page=$("page-activities");if(!page||page.dataset.eventsReady==="true")return;page.dataset.eventsReady="true";
+ renderActivityEmojiPicker();
+ page.addEventListener("mousedown",event=>{if(event.target.closest("#activity-editor-body"))rememberActivityEmojiSelection();});
  page.addEventListener("click",async event=>{
-  const add=event.target.closest("#activity-add-button"),edit=event.target.closest("[data-activity-edit]"),del=event.target.closest("[data-activity-delete]"),cmd=event.target.closest("[data-activity-command]"),emoji=event.target.closest("[data-activity-emoji]"),image=event.target.closest("[data-activity-image]");
+  const add=event.target.closest("#activity-add-button"),edit=event.target.closest("[data-activity-edit]"),del=event.target.closest("[data-activity-delete]"),cmd=event.target.closest("[data-activity-command]"),emoji=event.target.closest("[data-activity-emoji]"),emojiValue=event.target.closest("[data-activity-emoji-value]"),image=event.target.closest("[data-activity-image]");
   if(add){openGuildActivityEditor();return;}
   if(edit){if(!isManagement())return;openGuildActivityEditor(edit.dataset.activityEdit);return;}
   if(del){
@@ -3357,26 +3432,52 @@ function registerGuildActivityEvents(){
    const id=del.dataset.activityDelete,item=guildActivitiesCache.find(row=>row.id===id);if(!item)return;
    if(!window.confirm('ต้องการลบกิจกรรม “'+item.title+'” ใช่หรือไม่?'))return;
    del.disabled=true;
-   try{const {error}=await supabaseClient.from("guild_activities").delete().eq("id",id);if(error)throw error;guildActivitiesCache=guildActivitiesCache.filter(row=>row.id!==id);renderGuildActivities();}
+   try{const {error}=await supabaseClient.from("guild_activities").delete().eq("id",id);if(error)throw error;guildActivitiesCache=guildActivitiesCache.filter(row=>row.id!==id);delete guildActivityCommentsCache[id];renderGuildActivities();}
    catch(error){console.error("Delete guild activity:",error);alert("ลบกิจกรรมไม่สำเร็จ: "+error.message);del.disabled=false;}
    return;
   }
   if(cmd){if(!isManagement())return;const body=$("activity-editor-body");body?.focus();document.execCommand(cmd.dataset.activityCommand,false,null);return;}
-  if(emoji){if(!isManagement())return;const value=window.prompt("พิมพ์หรือวางอีโมจิ","✨");if(value){$("activity-editor-body")?.focus();document.execCommand("insertText",false,value);}return;}
+  if(emoji){if(!isManagement())return;rememberActivityEmojiSelection();$("activity-emoji-picker")?.classList.toggle("hidden");return;}
+  if(emojiValue){insertActivityEmoji(GUILD_ACTIVITY_EMOJIS[Number(emojiValue.dataset.activityEmojiValue)]||"✨");return;}
   if(image){if(isManagement())$("activity-image-input")?.click();return;}
   if(event.target.closest("#activity-cancel-button")){if(isManagement())closeGuildActivityEditor();return;}
+  const commentEdit=event.target.closest("[data-activity-comment-edit]");
+  if(commentEdit){
+   const card=commentEdit.closest("[data-activity-comment-card]"),id=commentEdit.dataset.activityCommentEdit,comment=Object.values(guildActivityCommentsCache).flat().find(row=>row.id===id);
+   if(!comment||comment.user_id!==currentUser?.id)return;
+   const text=card.querySelector("[data-activity-comment-text]");
+   if(card.querySelector("textarea"))return;
+   const input=document.createElement("textarea");input.maxLength=2000;input.value=comment.content;input.className="activity-comment-edit-input";
+   const save=document.createElement("button");save.type="button";save.className="btn btn-primary btn-sm";save.textContent="บันทึก";
+   const cancel=document.createElement("button");cancel.type="button";cancel.className="btn btn-outline btn-sm";cancel.textContent="ยกเลิก";
+   const wrap=document.createElement("div");wrap.className="activity-comment-edit-controls";wrap.append(input,save,cancel);text.replaceWith(wrap);
+   save.addEventListener("click",async()=>{const content=input.value.trim();if(!content)return;save.disabled=true;const {error}=await supabaseClient.from("guild_activity_comments").update({content,updated_at:new Date().toISOString()}).eq("id",id);if(error){alert("แก้ไขความคิดเห็นไม่สำเร็จ: "+error.message);save.disabled=false;return;}await loadGuildActivityComments();});
+   cancel.addEventListener("click",()=>loadGuildActivityComments());return;
+  }
+  const commentDelete=event.target.closest("[data-activity-comment-delete]");
+  if(commentDelete){
+   const id=commentDelete.dataset.activityCommentDelete,comment=Object.values(guildActivityCommentsCache).flat().find(row=>row.id===id);
+   if(!comment||!(comment.user_id===currentUser?.id||isManagement()))return;
+   if(!window.confirm("ต้องการลบความคิดเห็นนี้หรือไม่?"))return;
+   commentDelete.disabled=true;const {error}=await supabaseClient.from("guild_activity_comments").delete().eq("id",id);
+   if(error){alert("ลบความคิดเห็นไม่สำเร็จ: "+error.message);commentDelete.disabled=false;}else await loadGuildActivityComments();
+   return;
+  }
   if(event.target.closest("#activity-save-button")){
    if(!isManagement())return;
    const save=$("activity-save-button"),title=$("activity-title-input").value.trim(),body=$("activity-editor-body"),msg=$("activity-editor-message"),panel=$("activity-editor"),id=panel.dataset.editingId||"";
    if(!title){msg.textContent="กรุณาระบุหัวข้อกิจกรรม";msg.className="message error";$("activity-title-input").focus();return;}
    const content=sanitizeGuildActivityHTML(body.innerHTML);
    if(!content.trim()){msg.textContent="กรุณากรอกรายละเอียดกิจกรรม";msg.className="message error";body.focus();return;}
+   const startsValue=$("activity-starts-input").value,endsValue=$("activity-ends-input").value;
+   const startsAt=startsValue?new Date(startsValue).toISOString():null,endsAt=endsValue?new Date(endsValue).toISOString():null;
+   if(startsAt&&endsAt&&new Date(endsAt)<new Date(startsAt)){msg.textContent="เวลาสิ้นสุดต้องไม่ก่อนเวลาเริ่ม";msg.className="message error";return;}
    save.disabled=true;save.textContent="กำลังบันทึก...";
    try{
-    const payload={title,content_html:content,updated_by:currentUser.id,updated_at:new Date().toISOString()};
+    const payload={title,content_html:content,starts_at:startsAt,ends_at:endsAt,updated_by:currentUser.id,updated_at:new Date().toISOString()};
     let result;
-    if(id)result=await supabaseClient.from("guild_activities").update(payload).eq("id",id).select("id,title,content_html,created_by,updated_by,created_at,updated_at").single();
-    else result=await supabaseClient.from("guild_activities").insert({...payload,created_by:currentUser.id}).select("id,title,content_html,created_by,updated_by,created_at,updated_at").single();
+    if(id)result=await supabaseClient.from("guild_activities").update(payload).eq("id",id).select("id,title,content_html,starts_at,ends_at,created_by,updated_by,created_at,updated_at").single();
+    else result=await supabaseClient.from("guild_activities").insert({...payload,created_by:currentUser.id}).select("id,title,content_html,starts_at,ends_at,created_by,updated_by,created_at,updated_at").single();
     if(result.error)throw result.error;
     const saved=result.data,index=guildActivitiesCache.findIndex(row=>row.id===saved.id);
     if(index>=0)guildActivitiesCache[index]=saved;else guildActivitiesCache.unshift(saved);
@@ -3386,12 +3487,25 @@ function registerGuildActivityEvents(){
    finally{save.disabled=false;save.textContent=id?"บันทึกการแก้ไข":"บันทึกกิจกรรม";}
   }
  });
+ page.addEventListener("submit",async event=>{
+  const form=event.target.closest("[data-activity-comment-form]");if(!form)return;
+  event.preventDefault();if(!currentUser||!currentMember?.active)return;
+  const textarea=form.querySelector("textarea"),button=form.querySelector("button"),content=textarea.value.trim();
+  if(!content)return;
+  button.disabled=true;button.textContent="กำลังส่ง...";
+  try{
+   const {error}=await supabaseClient.from("guild_activity_comments").insert({activity_id:form.dataset.activityCommentForm,user_id:currentUser.id,content});
+   if(error)throw error;
+   textarea.value="";await loadGuildActivityComments();
+  }catch(error){console.error("Submit activity comment:",error);alert("ส่งความคิดเห็นไม่สำเร็จ: "+error.message);}
+  finally{button.disabled=false;button.textContent="ส่งความคิดเห็น";}
+ });
  page.addEventListener("change",async event=>{
   const input=event.target.closest("#activity-image-input");if(!input||!input.files?.length)return;
   const button=page.querySelector("[data-activity-image]"),body=$("activity-editor-body");
   try{if(button){button.disabled=true;button.textContent="กำลังอัปโหลด...";}const url=await uploadGuildActivityImage(input.files[0]);body?.focus();document.execCommand("insertHTML",false,'<img src="'+escapeHTML(url)+'" alt="Guild activity image">');}
   catch(error){alert(error.message||"อัปโหลดรูปไม่สำเร็จ");}
-  finally{input.value="";if(button){button.disabled=false;button.textContent="▧ รูป / GIF";}}
+  finally{input.value="";if(button){button.disabled=false;button.textContent="▧ รูปภาพ";}}
  });
 }
 registerGuildActivityEvents();
