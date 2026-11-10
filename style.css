@@ -4757,15 +4757,15 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 #page-war .war-skill-library-item{display:flex;align-items:center;gap:9px;min-height:54px;padding:7px 9px;border:1px solid rgba(220,185,160,.2);border-radius:7px;background:rgba(255,255,255,.035)}
 #page-war .war-skill-library-item img{width:34px;height:34px;object-fit:contain}
 #page-war .war-skill-library-item span{color:#fff;font-size:12px;font-weight:700}
-#page-war .war-member-skills{display:flex;align-items:center;gap:4px;flex-wrap:wrap;max-width:92px}
-#page-war .war-member-skill-icon{width:25px;height:25px;object-fit:contain;border-radius:5px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
+#page-war .war-member-skills{display:flex;flex:0 0 auto;align-items:center;justify-content:flex-start;gap:3px;flex-wrap:wrap;max-width:116px;min-height:28px;padding:4px 5px;border:1px solid rgba(139,177,221,.38);border-radius:7px;background:linear-gradient(135deg,rgba(23,49,78,.78),rgba(12,27,48,.72));box-shadow:inset 0 1px 0 rgba(255,255,255,.07)}
+#page-war .war-member-skill-icon{display:block;width:17px;height:17px;flex:0 0 17px;object-fit:contain;border-radius:50%;filter:drop-shadow(0 1px 2px rgba(0,0,0,.45))}
 #page-war .war-member-skill-editor{display:grid;gap:9px;margin:14px 0;padding:12px;border:1px solid rgba(226,165,144,.22);border-radius:8px;background:rgba(0,0,0,.22)}
 #page-war .war-member-skill-heading{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;color:#f0d4c4;font-size:11px}
 #page-war .war-member-skill-heading span{color:#bba8a8;font-size:10px}
 #page-war .war-member-skill-choice-list{display:flex;gap:7px;flex-wrap:wrap}
 #page-war .war-member-skill-choice{display:flex;align-items:center;gap:6px;padding:6px 8px;border:1px solid rgba(230,185,150,.22);border-radius:6px;background:rgba(255,255,255,.035);color:#fff;font-size:11px;cursor:pointer}
 #page-war .war-member-skill-choice input{accent-color:#d6a15e}
-#page-war .war-member-skill-choice img{width:25px;height:25px;object-fit:contain}
+#page-war .war-member-skill-choice img{width:18px;height:18px;object-fit:contain;border-radius:50%}
 @media(max-width:850px){#page-war .war-skill-form{grid-template-columns:1fr}#page-war .war-toolbar-actions{width:100%}#page-war .war-toolbar-actions .btn{flex:1}}
 
 /* Global skill creation inside member assignment modal */
@@ -5043,3 +5043,12 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
   background: linear-gradient(135deg, #6b4c1e, #98702f) !important;
   border-color: #f0ce8c !important;
 }
+
+/* Skill edit dialog */
+#page-war .war-skill-edit-panel form{display:grid;gap:9px;margin-top:16px}
+#page-war .war-skill-edit-label{color:#f0c98e;font-size:12px;font-weight:800}
+#page-war #war-skill-edit-name{width:100%;min-height:40px;padding:9px 11px;color:#fff;background:rgba(0,0,0,.35);border:1px solid rgba(226,165,144,.3);border-radius:7px}
+#page-war #war-skill-edit-icon{width:100%;color:#e9d8d0;font-size:12px}
+#page-war .war-skill-edit-panel small{color:#bca8a8;font-size:11px}
+#page-war .war-skill-edit-panel .rule-editor-actions{display:flex;justify-content:flex-end;gap:8px}
+#page-war .war-skill-library-item [data-war-skill-edit]{white-space:nowrap}
