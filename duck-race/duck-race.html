@@ -25,6 +25,12 @@
 #duck-race-root #trophy{border:1px solid #ffe8a1;background:linear-gradient(145deg,#f7b733,#bd7410);box-shadow:0 8px 22px #0007}
 @media(max-width:600px){#duck-race-root .ctl{left:8px;bottom:8px;gap:5px;padding:5px}#duck-race-root .ctl button{min-width:70px;padding:9px 10px;font-size:12px}#duck-race-root .clock{top:62px;min-width:145px;padding:6px 12px;font-size:clamp(20px,6cqw,32px)}#duck-race-root .ic{left:8px;top:8px;padding:5px}#duck-race-root .ic button{width:32px;height:32px}#duck-race-root #bShuf{top:53px;left:8px}}
 
+
+/* Full-size game canvas inside the existing 4AM GUILD sidebar layout */
+html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
+#duck-race-root{width:100%;min-height:100vh;margin:0;padding:0}
+#duck-race-root .stage{width:100%;max-width:none;min-height:100vh;margin:0;border-radius:0}
+#duck-race-root canvas{width:100%;}
 </style>
 <div id="duck-race-root">
 <div class="stage" id="stage">
@@ -206,8 +212,12 @@ function drawDuck(k,x,y,s,t){
 
 /* ---------- scene ---------- */
 function size(){
-  W=$('stage').clientWidth;H=Math.round(Math.max(280,W*.566));DPR=window.devicePixelRatio||1;
-  cv.width=W*DPR;cv.height=H*DPR;cv.style.height=H+'px';D=W*2.2;
+  W=$('stage').clientWidth;
+  /* Use the iframe's full viewport height instead of a fixed 16:9 canvas. */
+  H=Math.max(420,Math.floor(window.innerHeight||W*.566));
+  DPR=Math.min(2,window.devicePixelRatio||1);
+  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  cv.style.height=H+'px';D=W*2.2;
 }
 addEventListener('resize',size);
 const bank=()=>H*.25;
