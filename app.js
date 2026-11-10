@@ -24,6 +24,8 @@ const supabaseClient = window.supabase.createClient(
 let currentUser = null;
 let currentMember = null;
 let allMembers = [];
+let manualGuildMembers = [];
+let directoryMembers = [];
 let discordAccount = null;
 let allPortfolios = [];
 let portfolioClassFilter = "all";
@@ -78,7 +80,8 @@ const GUILD_POSITIONS = [
 
 const PAGE_TITLES = {
   dashboard: "ภาพรวมกิลด์",
-  members: "สมาชิกกิลด์",
+  members: "รายชื่อสมาชิก",
+  "member-management": "จัดการรายชื่อสมาชิก",
   war: "จัดตี้วอร์",
   "war-attendance": "ประกาศรายชื่อวอร์",
   "war-signup": "ลงชื่อวอร์",
@@ -541,7 +544,7 @@ function showRegistrationScreen(errorMessage = "") {
           name="character_name"
           type="text"
           maxlength="40"
-          placeholder="Enter character name"
+          placeholder="กรอกชื่อตัวละคร"
           autocomplete="off"
           required
         >
@@ -590,7 +593,7 @@ function showRegistrationScreen(errorMessage = "") {
           name="nickname"
           type="text"
           maxlength="40"
-          placeholder="Enter nickname"
+          placeholder="กรอกชื่อเล่น"
           autocomplete="nickname"
           required
         >
@@ -695,7 +698,7 @@ async function registerGuildMember(event) {
   if (!characterName) {
     showMessage(
       "registration-message",
-      "กรุณากรอก Character Name"
+      "กรุณากรอกชื่อตัวละคร"
     );
     return;
   }
@@ -965,24 +968,36 @@ async function renderDashboardProfile() {
 
 async function loadMembers() {
   const container = $("members-list");
+  if (container) container.innerHTML = `<p class="muted">กำลังโหลดรายชื่อสมาชิก...</p>`;
 
-  if (container) {
-    container.innerHTML = `<p class="muted">กำลังโหลดรายชื่อสมาชิก...</p>`;
-  }
+  const [accountsResult, manualResult] = await Promise.all([
+    supabaseClient.from("guild_members").select("*").order("created_at", { ascending: true }),
+    supabaseClient.from("guild_manual_members").select("*").eq("active", true).order("character_name", { ascending: true })
+  ]);
 
-  const { data, error } = await supabaseClient
-    .from("guild_members")
-    .select("*")
-    .order("created_at", { ascending: true });
-
-  if (error) {
-    console.error("Load members error:", error);
-    showEmpty(container, "Unable to load members", error.message);
+  if (accountsResult.error) {
+    console.error("Load members error:", accountsResult.error);
+    showEmpty(container, "ไม่สามารถโหลดรายชื่อสมาชิกได้", accountsResult.error.message);
     return;
   }
 
-  allMembers = data || [];
-  renderMembers(allMembers);
+  allMembers = accountsResult.data || [];
+  manualGuildMembers = manualResult.error ? [] : (manualResult.data || []);
+  if (manualResult.error && !/guild_manual_members|relation.*does not exist/i.test(manualResult.error.message || "")) {
+    console.warn("Load manual guild members:", manualResult.error);
+  }
+
+  directoryMembers = [
+    ...allMembers.map(member => ({ ...member, is_manual_record: false })),
+    ...manualGuildMembers.map(member => ({
+      ...member,
+      user_id: null,
+      role: "member",
+      is_manual_record: true
+    }))
+  ].sort((a, b) => String(a.character_name || "").localeCompare(String(b.character_name || ""), "th"));
+
+  renderMembers(directoryMembers);
 }
 
 function renderMembers(members) {
@@ -990,188 +1005,248 @@ function renderMembers(members) {
   if (!container) return;
 
   if (!members.length) {
-    showEmpty(container, "No Members Found", "There are no guild members to display.");
+    showEmpty(container, "ยังไม่มีรายชื่อสมาชิก", "เมื่อมีสมาชิกในกิลด์ รายชื่อจะแสดงที่นี่");
     return;
   }
 
-  const canManagePositions = isManagement();
-
-  container.innerHTML = members.map((member) => {
+  container.innerHTML = members.map(member => {
     const name = getMemberName(member);
-    const role = roleLabel(member.role);
     const className = getMemberClass(member);
-    const userId = member.user_id || "";
     const classInfo = getClassInfo(className);
     const classColor = classInfo?.color || "#a9a9a9";
-    const guildPosition = member.guild_position || "";
+    const guildPosition = member.guild_position || "สมาชิกแก๊ง";
     const gameUID = String(member.game_uid || "");
-
-    const positionOptions = GUILD_POSITIONS.map((position) => `
-      <option value="${escapeHTML(position)}"
-        ${guildPosition === position ? "selected" : ""}>
-        ${escapeHTML(position)}
-      </option>
-    `).join("");
+    const recordType = member.is_manual_record ? "manual" : "account";
+    const avatarKey = member.user_id || member.id || name;
 
     return `
-      <article class="member-card">
+      <article class="member-card member-directory-card" data-member-kind="${recordType}">
         <div class="member-avatar">
-          <img
-            class="member-avatar-image"
-            data-member-avatar-user-id="${escapeHTML(userId)}"
-            src="${DEFAULT_AVATAR}"
-            alt="รูปโปรไฟล์ ${escapeHTML(name)}"
-            loading="lazy"
-            onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'"
-          >
+          <img class="member-avatar-image"
+            data-member-avatar-user-id="${escapeHTML(avatarKey)}"
+            src="${DEFAULT_AVATAR}" alt="รูปโปรไฟล์ ${escapeHTML(name)}"
+            loading="lazy" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'">
         </div>
-
         <div class="member-info">
           <div class="member-details">
             <h4>${escapeHTML(name)}</h4>
-            <span class="member-role role-${escapeHTML(String(member.role || "member").toLowerCase())} ${String(member.role || "").toLowerCase() === "developer" ? "is-developer" : ""}">${escapeHTML(role)}</span>
-            <small class="member-guild-position">
-              ตำแหน่งกิลด์: ${escapeHTML(guildPosition || "ยังไม่ได้กำหนดตำแหน่ง")}
-            </small>
+            <span class="member-guild-position-badge">${escapeHTML(guildPosition)}</span>
+            <small class="member-secondary-name">ชื่อเล่น: ${escapeHTML(member.nickname || "-")}</small>
           </div>
-
           <div class="member-game-uid">
             <span class="member-uid-label">UID ตัวละคร</span>
-            <strong>${escapeHTML(gameUID || "ยังไม่ได้กรอก UID")}</strong>
-            ${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">Copy UID</button>` : ""}
+            <strong>${escapeHTML(gameUID || "-")}</strong>
+            ${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">คัดลอก UID</button>` : ""}
           </div>
         </div>
-
         <div class="member-class" style="--class-color:${classColor}">
-          ${classInfo?.iconPath ? `<img class="member-class-icon" src="${classInfo.iconPath}" alt="${escapeHTML(className)}" loading="lazy" onerror="this.style.display=\'none\'">` : ""}
+          ${classInfo?.iconPath ? `<img class="member-class-icon" src="${classInfo.iconPath}" alt="${escapeHTML(className)}" loading="lazy" onerror="this.style.display='none'">` : ""}
           <span>${escapeHTML(className)}</span>
         </div>
-
-        ${canManagePositions ? `
-          <div class="member-position-management">
-            <label for="guild-position-${escapeHTML(userId)}">กำหนดตำแหน่ง</label>
-            <select
-              id="guild-position-${escapeHTML(userId)}"
-              class="guild-position-select"
-              data-action="assign-guild-position"
-              data-user-id="${escapeHTML(userId)}"
-              aria-label="กำหนดตำแหน่งกิลด์ให้ ${escapeHTML(name)}"
-              style="
-                max-width: 220px;
-                padding: 8px 10px;
-                border: 1px solid rgba(255,255,255,.16);
-                border-radius: 8px;
-                background: rgba(20,20,24,.92);
-                color: inherit;
-              "
-            >
-              <option value="">ยังไม่ได้กำหนดตำแหน่ง</option>
-              ${positionOptions}
-            </select>
-            <small class="guild-position-save-status" aria-live="polite"></small>
-          </div>
-        ` : ""}
-
+        ${member.is_manual_record ? '<span class="member-record-status">รายชื่อ Manual</span>' : ""}
       </article>
     `;
   }).join("");
 
-  // Load each member's saved avatar into the circular member-list frame.
-  members.forEach(async (member) => {
-    const userId = String(member.user_id || "");
-    const avatar = container.querySelector(
-      `.member-avatar-image[data-member-avatar-user-id="${CSS.escape(userId)}"]`
-    );
+  members.forEach(async member => {
+    if (member.is_manual_record) return;
+    const key = String(member.user_id || member.id || getMemberName(member));
+    const avatar = container.querySelector(`.member-avatar-image[data-member-avatar-user-id="${CSS.escape(key)}"]`);
     if (!avatar) return;
-
     const avatarUrl = await resolveAvatarUrl(member);
-    // Avoid applying a stale result if the member list has been re-rendered.
     if (avatar.isConnected) avatar.src = avatarUrl || DEFAULT_AVATAR;
   });
 }
 
-// ฝ่ายบริหารเท่านั้นที่กำหนดตำแหน่งกิลด์ให้สมาชิกได้
-async function assignGuildPosition(selectElement) {
-  if (!selectElement || !isManagement()) {
-    alert("คุณไม่มีสิทธิ์กำหนดตำแหน่งกิลด์");
+// ==========================================
+// MANUAL MEMBER MANAGEMENT
+// ==========================================
+
+function renderGuildPositionOptions(selected = "") {
+  return '<option value="">เลือกตำแหน่งกิลด์</option>' + GUILD_POSITIONS.map(position =>
+    `<option value="${escapeHTML(position)}" ${selected === position ? "selected" : ""}>${escapeHTML(position)}</option>`
+  ).join("");
+}
+
+function resetManualMemberForm() {
+  const form = $("manual-member-form");
+  if (!form) return;
+  form.reset();
+  $("manual-member-id").value = "";
+  $("manual-member-form-title").textContent = "เพิ่มสมาชิกใหม่";
+  $("manual-member-submit").textContent = "บันทึกสมาชิก";
+  $("manual-member-cancel").classList.add("hidden");
+  $("manual-member-active").checked = true;
+}
+
+async function loadManualMemberManagement() {
+  if (!isManagement()) return;
+  const list = $("manual-member-list");
+  if (list) list.innerHTML = '<p class="muted">กำลังโหลดข้อมูลสมาชิก...</p>';
+
+  const { data, error } = await supabaseClient
+    .from("guild_manual_members")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("Manual member management load:", error);
+    if (list) list.innerHTML = '<div class="manual-member-setup-warning"><strong>ยังไม่พบตารางรายชื่อสมาชิก Manual</strong><p>กรุณารัน SQL ชื่อ <b>4AM Manual Guild Member Directory</b> ใน Supabase SQL Editor ก่อนใช้งานส่วนนี้</p><small>' + escapeHTML(error.message) + '</small></div>';
     return;
   }
 
-  const userId = selectElement.dataset.userId;
-  const newPosition = selectElement.value || null;
-  const member = allMembers.find((item) => item.user_id === userId);
+  manualGuildMembers = data || [];
+  renderManualMemberManagement();
+}
 
-  if (!userId || !member) {
-    alert("ไม่พบข้อมูลสมาชิกที่ต้องการแก้ไข");
+function renderManualMemberManagement() {
+  const list = $("manual-member-list");
+  const summary = $("manual-member-summary");
+  if (!list) return;
+  const activeCount = manualGuildMembers.filter(member => member.active).length;
+  if (summary) summary.textContent = `รายชื่อ Manual ${manualGuildMembers.length} คน · ใช้งาน ${activeCount} คน`;
+
+  if (!manualGuildMembers.length) {
+    list.innerHTML = '<div class="manual-member-empty"><span>＋</span><strong>ยังไม่มีรายชื่อสมาชิก Manual</strong><p>เพิ่มสมาชิกที่ยังไม่มีบัญชีเข้าใช้งานแอปได้จากแบบฟอร์มด้านบน</p></div>';
     return;
   }
 
-  if (newPosition && !GUILD_POSITIONS.includes(newPosition)) {
-    alert("ตำแหน่งที่เลือกไม่ถูกต้อง");
-    selectElement.value = member.guild_position || "";
+  list.innerHTML = `
+    <div class="manual-member-table-wrap">
+      <table class="manual-member-table">
+        <thead><tr><th>สมาชิก</th><th>Class</th><th>ตำแหน่งกิลด์</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+        <tbody>${manualGuildMembers.map(member => {
+          const cls = getClassInfo(member.game_class);
+          return `<tr>
+            <td><strong>${escapeHTML(member.character_name)}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")}</small></td>
+            <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class)}</span></td>
+            <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
+            <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
+            <td><div class="manual-member-actions">
+              <button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
+              <button type="button" class="btn btn-danger btn-sm" data-manual-delete="${escapeHTML(member.id)}">ลบ</button>
+            </div></td>
+          </tr>`;
+        }).join("")}</tbody>
+      </table>
+    </div>`;
+}
+
+async function saveManualGuildMember(form) {
+  if (!isManagement() || !form) return;
+  const formData = new FormData(form);
+  const id = String(formData.get("id") || "");
+  const payload = {
+    character_name: String(formData.get("character_name") || "").trim(),
+    game_class: String(formData.get("game_class") || "").trim(),
+    nickname: String(formData.get("nickname") || "").trim() || null,
+    discord_name: String(formData.get("discord_name") || "").trim() || null,
+    age: String(formData.get("age") || "").trim() ? Number(formData.get("age")) : null,
+    guild_position: String(formData.get("guild_position") || "").trim() || null,
+    notes: String(formData.get("notes") || "").trim() || null,
+    active: $("manual-member-active").checked,
+    updated_by: currentUser.id
+  };
+  const status = $("manual-member-form-status");
+  const submit = $("manual-member-submit");
+
+  if (!payload.character_name || payload.character_name.length > 40) {
+    if (status) status.textContent = "กรุณากรอกชื่อตัวละครไม่เกิน 40 ตัวอักษร";
+    return;
+  }
+  if (!CLASS_DATA.some(item => item.name === payload.game_class)) {
+    if (status) status.textContent = "กรุณาเลือก Class อาชีพ";
+    return;
+  }
+  if (payload.age !== null && (!Number.isInteger(payload.age) || payload.age < 1 || payload.age > 120)) {
+    if (status) status.textContent = "กรุณาตรวจสอบอายุ (1–120 ปี)";
     return;
   }
 
-  const previousPosition = member.guild_position || "";
-  const status = selectElement.parentElement?.querySelector(
-    ".guild-position-save-status"
-  );
-
-  selectElement.disabled = true;
-  if (status) status.textContent = "กำลังบันทึก...";
-
+  if (submit) { submit.disabled = true; submit.textContent = "กำลังบันทึก..."; }
+  if (status) status.textContent = "กำลังบันทึกข้อมูลสมาชิก...";
   try {
-    const { data, error } = await supabaseClient
-      .from("guild_members")
-      .update({ guild_position: newPosition })
-      .eq("user_id", userId)
-      .select("user_id, guild_position")
-      .single();
-
-    if (error) throw error;
-
-    member.guild_position = data.guild_position;
-
-    if (currentMember?.user_id === userId) {
-      currentMember.guild_position = data.guild_position;
-      renderDashboardProfile();
+    const duplicateQuery = supabaseClient.from("guild_manual_members")
+      .select("id").ilike("character_name", payload.character_name);
+    const duplicate = await duplicateQuery;
+    if (duplicate.error) throw duplicate.error;
+    if ((duplicate.data || []).some(row => row.id !== id)) {
+      throw new Error("มีชื่อตัวละครนี้ในรายชื่อ Manual แล้ว");
     }
 
-    if (status) {
-      status.textContent = "บันทึกตำแหน่งแล้ว";
-      status.style.color = "#42c98e";
+    let result;
+    if (id) {
+      result = await supabaseClient.from("guild_manual_members").update(payload).eq("id", id).select("*").single();
+    } else {
+      result = await supabaseClient.from("guild_manual_members").insert({ ...payload, created_by: currentUser.id }).select("*").single();
     }
+    if (result.error) throw result.error;
 
-    const memberDetails = selectElement.closest(".member-card")
-      ?.querySelector(".member-guild-position");
+    const index = manualGuildMembers.findIndex(member => member.id === result.data.id);
+    if (index >= 0) manualGuildMembers[index] = result.data;
+    else manualGuildMembers.unshift(result.data);
 
-    if (memberDetails) {
-      memberDetails.textContent =
-        "ตำแหน่งกิลด์: " + (data.guild_position || "ยังไม่ได้กำหนดตำแหน่ง");
-    }
-
+    resetManualMemberForm();
+    if (status) status.textContent = "บันทึกข้อมูลสมาชิกเรียบร้อยแล้ว";
+    renderManualMemberManagement();
+    await loadMembers();
   } catch (error) {
-    console.error("Guild position update error:", error);
-    selectElement.value = previousPosition;
-
-    if (status) {
-      status.textContent = "บันทึกไม่สำเร็จ";
-      status.style.color = "#e54858";
-    }
-
-    alert(
-      "ไม่สามารถบันทึกตำแหน่งได้: " +
-      (error.message || "เกิดข้อผิดพลาด")
-    );
+    console.error("Save manual guild member:", error);
+    if (status) status.textContent = "บันทึกไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด");
   } finally {
-    selectElement.disabled = false;
+    if (submit) { submit.disabled = false; submit.textContent = $("manual-member-id")?.value ? "บันทึกการแก้ไข" : "บันทึกสมาชิก"; }
   }
+}
+
+function editManualGuildMember(id) {
+  if (!isManagement()) return;
+  const member = manualGuildMembers.find(item => item.id === id);
+  const form = $("manual-member-form");
+  if (!member || !form) return;
+  $("manual-member-id").value = member.id;
+  form.elements.character_name.value = member.character_name || "";
+  form.elements.game_class.value = member.game_class || "";
+  form.elements.nickname.value = member.nickname || "";
+  form.elements.discord_name.value = member.discord_name || "";
+  form.elements.age.value = member.age || "";
+  form.elements.guild_position.value = member.guild_position || "";
+  form.elements.notes.value = member.notes || "";
+  $("manual-member-active").checked = member.active !== false;
+  $("manual-member-form-title").textContent = "แก้ไขข้อมูลสมาชิก";
+  $("manual-member-submit").textContent = "บันทึกการแก้ไข";
+  $("manual-member-cancel").classList.remove("hidden");
+  form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+async function updateManualGuildMemberStatus(id) {
+  if (!isManagement()) return;
+  const member = manualGuildMembers.find(item => item.id === id);
+  if (!member) return;
+  const { data, error } = await supabaseClient.from("guild_manual_members")
+    .update({ active: !member.active, updated_by: currentUser.id })
+    .eq("id", id).select("*").single();
+  if (error) { alert("เปลี่ยนสถานะไม่สำเร็จ: " + error.message); return; }
+  Object.assign(member, data);
+  renderManualMemberManagement();
+  await loadMembers();
+}
+
+async function deleteManualGuildMember(id) {
+  if (!isManagement()) return;
+  const member = manualGuildMembers.find(item => item.id === id);
+  if (!member || !confirm(`ยืนยันลบรายชื่อ "${member.character_name}" หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้`)) return;
+  const { error } = await supabaseClient.from("guild_manual_members").delete().eq("id", id);
+  if (error) { alert("ลบรายชื่อไม่สำเร็จ: " + error.message); return; }
+  manualGuildMembers = manualGuildMembers.filter(item => item.id !== id);
+  renderManualMemberManagement();
+  await loadMembers();
 }
 
 function filterMembers() {
   const search = $("member-search")?.value.trim().toLowerCase() || "";
 
-  const filtered = allMembers.filter((member) => {
+  const filtered = directoryMembers.filter((member) => {
     const searchable = [
       getMemberName(member),
       member.nickname,
@@ -4575,6 +4650,7 @@ function openGuildPage(pageName) {
   if (["war","war-stats","war-attendance-stats"].includes(pageName) && !isManagement()) {
     pageName = "war-attendance";
   }
+  if (pageName === "member-management" && !isManagement()) pageName = "members";
   if (pageName === "system-management" && !isDeveloper()) {
     pageName = "dashboard";
   }
@@ -4626,7 +4702,14 @@ function openGuildPage(pageName) {
   window.scrollTo({ top: 0 });
 
   if (pageName === "members") loadMembers();
+  if (pageName === "member-management" && isManagement()) loadManualMemberManagement();
   if (pageName === "system-management") loadSystemRoleMembers();
+
+  const memberPages = ["members", "member-management"];
+  const memberParent = document.querySelector('[data-toggle-submenu="members-submenu"]');
+  const memberSubmenu = $("members-submenu");
+  memberParent?.classList.toggle("active", memberPages.includes(pageName));
+  if (memberPages.includes(pageName) && memberSubmenu) memberSubmenu.classList.add("is-open");
 
   if (pageName === "settings") {
     renderAccountDetails();
@@ -4772,7 +4855,7 @@ function renderAccountDetails() {
       <button type="button" class="btn btn-outline btn-sm account-edit-button" id="account-edit-toggle" aria-expanded="false">✎ แก้ไข</button>
     </div>
     <div class="account-details-list">
-      <div class="settings-detail"><span>Character Name</span><strong>${escapeHTML(name)}</strong></div>
+      <div class="settings-detail"><span>ชื่อตัวละคร</span><strong>${escapeHTML(name)}</strong></div>
       <div class="settings-detail"><span>Email</span><strong>${escapeHTML(currentUser?.email || "-")}</strong></div>
       <div class="settings-detail"><span>Class อาชีพ</span><strong class="account-class-display" style="--class-color:${classColor}"><img class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'"><span>${escapeHTML(currentMember?.game_class || "ยังไม่ได้เลือกอาชีพ")}</span></strong></div>
       <div class="settings-detail"><span>UID ตัวละคร</span><strong>${escapeHTML(currentMember?.game_uid || "ยังไม่ได้กรอก UID")}</strong></div>
@@ -4782,7 +4865,7 @@ function renderAccountDetails() {
       <div class="settings-detail"><span>Server</span><strong>Tideborn Dreams</strong></div>
     </div>
     <form id="account-profile-form" class="game-uid-settings-form account-character-form hidden">
-      <label for="account-character-name">Character Name / ชื่อตัวละคร</label>
+      <label for="account-character-name">ชื่อตัวละคร</label>
       <input id="account-character-name" name="character_name" type="text" maxlength="40" autocomplete="off" placeholder="กรอกชื่อตัวละคร" value="${escapeHTML(currentMember?.character_name || "")}" required>
       <label for="account-game-class">Class อาชีพ</label>
       <div class="account-class-select-wrap">
@@ -4810,6 +4893,16 @@ function registerAppEventListeners() {
   $("logout-btn")?.addEventListener("click", logout);
 
   $("member-search")?.addEventListener("input", filterMembers);
+  $("manual-member-form")?.addEventListener("submit", event => { event.preventDefault(); saveManualGuildMember(event.currentTarget); });
+  $("manual-member-cancel")?.addEventListener("click", resetManualMemberForm);
+  $("manual-member-list")?.addEventListener("click", event => {
+    const edit = event.target.closest("[data-manual-edit]");
+    const toggle = event.target.closest("[data-manual-toggle]");
+    const remove = event.target.closest("[data-manual-delete]");
+    if (edit) editManualGuildMember(edit.dataset.manualEdit);
+    else if (toggle) updateManualGuildMemberStatus(toggle.dataset.manualToggle);
+    else if (remove) deleteManualGuildMember(remove.dataset.manualDelete);
+  });
   $("refresh-members")?.addEventListener("click", loadMembers);
   $("connect-discord")?.addEventListener("click", connectDiscord);
 
