@@ -4749,3 +4749,12 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 #page-war .war-member-skill-choice input{accent-color:#d6a15e}
 #page-war .war-member-skill-choice img{width:25px;height:25px;object-fit:contain}
 @media(max-width:850px){#page-war .war-skill-form{grid-template-columns:1fr}#page-war .war-toolbar-actions{width:100%}#page-war .war-toolbar-actions .btn{flex:1}}
+
+/* Global skill creation inside member assignment modal */
+#page-war .war-member-skill-create-form{display:grid;gap:8px;padding:11px;border:1px solid rgba(226,165,144,.22);border-radius:7px;background:rgba(0,0,0,.2)}
+#page-war .war-member-skill-create-form>label{color:#f0c98e;font-size:11px;font-weight:800}
+#page-war .war-member-skill-create-fields{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+#page-war .war-member-skill-create-fields>input[type=text]{flex:1;min-width:140px;min-height:36px;padding:7px 9px;color:#fff;background:rgba(0,0,0,.35);border:1px solid rgba(226,165,144,.25);border-radius:6px}
+#page-war .war-member-skill-upload{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:7px 10px;border:1px dashed rgba(226,165,144,.5);border-radius:6px;color:#f0d4c4;font-size:11px;font-weight:700;cursor:pointer}
+#page-war .war-member-skill-upload input{display:none}
+#page-war .war-member-skill-create-form>small{color:#bca8a8;font-size:10px}
