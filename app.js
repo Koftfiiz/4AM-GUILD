@@ -1084,6 +1084,18 @@ async function loadManualMemberManagement() {
   const list = $("manual-member-list");
   if (list) list.innerHTML = '<p class="muted">กำลังโหลดข้อมูลสมาชิก...</p>';
 
+  const form = $("manual-member-form");
+  const classSelect = form?.elements?.game_class;
+  const positionSelect = form?.elements?.guild_position;
+  if (classSelect && classSelect.options.length <= 1) {
+    classSelect.innerHTML = '<option value="">เลือก Class อาชีพ</option>' + CLASS_DATA.map(item =>
+      `<option value="${escapeHTML(item.name)}">${escapeHTML(item.name)}</option>`
+    ).join("");
+  }
+  if (positionSelect && positionSelect.options.length <= 1) {
+    positionSelect.innerHTML = renderGuildPositionOptions();
+  }
+
   const { data, error } = await supabaseClient
     .from("guild_manual_members")
     .select("*")
