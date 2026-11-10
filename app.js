@@ -2511,12 +2511,12 @@ function renderWarSkillManager(){
   if(!list)return;
   const modeButton=$("war-skill-delete-mode");
   if(modeButton){
-    modeButton.textContent=warSkillDeleteMode?"เสร็จสิ้น":"จัดการ";
+    modeButton.textContent=warSkillDeleteMode?"เสร็จสิ้น":"ลบสกิล";
     modeButton.classList.toggle("is-active",warSkillDeleteMode);
     modeButton.setAttribute("aria-pressed",String(warSkillDeleteMode));
   }
   if(warSkillLoadError){list.innerHTML=`<p class="war-skill-error">${escapeHTML(warSkillLoadError)}</p>`;return;}
-  if(!warSkillCatalog.length){list.innerHTML='<div class="war-skill-empty"><span>✦</span><strong>ยังไม่มี Skill ในคลัง</strong><p>กด “＋ เพิ่ม Skill” เพื่อเริ่มต้น</p></div>';return;}
+  if(!warSkillCatalog.length){list.innerHTML='<div class="war-skill-empty"><span>✦</span><strong>ยังไม่มี Skill ในคลัง</strong><p>กด “จัดการสกิล” เพื่อเพิ่ม Skill</p></div>';return;}
   list.innerHTML='<div class="war-skill-library-grid'+(warSkillDeleteMode?' is-delete-mode':'')+'">'+warSkillCatalog.map(skill=>`<article class="war-skill-library-item"><button type="button" class="war-skill-icon-button" data-war-skill-edit="${escapeHTML(skill.id)}" aria-label="แก้ไข ${escapeHTML(skill.skill_name)}" title="${escapeHTML(skill.skill_name)}"><img src="${escapeHTML(skill.iconUrl)}" alt="${escapeHTML(skill.skill_name)}"></button>${warSkillDeleteMode?`<button type="button" class="war-skill-delete-badge" data-war-skill-delete="${escapeHTML(skill.id)}" aria-label="ลบ ${escapeHTML(skill.skill_name)}" title="ลบ Skill">−</button>`:""}</article>`).join("")+'</div>';
  }
 async function saveWarSkillDefinition(event){
