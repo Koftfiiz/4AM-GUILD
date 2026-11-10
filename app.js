@@ -2250,7 +2250,9 @@ function renderWarLayout(eventId = selectedWarEventId) {
     <article class="stat-card stat-card-sm"><div class="stat-icon letter">⚔</div><div class="stat-info"><span class="stat-label">WAR EVENT</span><div class="stat-value war-summary-name"><strong>${escapeHTML(event.event_name)}</strong></div><small>${formatDate(event.event_date)} · ${formatTime(event.start_time)}</small></div></article>`;
   const confirmed=Boolean(event.is_draft_confirmed),published=Boolean(event.is_published);
   $("war-confirm-draft")?.classList.toggle("hidden",!isManagement()||confirmed||published);
-  $("war-publish-event")?.classList.toggle("hidden",!isManagement()||!confirmed||published);
+  const publishButton=$("war-publish-event");
+  publishButton?.classList.toggle("hidden",!isManagement()||!confirmed);
+  if(publishButton)publishButton.textContent=published?"Publish อัปเดตรายชื่อ":"Publish";
   $("war-export-image")?.classList.toggle("hidden",!confirmed);
   const sync=$("war-sync-discord");sync?.classList.toggle("hidden",!confirmed);if(sync){sync.disabled=true;sync.title="Discord Bot integration ยังไม่เปิดใช้งาน";}
   const label=$("war-detail-stage-label");if(label)label.textContent=published?"PUBLISHED · สมาชิกมองเห็นแล้ว":confirmed?"DRAFT · ยืนยันรายชื่อแล้ว":"กำลังจัดตี้ · ยังไม่ยืนยัน";
@@ -2634,11 +2636,17 @@ async function deleteWarEvent(eventId,button){
   }
 }
 async function publishWarEvent(){
-  if(!isManagement())return;const event=allWarEvents.find(item=>item.id===selectedWarEventId);if(!event||!event.is_draft_confirmed||event.is_published)return;
-  const button=$("war-publish-event");if(button){button.disabled=true;button.textContent="กำลัง Publish...";}
-  try{const {error}=await supabaseClient.from("war_events").update({is_published:true}).eq("id",event.id);if(error)throw error;selectedWarEventId=null;await loadWarEvents();renderWarLayout();}
-  catch(error){alert("Publish วอร์ไม่สำเร็จ: "+error.message);}
-  finally{if(button){button.disabled=false;button.textContent="Publish";}}
+  if(!isManagement())return;
+  const event=allWarEvents.find(item=>item.id===selectedWarEventId);
+  if(!event||!event.is_draft_confirmed)return;
+  const button=$("war-publish-event");if(button){button.disabled=true;button.textContent="กำลังอัปเดต...";}
+  try{
+    const result=await supabaseClient.from("war_events").update({is_published:true}).eq("id",event.id);if(result.error)throw result.error;
+    const keepId=event.id;await loadWarEvents();selectedWarEventId=keepId;renderWarLayout(keepId);
+    if($("war-attendance-content"))await loadWarAttendance();
+    alert(event.is_published?"อัปเดตรายชื่อวอร์ที่ประกาศแล้วเรียบร้อย":"Publish รายชื่อวอร์เรียบร้อย");
+  }catch(error){console.error("Publish/update war roster failed:",error);alert("Publish / อัปเดตรายชื่อวอร์ไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));}
+  finally{if(button){button.disabled=false;button.textContent="Publish อัปเดตรายชื่อ";}}
 }
 let thaiFontCssPromise = null;
 // SVG ที่แปลงเป็นรูปใช้ฟอนต์ของหน้าเว็บไม่ได้ จึงต้องฝัง Noto Sans Thai (ไทย+ละติน, ปกติ/หนา) ลงในไฟล์ SVG เอง
