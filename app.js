@@ -523,7 +523,7 @@ function showRegistrationScreen(errorMessage = "") {
     screen.innerHTML = `
       <div class="login-logo registration-guild-logo">
         <img
-          src="assets/4am-guild-logo.png"
+          src="https://i.postimg.cc/xqVN8XTs/4AM-Logo.png"
           alt="4AM GUILD Logo"
           onerror="this.style.display='none'"
         >
@@ -2953,7 +2953,7 @@ async function exportWarImage(raidFilter = null){
   try{
     const [background,logo,fontCss]=await Promise.all([
       fetch("assets/4am-web-bg.jpg").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ assets/4am-web-bg.jpg");return response.blob();}).then(toDataUrl),
-      fetch("assets/4am-guild-logo.png").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ assets/4am-guild-logo.png");return response.blob();}).then(toDataUrl),
+      fetch("https://i.postimg.cc/xqVN8XTs/4AM-Logo.png").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ https://i.postimg.cc/xqVN8XTs/4AM-Logo.png");return response.blob();}).then(toDataUrl),
       getThaiFontCss()
     ]);
     const rosterClassNames=[...new Set(currentWarParties.flatMap(party=>(party.war_party_members||[]).map(assignment=>{
@@ -3068,7 +3068,7 @@ async function exportWarPartyImage(partyId){
   try{
     const [bg,logo,fontCss]=await Promise.all([
       fetch("assets/4am-web-bg.jpg").then(r=>{if(!r.ok)throw Error("ไม่พบภาพพื้นหลัง");return r.blob();}).then(toDataUrl),
-      fetch("assets/4am-guild-logo.png").then(r=>{if(!r.ok)throw Error("ไม่พบโลโก้");return r.blob();}).then(toDataUrl),
+      fetch("https://i.postimg.cc/xqVN8XTs/4AM-Logo.png").then(r=>{if(!r.ok)throw Error("ไม่พบโลโก้");return r.blob();}).then(toDataUrl),
       getThaiFontCss()
     ]);
     const members=(party.war_party_members||[]).map(row=>({row,member:allMembers.find(item=>item.user_id===row.member_id)}));
@@ -4895,6 +4895,7 @@ function renderAppearancePage(){
  $("appearance-active-label").textContent=APPEARANCE_THEMES[appearanceState.themeId].name;
  const select=$("appearance-default-theme");if(select){select.innerHTML=Object.entries(APPEARANCE_THEMES).map(([id,t])=>`<option value="${id}">${t.name}</option>`).join("");select.value=appearanceState.defaultThemeId}
  $("appearance-admin-section")?.classList.toggle("hidden",!isManagement());
+ const brandForm=document.querySelector(".appearance-brand-form");if(brandForm)brandForm.classList.toggle("hidden",!isManagement());
  document.querySelectorAll("[data-appearance-token]").forEach(input=>{const k=input.dataset.appearanceToken;input.value=appearanceState.customTokens[k]||APPEARANCE_THEMES[appearanceState.themeId].colors[k]});
  updateGuildLogo(appearanceState.activeLogoUrl);renderAppearanceLogoLibrary();
 }
