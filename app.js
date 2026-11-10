@@ -523,7 +523,7 @@ function showRegistrationScreen(errorMessage = "") {
     screen.innerHTML = `
       <div class="login-logo registration-guild-logo">
         <img
-          src="/assets/4am-guild-logo.png"
+          src="/assets/4am-guild-logo.png?v=20261111b"
           alt="4AM GUILD Logo"
           onerror="this.style.display='none'"
         >
@@ -2953,7 +2953,7 @@ async function exportWarImage(raidFilter = null){
   try{
     const [background,logo,fontCss]=await Promise.all([
       fetch("assets/4am-web-bg.jpg").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ assets/4am-web-bg.jpg");return response.blob();}).then(toDataUrl),
-      fetch("/assets/4am-guild-logo.png").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ /assets/4am-guild-logo.png");return response.blob();}).then(toDataUrl),
+      fetch("/assets/4am-guild-logo.png?v=20261111b").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ /assets/4am-guild-logo.png?v=20261111b");return response.blob();}).then(toDataUrl),
       getThaiFontCss()
     ]);
     const rosterClassNames=[...new Set(currentWarParties.flatMap(party=>(party.war_party_members||[]).map(assignment=>{
@@ -3068,7 +3068,7 @@ async function exportWarPartyImage(partyId){
   try{
     const [bg,logo,fontCss]=await Promise.all([
       fetch("assets/4am-web-bg.jpg").then(r=>{if(!r.ok)throw Error("ไม่พบภาพพื้นหลัง");return r.blob();}).then(toDataUrl),
-      fetch("/assets/4am-guild-logo.png").then(r=>{if(!r.ok)throw Error("ไม่พบโลโก้");return r.blob();}).then(toDataUrl),
+      fetch("/assets/4am-guild-logo.png?v=20261111b").then(r=>{if(!r.ok)throw Error("ไม่พบโลโก้");return r.blob();}).then(toDataUrl),
       getThaiFontCss()
     ]);
     const members=(party.war_party_members||[]).map(row=>({row,member:allMembers.find(item=>item.user_id===row.member_id)}));
@@ -4847,7 +4847,7 @@ const APPEARANCE_THEMES={
  "minimal-light":{name:"Minimal Light",description:"Clean White · Silver · Soft Indigo",colors:{primary:"#5968b8",secondary:"#8c96b8",background:"#f1f3f8",surface:"#ffffff"}}
 };
 const APPEARANCE_LOCAL_KEY="4am-guild:appearance:v1";
-const GUILD_LOGO_FALLBACK="/assets/4am-guild-logo.png";
+const GUILD_LOGO_FALLBACK="/assets/4am-guild-logo.png?v=20261111b";
 let appearanceState={themeId:"4am-original",defaultThemeId:"4am-original",customTokens:{},activeLogoUrl:GUILD_LOGO_FALLBACK,logoLibrary:[],loaded:false};
 function appearanceLocal(){try{return JSON.parse(localStorage.getItem(APPEARANCE_LOCAL_KEY)||"{}")}catch{return{}}}
 function applyAppearanceTheme(id,tokens={}){
