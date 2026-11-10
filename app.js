@@ -1073,6 +1073,8 @@ function resetManualMemberForm() {
   if (!form) return;
   form.reset();
   $("manual-member-id").value = "";
+  $("manual-member-type").value = "manual";
+  $("manual-member-user-id").value = "";
   $("manual-member-form-title").textContent = "เพิ่มสมาชิกใหม่";
   $("manual-member-submit").textContent = "บันทึกสมาชิก";
   $("manual-member-cancel").classList.add("hidden");
@@ -1083,6 +1085,7 @@ async function loadManualMemberManagement() {
   if (!isManagement()) return;
   const list = $("manual-member-list");
   if (list) list.innerHTML = '<p class="muted">กำลังโหลดข้อมูลสมาชิก...</p>';
+  await loadMembers();
 
   const form = $("manual-member-form");
   const classSelect = form?.elements?.game_class;
@@ -1115,32 +1118,50 @@ function renderManualMemberManagement() {
   const list = $("manual-member-list");
   const summary = $("manual-member-summary");
   if (!list) return;
-  const activeCount = manualGuildMembers.filter(member => member.active).length;
-  if (summary) summary.textContent = `รายชื่อ Manual ${manualGuildMembers.length} คน · ใช้งาน ${activeCount} คน`;
+  const linkedCount = allMembers.length;
+  const manualCount = manualGuildMembers.length;
+  const activeCount = allMembers.filter(member => member.active).length + manualGuildMembers.filter(member => member.active).length;
+  if (summary) summary.textContent = `สมาชิกในระบบ ${linkedCount} คน · Manual ${manualCount} คน · Active ${activeCount} คน`;
 
-  if (!manualGuildMembers.length) {
-    list.innerHTML = '<div class="manual-member-empty"><span>＋</span><strong>ยังไม่มีรายชื่อสมาชิก Manual</strong><p>เพิ่มสมาชิกที่ยังไม่มีบัญชีเข้าใช้งานแอปได้จากแบบฟอร์มด้านบน</p></div>';
+  if (!linkedCount && !manualCount) {
+    list.innerHTML = '<div class="manual-member-empty"><span>＋</span><strong>ยังไม่มีรายชื่อสมาชิก</strong><p>เพิ่มสมาชิกที่ยังไม่มีบัญชีเข้าใช้งานแอปได้จากแบบฟอร์มด้านบน</p></div>';
     return;
   }
+
+  const accountRows = allMembers.map(member => {
+    const cls = getClassInfo(member.game_class);
+    return `<tr>
+      <td><strong>${escapeHTML(member.character_name || getMemberName(member))}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")} · บัญชีเชื่อมต่อแล้ว</small></td>
+      <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class || "ยังไม่ระบุ")}</span></td>
+      <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
+      <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
+      <td><div class="manual-member-actions">
+        <button type="button" class="btn btn-outline btn-sm" data-account-edit="${escapeHTML(member.user_id)}">แก้ไข</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-account-toggle="${escapeHTML(member.user_id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+
+  const manualRows = manualGuildMembers.map(member => {
+    const cls = getClassInfo(member.game_class);
+    return `<tr>
+      <td><strong>${escapeHTML(member.character_name)}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")} · ยังไม่มีบัญชีเข้าใช้งาน</small></td>
+      <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class)}</span></td>
+      <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
+      <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
+      <td><div class="manual-member-actions">
+        <button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
+        <button type="button" class="btn btn-danger btn-sm" data-manual-delete="${escapeHTML(member.id)}">ลบ</button>
+      </div></td>
+    </tr>`;
+  }).join("");
 
   list.innerHTML = `
     <div class="manual-member-table-wrap">
       <table class="manual-member-table">
         <thead><tr><th>สมาชิก</th><th>Class</th><th>ตำแหน่งกิลด์</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
-        <tbody>${manualGuildMembers.map(member => {
-          const cls = getClassInfo(member.game_class);
-          return `<tr>
-            <td><strong>${escapeHTML(member.character_name)}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")}</small></td>
-            <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class)}</span></td>
-            <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
-            <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
-            <td><div class="manual-member-actions">
-              <button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button>
-              <button type="button" class="btn btn-ghost btn-sm" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
-              <button type="button" class="btn btn-danger btn-sm" data-manual-delete="${escapeHTML(member.id)}">ลบ</button>
-            </div></td>
-          </tr>`;
-        }).join("")}</tbody>
+        <tbody>${accountRows}${manualRows}</tbody>
       </table>
     </div>`;
 }
@@ -1149,6 +1170,8 @@ async function saveManualGuildMember(form) {
   if (!isManagement() || !form) return;
   const formData = new FormData(form);
   const id = String(formData.get("id") || "");
+  const recordType = String(formData.get("record_type") || "manual");
+  const userId = String(formData.get("user_id") || "");
   const payload = {
     character_name: String(formData.get("character_name") || "").trim(),
     game_class: String(formData.get("game_class") || "").trim(),
@@ -1156,9 +1179,8 @@ async function saveManualGuildMember(form) {
     discord_name: String(formData.get("discord_name") || "").trim() || null,
     age: String(formData.get("age") || "").trim() ? Number(formData.get("age")) : null,
     guild_position: String(formData.get("guild_position") || "").trim() || null,
-    notes: String(formData.get("notes") || "").trim() || null,
     active: $("manual-member-active").checked,
-    updated_by: currentUser.id
+    updated_at: new Date().toISOString()
   };
   const status = $("manual-member-form-status");
   const submit = $("manual-member-submit");
@@ -1179,44 +1201,63 @@ async function saveManualGuildMember(form) {
   if (submit) { submit.disabled = true; submit.textContent = "กำลังบันทึก..."; }
   if (status) status.textContent = "กำลังบันทึกข้อมูลสมาชิก...";
   try {
-    const duplicateQuery = supabaseClient.from("guild_manual_members")
+    const duplicate = await supabaseClient.from("guild_manual_members")
       .select("id").ilike("character_name", payload.character_name);
-    const duplicate = await duplicateQuery;
     if (duplicate.error) throw duplicate.error;
     if ((duplicate.data || []).some(row => row.id !== id)) {
       throw new Error("มีชื่อตัวละครนี้ในรายชื่อ Manual แล้ว");
     }
+    const accountDuplicate = allMembers.some(member =>
+      String(member.character_name || "").trim().toLowerCase() === payload.character_name.toLowerCase() &&
+      !(recordType === "account" && member.user_id === userId)
+    );
+    if (accountDuplicate) throw new Error("มีชื่อตัวละครนี้ในรายชื่อสมาชิกที่เชื่อมบัญชีแล้ว");
 
     let result;
-    if (id) {
-      result = await supabaseClient.from("guild_manual_members").update(payload).eq("id", id).select("*").single();
+    if (recordType === "account") {
+      if (!userId) throw new Error("ไม่พบ User ID ของบัญชีสมาชิก");
+      result = await supabaseClient.from("guild_members")
+        .update({ ...payload, updated_by: currentUser.id })
+        .eq("user_id", userId).select("*").single();
+    } else if (id) {
+      result = await supabaseClient.from("guild_manual_members")
+        .update({ ...payload, updated_by: currentUser.id }).eq("id", id).select("*").single();
     } else {
-      result = await supabaseClient.from("guild_manual_members").insert({ ...payload, created_by: currentUser.id }).select("*").single();
+      result = await supabaseClient.from("guild_manual_members")
+        .insert({ ...payload, created_by: currentUser.id, updated_by: currentUser.id }).select("*").single();
     }
     if (result.error) throw result.error;
 
-    const index = manualGuildMembers.findIndex(member => member.id === result.data.id);
-    if (index >= 0) manualGuildMembers[index] = result.data;
-    else manualGuildMembers.unshift(result.data);
+    if (recordType === "account") {
+      const accountIndex = allMembers.findIndex(member => member.user_id === userId);
+      if (accountIndex >= 0) allMembers[accountIndex] = result.data;
+      if (currentMember?.user_id === userId) Object.assign(currentMember, result.data);
+      updateUserChip();
+      renderDashboardProfile();
+    } else {
+      const index = manualGuildMembers.findIndex(member => member.id === result.data.id);
+      if (index >= 0) manualGuildMembers[index] = result.data;
+      else manualGuildMembers.unshift(result.data);
+    }
 
     resetManualMemberForm();
     if (status) status.textContent = "บันทึกข้อมูลสมาชิกเรียบร้อยแล้ว";
     renderManualMemberManagement();
     await loadMembers();
   } catch (error) {
-    console.error("Save manual guild member:", error);
+    console.error("Save member record:", error);
     if (status) status.textContent = "บันทึกไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด");
   } finally {
     if (submit) { submit.disabled = false; submit.textContent = $("manual-member-id")?.value ? "บันทึกการแก้ไข" : "บันทึกสมาชิก"; }
   }
 }
 
-function editManualGuildMember(id) {
-  if (!isManagement()) return;
-  const member = manualGuildMembers.find(item => item.id === id);
+function fillManualMemberForm(member, type = "manual") {
   const form = $("manual-member-form");
   if (!member || !form) return;
-  $("manual-member-id").value = member.id;
+  $("manual-member-id").value = type === "manual" ? member.id : "";
+  $("manual-member-type").value = type;
+  $("manual-member-user-id").value = type === "account" ? member.user_id : "";
   form.elements.character_name.value = member.character_name || "";
   form.elements.game_class.value = member.game_class || "";
   form.elements.nickname.value = member.nickname || "";
@@ -1225,10 +1266,20 @@ function editManualGuildMember(id) {
   form.elements.guild_position.value = member.guild_position || "";
   form.elements.notes.value = member.notes || "";
   $("manual-member-active").checked = member.active !== false;
-  $("manual-member-form-title").textContent = "แก้ไขข้อมูลสมาชิก";
+  $("manual-member-form-title").textContent = type === "account" ? "แก้ไขข้อมูลสมาชิกที่เชื่อมบัญชีแล้ว" : "แก้ไขข้อมูลสมาชิก Manual";
   $("manual-member-submit").textContent = "บันทึกการแก้ไข";
   $("manual-member-cancel").classList.remove("hidden");
   form.scrollIntoView({ behavior: "smooth", block: "center" });
+}
+
+function editManualGuildMember(id) {
+  if (!isManagement()) return;
+  fillManualMemberForm(manualGuildMembers.find(item => item.id === id), "manual");
+}
+
+function editLinkedGuildMember(userId) {
+  if (!isManagement()) return;
+  fillManualMemberForm(allMembers.find(item => item.user_id === userId), "account");
 }
 
 async function updateManualGuildMemberStatus(id) {
@@ -1236,10 +1287,24 @@ async function updateManualGuildMemberStatus(id) {
   const member = manualGuildMembers.find(item => item.id === id);
   if (!member) return;
   const { data, error } = await supabaseClient.from("guild_manual_members")
-    .update({ active: !member.active, updated_by: currentUser.id })
+    .update({ active: !member.active, updated_by: currentUser.id, updated_at: new Date().toISOString() })
     .eq("id", id).select("*").single();
   if (error) { alert("เปลี่ยนสถานะไม่สำเร็จ: " + error.message); return; }
   Object.assign(member, data);
+  renderManualMemberManagement();
+  await loadMembers();
+}
+
+async function updateLinkedGuildMemberStatus(userId) {
+  if (!isManagement()) return;
+  const member = allMembers.find(item => item.user_id === userId);
+  if (!member) return;
+  const { data, error } = await supabaseClient.from("guild_members")
+    .update({ active: !member.active })
+    .eq("user_id", userId).select("*").single();
+  if (error) { alert("เปลี่ยนสถานะไม่สำเร็จ: " + error.message); return; }
+  Object.assign(member, data);
+  if (currentMember?.user_id === userId) Object.assign(currentMember, data);
   renderManualMemberManagement();
   await loadMembers();
 }
@@ -1265,6 +1330,7 @@ function filterMembers() {
       member.discord_name,
       member.role,
       member.display_position,
+      member.guild_position,
       getMemberClass(member),
       member.user_id,
       member.game_uid
@@ -4911,7 +4977,11 @@ function registerAppEventListeners() {
     const edit = event.target.closest("[data-manual-edit]");
     const toggle = event.target.closest("[data-manual-toggle]");
     const remove = event.target.closest("[data-manual-delete]");
-    if (edit) editManualGuildMember(edit.dataset.manualEdit);
+    const accountEdit = event.target.closest("[data-account-edit]");
+    const accountToggle = event.target.closest("[data-account-toggle]");
+    if (accountEdit) editLinkedGuildMember(accountEdit.dataset.accountEdit);
+    else if (accountToggle) updateLinkedGuildMemberStatus(accountToggle.dataset.accountToggle);
+    else if (edit) editManualGuildMember(edit.dataset.manualEdit);
     else if (toggle) updateManualGuildMemberStatus(toggle.dataset.manualToggle);
     else if (remove) deleteManualGuildMember(remove.dataset.manualDelete);
   });
