@@ -4710,3 +4710,42 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 
 
 /* Duck Race controls live inside the arcade scene, opened by the in-game gear */
+
+
+/* TOPBAR — spacing and fully rounded connection status pills */
+.topbar-right {
+  gap: 12px;
+  padding: 6px 10px;
+}
+
+.topbar-right > .conn-item {
+  height: 42px;
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid rgba(205, 160, 120, .28);
+  border-radius: 9999px;
+  background: rgba(25, 12, 16, .72);
+}
+
+.topbar-right > .conn-item:last-of-type {
+  border-right: 1px solid rgba(205, 160, 120, .28);
+}
+
+.topbar-right > .conn-item.conn-discord {
+  text-decoration: none;
+}
+
+.topbar-right > .conn-item.conn-discord:hover {
+  background: rgba(255, 255, 255, .07);
+}
+
+@media (max-width: 760px) {
+  .topbar-right {
+    gap: 8px;
+    padding: 5px 8px;
+  }
+
+  .topbar-right > .conn-item {
+    padding: 0 12px;
+  }
+}
