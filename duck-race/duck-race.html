@@ -1,0 +1,320 @@
+<!-- ===== เกมเป็ดแข่ง: วางโค้ดทั้งก้อนนี้ลงในหน้าเว็บไซต์ (HTML / Custom HTML block) ===== -->
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+#duck-race-root{--bg:#dfeef6;--card:#fff;--tx:#17324a;--mut:#5b7186;--ac:#3aa51f;--bd:#c3d6e3;}#duck-race-root @media (prefers-color-scheme:dark){#duck-race-root{--bg:#0d1f2b;--card:#17303f;--tx:#e8f1f7;--mut:#9fb5c5;--bd:#2c4a5d}}
+
+#duck-race-root *{box-sizing:border-box}
+
+#duck-race-root{color:var(--tx);font-family:"Noto Sans Thai",system-ui,sans-serif;line-height:1.4}#duck-race-root .stage{position:relative;max-width:1100px;margin:0 auto;container-type:inline-size;background:#000;user-select:none}#duck-race-root canvas{display:block;width:100%}#duck-race-root .stage button{font-family:inherit}#duck-race-root .ic{display:flex;position:absolute;left:0;top:0;background:#000}#duck-race-root .ic button{width:max(34px,4.9cqw);height:max(34px,4.9cqw);background:#000;color:#fff;border:0;font-size:max(17px,2.5cqw);cursor:pointer;padding:0}#duck-race-root #bShuf{position:absolute;left:0;top:max(34px,4.9cqw);background:#1a7f37;color:#fff;border:0;font-size:max(9px,1.25cqw);padding:3px 8px;cursor:pointer;border-radius:0 0 6px 0}#duck-race-root .ctl{position:absolute;left:max(70px,16cqw);top:1.6cqw;display:flex;flex-direction:column;align-items:flex-start;gap:max(2px,.8cqw)}#duck-race-root .ctl button{background:none;border:0;color:#fff;font-size:max(13px,2.3cqw);cursor:pointer;padding:0;font-family:Arial,sans-serif}#duck-race-root .ctl .sm{font-size:max(10px,1.4cqw);opacity:.8}#duck-race-root .clock{position:absolute;left:31.5cqw;top:1cqw;width:37cqw;text-align:center;background:#e8e8ff;border:.45cqw solid #333;border-radius:1.4cqw;font:max(22px,8.2cqw)/1.25 Arial,sans-serif;color:#000;box-shadow:0 2px 0 #0003}#duck-race-root .again{position:absolute;left:max(40px,5.5cqw);top:3px;background:#fff;border:3px solid #000;border-radius:12px;padding:5px;font-size:max(9px,1.15cqw);color:#000;z-index:3;width:max(120px,17cqw)}#duck-race-root .again .rm{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:4px}#duck-race-root .again .rm button{border:0;background:none;font-size:1.6em;cursor:pointer;color:#d00;padding:0;line-height:1}#duck-race-root .again .rm button.on{color:#1a9a1a}#duck-race-root #bAgain{width:100%;background:#5cc81a;border:2px solid #2d7a05;border-radius:8px;color:#fff;font-weight:800;font-size:1.5em;padding:3px;cursor:pointer}#duck-race-root #trophy{position:absolute;right:2cqw;bottom:2cqw;width:max(44px,8cqw);height:max(44px,8cqw);border-radius:50%;background:#000;border:3px solid #fff;font-size:max(22px,4cqw);cursor:pointer;z-index:3}#duck-race-root .hide{display:none!important}#duck-race-root .modal{position:fixed;inset:0;background:rgba(5,15,25,.7);display:flex;align-items:center;justify-content:center;padding:14px;z-index:10}#duck-race-root .mc{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:16px;padding:18px;width:min(520px,100%);max-height:100%;overflow:auto}#duck-race-root .mc h2{margin:0 0 10px;font-size:1.3rem}#duck-race-root .tabs{display:flex;gap:8px;margin:12px 0}#duck-race-root .tab{flex:1;padding:9px;border:2px solid var(--bd);background:transparent;color:var(--tx);border-radius:12px;font:inherit;font-weight:600;cursor:pointer}#duck-race-root .tab.on{background:var(--ac);border-color:var(--ac);color:#fff}#duck-race-root label{display:block;font-weight:600;margin:12px 0 6px}#duck-race-root .row{display:flex;align-items:center;gap:10px}#duck-race-root .tm{display:flex;gap:8px}#duck-race-root .tm div{flex:1;text-align:center;font-size:.85rem;color:var(--mut)}#duck-race-root input[type=range]{flex:1;accent-color:var(--ac)}#duck-race-root input[type=number],#duck-race-root textarea{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px;font:inherit}#duck-race-root .tm input{width:100%;text-align:center;font-size:1.5rem;font-weight:800}#duck-race-root #cnt{width:84px;text-align:center;font-weight:800}#duck-race-root textarea{width:100%;min-height:170px;resize:vertical}#duck-race-root .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}#duck-race-root .chip,#duck-race-root .btn{padding:6px 12px;border:1px solid var(--bd);background:transparent;color:var(--tx);border-radius:999px;font:inherit;cursor:pointer;font-size:.9rem}#duck-race-root .hint{color:var(--mut);font-size:.88rem;margin-top:6px}#duck-race-root .go{width:100%;margin-top:16px;padding:13px;border:0;border-radius:12px;background:var(--ac);color:#fff;font:inherit;font-weight:800;font-size:1.1rem;cursor:pointer}#duck-race-root .list{border:1px solid var(--bd);border-radius:10px;margin:10px 0;max-height:55vh;overflow:auto}#duck-race-root .list div{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid var(--bd)}#duck-race-root .list b{width:2.4em;color:var(--mut)}#duck-race-root .list span:last-child{margin-left:auto;color:var(--mut)}
+</style>
+<div id="duck-race-root">
+<div class="stage" id="stage">
+  <canvas id="cv"></canvas>
+  <div class="ic"><button id="bSet" title="ตั้งค่า">⚙</button><button id="bMus" title="เพลง">♫✕</button><button id="bBell" title="เสียงระฆัง">🔔✕</button></div>
+  <button id="bShuf">🔀 Shuffle Characters</button>
+  <div class="ctl"><button id="bGo">Start</button><button id="bClr">Clear</button><button id="bSkip" class="sm">ข้ามไปจบ</button></div>
+  <div class="clock" id="clk">00:00:30</div>
+  <div class="again hide" id="again"><div class="rm"><span>Remove winner from next race?</span><button id="rm" title="ตัดผู้ชนะออกจากรอบถัดไป">✕</button></div><button id="bAgain">Race Again?</button></div>
+  <button id="trophy" class="hide" title="ผลการแข่ง">🏆</button>
+</div>
+
+<div class="modal" id="setM">
+  <div class="mc">
+    <h2>⚙ ตั้งค่าเกม</h2>
+    <label>ตั้งเวลา (ตั้งได้ตั้งแต่ 1 วินาทีถึงหลักชั่วโมง)</label>
+    <div class="tm">
+      <div>ชั่วโมง<input type="number" id="th" min="0" max="99" value="0"></div>
+      <div>นาที<input type="number" id="tmn" min="0" value="0"></div>
+      <div>วินาที<input type="number" id="ts" min="0" value="30"></div>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="tabs"><button class="tab on" id="tN">Numbers (ตามจำนวน)</button><button class="tab" id="tM">Names (กรอกรายชื่อ)</button></div>
+    <div id="pN">
+      <label for="cnt">จำนวนเป็ด (สูงสุด 120 ตัว)</label>
+      <div class="row"><input type="range" id="rng" min="2" max="120" value="10"><input type="number" id="cnt" min="2" max="120" value="10"></div>
+    </div>
+    <div id="pM" class="hide">
+      <label for="names">รายชื่อ (ชื่อละ 1 บรรทัด)</label>
+      <textarea id="names" placeholder="สมชาย&#10;สมหญิง&#10;มานี&#10;..."></textarea>
+      <div class="hint" id="nh">0 รายชื่อ</div>
+    </div>
+    <button class="go" id="save">บันทึกและเข้าเกม</button>
+  </div>
+</div>
+
+<div class="modal hide" id="resM">
+  <div class="mc"><h2 id="winT"></h2><div class="list" id="list"></div><button class="go" id="resX" style="margin:0">ปิด</button></div>
+</div>
+</div>
+<script>
+(function(){
+
+const root=document.getElementById('duck-race-root');
+const $=id=>root.querySelector('#'+id);
+const MUSIC_URL='';/* วางลิงก์ไฟล์เพลงของคุณที่นี่ เช่น 'music/race.mp3' (ถ้าเว้นว่างจะใช้เพลงในเกม) */
+const cv=$('cv'),cx=cv.getContext('2d');
+const MAXN=120,SL=.42,NEED=20;
+let W=1000,H=566,DPR=1,D=2000,mode='num',roster=[],ducks=[],rmWin=false,musOn=false,bellOn=false;
+let S={st:'idle',t:0,T:30,sc:1,cam:0,last:0,fin:false};
+
+/* ---------- costumes (every duck is unique) ---------- */
+const BODY=['#ffd84a','#e63946','#f78fb3','#8e44ad','#2fcf3a','#a7d129','#2f6fe0','#6ec6ff','#ff7a00','#14a8a0','#f4f4f4','#4a4a4a','#8d5524','#9aa5b1','#e0409a','#fff08a'];
+const COL=['#d62828','#2f6fe0','#2fcf3a','#8e44ad','#ff7a00','#f78fb3','#14a8a0','#151515','#ffffff','#f4b400','#6ec6ff','#8d5524'];
+const HATS=['chef','top','crown','hard','helmet','cap','santa','pirate','guard','party','beanie','cowboy'],WIGS=['afro','mohawk','long','curly','pigtail','bob'];
+const GL=['round','shades','star','heart','goggles','monocle'],NK=['bow','scarf'],SH=['solid','stripe','dots','sailor','vest','check'],SUITS=['straw','bee','dino','uni','snow','mask'];
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+function genCo(){
+  const co={};
+  if(Math.random()<.28){co.su=rnd(SUITS);co.c=rnd(COL);
+    co.bc={straw:'#d62828',bee:'#ffd84a',dino:co.c,uni:rnd(['#ffffff','#f78fb3','#c7a6ff','#a8e6ff']),snow:'#eaf8ff',mask:rnd(BODY)}[co.su]}
+  else{co.bc=rnd(BODY);if(Math.random()<.2)co.st='dots';
+    const noH=Math.random()<.12;
+    if(!noH){co.h=rnd(HATS.concat(WIGS,WIGS));co.hc=rnd(COL)}
+    if(noH||Math.random()<.75){co.sh=rnd(SH);co.s1=rnd(COL.filter(x=>x!==co.bc));co.s2=rnd(COL.filter(x=>x!==co.s1));
+      if(co.sh==='sailor')co.s1='#ffffff';if(co.sh==='solid')delete co.s2}}
+  if(Math.random()<.6||(!co.h&&!co.su))co.gl=rnd(GL);
+  if(Math.random()<.4){co.nk=rnd(NK);co.nc=rnd(COL)}
+  return co;
+}
+function assignCo(list){const used=new Set();list.forEach(r=>{let co,n=0;do{co=genCo()}while(used.has(JSON.stringify(co))&&++n<800);used.add(JSON.stringify(co));r.co=co})}
+
+/* ---------- duck drawing: fluffy front-facing duck (unit coords, width = 1) ---------- */
+const shade=(h,f)=>{const n=parseInt(h.slice(1),16),m=v=>Math.max(0,Math.min(255,Math.round(v*f)));return '#'+[n>>16,n>>8&255,n&255].map(v=>m(v).toString(16).padStart(2,'0')).join('')};
+const PI=Math.PI,PH=new Path2D(),PB=new Path2D(),PD=new Path2D();
+PH.ellipse(0,-.38,.39,.34,0,0,7);PH.moveTo(.36,.12);PH.ellipse(0,.12,.36,.38,0,0,7);
+PB.ellipse(0,.12,.36,.38,0,0,7);PD.ellipse(0,-.38,.39,.34,0,0,7);
+function drawDuck(k,x,y,s,t){
+  const c=cx,co=k.r.co,bc=co.bc,hc=co.hc,lw=.02,ol=co.ol||(co.ol=shade(bc,.6)),INK='#2b2100';
+  const FS=(col,o)=>{c.fillStyle=col;c.fill();c.lineWidth=lw;c.strokeStyle=o||INK;c.stroke()};
+  const circ=(a,b,r,col,o)=>{c.beginPath();c.arc(a,b,r,0,7);FS(col,o)};
+  const R=(a,b,w,h,col)=>{c.beginPath();c.rect(a,b,w,h);FS(col)};
+  const poly=(pts,col,o)=>{c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();FS(col,o)};
+  const star=(a,b,Ro,ri,col)=>{c.beginPath();for(let i=0;i<10;i++){const rr=i%2?ri:Ro,an=-PI/2+i*PI/5;c.lineTo(a+rr*Math.cos(an),b+rr*Math.sin(an))}c.closePath();FS(col)};
+  const heart=(a,b,z,col)=>{c.beginPath();c.moveTo(a,b+z);c.bezierCurveTo(a-z*1.4,b-z*.2,a-z*.6,b-z*1.2,a,b-z*.5);c.bezierCurveTo(a+z*.6,b-z*1.2,a+z*1.4,b-z*.2,a,b+z);FS(col)};
+  const line=(a,b,d,e,col,w)=>{c.beginPath();c.moveTo(a,b);c.lineTo(d,e);c.lineWidth=w||lw;c.strokeStyle=col||INK;c.stroke()};
+  const yb=y+Math.sin(t*4+k.ph)*s*.03;
+  c.save();c.translate(x,yb);c.rotate(Math.sin(t*3+k.ph)*.05);c.scale(s,s);c.lineJoin='round';c.lineCap='round';
+  c.fillStyle='rgba(255,255,255,.3)';c.beginPath();c.ellipse(0,.56,.55,.09,0,0,7);c.fill();
+  // wigs behind the head
+  if(co.h==='afro')circ(0,-.52,.5,hc,shade(hc,.6));
+  if(co.h==='bob'){c.beginPath();c.ellipse(0,-.35,.46,.42,0,0,7);FS(hc,shade(hc,.6))}
+  if(co.h==='long'){c.beginPath();c.ellipse(0,-.2,.46,.55,0,0,7);FS(hc,shade(hc,.6))}
+  if(co.h==='pigtail'){circ(-.44,-.45,.12,hc,shade(hc,.6));circ(.44,-.45,.12,hc,shade(hc,.6));circ(-.47,-.28,.1,hc,shade(hc,.6));circ(.47,-.28,.1,hc,shade(hc,.6))}
+  if(co.h==='curly')for(let i=0;i<10;i++){const a=PI*.9+i*PI*.133;circ(.46*Math.cos(a),-.38+.42*Math.sin(a),.1,hc,shade(hc,.6))}
+  if(co.su==='bee'){[-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.3,-.15,.1,.26,d*.5,0,7);FS('rgba(255,255,255,.85)','#7a7a7a')})}
+  // feet
+  const fp=Math.sin(t*9+k.ph)*.025;
+  [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.17,.52+fp*d,.14,.055,0,0,7);FS('#f0a020','#8a5a00');[-.07,0,.07].forEach(o=>circ(d*.17+o,.56+fp*d,.03,'#f0a020','#8a5a00'))});
+  // wings
+  [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.45,.1,.1,.18,d*.3,0,7);FS(bc,ol)});
+  // body + head
+  c.lineWidth=lw*2;c.strokeStyle=ol;c.stroke(PH);c.fillStyle=bc;c.fill(PH);
+  c.fillStyle='rgba(255,255,255,.2)';c.beginPath();c.ellipse(-.12,-.56,.2,.09,-.3,0,7);c.fill();
+  c.beginPath();c.ellipse(0,.24,.25,.24,0,0,7);c.fill();
+  c.save();c.clip(PH);
+  if(co.st==='dots'){c.fillStyle='rgba(255,255,255,.55)';for(let i=0;i<7;i++)for(let j=0;j<7;j++){c.beginPath();c.arc(-.36+i*.12+(j%2)*.06,-.62+j*.17,.035,0,7);c.fill()}}
+  if(co.su==='straw'){c.fillStyle='#ffe066';for(let i=0;i<9;i++)for(let j=0;j<7;j++){c.beginPath();c.ellipse(-.4+i*.1+(j%2)*.05,-.62+j*.19,.018,.03,0,0,7);c.fill()}}
+  if(co.su==='mask'){c.save();c.clip(PD);c.fillStyle=co.c;c.fillRect(-.5,-.8,1,.5);c.restore();star(0,-.6,.1,.045,'#fff')}
+  c.restore();
+  if(co.su==='bee'){c.save();c.clip(PB);c.fillStyle='#151515';[.02,.2,.38].forEach(v=>c.fillRect(-.5,v,1,.08));c.restore()}
+  // shirt (below the collar)
+  if(co.sh){c.save();c.clip(PB);c.fillStyle=co.s1;c.fillRect(-.5,0,1,.7);c.fillStyle=co.s2||co.s1;
+    if(co.sh==='stripe'||co.sh==='sailor')for(let v=.02;v<.55;v+=.1)c.fillRect(-.5,v,1,.05);
+    if(co.sh==='dots')for(let i=0;i<6;i++)for(let j=0;j<5;j++){c.beginPath();c.arc(-.3+i*.12+(j%2)*.06,.06+j*.11,.03,0,7);c.fill()}
+    if(co.sh==='vest'){c.fillRect(-.03,0,.06,.7);c.fillStyle='#111';c.fillRect(.08,.15,.04,.04);c.fillRect(.08,.3,.04,.04)}
+    if(co.sh==='check'){c.globalAlpha=.7;for(let v=-.4;v<.5;v+=.14)c.fillRect(v,0,.04,.7);for(let v=.04;v<.6;v+=.14)c.fillRect(-.5,v,1,.04);c.globalAlpha=1}
+    c.restore();c.beginPath();c.ellipse(0,.12,.36,.38,0,0,PI);c.lineWidth=lw*1.6;c.strokeStyle=ol;c.stroke()}
+  // collar, straps, bell
+  c.beginPath();c.moveTo(-.34,-.08);c.quadraticCurveTo(0,.06,.34,-.08);c.lineTo(.33,-.03);c.quadraticCurveTo(0,.11,-.33,-.03);c.closePath();FS('#8a3a2a','#4a1a10');
+  line(-.33,-.01,-.41,.17,'#4a3020',.025);line(.33,-.01,.41,.17,'#4a3020',.025);
+  if(co.nk==='bow'){poly([[0,.03],[-.14,-.05],[-.14,.1]],co.nc);poly([[0,.03],[.14,-.05],[.14,.1]],co.nc);circ(0,.03,.04,co.nc)}
+  else if(co.nk==='scarf'||co.su==='snow'){const sc=co.nc||co.c;c.beginPath();c.moveTo(-.34,-.09);c.quadraticCurveTo(0,.05,.34,-.09);c.lineTo(.33,.01);c.quadraticCurveTo(0,.14,-.33,.01);c.closePath();FS(sc);poly([[.1,.06],[.24,.04],[.2,.3],[.08,.28]],sc)}
+  else{circ(0,.11,.07,'#e0c060','#6a5010');line(-.05,.12,.05,.12,'#6a5010',.012);circ(0,.03,.018,'#c9a84a','#6a5010')}
+  // front hair
+  if(['afro','bob','long','pigtail','curly'].includes(co.h)){c.beginPath();c.ellipse(0,-.38,.4,.35,0,PI*1.2,PI*1.8);c.closePath();FS(hc,shade(hc,.6))}
+  if(co.h==='mohawk')poly([[-.1,-.66],[-.08,-.88],[-.03,-.74],[0,-.94],[.04,-.74],[.09,-.88],[.1,-.66]],hc,shade(hc,.6));
+  if(!co.h&&!co.su){poly([[-.05,-.7],[-.17,-.84],[-.1,-.68]],'#3a2a1a');poly([[.05,-.7],[.18,-.85],[.1,-.68]],'#3a2a1a')}
+  // eyes + beak
+  [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.2,-.4,.075,.08,0,0,7);FS('#fff',shade(bc,.5));circ(d*.19,-.39,.037,'#1a1a1a','#1a1a1a')});
+  c.beginPath();c.ellipse(0,-.29,.2,.08,0,0,7);FS('#ebb82a','#8a6a00');line(-.12,-.3,.12,-.3,'#a07a10',.012);
+  // glasses
+  const g2=f=>[-1,1].forEach(d=>f(d*.2));
+  switch(co.gl){
+   case 'round':g2(a=>circ(a,-.4,.115,'rgba(190,235,255,.5)','#111'));line(-.09,-.4,.09,-.4,'#111',.02);break;
+   case 'shades':c.beginPath();c.roundRect(-.36,-.48,.72,.15,.05);FS('#111','#000');line(-.25,-.45,-.15,-.45,'rgba(255,255,255,.5)',.02);break;
+   case 'star':g2(a=>star(a,-.4,.14,.06,'#ff4fa3'));break;
+   case 'heart':g2(a=>heart(a,-.4,.09,'#e0203a'));break;
+   case 'goggles':R(-.42,-.42,.84,.04,'#333');g2(a=>circ(a,-.4,.12,'rgba(255,190,0,.6)','#333'));break;
+   case 'monocle':c.beginPath();c.arc(.2,-.4,.11,0,7);c.lineWidth=lw*1.4;c.strokeStyle='#d4a000';c.stroke();line(.2,-.29,.32,.1,'#d4a000',.012);break;
+  }
+  // angry brows
+  line(-.32,-.53,-.13,-.46,'#3a2a1a',.045);line(.32,-.53,.13,-.46,'#3a2a1a',.045);
+  // headwear / suit top (origin on top of head)
+  c.save();c.translate(0,-.64);
+  switch(co.su||co.h){
+   case 'chef':circ(-.15,-.14,.13,'#fff');circ(.15,-.14,.13,'#fff');circ(0,-.22,.15,'#fff');R(-.22,-.08,.44,.14,'#fff');R(-.22,0,.44,.05,hc);break;
+   case 'top':R(-.16,-.4,.32,.42,hc);R(-.28,-.04,.56,.06,hc);R(-.16,-.1,.32,.05,'#c1121f');break;
+   case 'crown':poly([[-.2,0],[-.2,-.22],[-.1,-.12],[0,-.28],[.1,-.12],[.2,-.22],[.2,0]],hc);circ(0,-.08,.03,'#d62828');break;
+   case 'hard':c.beginPath();c.arc(0,0,.3,PI,0);c.closePath();FS(hc);R(-.34,-.02,.68,.05,hc);R(-.04,-.3,.08,.26,shade(hc,.8));break;
+   case 'helmet':c.beginPath();c.arc(0,.05,.36,PI,0);c.closePath();FS(hc);R(-.3,-.04,.6,.08,'#222');circ(0,-.22,.04,'#fff');break;
+   case 'cap':c.beginPath();c.arc(0,0,.3,PI,0);c.closePath();FS(hc);c.beginPath();c.ellipse(0,.02,.3,.05,0,0,7);FS(hc);break;
+   case 'beanie':c.beginPath();c.arc(0,.02,.32,PI,0);c.closePath();FS(hc);R(-.32,-.04,.64,.08,'#fff');circ(0,-.34,.07,'#fff');break;
+   case 'santa':poly([[-.28,.02],[.28,.02],[.1,-.42]],'#d62828');circ(.1,-.44,.07,hc);R(-.3,-.04,.6,.09,hc);break;
+   case 'pirate':poly([[-.34,.02],[.34,.02],[.26,-.2],[0,-.32],[-.26,-.2]],'#151515');circ(0,-.1,.05,hc);break;
+   case 'guard':R(-.16,-.5,.32,.5,'#151515');R(-.16,-.14,.32,.06,hc);break;
+   case 'party':poly([[-.15,.02],[.15,.02],[0,-.46]],hc);circ(0,-.48,.05,'#ffe14d');break;
+   case 'cowboy':R(-.18,-.28,.36,.3,hc);c.beginPath();c.ellipse(0,.02,.4,.07,0,0,7);FS(hc);break;
+   case 'straw':c.beginPath();c.ellipse(-.1,-.06,.12,.045,-.4,0,7);FS('#2e9e44');c.beginPath();c.ellipse(.1,-.06,.12,.045,.4,0,7);FS('#2e9e44');break;
+   case 'bee':line(-.08,-.04,-.18,-.3);line(.08,-.04,.18,-.3);circ(-.18,-.31,.04,co.c);circ(.18,-.31,.04,co.c);break;
+   case 'dino':c.beginPath();c.ellipse(0,.02,.34,.3,0,PI,0);c.closePath();FS(bc,ol);circ(-.14,-.28,.08,'#fff');circ(.14,-.28,.08,'#fff');circ(-.14,-.28,.03,'#111');circ(.14,-.28,.03,'#111');poly([[-.07,-.2],[0,-.36],[.07,-.2]],'#fff',ol);break;
+   case 'uni':poly([[-.06,-.02],[.06,-.02],[0,-.4]],'#ffd95a');[-1,1].forEach(d=>{circ(d*.4,.15,.1,co.c);circ(d*.44,.3,.1,'#3b82f6');circ(d*.42,.45,.1,'#2fcf3a')});break;
+   case 'snow':R(-.16,-.4,.32,.42,co.c);R(-.28,-.04,.56,.06,co.c);R(-.16,-.1,.32,.05,'#fff');break;
+  }
+  c.restore();c.restore();
+  // number / name tag on the belly
+  const tx=x,ty=yb+s*.34;let fs=s*.17,txt=k.r.label;
+  c.font='700 '+fs+'px "Noto Sans Thai",Arial,sans-serif';
+  const maxw=s*.55;let w=c.measureText(txt).width;
+  while(w>maxw&&fs>6){fs-=1;c.font='700 '+fs+'px "Noto Sans Thai",Arial,sans-serif';w=c.measureText(txt).width}
+  if(w>maxw){while(txt.length>2&&c.measureText(txt+'…').width>maxw)txt=txt.slice(0,-1);txt+='…';w=c.measureText(txt).width}
+  const bw=Math.max(s*.32,w+s*.1),bh=Math.max(fs*1.5,s*.2);
+  c.fillStyle='#fff';c.strokeStyle='#5a4a2a';c.lineWidth=Math.max(1,s*.018);
+  c.beginPath();c.roundRect(tx-bw/2,ty-bh/2,bw,bh,bh/2);c.fill();c.stroke();
+  c.fillStyle='#111';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,tx,ty+fs*.05);
+}
+
+/* ---------- scene ---------- */
+function size(){
+  W=$('stage').clientWidth;H=Math.round(Math.max(280,W*.566));DPR=window.devicePixelRatio||1;
+  cv.width=W*DPR;cv.height=H*DPR;cv.style.height=H+'px';D=W*2.2;
+}
+addEventListener('resize',size);
+const bank=()=>H*.25;
+const duckSize=()=>Math.max(26,Math.min(W*.11,W*.78/Math.sqrt(Math.max(1,ducks.length))));
+function checker(wx,cam){
+  const q=Math.max(14,H/26),top=bank()-q;
+  cx.save();cx.translate(wx-cam+SL*bank(),0);cx.transform(1,0,-SL,1,0,0);
+  for(let y=top,i=0;y<H+q;y+=q,i++){cx.fillStyle=i%2?'#111':'#fff';cx.fillRect(0,y,q,q);cx.fillStyle=i%2?'#fff':'#111';cx.fillRect(q,y,q,q)}
+  cx.lineWidth=3;cx.strokeStyle='#111';cx.strokeRect(0,top,q*2,H+q-top);cx.restore();
+}
+function scene(cam,t){
+  const c=cx,B=bank();
+  let g=c.createLinearGradient(0,B,0,H);g.addColorStop(0,'#3f8fab');g.addColorStop(1,'#2a6c88');
+  c.fillStyle=g;c.fillRect(0,B,W,H-B);
+  for(let r=0;r<7;r++){const y0=B+(r+.4)*(H-B)/7,ph=r*1.9+t*.4;
+    c.fillStyle=r%2?'rgba(130,205,230,.28)':'rgba(25,80,110,.22)';c.beginPath();c.moveTo(0,y0+16);
+    for(let x=0;x<=W;x+=10)c.lineTo(x,y0+Math.sin((x+cam)/55+ph)*5);
+    for(let x=W;x>=0;x-=10)c.lineTo(x,y0+14+Math.sin((x+cam)/55+ph+.5)*5);c.fill()}
+  g=c.createLinearGradient(0,0,0,B);g.addColorStop(0,'#00b800');g.addColorStop(1,'#19cf19');c.fillStyle=g;c.fillRect(0,0,W,B);
+  const bs=H*.075;
+  for(let i=-1;i<W/320+2;i++){const wx=i*320+((Math.floor((cam)/320))*320),x=wx-cam+(i*0);
+    const bx=wx-cam+60;c.fillStyle='#1f9d1f';c.strokeStyle='#0c5a0c';c.lineWidth=2;
+    c.beginPath();c.ellipse(bx,B-bs*.55,bs,bs*.7,0,0,7);c.fill();c.stroke();c.beginPath();c.ellipse(bx+bs*.7,B-bs*.4,bs*.6,bs*.5,0,0,7);c.fill();c.stroke();
+    c.strokeStyle='#0a8a0a';c.beginPath();c.moveTo(wx-cam+210,B-14);c.lineTo(wx-cam+206,B-26);c.moveTo(wx-cam+214,B-14);c.lineTo(wx-cam+216,B-26);c.moveTo(wx-cam+218,B-14);c.lineTo(wx-cam+224,B-24);c.stroke()}
+  c.fillStyle='#6b3f14';c.beginPath();c.moveTo(0,B-4);for(let x=0;x<=W;x+=12)c.lineTo(x,B-4+Math.sin((x+cam)/9)*2);c.lineTo(W,B+8);c.lineTo(0,B+8);c.fill();
+}
+const hms=n=>{n=Math.max(0,Math.ceil(n));const p=v=>String(v).padStart(2,'0');return p(Math.floor(n/3600))+':'+p(Math.floor(n%3600/60))+':'+p(n%60)};
+const dist=(d,t)=>t+.35/d.a*(Math.cos(d.p)-Math.cos(d.a*t+d.p))+.2/d.b*(Math.cos(d.q)-Math.cos(d.b*t+d.q));
+const prog=k=>{const pT=D/NEED*dist(k,Math.min(S.t,S.T)*S.sc);if(S.t<=S.T)return pT;const u=Math.min(1,(S.t-S.T)/5),e=1-Math.pow(1-u,3);return k.win?pT+W*.5*e:pT+(D-pT)*e};
+
+function frame(now){
+  const dt=Math.min(.05,(now-S.last)/1000);S.last=now;
+  if(S.st==='run'){
+    S.t+=dt;
+    if(S.t>=S.T&&!S.fin)onFinish();
+    if(S.t>=S.T+5.5){S.t=S.T+5.5;S.st='done'}
+  }
+  const s=duckSize(),B=bank(),yMin=B+s*.4,yMax=H-s*.62,n=ducks.length;
+  const X0=W*.2,rows=ducks.map(k=>{const y=yMin+(k.slot+.5)/n*(yMax-yMin)+Math.sin(S.t*.9+k.ph)*s*.03;
+    return{k,y,x:X0-SL*(y-B)-s*.5+prog(k)+(S.t<S.T?Math.sin(S.t*1.3+k.ph)*s*.02:0)}});
+  const lead=rows.reduce((m,o)=>Math.max(m,o.x+SL*(o.y-B)),0);
+  S.cam+=(Math.max(0,lead-W*.62)-S.cam)*Math.min(1,dt*3);
+  scene(S.cam,now/1000);
+  checker(X0,S.cam);checker(X0+D,S.cam);
+  rows.sort((a,b)=>a.y-b.y).forEach(o=>drawDuck(o.k,o.x-S.cam,o.y,s,now/1000));
+  $('clk').textContent=hms(S.T-S.t);
+  requestAnimationFrame(frame);
+}
+
+/* ---------- race control ---------- */
+function reset(){
+  const n=roster.length,slots=[...Array(n).keys()].sort(()=>Math.random()-.5);
+  ducks=roster.map((r,i)=>({r,slot:slots[i],ph:Math.random()*6.28,a:.8+Math.random()*1.6,b:2+Math.random()*3,p:Math.random()*6.28,q:Math.random()*6.28}));
+  let best=1e9;
+  ducks.forEach(k=>{let t=0;while(dist(k,t)<NEED&&t<999)t+=.01;k.tf=t;best=Math.min(best,t)});
+  S={st:'idle',t:0,T:cfg.T,sc:best/cfg.T,cam:0,last:performance.now(),fin:false};
+  ducks.forEach(k=>k.fin=k.tf/S.sc);ducks.forEach(k=>k.win=false);order()[0].win=true;
+  $('bGo').textContent='Start';$('again').classList.add('hide');$('trophy').classList.add('hide');
+  rmWin=false;$('rm').classList.remove('on');$('rm').textContent='✕';
+}
+const order=()=>ducks.slice().sort((a,b)=>a.fin-b.fin);
+function onFinish(){
+  S.fin=true;$('bGo').textContent='Start';
+  $('again').classList.remove('hide');$('trophy').classList.remove('hide');
+  if(bellOn)bell();
+  const w=order()[0].r.label;
+  $('winT').textContent='🏆 ผู้ชนะ: '+(/^\d+$/.test(w)?'เป็ดหมายเลข ':'')+w;
+  $('list').innerHTML='';
+  order().forEach((k,i)=>{const d=document.createElement('div');d.innerHTML='<b>'+(i+1)+'</b><span></span><span>'+hms(Math.min(k.fin,99*3600)).slice(0)+'</span>';d.children[1].textContent=k.r.label;$('list').appendChild(d)});
+}
+$('bGo').onclick=()=>{
+  if(S.fin)return;
+  if(S.st==='run'){S.st='paused';$('bGo').textContent='Start'}
+  else{S.st='run';$('bGo').textContent='Pause';ac()}
+};
+$('bClr').onclick=reset;
+$('bSkip').onclick=()=>{if(!S.fin){S.t=S.T;S.st='run';$('bGo').textContent='Start';onFinish()}};
+$('bShuf').onclick=()=>assignCo(roster);
+$('rm').onclick=()=>{rmWin=!rmWin;$('rm').classList.toggle('on',rmWin);$('rm').textContent=rmWin?'✓':'✕'};
+$('bAgain').onclick=()=>{
+  if(rmWin){const w=order()[0].r;roster=roster.filter(r=>r!==w)}
+  if(roster.length<2){alert('เหลือเป็ดไม่ถึง 2 ตัว กรุณาตั้งค่าใหม่');openSet();return}
+  reset();S.st='run';$('bGo').textContent='Pause';
+};
+$('trophy').onclick=()=>$('resM').classList.remove('hide');
+$('resX').onclick=()=>$('resM').classList.add('hide');
+
+/* ---------- sound ---------- */
+let AC=null;const ac=()=>{if(!AC)try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}if(AC&&AC.state==='suspended')AC.resume()};
+function tone(f,d,type,v){if(!AC)return;const o=AC.createOscillator(),g=AC.createGain();o.type=type;o.frequency.value=f;g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);o.connect(g);g.connect(AC.destination);o.start();o.stop(AC.currentTime+d)}
+function bell(){ac();tone(880,1.2,'sine',.3);setTimeout(()=>tone(1320,1.4,'sine',.25),180)}
+let mt=null,mi=0,aud=null;
+const ROOT=[130.8,98,110,87.3],LEAD=[[523,659,784,659,523,659,784,1047],[494,587,784,587,494,587,784,988],[440,523,659,523,440,523,659,880],[349,440,523,440,349,440,523,698]];
+function stopMus(){clearInterval(mt);if(aud)aud.pause()}
+function startMus(){stopMus();
+  if(MUSIC_URL){if(!aud){aud=new Audio(MUSIC_URL);aud.loop=true;aud.volume=.6}aud.play().catch(()=>{});return}
+  ac();if(!AC)return;
+  mt=setInterval(()=>{if(S.st!=='run')return;const bar=Math.floor(mi/8)%4,n=mi%8;
+    tone(ROOT[bar]*(n%4===2?2:1),.17,'triangle',.12);tone(LEAD[bar][n],.15,'square',.035);if(n%2)tone(6000,.03,'square',.012);mi++},190)}
+$('bMus').onclick=()=>{musOn=!musOn;$('bMus').textContent=musOn?'♫✓':'♫✕';if(musOn)startMus();else stopMus()};
+$('bBell').onclick=()=>{bellOn=!bellOn;$('bBell').textContent=bellOn?'🔔✓':'🔔✕';ac();if(bellOn)tone(880,.4,'sine',.15)};
+
+/* ---------- settings ---------- */
+let cfg={T:30};
+function setMode(m){mode=m;$('tN').classList.toggle('on',m==='num');$('tM').classList.toggle('on',m==='names');$('pN').classList.toggle('hide',m!=='num');$('pM').classList.toggle('hide',m!=='names')}
+$('tN').onclick=()=>setMode('num');$('tM').onclick=()=>setMode('names');
+const clampN=v=>Math.max(2,Math.min(MAXN,Math.round(+v)||2));
+$('rng').oninput=e=>$('cnt').value=e.target.value;
+$('cnt').onchange=e=>{e.target.value=clampN(e.target.value);$('rng').value=e.target.value};
+const getNames=()=>$('names').value.split('\n').map(s=>s.trim()).filter(Boolean);
+$('names').oninput=()=>{const n=getNames().length;$('nh').textContent=n+' รายชื่อ'+(n>MAXN?' (ใช้เฉพาะ '+MAXN+' รายชื่อแรก)':n<2?' (ต้องมีอย่างน้อย 2)':'')};
+[[10,'10 วิ'],[30,'30 วิ'],[60,'1 นาที'],[300,'5 นาที'],[600,'10 นาที'],[1800,'30 นาที'],[3600,'1 ชั่วโมง']].forEach(([t,l])=>{
+  const b=document.createElement('button');b.className='chip';b.textContent=l;
+  b.onclick=()=>{$('th').value=Math.floor(t/3600);$('tmn').value=Math.floor(t%3600/60);$('ts').value=t%60};$('chips').appendChild(b)});
+function openSet(){$('setM').classList.remove('hide')}
+$('bSet').onclick=openSet;
+$('save').onclick=()=>{
+  const T=Math.round((+$('th').value||0)*3600+(+$('tmn').value||0)*60+(+$('ts').value||0));
+  if(T<1){alert('กรุณาตั้งเวลาอย่างน้อย 1 วินาที');return}
+  if(T>99*3600+3599){alert('เวลามากสุด 99 ชั่วโมง');return}
+  let labels;
+  if(mode==='num')labels=Array.from({length:clampN($('cnt').value)},(_,i)=>String(i+1));
+  else{labels=getNames().slice(0,MAXN);if(labels.length<2){alert('กรุณากรอกรายชื่ออย่างน้อย 2 รายชื่อ');return}}
+  cfg={T};roster=labels.map(l=>({label:l}));assignCo(roster);
+  $('setM').classList.add('hide');reset();
+};
+size();roster=Array.from({length:10},(_,i)=>({label:String(i+1)}));assignCo(roster);reset();
+requestAnimationFrame(frame);
+
+})();
+</script>
