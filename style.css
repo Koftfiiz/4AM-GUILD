@@ -4710,3 +4710,13 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 
 
 /* Duck Race controls live inside the arcade scene, opened by the in-game gear */
+
+
+/* WAR PARTY MANAGEMENT — distinct raid identity colors */
+#page-war .raid-badge.raid-a { background:linear-gradient(180deg,#b32233,#6f121e); box-shadow:0 0 14px rgba(200,30,46,.4); }
+#page-war .raid-badge.raid-b { background:linear-gradient(180deg,#3a58a8,#1f3166); box-shadow:0 0 14px rgba(70,110,220,.4); }
+#page-war .raid-badge.raid-c { background:linear-gradient(180deg,#23865d,#124b39); box-shadow:0 0 14px rgba(45,190,125,.38); }
+#page-war .raid-badge.raid-d { background:linear-gradient(180deg,#9a6a27,#5d3c17); box-shadow:0 0 14px rgba(220,160,65,.38); }
+
+/* Make the Official / Practice choices easier to read */
+#page-war .war-mode-option strong { font-size:17px; line-height:1.35; }
