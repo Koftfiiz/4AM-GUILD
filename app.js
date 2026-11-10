@@ -38,6 +38,8 @@ let warRealtimeChannel = null;
 let registrationBusy = false;
 let warArrangeMode = false;
 let warAssignmentFilter="all",warAssignmentClassFilter="all",warAssignmentSearch="",warAssignmentSignups=[],warAssignmentLeaves=[],warAssignmentAbsentees=[],warAssignmentRosterSnapshot=[],warAssignmentModalSlot=null;
+let warSkillCatalog=[],warMemberSkillMap=new Map(),warSkillLoadError="";
+const WAR_SKILL_BUCKET="war-skill-icons";
 
 const $ = (id) => document.getElementById(id);
 
@@ -2192,6 +2194,7 @@ async function loadWarEvents() {
   }
 
   allWarEvents = data || [];
+  await loadWarSkillData();
   renderWarEvents();
   renderWarLayout(selectedWarEventId);
 }
@@ -2298,11 +2301,105 @@ function getWarMemberOptions(className, selectedMemberId = "") {
     .join("");
 }
 
+
+function getWarSkillIconUrl(path){
+ if(!path)return "";
+ if(/^https?:\\/\\//i.test(path))return path;
+ return supabaseClient.storage.from(WAR_SKILL_BUCKET).getPublicUrl(path).data?.publicUrl||"";
+}
+function getMemberSkillIconsMarkup(memberId){
+ const skills=warMemberSkillMap.get(memberId)||[];
+ return skills.map(skill=>`<img class="war-member-skill-icon" src="${escapeHTML(skill.iconUrl||"")}" alt="${escapeHTML(skill.skill_name)}" title="${escapeHTML(skill.skill_name)}" loading="lazy">`).join("");
+}
+async function loadWarSkillData(){
+ const [catalogResult,memberResult]=await Promise.all([
+  supabaseClient.from("war_skill_catalog").select("id,game_class,skill_name,icon_path,created_at").order("game_class").order("skill_name"),
+  supabaseClient.from("guild_member_skills").select("member_id,skill_id")
+ ]);
+ if(catalogResult.error||memberResult.error){
+  warSkillLoadError=(catalogResult.error||memberResult.error).message||"ไม่สามารถโหลดคลัง Skill ได้";
+  console.warn("War Skill data is not ready:",warSkillLoadError);
+  warSkillCatalog=[];warMemberSkillMap=new Map();renderWarSkillManager();return;
+ }
+ warSkillLoadError="";
+ warSkillCatalog=(catalogResult.data||[]).map(skill=>({...skill,iconUrl:getWarSkillIconUrl(skill.icon_path)}));
+ const byId=new Map(warSkillCatalog.map(skill=>[skill.id,skill]));
+ warMemberSkillMap=new Map();
+ (memberResult.data||[]).forEach(row=>{
+  const skill=byId.get(row.skill_id);if(!skill)return;
+  const list=warMemberSkillMap.get(row.member_id)||[];list.push(skill);warMemberSkillMap.set(row.member_id,list);
+ });
+ renderWarSkillManager();
+}
+function renderWarSkillManager(){
+ const panel=$("war-skill-management"),toggle=$("war-skill-library-toggle"),classSelect=$("war-skill-class"),list=$("war-skill-library-list");
+ const manager=isManagement();
+ if(toggle)toggle.classList.toggle("hidden",!manager);
+ if(panel&&!manager)panel.classList.add("hidden");
+ if(classSelect&&!classSelect.options.length)classSelect.innerHTML=CLASS_DATA.map(item=>`<option value="${escapeHTML(item.name)}">${escapeHTML(item.name)}</option>`).join("");
+ if(!list)return;
+ if(warSkillLoadError){list.innerHTML=`<p class="war-skill-error">ยังโหลดคลัง Skill ไม่ได้: ${escapeHTML(warSkillLoadError)}<br>กรุณารันไฟล์ SQL migration ใน Supabase ก่อน</p>`;return;}
+ if(!warSkillCatalog.length){list.innerHTML='<p class="muted">ยังไม่มี Skill ในคลัง · เพิ่ม Skill แรกได้จากแบบฟอร์มด้านบน</p>';return;}
+ list.innerHTML=CLASS_DATA.map(cls=>{
+  const skills=warSkillCatalog.filter(skill=>skill.game_class.toLowerCase()===cls.name.toLowerCase());
+  if(!skills.length)return "";
+  return `<section class="war-skill-class-group"><h4>${escapeHTML(cls.name)}</h4><div class="war-skill-library-grid">${skills.map(skill=>`<article class="war-skill-library-item"><img src="${escapeHTML(skill.iconUrl)}" alt=""><span>${escapeHTML(skill.skill_name)}</span><button type="button" class="btn btn-danger btn-sm" data-war-skill-delete="${escapeHTML(skill.id)}" aria-label="ลบ ${escapeHTML(skill.skill_name)}">ลบ</button></article>`).join("")}</div></section>`;
+ }).join("");
+}
+async function saveWarSkillDefinition(event){
+ event.preventDefault();if(!isManagement())return;
+ const name=$("war-skill-name")?.value.trim(),gameClass=$("war-skill-class")?.value,file=$("war-skill-icon")?.files?.[0],status=$("war-skill-form-status"),button=$("war-skill-submit");
+ if(!name||!gameClass||!file){if(status)status.textContent="กรุณากรอกชื่อ เลือก Class และเลือกไอคอน";return;}
+ if(!file.type.startsWith("image/")||file.size>3*1024*1024){if(status)status.textContent="ไฟล์ต้องเป็นรูปภาพและมีขนาดไม่เกิน 3 MB";return;}
+ if(button){button.disabled=true;button.textContent="กำลังเพิ่ม Skill...";}
+ if(status)status.textContent="กำลังอัปโหลดไอคอนและบันทึกข้อมูล...";
+ const extension=(file.name.split(".").pop()||"png").toLowerCase().replace(/[^a-z0-9]/g,"")||"png";
+ const path=`skills/${Date.now()}-${Math.random().toString(36).slice(2,9)}.${extension}`;
+ try{
+  const upload=await supabaseClient.storage.from(WAR_SKILL_BUCKET).upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+  if(upload.error)throw upload.error;
+  const insert=await supabaseClient.from("war_skill_catalog").insert({game_class:gameClass,skill_name:name,icon_path:path,created_by:currentUser?.id}).select("id").single();
+  if(insert.error){await supabaseClient.storage.from(WAR_SKILL_BUCKET).remove([path]);throw insert.error;}
+  $("war-skill-form")?.reset();await loadWarSkillData();
+  if(status)status.textContent="เพิ่ม Skill ลงคลังเรียบร้อยแล้ว";
+ }catch(error){console.error("Create Skill error:",error);if(status)status.textContent="เพิ่ม Skill ไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่");}
+ finally{if(button){button.disabled=false;button.textContent="＋ เพิ่ม Skill เข้าคลัง";}}
+}
+async function deleteWarSkill(skillId,button){
+ if(!isManagement())return;
+ const skill=warSkillCatalog.find(item=>item.id===skillId);if(!skill)return;
+ if(!confirm(`ลบ Skill "${skill.skill_name}" ออกจากคลังและลบการกำหนด Skill ของสมาชิกที่ใช้อยู่หรือไม่?`))return;
+ if(button){button.disabled=true;button.textContent="...";}
+ try{
+  const result=await supabaseClient.from("war_skill_catalog").delete().eq("id",skillId);
+  if(result.error)throw result.error;
+  if(skill.icon_path)await supabaseClient.storage.from(WAR_SKILL_BUCKET).remove([skill.icon_path]);
+  await loadWarSkillData();
+ }catch(error){alert("ลบ Skill ไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่"));if(button){button.disabled=false;button.textContent="ลบ";}}
+}
+function renderWarMemberSkillEditor(member){
+ const root=$("war-member-skill-editor");if(!root||!member)return;
+ const className=getMemberClass(member),skills=warSkillCatalog.filter(skill=>skill.game_class.toLowerCase()===className.toLowerCase()),selected=new Set((warMemberSkillMap.get(member.user_id)||[]).map(skill=>skill.id));
+ if(warSkillLoadError){root.innerHTML='<p class="war-skill-error">ระบบ Skill ยังไม่พร้อม · กรุณารัน SQL migration ใน Supabase</p>';return;}
+ root.innerHTML=`<div class="war-member-skill-heading"><strong>SKILLS · ${escapeHTML(className)}</strong><span>เลือกได้หลาย Skill</span></div>${skills.length?'<div class="war-member-skill-choice-list">'+skills.map(skill=>`<label class="war-member-skill-choice"><input type="checkbox" value="${escapeHTML(skill.id)}" ${selected.has(skill.id)?"checked":""}><img src="${escapeHTML(skill.iconUrl)}" alt=""><span>${escapeHTML(skill.skill_name)}</span></label>`).join("")+'</div>':'<p class="muted">ยังไม่มี Skill สำหรับ Class นี้ในคลัง</p>'}<button type="button" class="btn btn-outline btn-sm" data-war-save-member-skills="${escapeHTML(member.user_id)}">บันทึก Skill ของสมาชิก</button><p id="war-member-skill-status" class="war-skill-status" role="status"></p>`;
+}
+async function saveWarMemberSkills(memberId,button){
+ if(!isManagement()||!memberId)return;
+ const selected=[...document.querySelectorAll("#war-member-skill-editor input[type=checkbox]:checked")].map(input=>input.value);
+ if(button){button.disabled=true;button.textContent="กำลังบันทึก...";}
+ const status=$("war-member-skill-status");
+ try{
+  const result=await supabaseClient.rpc("set_guild_member_skills",{p_member_id:memberId,p_skill_ids:selected});
+  if(result.error)throw result.error;
+  await loadWarSkillData();await loadSelectedWarEvent(currentWarAssignmentEventId);closeWarAssignmentModal();
+ }catch(error){console.error("Save member Skills error:",error);if(status)status.textContent="บันทึก Skill ไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่");if(button){button.disabled=false;button.textContent="บันทึก Skill ของสมาชิก";}}
+}
+
 function renderRaid(containerId,raidName,parties=[],options={}){
  const container=$(containerId);if(!container)return;const canArrange=options.editable===true;
  container.innerHTML=Array.from({length:5},(_,i)=>{const n=i+1,p=parties.find(x=>Number(x.party_number)===n),members=p?.war_party_members||[];
  return `<article class="party-card" data-party-card data-raid="${raidName}"><div class="party-header"><div class="party-heading-fields"><h3>${raidName}${n}</h3>${p?.party_name&&p.party_name!==`${raidName}${n}`?`<small class="war-party-role-label">${escapeHTML(p.party_name)}</small>`:""}</div><span class="party-count">(6)</span></div><div class="party-slots">${Array.from({length:6},(_,j)=>{const pos=j+1,slot=members.find(x=>Number(x.position)===pos),member=allMembers.find(x=>x.user_id===slot?.member_id);
- if(slot&&member){const info=getClassInfo(getMemberClass(member));return `<button class="party-slot party-slot-filled war-member-slot" type="button" data-war-manage-slot data-assignment-id="${escapeHTML(slot.id)}" data-party-id="${escapeHTML(p.id)}" data-position="${pos}" style="--class-color:${info?.color||"#aaa"}" ${canArrange?"":"disabled"}><img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath||"")}" alt="${escapeHTML(info?.name||"")}"><span class="war-member-identity"><strong class="slot-member-name">${escapeHTML(getMemberName(member))}</strong><small class="war-member-class">${escapeHTML(info?.name||getMemberClass(member))}</small></span><span class="war-member-skills" aria-label="ช่อง Skill ของสมาชิก"></span><span class="war-member-slot-edit">${canArrange?"MANAGE":""}</span></button>`;}
+ if(slot&&member){const info=getClassInfo(getMemberClass(member));return `<button class="party-slot party-slot-filled war-member-slot" type="button" data-war-manage-slot data-assignment-id="${escapeHTML(slot.id)}" data-party-id="${escapeHTML(p.id)}" data-position="${pos}" style="--class-color:${info?.color||"#aaa"}" ${canArrange?"":"disabled"}><img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath||"")}" alt="${escapeHTML(info?.name||"")}"><span class="war-member-identity"><strong class="slot-member-name">${escapeHTML(getMemberName(member))}</strong><small class="war-member-class">${escapeHTML(info?.name||getMemberClass(member))}</small></span><span class="war-member-skills" aria-label="Skill ของสมาชิก">${getMemberSkillIconsMarkup(member.user_id)}</span><span class="war-member-slot-edit">${canArrange?"MANAGE":""}</span></button>`;}
  return `<div class="party-slot ${canArrange&&p?"party-slot-editor":""}">${canArrange&&p?`<button class="war-slot-add-button" type="button" data-war-add-slot data-party-id="${escapeHTML(p.id)}" data-position="${pos}">＋ ADD</button>`:'<span class="slot-empty">Empty Slot</span>'}</div>`;
  }).join("")}</div></article>`;}).join("");
 }
@@ -2326,7 +2423,7 @@ function openWarAssignmentModal(partyId,position,assignmentId=null){
  const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event)return;const party=currentWarParties.find(x=>x.id===partyId);if(!party)return;
  const assignment=assignmentId?currentWarPartyAssignments.find(x=>x.id===assignmentId):null,current=assignment?allMembers.find(x=>x.user_id===assignment.member_id):null;
  closeWarAssignmentModal();warAssignmentModalSlot={partyId,position,assignmentId};const modal=document.createElement("div");modal.id="war-assignment-modal";modal.className="war-assignment-modal";
- modal.innerHTML=`<div class="war-assignment-modal-backdrop" data-war-modal-close></div><section class="war-assignment-modal-panel" role="dialog" aria-modal="true"><button class="war-modal-close" data-war-modal-close type="button">×</button><span class="panel-kicker">PARTY MANAGEMENT</span><h3>${party.raid}${party.party_number} · SLOT ${position}</h3><p class="war-modal-subtitle">${assignment?"จัดการสมาชิกในช่องนี้":"เลือกสมาชิกเพื่อเพิ่มลง Party"}</p>${current?`<div class="war-modal-current-member"><img src="${escapeHTML(getClassInfo(getMemberClass(current))?.iconPath||"")}" alt=""><div><strong>${escapeHTML(getMemberName(current))}</strong><small>${escapeHTML(getMemberClass(current))} · UID ${escapeHTML(current.game_uid||"—")}</small></div><button class="btn btn-danger btn-sm" data-war-modal-remove type="button">นำออก</button></div>`:""}<label class="war-modal-search">ค้นหาชื่อ / UID<input id="war-modal-member-search" type="search" placeholder="พิมพ์ชื่อหรือตัวเลข UID"></label><div class="war-modal-class-tabs"><button class="is-active" data-war-modal-class="all" type="button">ALL</button><button data-war-modal-reserve type="button">สำรอง <span>${warAssignmentSignups.filter(x=>Number(x.queue_position)>=61&&!currentWarPartyAssignments.some(a=>a.member_id===x.member_id)).length}</span></button>${CLASS_DATA.map(x=>`<button data-war-modal-class="${escapeHTML(x.name)}" type="button"><img src="${escapeHTML(x.iconPath)}" alt=""></button>`).join("")}</div><div class="war-modal-member-list" id="war-modal-member-list"></div><p class="war-modal-status" id="war-modal-status"></p></section>`;document.body.appendChild(modal);renderWarAssignmentModalMembers();
+ modal.innerHTML=`<div class="war-assignment-modal-backdrop" data-war-modal-close></div><section class="war-assignment-modal-panel" role="dialog" aria-modal="true"><button class="war-modal-close" data-war-modal-close type="button">×</button><span class="panel-kicker">PARTY MANAGEMENT</span><h3>${party.raid}${party.party_number} · SLOT ${position}</h3><p class="war-modal-subtitle">${assignment?"จัดการสมาชิกในช่องนี้":"เลือกสมาชิกเพื่อเพิ่มลง Party"}</p>${current?`<div class="war-modal-current-member"><img src="${escapeHTML(getClassInfo(getMemberClass(current))?.iconPath||"")}" alt=""><div><strong>${escapeHTML(getMemberName(current))}</strong><small>${escapeHTML(getMemberClass(current))} · UID ${escapeHTML(current.game_uid||"—")}</small></div><button class="btn btn-danger btn-sm" data-war-modal-remove type="button">นำออก</button></div>`:""}<label class="war-modal-search">ค้นหาชื่อ / UID<input id="war-modal-member-search" type="search" placeholder="พิมพ์ชื่อหรือตัวเลข UID"></label>${current?`<div id="war-member-skill-editor" class="war-member-skill-editor"></div>`:""}<div class="war-modal-class-tabs"><button class="is-active" data-war-modal-class="all" type="button">ALL</button><button data-war-modal-reserve type="button">สำรอง <span>${warAssignmentSignups.filter(x=>Number(x.queue_position)>=61&&!currentWarPartyAssignments.some(a=>a.member_id===x.member_id)).length}</span></button>${CLASS_DATA.map(x=>`<button data-war-modal-class="${escapeHTML(x.name)}" type="button"><img src="${escapeHTML(x.iconPath)}" alt=""></button>`).join("")}</div><div class="war-modal-member-list" id="war-modal-member-list"></div><p class="war-modal-status" id="war-modal-status"></p></section>`;document.body.appendChild(modal);if(current)renderWarMemberSkillEditor(current);renderWarAssignmentModalMembers();
 }
 function renderWarAssignmentModalMembers(){
  const list=$("war-modal-member-list");if(!list||!warAssignmentModalSlot)return;const assigned=getAssignedWarMemberIds(warAssignmentModalSlot.assignmentId),q=String($("war-modal-member-search")?.value||"").toLowerCase(),cls=$("war-assignment-modal")?.dataset.classFilter||"all",reserveOnly=$("war-assignment-modal")?.dataset.reserveOnly==="true";
@@ -3218,6 +3315,8 @@ function subscribeToWarRealtime() {
       const eventId = currentWarAssignmentEventId || selectedWarEventId;
       if (eventId) await loadSelectedWarEvent(eventId);
     })
+    .on("postgres_changes", { event: "*", schema: "public", table: "war_skill_catalog" }, () => loadWarSkillData())
+    .on("postgres_changes", { event: "*", schema: "public", table: "guild_member_skills" }, async () => { await loadWarSkillData(); const eventId=currentWarAssignmentEventId||selectedWarEventId; if(eventId) renderAllWarParties(); })
     .on("postgres_changes", { event: "*", schema: "public", table: "war_party_members" }, async () => {
       const eventId = currentWarAssignmentEventId || selectedWarEventId;
       if (eventId) await loadSelectedWarEvent(eventId);
@@ -3226,10 +3325,15 @@ function subscribeToWarRealtime() {
 }
 
 function registerWarCreationEvents(){
+ $("war-skill-library-toggle")?.addEventListener("click",()=>{if(!isManagement())return;const panel=$("war-skill-management");panel?.classList.toggle("hidden");if(!panel?.classList.contains("hidden")){renderWarSkillManager();panel.scrollIntoView({behavior:"smooth",block:"start"});}});
+ $("war-skill-library-close")?.addEventListener("click",()=>$("war-skill-management")?.classList.add("hidden"));
+ $("war-skill-form")?.addEventListener("submit",saveWarSkillDefinition);
+ $("war-skill-library-list")?.addEventListener("click",event=>{const button=event.target.closest("[data-war-skill-delete]");if(button)deleteWarSkill(button.dataset.warSkillDelete,button);});
+
  $("war-raid-boards")?.addEventListener("click",e=>{const add=e.target.closest("[data-war-add-slot]"),manage=e.target.closest("[data-war-manage-slot]");if(add)openWarAssignmentModal(add.dataset.partyId,Number(add.dataset.position));else if(manage)openWarAssignmentModal(manage.dataset.partyId,Number(manage.dataset.position),manage.dataset.assignmentId);});
  $("war-assignment-toolbar")?.addEventListener("click",e=>{const f=e.target.closest("[data-war-filter]"),c=e.target.closest("[data-war-class-filter]"),pool=e.target.closest("[data-war-pool-member]");if(f){warAssignmentFilter=f.dataset.warFilter||"all";applyWarAssignmentMemberFilters();}if(c){warAssignmentClassFilter=c.dataset.warClassFilter||"all";applyWarAssignmentMemberFilters();}if(pool){const p=currentWarParties.find(x=>x.raid===warAssignmentFilter&&(x.war_party_members||[]).length<6)||currentWarParties.find(x=>(x.war_party_members||[]).length<6);if(!p){alert("ไม่พบ Party ที่ว่าง");return;}const used=new Set((p.war_party_members||[]).map(x=>Number(x.position))),pos=[1,2,3,4,5,6].find(x=>!used.has(x));if(pos){openWarAssignmentModal(p.id,pos);const picked=allMembers.find(m=>m.user_id===pool.dataset.warPoolMember);const search=$("war-modal-member-search");if(picked&&search){search.value=getMemberName(picked);renderWarAssignmentModalMembers();}}}});
  $("war-assignment-toolbar")?.addEventListener("input",e=>{if(e.target.id==="war-assignment-search"){warAssignmentSearch=e.target.value;applyWarAssignmentMemberFilters();}});
- document.body.addEventListener("click",e=>{if(e.target.closest("[data-war-modal-close]")){closeWarAssignmentModal();return;}const add=e.target.closest("[data-war-modal-assign]"),remove=e.target.closest("[data-war-modal-remove]"),cls=e.target.closest("[data-war-modal-class]"),reserveTab=e.target.closest("[data-war-modal-reserve]");if(reserveTab){const modal=$("war-assignment-modal");if(modal){modal.dataset.reserveOnly=modal.dataset.reserveOnly==="true"?"false":"true";reserveTab.classList.toggle("is-active",modal.dataset.reserveOnly==="true");modal.querySelector("[data-war-modal-class=\"all\"]")?.classList.toggle("is-active",modal.dataset.reserveOnly!=="true");renderWarAssignmentModalMembers();}return;}if(add){assignWarMemberToSlot(add.dataset.warModalAssign);return;}if(remove&&warAssignmentModalSlot?.assignmentId){removeWarPartyMember(warAssignmentModalSlot.assignmentId,remove);return;}if(cls){const modal=$("war-assignment-modal");if(modal)modal.dataset.classFilter=cls.dataset.warModalClass||"all";modal?.querySelectorAll("[data-war-modal-class]").forEach(b=>b.classList.toggle("is-active",b===cls));renderWarAssignmentModalMembers();}});
+ document.body.addEventListener("click",e=>{if(e.target.closest("[data-war-modal-close]")){closeWarAssignmentModal();return;}const add=e.target.closest("[data-war-modal-assign]"),remove=e.target.closest("[data-war-modal-remove]"),saveSkills=e.target.closest("[data-war-save-member-skills]"),deleteSkill=e.target.closest("[data-war-skill-delete]"),cls=e.target.closest("[data-war-modal-class]"),reserveTab=e.target.closest("[data-war-modal-reserve]");if(reserveTab){const modal=$("war-assignment-modal");if(modal){modal.dataset.reserveOnly=modal.dataset.reserveOnly==="true"?"false":"true";reserveTab.classList.toggle("is-active",modal.dataset.reserveOnly==="true");modal.querySelector("[data-war-modal-class=\"all\"]")?.classList.toggle("is-active",modal.dataset.reserveOnly!=="true");renderWarAssignmentModalMembers();}return;}if(saveSkills){saveWarMemberSkills(saveSkills.dataset.warSaveMemberSkills,saveSkills);return;}if(deleteSkill){deleteWarSkill(deleteSkill.dataset.warSkillDelete,deleteSkill);return;}if(add){assignWarMemberToSlot(add.dataset.warModalAssign);return;}if(remove&&warAssignmentModalSlot?.assignmentId){removeWarPartyMember(warAssignmentModalSlot.assignmentId,remove);return;}if(cls){const modal=$("war-assignment-modal");if(modal)modal.dataset.classFilter=cls.dataset.warModalClass||"all";modal?.querySelectorAll("[data-war-modal-class]").forEach(b=>b.classList.toggle("is-active",b===cls));renderWarAssignmentModalMembers();}});
  document.body.addEventListener("input",e=>{if(e.target.id==="war-modal-member-search")renderWarAssignmentModalMembers();});
   $("war-events")?.addEventListener("click",event=>{
     const deleteButton=event.target.closest("[data-war-delete]");
