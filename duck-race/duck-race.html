@@ -223,6 +223,24 @@ function drawDuck(k,x,y,s,t){
   c.restore();c.fillStyle='#111';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,tx,tagY+fs*.05);
 }
 
+
+function drawWinnerCrown(x,y,s,elapsed){
+  const c=cx,fall=Math.min(1,Math.max(0,elapsed/1.05));
+  const ease=1-Math.pow(1-fall,3),crownY=-s*1.55+ease*s*.52;
+  c.save();c.translate(x,y+crownY);c.rotate((1-fall)*-.18);
+  c.shadowColor='rgba(255,205,55,.85)';c.shadowBlur=fall>=1?18:10;
+  c.fillStyle='#f8c52e';c.strokeStyle='#8a5100';c.lineWidth=Math.max(1.5,s*.025);
+  c.beginPath();c.moveTo(-s*.34,0);c.lineTo(-s*.29,-s*.34);c.lineTo(-s*.10,-s*.16);c.lineTo(0,-s*.43);c.lineTo(s*.12,-s*.16);c.lineTo(s*.31,-s*.34);c.lineTo(s*.34,0);c.closePath();c.fill();c.stroke();
+  c.fillStyle='#fff0a0';c.fillRect(-s*.34,0,s*.68,s*.11);c.strokeRect(-s*.34,0,s*.68,s*.11);
+  c.fillStyle='#ff5368';c.beginPath();c.arc(0,-s*.12,s*.055,0,Math.PI*2);c.fill();
+  c.fillStyle='#63d9ff';c.beginPath();c.arc(-s*.22,-s*.12,s*.045,0,Math.PI*2);c.fill();
+  c.fillStyle='#fff';c.beginPath();c.arc(s*.22,-s*.12,s*.045,0,Math.PI*2);c.fill();c.restore();
+  if(elapsed>1.05){
+    c.save();c.font='900 '+Math.max(16,s*.34)+'px system-ui';c.textAlign='center';c.textBaseline='middle';c.shadowColor='#ffd84a';c.shadowBlur=16;c.fillStyle='#fff4ad';c.fillText('WINNER!',x,y-s*1.95);c.restore();
+    for(let i=0;i<18;i++){const seed=i*2.399,falling=(elapsed*95+i*23)%(s*2.8);c.save();c.translate(x+Math.cos(seed)*falling*.55,y-s*1.8+falling);c.rotate(elapsed*3+i);c.fillStyle=['#ffd54a','#ff5b72','#65dcff','#8be36b'][i%4];c.fillRect(-s*.035,-s*.035,s*.07,s*.07);c.restore()}
+  }
+}
+
 /* ---------- scene ---------- */
 const RACE_SPEED=190; // world pixels per second: keeps visible movement at every race duration
 function size(){
@@ -289,12 +307,14 @@ function scene(cam,t){
 }
 const hms=n=>{n=Math.max(0,Math.ceil(n));const p=v=>String(v).padStart(2,'0');return p(Math.floor(n/3600))+':'+p(Math.floor(n%3600/60))+':'+p(n%60)};
 const dist=(d,t)=>t+.35/d.a*(Math.cos(d.p)-Math.cos(d.a*t+d.p))+.2/d.b*(Math.cos(d.q)-Math.cos(d.b*t+d.q));
-const prog=k=>RACE_SPEED*Math.min(S.t,S.T)+(k.offset||0);
+const baseProgress=()=>RACE_SPEED*Math.min(S.t,S.T);
+const prog=k=>baseProgress()+(k.offset||0)+(S.fin&&k.win?Math.min(W*.34,RACE_SPEED*1.05*(S.celebrateT||0)):0);
+const leader=()=>ducks.reduce((best,k)=>!best||prog(k)>prog(best)?k:best,null);
 
 function frame(now){
   const dt=Math.min(.05,(now-S.last)/1000);S.last=now;
   if(S.st==='run'){
-    S.t+=dt;
+    S.t=Math.min(S.T,S.t+dt);
     const base=D/Math.max(1,S.T);
     if(!S.fin)ducks.forEach(k=>{
       if(!k.mode||k.mode==='normal'){
@@ -305,10 +325,12 @@ function frame(now){
         if(k.modeLeft<=0){k.mode='normal';k.eventIn=2.5+Math.random()*5;k.fx=''}
       }
       const mult=k.mode==='tired'?.42:k.mode==='boost'?2.25:1;
-      k.offset=Math.max(-D*.12,Math.min(D*.12,(k.offset||0)+base*(mult-1)*dt));
+      const offsetLimit=Math.max(36,W*.22);
+      k.offset=Math.max(-offsetLimit,Math.min(offsetLimit,(k.offset||0)+base*(mult-1)*dt));
     });
     if(S.t>=S.T&&!S.fin)onFinish();
-    if(S.t>=S.T+5.5){S.t=S.T+5.5;S.st='done'}
+  }else if(S.st==='celebrate'){
+    S.celebrateT=(S.celebrateT||0)+dt;
   }
   const s=duckSize(),B=bank(),yMin=B+s*.4,yMax=H-s*.62,n=ducks.length;
   const X0=W*.2,rows=ducks.map(k=>{
@@ -317,13 +339,18 @@ function frame(now){
   });
   /* Track the shared forward swim from the very first frame.
      Ducks stay in view while the world and shoreline scroll continuously behind them. */
-  S.cam=RACE_SPEED*Math.min(S.t,S.T);
+  S.cam=baseProgress();
   scene(S.cam,now/1000);
-  checker(X0,S.cam);checker(X0+D,S.cam);
+  const maxSpeed=(D/Math.max(1,S.T))*2.25;
+  const finishWorld=S.fin?S.finishWorld:(Math.max(...ducks.map(k=>baseProgress()+(k.offset||0)),baseProgress())+maxSpeed*Math.max(0,S.T-S.t));
+  if(!S.fin)S.finishWorld=finishWorld;
+  checker(X0,S.cam);checker(X0+finishWorld,S.cam);
   rows.sort((a,b)=>a.y-b.y).forEach(o=>{
     // Bright concentric wake rings make the ducks visibly swim, not walk on top of the water
     cx.save();cx.strokeStyle='rgba(225,255,255,.48)';cx.lineWidth=1.5;const pulse=1+Math.sin(now/190+o.k.ph)*.25;cx.beginPath();cx.ellipse(o.x-S.cam,o.y+s*.48,s*.55*pulse,s*.10,0,0,Math.PI*2);cx.stroke();cx.restore();
-    drawDuck(o.k,o.x-S.cam,o.y,s,now/1000);
+    const frozenTime=S.fin&&!o.k.win?(S.finishAnimTime||now/1000):now/1000;
+    drawDuck(o.k,o.x-S.cam,o.y,s,frozenTime);
+    if(S.fin&&o.k.win)drawWinnerCrown(o.x-S.cam,o.y-s*.68,s,S.celebrateT||0);
     if(S.st==='run'&&o.k.mode==='boost'){
       const bx=o.x-S.cam,by=o.y+s*.38;
       cx.save();cx.font='900 '+Math.max(11,s*.25)+'px system-ui';cx.textAlign='center';
@@ -348,7 +375,7 @@ function reset(){
   const n=roster.length,slots=[...Array(n).keys()].sort(()=>Math.random()-.5);
   ducks=roster.map((r,i)=>({r,slot:slots[i],ph:Math.random()*6.28,offset:0,mode:'normal',modeLeft:0,eventIn:2+Math.random()*5,fx:''}));
   const sceneOrder=[0,1,2,3,4].sort(()=>Math.random()-.5);
-  S={st:'idle',t:0,T:cfg.T,sc:1,cam:0,last:performance.now(),fin:false,sceneOrder};
+  S={st:'idle',t:0,T:cfg.T,sc:1,cam:0,last:performance.now(),fin:false,sceneOrder,celebrateT:0,finishWorld:D,finishAnimTime:0};
   ducks.forEach(k=>k.fin=cfg.T);ducks.forEach(k=>k.win=false);order()[0].win=true;
   $('bGo').textContent='▶ START';$('again').classList.add('hide');$('trophy').classList.add('hide');
   $('clk').textContent=hms(S.T);stopMus();if(aud)aud.currentTime=0;
@@ -356,10 +383,14 @@ function reset(){
 }
 const order=()=>ducks.slice().sort((a,b)=>a.fin-b.fin);
 function onFinish(){
-  S.fin=true;ducks.forEach(k=>k.fin=Math.max(S.T*.82,Math.min(S.T*1.18,S.T-(k.offset||0)/RACE_SPEED)));ducks.forEach(k=>k.win=false);order()[0].win=true;$('bGo').textContent='▶ FINISH';
+  const winner=leader();
+  S.fin=true;S.st='celebrate';S.celebrateT=0;S.finishAnimTime=performance.now()/1000;
+  S.finishWorld=baseProgress()+(winner?.offset||0);
+  ducks.forEach(k=>{k.win=k===winner;k.mode='normal';k.fx='';k.fin=k===winner?S.T:Math.max(0,S.T-(k.offset||0)/RACE_SPEED)});
+  $('bGo').textContent='🏆 WINNER';
   $('again').classList.remove('hide');$('trophy').classList.remove('hide');
   if(bellOn)bell();
-  const w=order()[0].r.label;
+  const w=winner.r.label;
   $('winT').textContent='🏆 ผู้ชนะ: '+(/^\d+$/.test(w)?'เป็ดหมายเลข ':'')+w;
   $('list').innerHTML='';
   order().forEach((k,i)=>{const d=document.createElement('div');d.innerHTML='<b>'+(i+1)+'</b><span></span><span>'+hms(Math.min(k.fin,99*3600)).slice(0)+'</span>';d.children[1].textContent=k.r.label;$('list').appendChild(d)});
@@ -370,7 +401,7 @@ $('bGo').onclick=()=>{
   else{S.st='run';$('bGo').textContent='Ⅱ PAUSE';ac();if(musOn)startMus()}
 };
 $('bClr').onclick=()=>{reset();$('bGo').textContent='▶ START'};
-$('bSkip').onclick=()=>{if(!S.fin){S.t=S.T;S.st='run';$('bGo').textContent='▶ FINISH';onFinish()}};
+$('bSkip').onclick=()=>{if(!S.fin){S.t=S.T;onFinish()}};
 $('bShuf').onclick=()=>assignCo(roster);
 $('rm').onclick=()=>{rmWin=!rmWin;$('rm').classList.toggle('on',rmWin);$('rm').textContent=rmWin?'✓':'✕'};
 $('bAgain').onclick=()=>{
