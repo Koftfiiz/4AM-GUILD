@@ -2569,7 +2569,7 @@ async function saveWarSkillEdit(event){
   }
   const update=await supabaseClient.from("war_skill_catalog").update({skill_name:name,...(newPath?{icon_path:newPath}:{})}).eq("id",skillId);
   if(update.error)throw update.error;
-  if(newPath&&skill.icon_path&&!/^https?:\\/\\//i.test(skill.icon_path)){
+  if(newPath&&skill.icon_path&&!String(skill.icon_path).startsWith("http")){
    const cleanup=await supabaseClient.storage.from(WAR_SKILL_BUCKET).remove([skill.icon_path]);
    if(cleanup.error)console.warn("Old Skill icon cleanup failed:",cleanup.error);
   }
