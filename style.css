@@ -4855,3 +4855,66 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 .war-attendance-boards .war-member-skills{display:flex;flex:0 0 auto;align-items:center;gap:6px;min-width:0;max-width:92px;flex-wrap:wrap}
 .war-attendance-boards .war-member-skill-icon{width:25px;height:25px;object-fit:contain;border-radius:5px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
 .war-attendance-boards .party-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px}
+
+
+/* ==========================================
+   MEMBER DIRECTORY — modern guild roster
+   ========================================== */
+#members-submenu .nav-subitem{padding-left:59px}
+.member-directory-panel .panel-heading p{margin:6px 0 0;color:var(--muted);font-size:12px}
+.member-directory-panel .member-toolbar{margin:18px 0 22px}
+.member-directory-panel .member-toolbar input{width:100%;max-width:460px;min-height:44px;padding:10px 14px;border:1px solid rgba(216,176,106,.22);border-radius:10px;background:rgba(255,255,255,.035);color:var(--text)}
+.member-directory-card{position:relative;overflow:hidden;transition:transform .2s ease,border-color .2s ease,background .2s ease}
+.member-directory-card:hover{transform:translateY(-3px);border-color:rgba(216,176,106,.42);background:linear-gradient(135deg,rgba(178,32,46,.10),rgba(255,255,255,.035))}
+.member-directory-card .member-guild-position-badge{display:inline-flex;align-items:center;width:max-content;max-width:100%;margin-top:5px;padding:4px 9px;border:1px solid rgba(216,176,106,.28);border-radius:999px;background:rgba(216,176,106,.09);color:#f0d29c;font-size:11px;font-weight:800}
+.member-directory-card .member-secondary-name{display:block;margin-top:5px;color:var(--muted);font-size:11px}
+.member-directory-card .member-record-status{position:absolute;top:12px;right:12px;padding:3px 7px;border:1px solid rgba(101,114,242,.28);border-radius:999px;background:rgba(101,114,242,.1);color:#b9c0ff;font-size:9px;font-weight:800;letter-spacing:.04em}
+.member-directory-card .member-info{min-width:0}
+.member-directory-card .member-game-uid{margin-top:8px}
+.member-directory-card .member-game-uid strong{overflow-wrap:anywhere}
+.member-admin-overview{display:grid;grid-template-columns:minmax(220px,.8fr) minmax(0,1.6fr);gap:14px;margin:0 0 20px}
+.member-admin-stat,.member-admin-note{display:flex;align-items:center;gap:14px;min-height:88px;padding:18px;border:1px solid rgba(216,176,106,.2);border-radius:14px;background:linear-gradient(135deg,rgba(178,32,46,.12),rgba(255,255,255,.025))}
+.member-admin-stat-icon{display:grid;place-items:center;width:44px;height:44px;flex:0 0 44px;border-radius:12px;background:rgba(216,176,106,.12);color:var(--gold-light);font-size:25px}
+.member-admin-stat small{display:block;margin-bottom:5px;color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.12em}
+.member-admin-stat strong{color:var(--cream);font-size:14px}
+.member-admin-note{display:grid;align-content:center;gap:5px}
+.member-admin-note strong{color:var(--gold-light);font-size:13px}
+.member-admin-note span{color:var(--muted);font-size:12px;line-height:1.6}
+.manual-member-form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
+.manual-member-field{display:grid;gap:7px;min-width:0}
+.manual-member-field>span{color:#ead8c6;font-size:12px;font-weight:750}
+.manual-member-field i{color:#ef6874;font-style:normal}
+.manual-member-field input,.manual-member-field select,.manual-member-field textarea{width:100%;min-height:42px;padding:10px 12px;border:1px solid rgba(216,176,106,.2);border-radius:9px;outline:none;background:rgba(0,0,0,.28);color:var(--text);font:inherit;font-size:13px;transition:border-color .18s ease,box-shadow .18s ease}
+.manual-member-field textarea{resize:vertical;min-height:76px}
+.manual-member-field input:focus,.manual-member-field select:focus,.manual-member-field textarea:focus{border-color:rgba(216,176,106,.7);box-shadow:0 0 0 3px rgba(216,176,106,.09)}
+.manual-member-field select option{color:#21181a}
+.manual-member-field-wide{grid-column:1/-1}
+.manual-member-active-toggle{display:flex;align-items:center;gap:9px;grid-column:1/-1;color:#d9c9bd;font-size:12px}
+.manual-member-active-toggle input{width:16px;height:16px;accent-color:var(--red-bright)}
+.manual-member-form-status{grid-column:1/-1;min-height:18px;margin:0;color:#9dd9ae;font-size:12px}
+.manual-member-form-actions{display:flex;justify-content:flex-end;gap:9px;grid-column:1/-1;flex-wrap:wrap}
+.manual-member-list-panel{margin-top:20px}
+.manual-member-table-wrap{width:100%;overflow-x:auto}
+.manual-member-table{width:100%;border-collapse:collapse;min-width:720px}
+.manual-member-table th,.manual-member-table td{padding:13px 12px;border-bottom:1px solid rgba(255,255,255,.07);text-align:left;vertical-align:middle}
+.manual-member-table th{color:var(--muted);font-size:10px;font-weight:850;letter-spacing:.08em;text-transform:uppercase}
+.manual-member-table td{color:#e9ded8;font-size:12px}
+.manual-member-table td:first-child strong,.manual-member-table td:first-child small{display:block}
+.manual-member-table td:first-child strong{color:#fff;font-size:13px}
+.manual-member-table td:first-child small{margin-top:4px;color:var(--muted);font-size:10px}
+.manual-member-class{color:var(--class-color);font-weight:850}
+.manual-member-status{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:10px;font-weight:850}
+.manual-member-status.is-active{border:1px solid rgba(76,211,127,.25);background:rgba(76,211,127,.09);color:#83e6a5}
+.manual-member-status.is-inactive{border:1px solid rgba(229,72,88,.25);background:rgba(229,72,88,.09);color:#f08c96}
+.manual-member-actions{display:flex;gap:6px;flex-wrap:wrap}
+.manual-member-actions .btn{min-height:30px;padding:5px 9px;font-size:10px}
+.manual-member-empty{display:grid;justify-items:center;gap:8px;padding:38px 18px;text-align:center}
+.manual-member-empty>span{display:grid;place-items:center;width:46px;height:46px;border:1px solid rgba(216,176,106,.25);border-radius:14px;background:rgba(216,176,106,.08);color:var(--gold-light);font-size:26px}
+.manual-member-empty strong{color:var(--cream);font-size:14px}
+.manual-member-empty p{margin:0;color:var(--muted);font-size:12px}
+.manual-member-setup-warning{padding:18px;border:1px solid rgba(229,72,88,.25);border-radius:12px;background:rgba(229,72,88,.07);color:#f0c8cb}
+.manual-member-setup-warning strong{color:#ffabb4}
+.manual-member-setup-warning p{margin:8px 0;color:#e8d5d5;font-size:12px;line-height:1.6}
+.manual-member-setup-warning small{color:#bba7a9;font-size:10px;overflow-wrap:anywhere}
+@media(max-width:850px){.manual-member-form{grid-template-columns:repeat(2,minmax(0,1fr))}.member-admin-overview{grid-template-columns:1fr}}
+@media(max-width:560px){.manual-member-form{grid-template-columns:1fr}.manual-member-field-wide,.manual-member-active-toggle,.manual-member-form-status,.manual-member-form-actions{grid-column:1}.manual-member-form-actions{justify-content:stretch}.manual-member-form-actions .btn{flex:1}.member-directory-card .member-record-status{position:static;width:max-content;margin-top:8px}.member-admin-stat,.member-admin-note{padding:14px}}
