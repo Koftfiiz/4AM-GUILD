@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=war-roster-republish-20261110c">
+  <link rel="stylesheet" href="style.css?v=manual-member-directory-20261110a">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=war-roster-republish-20261110c";
+          app.src = "app.js?v=manual-member-directory-20261110a";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -181,10 +181,17 @@
           <span>กฎกิลด์</span>
         </button>
 
-        <button class="nav-item" data-page="members">
-          <svg class="icon"><use href="#i-user"/></svg>
-          <span>สมาชิกกิลด์</span>
-        </button>
+        <div class="nav-group">
+          <button class="nav-item nav-parent" type="button" data-toggle-submenu="members-submenu" aria-expanded="false">
+            <svg class="icon"><use href="#i-user"/></svg>
+            <span>สมาชิกกิลด์</span>
+            <span class="nav-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="nav-submenu" id="members-submenu">
+            <button class="nav-subitem" data-page="members"><span class="nav-subitem-dot"></span><span>รายชื่อสมาชิก</span></button>
+            <button class="nav-subitem management-only" data-page="member-management" data-management-only><span class="nav-subitem-dot"></span><span>จัดการรายชื่อสมาชิก</span></button>
+          </div>
+        </div>
 
         <div class="nav-group">
           <button class="nav-item nav-parent" type="button" data-toggle-submenu="war-submenu" aria-expanded="true">
@@ -452,37 +459,73 @@
         </div>
       </section>
 
-      <!-- ============ MEMBERS ============ -->
+      <!-- ============ MEMBER DIRECTORY ============ -->
       <section id="page-members" class="page page-padded hidden">
         <div class="page-intro">
           <span class="section-kicker">GUILD DIRECTORY</span>
-          <h1>สมาชิกกิลด์</h1>
-          <p>ดูและจัดการข้อมูลสมาชิกในกิลด์</p>
+          <h1>รายชื่อสมาชิก</h1>
+          <p>ทำความรู้จักสมาชิก 4AM GUILD พร้อม Class อาชีพและตำแหน่งภายในกิลด์</p>
         </div>
 
-        <section class="panel">
+        <section class="panel member-directory-panel">
           <div class="panel-heading">
             <div>
-              <span class="panel-kicker">MEMBER DATABASE</span>
-              <h3>รายชื่อสมาชิกทั้งหมด</h3>
+              <span class="panel-kicker">MEMBER DIRECTORY</span>
+              <h3>สมาชิกทั้งหมด</h3>
+              <p>รายชื่อสมาชิกที่ลงทะเบียนและรายชื่อที่ฝ่ายบริหารเพิ่มด้วยตนเอง</p>
             </div>
-
-            <button id="refresh-members" class="btn btn-outline">
-              ↻ รีเฟรช
-            </button>
+            <button id="refresh-members" class="btn btn-outline" type="button">↻ รีเฟรช</button>
           </div>
-
           <div class="member-toolbar">
-            <input
-              id="member-search"
-              type="search"
-              placeholder="ค้นหาสมาชิก..."
-            >
+            <input id="member-search" type="search" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น Class หรือตำแหน่งกิลด์..." autocomplete="off">
           </div>
-
           <div id="members-list" class="members-list">
             <p class="muted">กำลังโหลดรายชื่อสมาชิก...</p>
           </div>
+        </section>
+      </section>
+
+      <!-- ============ MANUAL MEMBER MANAGEMENT ============ -->
+      <section id="page-member-management" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">MEMBER ADMINISTRATION</span>
+          <h1>จัดการรายชื่อสมาชิก</h1>
+          <p>เพิ่มและดูแลข้อมูลสมาชิกด้วยตนเอง โดยไม่จำเป็นต้องมีบัญชีเข้าใช้งานแอปก่อน</p>
+        </div>
+
+        <section class="member-admin-overview">
+          <div class="member-admin-stat">
+            <span class="member-admin-stat-icon">◎</span>
+            <div><small>MANUAL DIRECTORY</small><strong id="manual-member-summary">กำลังโหลด...</strong></div>
+          </div>
+          <div class="member-admin-note"><strong>ข้อมูลสมาชิก Manual</strong><span>รายชื่อในส่วนนี้จะแสดงในหน้ารายชื่อสมาชิก แต่ยังไม่สามารถ Login หรือเข้าร่วมระบบวอร์จนกว่าจะเชื่อมบัญชีผู้ใช้</span></div>
+        </section>
+
+        <section class="panel manual-member-form-panel">
+          <div class="panel-heading">
+            <div><span class="panel-kicker">MEMBER PROFILE</span><h3 id="manual-member-form-title">เพิ่มสมาชิกใหม่</h3><p>กรอกข้อมูลสมาชิกและกำหนดตำแหน่งกิลด์</p></div>
+          </div>
+          <form id="manual-member-form" class="manual-member-form">
+            <input type="hidden" id="manual-member-id" name="id">
+            <label class="manual-member-field"><span>ชื่อตัวละคร <i>*</i></span><input name="character_name" type="text" maxlength="40" placeholder="กรอกชื่อตัวละคร" required></label>
+            <label class="manual-member-field"><span>Class อาชีพ <i>*</i></span><select name="game_class" required><option value="">เลือก Class อาชีพ</option></select></label>
+            <label class="manual-member-field"><span>ชื่อเล่น</span><input name="nickname" type="text" maxlength="40" placeholder="กรอกชื่อเล่น"></label>
+            <label class="manual-member-field"><span>Discord Username</span><input name="discord_name" type="text" maxlength="100" placeholder="ชื่อผู้ใช้ Discord (ถ้ามี)"></label>
+            <label class="manual-member-field"><span>อายุ</span><input name="age" type="number" min="1" max="120" placeholder="อายุ"></label>
+            <label class="manual-member-field"><span>ตำแหน่งกิลด์</span><select name="guild_position"><option value="">เลือกตำแหน่งกิลด์</option></select></label>
+            <label class="manual-member-field manual-member-field-wide"><span>หมายเหตุ</span><textarea name="notes" rows="3" maxlength="500" placeholder="รายละเอียดเพิ่มเติม (ไม่บังคับ)"></textarea></label>
+            <label class="manual-member-active-toggle"><input id="manual-member-active" type="checkbox" checked><span>สมาชิก Active — แสดงในหน้ารายชื่อสมาชิก</span></label>
+            <p id="manual-member-form-status" class="manual-member-form-status" role="status" aria-live="polite"></p>
+            <div class="manual-member-form-actions">
+              <button type="button" id="manual-member-cancel" class="btn btn-outline hidden">ยกเลิกการแก้ไข</button>
+              <button type="submit" id="manual-member-submit" class="btn btn-primary">＋ บันทึกสมาชิก</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="panel manual-member-list-panel">
+          <div class="panel-heading"><div><span class="panel-kicker">MEMBER RECORDS</span><h3>รายการสมาชิกที่จัดการด้วยตนเอง</h3><p>แก้ไขข้อมูล เปลี่ยนสถานะ หรือเอารายชื่อออกจาก Directory</p></div></div>
+          <div id="manual-member-list"><p class="muted">กำลังโหลดข้อมูลสมาชิก...</p></div>
         </section>
       </section>
 
