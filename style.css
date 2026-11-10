@@ -5168,3 +5168,87 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 #page-war .war-skill-library-item{min-height:112px}
 @media(max-width:850px){#page-war .war-skill-form{grid-template-columns:1fr;gap:14px}#page-war .war-skill-form #war-skill-submit{grid-column:1;justify-self:stretch}}
 @media(max-width:600px){#page-war .war-skill-icon-button{width:82px;height:82px}#page-war .war-skill-icon-button img{width:66px;height:66px}}
+
+/* Skill Library — add-skill form: large labels and perfectly aligned controls */
+#page-war #war-skill-form{
+  grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  column-gap:24px;
+  row-gap:20px;
+  align-items:start;
+}
+#page-war #war-skill-form > .form-group{
+  display:grid;
+  grid-template-rows:38px 64px 22px;
+  align-content:start;
+  align-items:stretch;
+  gap:8px;
+  min-width:0;
+}
+#page-war #war-skill-form > .form-group label{
+  display:flex;
+  align-items:flex-end;
+  min-height:38px;
+  margin:0;
+  color:#f4d9bd;
+  font-size:25px !important;
+  font-weight:800;
+  line-height:1.25;
+}
+#page-war #war-skill-form > .form-group input{
+  box-sizing:border-box;
+  width:100%;
+  height:64px;
+  min-height:64px;
+  margin:0;
+  padding:12px 16px;
+  font-size:18px;
+  line-height:1.4;
+}
+#page-war #war-skill-form > .form-group input[type="file"]{
+  display:flex;
+  align-items:center;
+  padding:10px 12px;
+  font-size:16px;
+}
+#page-war #war-skill-form > .form-group input[type="file"]::file-selector-button{
+  min-height:40px;
+  margin-right:12px;
+  padding:7px 13px;
+  border:1px solid rgba(216,176,106,.55);
+  border-radius:7px;
+  background:rgba(216,176,106,.16);
+  color:#f6dfbd;
+  font:700 15px "Noto Sans Thai",sans-serif;
+  cursor:pointer;
+}
+#page-war #war-skill-form > .form-group:first-child::after{
+  content:"";
+  grid-row:3;
+  min-height:22px;
+}
+#page-war #war-skill-form > .form-group small{
+  display:block;
+  grid-row:3;
+  align-self:start;
+  min-height:22px;
+  margin:0;
+  font-size:12px;
+  line-height:1.5;
+}
+#page-war #war-skill-form #war-skill-submit{
+  grid-column:1/-1;
+  justify-self:end;
+  min-width:180px;
+  min-height:48px;
+  font-size:16px;
+}
+@media(max-width:850px){
+  #page-war #war-skill-form{grid-template-columns:minmax(0,1fr);row-gap:16px}
+  #page-war #war-skill-form #war-skill-submit{grid-column:1;justify-self:stretch}
+}
+@media(max-width:600px){
+  #page-war #war-skill-form > .form-group label{font-size:22px !important}
+  #page-war #war-skill-form > .form-group input{height:58px;min-height:58px;font-size:16px}
+  #page-war #war-skill-form > .form-group{grid-template-rows:34px 58px 22px}
+}
+
