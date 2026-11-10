@@ -91,7 +91,7 @@ const PAGE_TITLES = {
   rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
   "community-board": "Community Board",
-  "duck-race": "Duck Race",
+  "duck-race": "4AM Duck Race",
   "guild-news": "Guild News",
   "guild-activities": "Guild Activities",
   feedback: "แจ้งปัญหา / Feedback",
