@@ -5636,3 +5636,57 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
     min-width:0;
   }
 }
+
+/* 4AM GUILD — Party Management modal aligned to in-game reference */
+.war-assignment-modal-panel-reference{width:min(446px,calc(100vw - 28px));max-height:min(78vh,560px);overflow-y:auto;padding:24px 21px 20px;border:1px solid rgba(120,151,205,.34);border-radius:15px;background:linear-gradient(155deg,#202b49 0%,#18223b 54%,#111a30 100%);box-shadow:0 24px 80px rgba(0,0,0,.62),inset 0 1px rgba(255,255,255,.06);color:#eef3ff;scrollbar-width:thin;scrollbar-color:rgba(151,170,205,.35) transparent}
+.war-assignment-modal-panel-reference .panel-kicker{color:#d5b56e;letter-spacing:2px;font-size:9px;font-weight:900}
+.war-assignment-modal-panel-reference h3{margin:5px 0 3px;color:#f5f7ff;font-size:20px;font-weight:900}
+.war-assignment-modal-panel-reference .war-modal-subtitle{margin:0 0 13px;color:#aebbd4;font-size:11px}
+.war-assignment-modal-panel-reference .war-modal-close{top:10px;right:10px;width:30px;height:30px;border:1px solid rgba(211,222,244,.17);border-radius:8px;background:rgba(255,255,255,.055);color:#dce6f8;font-size:21px}
+.war-assignment-modal-panel-reference .war-modal-member-reference{display:grid;grid-template-columns:38px minmax(0,1fr);gap:0 10px;margin:0 0 12px;padding:10px 11px;border:1px solid rgba(151,172,210,.16);border-radius:10px;background:rgba(7,14,29,.28)}
+.war-assignment-modal-panel-reference .war-modal-member-reference>img{grid-row:1 / span 2;width:36px;height:36px;object-fit:contain}
+.war-assignment-modal-panel-reference .war-modal-member-details{display:grid;gap:3px;min-width:0}
+.war-assignment-modal-panel-reference .war-modal-member-details strong{overflow:hidden;color:#f3f6ff;font-size:13px;text-overflow:ellipsis;white-space:nowrap}
+.war-assignment-modal-panel-reference .war-modal-member-details small{color:#aebbd0;font-size:10px}
+.war-member-status-tags{grid-column:2;display:flex;gap:5px;flex-wrap:wrap;margin-top:5px}
+.war-member-status-tag{padding:3px 7px;border:1px solid rgba(181,197,225,.22);border-radius:20px;color:#c6d3e9;background:rgba(255,255,255,.045);font-size:9px;font-weight:800}
+.war-member-status-tag.is-reserve{color:#f2d27b;border-color:rgba(226,184,83,.38)}
+.war-member-status-tag.is-leave,.war-member-status-tag.is-absent{color:#ff9b9b;border-color:rgba(228,104,117,.35)}
+.war-member-status-tag.is-added{color:#a9c5ff;border-color:rgba(119,157,226,.35)}
+.war-member-status-tag.is-signed{color:#8de0bd;border-color:rgba(83,190,147,.32)}
+.war-assignment-modal-panel-reference .war-modal-tabs{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin:0 0 12px;padding:4px;border-radius:10px;background:rgba(7,14,29,.46)}
+.war-assignment-modal-panel-reference .war-modal-tabs button{min-height:34px;border:0;border-radius:7px;color:#aebbd1;background:transparent;font-size:11px;font-weight:800}
+.war-assignment-modal-panel-reference .war-modal-tabs button.is-active{color:#f4f6ff;background:linear-gradient(180deg,rgba(132,147,183,.42),rgba(92,108,146,.3));box-shadow:inset 0 1px rgba(255,255,255,.08)}
+.war-assignment-modal-panel-reference .war-modal-tab-panel[hidden]{display:none!important}
+.war-assignment-modal-panel-reference .war-member-skill-editor{gap:10px;margin:0;padding:0;border:0;background:transparent}
+.war-assignment-modal-panel-reference .war-member-skill-heading{color:#dbe4f6;font-size:10px}
+.war-assignment-modal-panel-reference .war-member-skill-heading span{color:#9eacc5;font-size:9px}
+.war-assignment-modal-panel-reference .war-member-skill-icon-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;padding:10px;border:1px solid rgba(119,148,198,.12);border-radius:11px;background:rgba(8,17,35,.25)}
+.war-assignment-modal-panel-reference .war-member-skill-icon-choice{position:relative;display:grid;place-items:center;gap:0;min-width:0;padding:0;border:0;background:transparent}
+.war-assignment-modal-panel-reference .war-member-skill-icon-choice input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.war-assignment-modal-panel-reference .war-member-skill-icon-choice img{width:34px;height:34px;padding:3px;border:2px solid #b98b42;border-radius:50%;background:linear-gradient(145deg,#f1d18a,#69451e);object-fit:cover;box-shadow:0 0 0 1px rgba(255,224,154,.25),0 2px 6px rgba(0,0,0,.4);transition:transform .15s,border-color .15s,box-shadow .15s}
+.war-assignment-modal-panel-reference .war-member-skill-icon-choice span{position:absolute;left:50%;bottom:calc(100% + 5px);z-index:3;display:none;max-width:140px;padding:4px 7px;border-radius:5px;background:#080f20;color:#fff;font-size:9px;white-space:nowrap;transform:translateX(-50%)}
+.war-assignment-modal-panel-reference .war-member-skill-icon-choice:hover span{display:block}
+.war-assignment-modal-panel-reference .war-member-skill-icon-choice:has(input:checked) img{border-color:#f9e3a1;box-shadow:0 0 0 2px #d3a74e,0 0 13px rgba(247,196,86,.55);transform:scale(1.06)}
+.war-assignment-modal-panel-reference .war-member-skill-upload-tools{display:grid;gap:8px}
+.war-assignment-modal-panel-reference .war-member-skill-upload-toggle{justify-self:end;padding:6px 11px;border:1px solid rgba(129,158,223,.28);border-radius:18px;color:#eaf0ff;background:#506fe0;font-size:10px;font-weight:800}
+.war-assignment-modal-panel-reference .war-member-skill-create-form[hidden]{display:none!important}
+.war-assignment-modal-panel-reference .war-member-skill-create-form{grid-template-columns:1fr auto;align-items:end;gap:7px;padding:9px;border:1px solid rgba(132,159,211,.18);border-radius:9px;background:rgba(5,12,27,.3)}
+.war-assignment-modal-panel-reference .war-member-skill-create-form>label:first-child{grid-column:1/-1;color:#cbd7ef;font-size:10px}
+.war-assignment-modal-panel-reference .war-member-skill-create-form>input[type=text]{grid-column:1/-1;width:100%;min-height:32px;padding:6px 9px;border:1px solid rgba(154,174,215,.22);border-radius:6px;color:#f4f6ff;background:rgba(3,9,20,.42);font-size:11px}
+.war-assignment-modal-panel-reference .war-member-skill-upload{min-height:31px;padding:6px 9px;border-color:rgba(154,174,215,.25);color:#cdd8ec;font-size:10px}
+.war-assignment-modal-panel-reference .war-member-skill-create-form>small{grid-column:1/-1;color:#94a4c0;font-size:9px}
+.war-assignment-modal-panel-reference .war-member-skill-save{width:100%;min-height:34px;margin-top:2px;border:1px solid rgba(226,181,89,.24);border-radius:8px;color:#f0d28c;background:rgba(171,124,42,.13);font-size:10px;font-weight:850}
+.war-assignment-modal-panel-reference .war-modal-section-remove{width:100%;min-height:35px;margin-top:12px;border:1px solid rgba(215,91,111,.2);border-radius:9px;color:#e98d9b;background:rgba(160,51,70,.13);font-size:10px;font-weight:800}
+.war-assignment-modal-panel-reference .war-modal-search{margin:0 0 9px;color:#cbd7eb;font-size:10px}
+.war-assignment-modal-panel-reference .war-modal-search input{height:35px;border-color:rgba(148,169,207,.2);border-radius:8px;color:#f4f6ff;background:rgba(5,12,27,.35);font-size:11px}
+.war-assignment-modal-panel-reference .war-modal-class-tabs{gap:5px;margin:8px 0}
+.war-assignment-modal-panel-reference .war-modal-class-tabs button{min-width:32px;height:32px;border-color:rgba(147,166,204,.15);border-radius:7px;color:#d9e3f5;background:rgba(255,255,255,.035)}
+.war-assignment-modal-panel-reference .war-modal-class-tabs img{width:23px;height:23px}
+.war-assignment-modal-panel-reference .war-modal-class-tabs button.is-active{border-color:#d4ad62;background:rgba(197,154,69,.16)}
+.war-assignment-modal-panel-reference .war-modal-member-list{max-height:225px;gap:5px}
+.war-assignment-modal-panel-reference .war-modal-member-option{padding:8px;border-color:rgba(138,163,211,.18);border-radius:8px;background:rgba(6,14,30,.3)}
+.war-assignment-modal-panel-reference .war-modal-member-option small{color:#9faec8}
+.war-assignment-modal-panel-reference .war-modal-status{color:#ff9ba9}
+.war-modal-empty-hint{margin:0;padding:12px;text-align:center;color:#9eacc5;font-size:10px}
+@media(max-width:520px){.war-assignment-modal{padding:10px}.war-assignment-modal-panel-reference{width:min(446px,calc(100vw - 20px));max-height:calc(100dvh - 20px);padding:20px 14px 15px}.war-assignment-modal-panel-reference .war-member-skill-icon-grid{grid-template-columns:repeat(7,minmax(0,1fr));gap:7px;padding:8px}.war-assignment-modal-panel-reference .war-member-skill-icon-choice img{width:32px;height:32px}}

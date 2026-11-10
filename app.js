@@ -2590,18 +2590,29 @@ async function saveWarSkillEdit(event){
  }
 }
 function renderWarMemberSkillEditor(member){
-  const root=$("war-member-skill-editor");if(!root||!member)return;
-  const skills=warSkillCatalog,selected=new Set((warMemberSkillMap.get(member.user_id)||[]).map(skill=>skill.id));
-  if(warSkillLoadError){root.innerHTML='<p class="war-skill-error">ระบบ Skill ยังไม่พร้อม: '+escapeHTML(warSkillLoadError)+'</p>';return;}
-  root.innerHTML=`<div class="war-member-skill-heading"><strong>SKILLS · ${escapeHTML(getMemberName(member))}</strong><span>ใช้ได้ทุก Class · เลือกได้หลายรายการ</span></div>
-  <form id="war-member-skill-create-form" class="war-member-skill-create-form">
-    <label for="war-member-skill-new-name">เพิ่ม Skill ใหม่เข้าคลัง</label>
-    <div class="war-member-skill-create-fields"><input id="war-member-skill-new-name" type="text" maxlength="80" placeholder="ชื่อ Skill" required><label class="war-member-skill-upload" for="war-member-skill-new-icon">＋ เลือกรูปไอคอน<input id="war-member-skill-new-icon" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" required></label><button id="war-member-skill-create-submit" type="submit" class="btn btn-primary btn-sm">เพิ่ม Skill</button></div>
+ const root=$("war-member-skill-editor");if(!root||!member)return;
+ const skills=warSkillCatalog,selected=new Set((warMemberSkillMap.get(member.user_id)||[]).map(skill=>skill.id));
+ if(warSkillLoadError){root.innerHTML='<p class="war-skill-error">ระบบ Skill ยังไม่พร้อม: '+escapeHTML(warSkillLoadError)+'</p>';return;}
+ root.innerHTML=`<div class="war-member-skill-heading"><strong>SKILL (${skills.length})</strong><span>เลือกได้หลายรายการ</span></div>
+  <div class="war-member-skill-choice-list war-member-skill-icon-grid">
+   ${skills.length?skills.map(skill=>`<label class="war-member-skill-choice war-member-skill-icon-choice" title="${escapeHTML(skill.skill_name)}">
+    <input type="checkbox" value="${escapeHTML(skill.id)}" ${selected.has(skill.id)?"checked":""} aria-label="${escapeHTML(skill.skill_name)}">
+    <img src="${escapeHTML(skill.iconUrl)}" alt="${escapeHTML(skill.skill_name)}"><span>${escapeHTML(skill.skill_name)}</span>
+   </label>`).join(""):'<p class="war-modal-empty-hint">ยังไม่มี Skill ในคลัง</p>'}
+  </div>
+  <div class="war-member-skill-upload-tools">
+   <button type="button" class="war-member-skill-upload-toggle" data-war-skill-upload-toggle>＋ อัปโหลดรูป Skill</button>
+   <form id="war-member-skill-create-form" class="war-member-skill-create-form" hidden>
+    <label for="war-member-skill-new-name">ชื่อ Skill</label>
+    <input id="war-member-skill-new-name" type="text" maxlength="80" placeholder="ชื่อ Skill" required>
+    <label class="war-member-skill-upload" for="war-member-skill-new-icon">เลือกรูปไอคอน<input id="war-member-skill-new-icon" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" required></label>
+    <button id="war-member-skill-create-submit" type="submit" class="btn btn-primary btn-sm">เพิ่ม Skill</button>
     <small>รองรับ PNG, JPG, WEBP, GIF หรือ SVG · ไม่เกิน 3 MB</small><p id="war-member-skill-create-status" class="war-skill-status" role="status"></p>
-  </form>
-  ${skills.length?'<div class="war-member-skill-choice-list">'+skills.map(skill=>`<label class="war-member-skill-choice"><input type="checkbox" value="${escapeHTML(skill.id)}" ${selected.has(skill.id)?"checked":""}><img src="${escapeHTML(skill.iconUrl)}" alt=""><span>${escapeHTML(skill.skill_name)}</span></label>`).join("")+'</div>':'<p class="muted">ยังไม่มี Skill ในคลัง · เพิ่ม Skill ใหม่ได้จากช่องด้านบน</p>'}
-  <button type="button" class="btn btn-outline btn-sm" data-war-save-member-skills="${escapeHTML(member.user_id)}">บันทึก Skill ของสมาชิก</button><p id="war-member-skill-status" class="war-skill-status" role="status"></p>`;
- }
+   </form>
+  </div>
+  <button type="button" class="war-member-skill-save" data-war-save-member-skills="${escapeHTML(member.user_id)}">บันทึก Skill</button>
+  <p id="war-member-skill-status" class="war-skill-status" role="status"></p>`;
+}
 async function saveWarMemberSkillFromEditor(event){
   event.preventDefault();if(!isManagement())return;
   const name=$("war-member-skill-new-name")?.value.trim(),file=$("war-member-skill-new-icon")?.files?.[0],status=$("war-member-skill-create-status"),button=$("war-member-skill-create-submit");
@@ -2665,8 +2676,41 @@ function closeWarAssignmentModal(){$("war-assignment-modal")?.remove();warAssign
 function openWarAssignmentModal(partyId,position,assignmentId=null){
  const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event)return;const party=currentWarParties.find(x=>x.id===partyId);if(!party)return;
  const assignment=assignmentId?currentWarPartyAssignments.find(x=>x.id===assignmentId):null,current=assignment?allMembers.find(x=>x.user_id===assignment.member_id):null;
- closeWarAssignmentModal();warAssignmentModalSlot={partyId,position,assignmentId};const modal=document.createElement("div");modal.id="war-assignment-modal";modal.className="war-assignment-modal";
- modal.innerHTML=`<div class="war-assignment-modal-backdrop" data-war-modal-close></div><section class="war-assignment-modal-panel" role="dialog" aria-modal="true"><button class="war-modal-close" data-war-modal-close type="button">×</button><span class="panel-kicker">PARTY MANAGEMENT</span><h3>${party.raid}${party.party_number} · SLOT ${position}</h3><p class="war-modal-subtitle">${assignment?"จัดการสมาชิกในช่องนี้":"เลือกสมาชิกเพื่อเพิ่มลง Party"}</p>${current?`<div class="war-modal-current-member"><img src="${escapeHTML(getClassInfo(getMemberClass(current))?.iconPath||"")}" alt=""><div><strong>${escapeHTML(getMemberName(current))}</strong><small>${escapeHTML(getMemberClass(current))} · UID ${escapeHTML(current.game_uid||"—")}</small></div><button class="btn btn-danger btn-sm" data-war-modal-remove type="button">นำออก</button></div>`:""}<label class="war-modal-search">ค้นหาชื่อ / UID<input id="war-modal-member-search" type="search" placeholder="พิมพ์ชื่อหรือตัวเลข UID"></label>${current?`<div id="war-member-skill-editor" class="war-member-skill-editor"></div>`:""}<div class="war-modal-class-tabs"><button class="is-active" data-war-modal-class="all" type="button">ALL</button><button data-war-modal-reserve type="button">สำรอง <span>${warAssignmentSignups.filter(x=>Number(x.queue_position)>=61&&!currentWarPartyAssignments.some(a=>a.member_id===x.member_id)).length}</span></button>${CLASS_DATA.map(x=>`<button data-war-modal-class="${escapeHTML(x.name)}" type="button"><img src="${escapeHTML(x.iconPath)}" alt=""></button>`).join("")}</div><div class="war-modal-member-list" id="war-modal-member-list"></div><p class="war-modal-status" id="war-modal-status"></p></section>`;document.body.appendChild(modal);if(current)renderWarMemberSkillEditor(current);renderWarAssignmentModalMembers();
+ closeWarAssignmentModal();warAssignmentModalSlot={partyId,position,assignmentId};
+ const status=current?warMemberStatus(current.user_id):null;
+ const statusTags=current?[
+  status?.reserve?'<span class="war-member-status-tag is-reserve">สำรอง</span>':"",
+  status?.leave?'<span class="war-member-status-tag is-leave">ลาวอร์</span>':"",
+  status?.absent?'<span class="war-member-status-tag is-absent">ไม่ลงชื่อ</span>':"",
+  status?.addedByManagement?'<span class="war-member-status-tag is-added">เพิ่มโดยผู้ดูแล</span>':"",
+  status?.signup&&!status?.reserve?'<span class="war-member-status-tag is-signed">ลงชื่อแล้ว</span>':""
+ ].filter(Boolean).join(""):"";
+ const modal=document.createElement("div");modal.id="war-assignment-modal";modal.className="war-assignment-modal";modal.dataset.activeTab=current?"skills":"members";
+ modal.innerHTML=`<div class="war-assignment-modal-backdrop" data-war-modal-close></div>
+ <section class="war-assignment-modal-panel war-assignment-modal-panel-reference" role="dialog" aria-modal="true" aria-labelledby="war-modal-title">
+  <button class="war-modal-close" data-war-modal-close type="button" aria-label="ปิด">×</button>
+  <span class="panel-kicker">PARTY MANAGEMENT</span>
+  <h3 id="war-modal-title">${party.raid}${party.party_number} · SLOT ${position}</h3>
+  <p class="war-modal-subtitle">${assignment?"จัดการสมาชิกในช่องนี้":"เลือกสมาชิกเพื่อเพิ่มลง Party"}</p>
+  ${current?`<div class="war-modal-current-member war-modal-member-reference">
+    <img src="${escapeHTML(getClassInfo(getMemberClass(current))?.iconPath||"")}" alt="">
+    <div class="war-modal-member-details"><strong>${escapeHTML(getMemberName(current))}</strong><small>${escapeHTML(getMemberClass(current))} · UID: ${escapeHTML(current.game_uid||"—")}</small></div>
+    <div class="war-member-status-tags">${statusTags}</div>
+  </div>`:""}
+  <div class="war-modal-tabs" role="tablist" aria-label="จัดการสมาชิก">
+   <button type="button" role="tab" data-war-modal-tab="skills" class="${current?"is-active":""}" aria-selected="${current?"true":"false"}">Skill</button>
+   <button type="button" role="tab" data-war-modal-tab="members" class="${current?"":"is-active"}" aria-selected="${current?"false":"true"}">${current?"เปลี่ยนคน":"เลือกสมาชิก"}</button>
+  </div>
+  <div id="war-modal-skills-panel" class="war-modal-tab-panel" ${current?"":"hidden"}>${current?'<div id="war-member-skill-editor" class="war-member-skill-editor"></div>':'<p class="war-modal-empty-hint">เลือกสมาชิกก่อนเพื่อจัดการ Skill</p>'}</div>
+  <div id="war-modal-members-panel" class="war-modal-tab-panel" ${current?"hidden":""}>
+   <label class="war-modal-search">ค้นหาชื่อ / UID<input id="war-modal-member-search" type="search" placeholder="พิมพ์ชื่อหรือตัวเลข UID"></label>
+   <div class="war-modal-class-tabs"><button class="is-active" data-war-modal-class="all" type="button">ALL</button><button data-war-modal-reserve type="button">สำรอง <span>${warAssignmentSignups.filter(x=>Number(x.queue_position)>=61&&!currentWarPartyAssignments.some(a=>a.member_id===x.member_id)).length}</span></button>${CLASS_DATA.map(x=>`<button data-war-modal-class="${escapeHTML(x.name)}" type="button" title="${escapeHTML(x.name)}"><img src="${escapeHTML(x.iconPath)}" alt="${escapeHTML(x.name)}"></button>`).join("")}</div>
+   <div class="war-modal-member-list" id="war-modal-member-list"></div>
+  </div>
+  ${current?'<button class="war-modal-section-remove" data-war-modal-remove type="button">ย้ายออกจาก Section</button>':""}
+  <p class="war-modal-status" id="war-modal-status" role="status"></p>
+ </section>`;
+ document.body.appendChild(modal);if(current)renderWarMemberSkillEditor(current);renderWarAssignmentModalMembers();
 }
 function renderWarAssignmentModalMembers(){
  const list=$("war-modal-member-list");if(!list||!warAssignmentModalSlot)return;const assigned=getAssignedWarMemberIds(warAssignmentModalSlot.assignmentId),q=String($("war-modal-member-search")?.value||"").toLowerCase(),cls=$("war-assignment-modal")?.dataset.classFilter||"all",reserveOnly=$("war-assignment-modal")?.dataset.reserveOnly==="true";
@@ -3650,7 +3694,7 @@ function registerWarCreationEvents(){
  $("war-raid-boards")?.addEventListener("click",e=>{const add=e.target.closest("[data-war-add-slot]"),manage=e.target.closest("[data-war-manage-slot]");if(add)openWarAssignmentModal(add.dataset.partyId,Number(add.dataset.position));else if(manage)openWarAssignmentModal(manage.dataset.partyId,Number(manage.dataset.position),manage.dataset.assignmentId);});
  $("war-assignment-toolbar")?.addEventListener("click",e=>{const f=e.target.closest("[data-war-filter]"),c=e.target.closest("[data-war-class-filter]"),pool=e.target.closest("[data-war-pool-member]");if(f){warAssignmentFilter=f.dataset.warFilter||"all";applyWarAssignmentMemberFilters();}if(c){warAssignmentClassFilter=c.dataset.warClassFilter||"all";applyWarAssignmentMemberFilters();}if(pool){const p=currentWarParties.find(x=>x.raid===warAssignmentFilter&&(x.war_party_members||[]).length<6)||currentWarParties.find(x=>(x.war_party_members||[]).length<6);if(!p){alert("ไม่พบ Party ที่ว่าง");return;}const used=new Set((p.war_party_members||[]).map(x=>Number(x.position))),pos=[1,2,3,4,5,6].find(x=>!used.has(x));if(pos){openWarAssignmentModal(p.id,pos);const picked=allMembers.find(m=>m.user_id===pool.dataset.warPoolMember);const search=$("war-modal-member-search");if(picked&&search){search.value=getMemberName(picked);renderWarAssignmentModalMembers();}}}});
  $("war-assignment-toolbar")?.addEventListener("input",e=>{if(e.target.id==="war-assignment-search"){warAssignmentSearch=e.target.value;applyWarAssignmentMemberFilters();}});
- document.body.addEventListener("click",e=>{if(e.target.closest("[data-war-modal-close]")){closeWarAssignmentModal();return;}const add=e.target.closest("[data-war-modal-assign]"),remove=e.target.closest("[data-war-modal-remove]"),saveSkills=e.target.closest("[data-war-save-member-skills]"),cls=e.target.closest("[data-war-modal-class]"),reserveTab=e.target.closest("[data-war-modal-reserve]");if(reserveTab){const modal=$("war-assignment-modal");if(modal){modal.dataset.reserveOnly=modal.dataset.reserveOnly==="true"?"false":"true";reserveTab.classList.toggle("is-active",modal.dataset.reserveOnly==="true");modal.querySelector("[data-war-modal-class=\"all\"]")?.classList.toggle("is-active",modal.dataset.reserveOnly!=="true");renderWarAssignmentModalMembers();}return;}if(saveSkills){saveWarMemberSkills(saveSkills.dataset.warSaveMemberSkills,saveSkills);return;}if(add){assignWarMemberToSlot(add.dataset.warModalAssign);return;}if(remove&&warAssignmentModalSlot?.assignmentId){removeWarPartyMember(warAssignmentModalSlot.assignmentId,remove);return;}if(cls){const modal=$("war-assignment-modal");if(modal)modal.dataset.classFilter=cls.dataset.warModalClass||"all";modal?.querySelectorAll("[data-war-modal-class]").forEach(b=>b.classList.toggle("is-active",b===cls));renderWarAssignmentModalMembers();}});
+ document.body.addEventListener("click",e=>{if(e.target.closest("[data-war-modal-close]")){closeWarAssignmentModal();return;}const tab=e.target.closest("[data-war-modal-tab]");if(tab){const modal=$("war-assignment-modal"),skillsPanel=$("war-modal-skills-panel"),membersPanel=$("war-modal-members-panel"),active=tab.dataset.warModalTab;if(modal)modal.dataset.activeTab=active;modal?.querySelectorAll("[data-war-modal-tab]").forEach(b=>{const selected=b===tab;b.classList.toggle("is-active",selected);b.setAttribute("aria-selected",String(selected));});if(skillsPanel)skillsPanel.hidden=active!=="skills";if(membersPanel)membersPanel.hidden=active!=="members";if(active==="members")renderWarAssignmentModalMembers();return;}const uploadToggle=e.target.closest("[data-war-skill-upload-toggle]");if(uploadToggle){const form=$("war-member-skill-create-form");if(form)form.hidden=!form.hidden;return;}const add=e.target.closest("[data-war-modal-assign]"),remove=e.target.closest("[data-war-modal-remove]"),saveSkills=e.target.closest("[data-war-save-member-skills]"),cls=e.target.closest("[data-war-modal-class]"),reserveTab=e.target.closest("[data-war-modal-reserve]");if(reserveTab){const modal=$("war-assignment-modal");if(modal){modal.dataset.reserveOnly=modal.dataset.reserveOnly==="true"?"false":"true";reserveTab.classList.toggle("is-active",modal.dataset.reserveOnly==="true");modal.querySelector("[data-war-modal-class=\"all\"]")?.classList.toggle("is-active",modal.dataset.reserveOnly!=="true");renderWarAssignmentModalMembers();}return;}if(saveSkills){saveWarMemberSkills(saveSkills.dataset.warSaveMemberSkills,saveSkills);return;}if(add){assignWarMemberToSlot(add.dataset.warModalAssign);return;}if(remove&&warAssignmentModalSlot?.assignmentId){removeWarPartyMember(warAssignmentModalSlot.assignmentId,remove);return;}if(cls){const modal=$("war-assignment-modal");if(modal)modal.dataset.classFilter=cls.dataset.warModalClass||"all";modal?.querySelectorAll("[data-war-modal-class]").forEach(b=>b.classList.toggle("is-active",b===cls));renderWarAssignmentModalMembers();}});
  document.body.addEventListener("input",e=>{if(e.target.id==="war-modal-member-search")renderWarAssignmentModalMembers();});
   $("war-events")?.addEventListener("click",event=>{
     const deleteButton=event.target.closest("[data-war-delete]");
