@@ -5797,3 +5797,25 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
  .war-assignment-modal-panel-reference .war-member-skill-icon-choice img{width:42px;height:42px}
  .war-assignment-modal-panel-reference .war-member-skill-upload-tools{margin:14px 0 13px}
 }
+
+
+/* Duck Race embedded game */
+.duck-race-panel{
+  padding:0;
+  overflow:hidden;
+  background:#07131b;
+}
+.duck-race-frame{
+  display:block;
+  width:100%;
+  height:clamp(720px,calc(100vh - 190px),1100px);
+  min-height:720px;
+  border:0;
+  background:#dfeef6;
+}
+@media(max-width:700px){
+  .duck-race-frame{
+    height:820px;
+    min-height:820px;
+  }
+}
