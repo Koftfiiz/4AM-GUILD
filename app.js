@@ -96,7 +96,8 @@ const PAGE_TITLES = {
   "guild-activities": "Guild Activities",
   feedback: "แจ้งปัญหา / Feedback",
   settings: "ตั้งค่าบัญชี",
-  "system-management": "System Management"
+  "system-management": "System Management",
+  appearance: "Appearance"
 };
 
 // ==========================================
@@ -420,6 +421,7 @@ async function loadApplication() {
 
   try {
     await loadCurrentMember();
+    await loadAppearanceSettings();
 
     // ยังไม่มีโปรไฟล์ ให้ลงทะเบียนก่อนเข้า Dashboard
     if (!currentMember) {
@@ -4837,6 +4839,80 @@ registerGuildRuleEvents();
 // PAGE NAVIGATION
 // ==========================================
 
+
+const APPEARANCE_THEMES={
+ "4am-original":{name:"4AM Original",description:"Black · Red · Gold",colors:{primary:"#b3202e",secondary:"#d8b06a",background:"#060405",surface:"#171014"}},
+ "4am-starlight":{name:"4AM Starlight",description:"Midnight Navy · Lavender · Pastel Pink · Ice Blue",colors:{primary:"#a98cff",secondary:"#f4a9d7",background:"#090b20",surface:"#171a38"}},
+ "cyberpunk":{name:"Cyberpunk",description:"Deep Navy · Electric Cyan · Neon Blue",colors:{primary:"#16c8e8",secondary:"#a5f3ff",background:"#06121b",surface:"#102735"}},
+ "minimal-light":{name:"Minimal Light",description:"Clean White · Silver · Soft Indigo",colors:{primary:"#5968b8",secondary:"#8c96b8",background:"#f1f3f8",surface:"#ffffff"}}
+};
+const APPEARANCE_LOCAL_KEY="4am-guild:appearance:v1";
+const GUILD_LOGO_FALLBACK="https://i.postimg.cc/xqVN8XTs/4AM-Logo.png";
+let appearanceState={themeId:"4am-original",defaultThemeId:"4am-original",customTokens:{},activeLogoUrl:GUILD_LOGO_FALLBACK,logoLibrary:[],loaded:false};
+function appearanceLocal(){try{return JSON.parse(localStorage.getItem(APPEARANCE_LOCAL_KEY)||"{}")}catch{return{}}}
+function applyAppearanceTheme(id,tokens={}){
+ const theme=APPEARANCE_THEMES[id]||APPEARANCE_THEMES["4am-original"],root=document.documentElement;
+ root.dataset.theme=APPEARANCE_THEMES[id]?id:"4am-original";
+ const c={...theme.colors,...tokens};
+ [["primary","--appearance-primary"],["secondary","--appearance-secondary"],["background","--appearance-background"],["surface","--appearance-card"]].forEach(([k,v])=>root.style.setProperty(v,c[k]));
+ root.style.setProperty("--red",c.primary);root.style.setProperty("--red-bright",c.primary);root.style.setProperty("--red-line",c.primary+"bb");root.style.setProperty("--gold",c.secondary);root.style.setProperty("--gold-light",c.secondary);root.style.setProperty("--bg",c.background);
+ updateGuildLogo(appearanceState.activeLogoUrl);
+}
+function updateGuildLogo(url){
+ const safe=/^https?:\/\//i.test(String(url||""))?String(url):GUILD_LOGO_FALLBACK;appearanceState.activeLogoUrl=safe;
+ document.querySelectorAll(".login-emblem img,.sidebar-brand img,.registration-guild-logo img").forEach(img=>{img.src=safe;img.onerror=()=>{img.onerror=null;img.src=GUILD_LOGO_FALLBACK}});
+ const preview=$("appearance-brand-preview");if(preview)preview.src=safe;
+ const input=$("appearance-logo-url");if(input&&document.activeElement!==input)input.value=safe;
+}
+async function loadAppearanceSettings(){
+ const local=appearanceLocal();appearanceState.themeId=APPEARANCE_THEMES[local.themeId]?local.themeId:"4am-original";appearanceState.customTokens=local.customTokens||{};applyAppearanceTheme(appearanceState.themeId,appearanceState.customTokens);
+ try{
+  const [p,g]=await Promise.all([supabaseClient.from("member_appearance_preferences").select("*").eq("user_id",currentUser.id).maybeSingle(),supabaseClient.from("guild_appearance_settings").select("*").eq("id",true).maybeSingle()]);
+  if(p.error)throw p.error;if(g.error)throw g.error;
+  const guild=g.data||{};appearanceState.defaultThemeId=APPEARANCE_THEMES[guild.default_theme_id]?guild.default_theme_id:"4am-original";appearanceState.activeLogoUrl=guild.active_logo_url||GUILD_LOGO_FALLBACK;appearanceState.logoLibrary=Array.isArray(guild.logo_library)?guild.logo_library:[];
+  appearanceState.themeId=APPEARANCE_THEMES[p.data?.theme_id]?p.data.theme_id:appearanceState.defaultThemeId;appearanceState.customTokens=p.data?.custom_tokens||{};appearanceState.loaded=true;
+ }catch(e){console.warn("Appearance SQL migration not applied or unavailable:",e.message||e);appearanceState.defaultThemeId="4am-original";appearanceState.loaded=false}
+ applyAppearanceTheme(appearanceState.themeId,appearanceState.customTokens);updateGuildLogo(appearanceState.activeLogoUrl);
+}
+async function saveAppearancePreferences(){
+ try{localStorage.setItem(APPEARANCE_LOCAL_KEY,JSON.stringify({themeId:appearanceState.themeId,customTokens:appearanceState.customTokens}))}catch{}
+ const {error}=await supabaseClient.from("member_appearance_preferences").upsert({user_id:currentUser.id,theme_id:appearanceState.themeId,custom_tokens:appearanceState.customTokens,updated_at:new Date().toISOString()},{onConflict:"user_id"});
+ if(error){showMessage("appearance-personal-message","บันทึกในเครื่องนี้แล้ว แต่ยังไม่ Sync ข้ามอุปกรณ์ กรุณารัน SQL Migration ก่อน: "+error.message);return false}
+ showMessage("appearance-personal-message","บันทึกธีมและการปรับแต่งในบัญชีแล้ว","success");return true;
+}
+async function saveGuildAppearanceSettings(){
+ if(!isManagement())throw new Error("คุณไม่มีสิทธิ์จัดการ Appearance");
+ const {error}=await supabaseClient.from("guild_appearance_settings").upsert({id:true,default_theme_id:appearanceState.defaultThemeId,active_logo_url:appearanceState.activeLogoUrl,logo_library:appearanceState.logoLibrary,updated_by:currentUser.id,updated_at:new Date().toISOString()},{onConflict:"id"});
+ if(error)throw error;
+}
+function renderAppearanceLogoLibrary(){
+ const list=$("appearance-logo-list");if(!list)return;
+ list.innerHTML=appearanceState.logoLibrary.length?appearanceState.logoLibrary.map((l,i)=>`<div class="appearance-logo-item"><img src="${escapeHTML(l.url)}" alt=""><span>${escapeHTML(l.name||"Guild logo")}</span><div><button type="button" class="btn btn-outline btn-sm" data-logo-activate="${i}">ใช้โลโก้นี้</button>${isManagement()?'<button type="button" class="btn btn-danger btn-sm" data-logo-remove="'+i+'">ลบ</button>':""}</div></div>`).join(""):'<p class="appearance-help">ยังไม่มีโลโก้ในคลัง</p>';
+}
+function renderAppearancePage(){
+ const grid=$("appearance-theme-grid");if(!grid)return;
+ grid.innerHTML=Object.entries(APPEARANCE_THEMES).map(([id,t])=>`<article class="appearance-theme-card ${id===appearanceState.themeId?"is-active":""}"><div class="appearance-theme-preview theme-preview-${id}"><span class="theme-preview-orbit"></span><span class="theme-preview-window"><i></i><i></i><i></i><b></b><em></em></span><strong>4AM GUILD</strong></div><div class="appearance-theme-info"><div><h4>${t.name}</h4><p>${t.description}</p></div><button class="btn ${id===appearanceState.themeId?"btn-outline":"btn-primary"} btn-sm" type="button" data-theme-select="${id}">${id===appearanceState.themeId?"กำลังใช้งาน":"ใช้ธีมนี้"}</button></div></article>`).join("");
+ $("appearance-active-label").textContent=APPEARANCE_THEMES[appearanceState.themeId].name;
+ const select=$("appearance-default-theme");if(select){select.innerHTML=Object.entries(APPEARANCE_THEMES).map(([id,t])=>`<option value="${id}">${t.name}</option>`).join("");select.value=appearanceState.defaultThemeId}
+ $("appearance-admin-section")?.classList.toggle("hidden",!isManagement());
+ document.querySelectorAll("[data-appearance-token]").forEach(input=>{const k=input.dataset.appearanceToken;input.value=appearanceState.customTokens[k]||APPEARANCE_THEMES[appearanceState.themeId].colors[k]});
+ updateGuildLogo(appearanceState.activeLogoUrl);renderAppearanceLogoLibrary();
+}
+function registerAppearanceEvents(){
+ const root=$("appearance-workspace");if(!root||root.dataset.bound)return;root.dataset.bound="true";
+ root.addEventListener("click",async e=>{
+  const theme=e.target.closest("[data-theme-select]");if(theme){appearanceState.themeId=theme.dataset.themeSelect;appearanceState.customTokens={};applyAppearanceTheme(appearanceState.themeId);renderAppearancePage();await saveAppearancePreferences();return}
+  const activate=e.target.closest("[data-logo-activate]");if(activate&&isManagement()){const logo=appearanceState.logoLibrary[+activate.dataset.logoActivate];if(!logo)return;appearanceState.activeLogoUrl=logo.url;updateGuildLogo(logo.url);try{await saveGuildAppearanceSettings();renderAppearancePage();showMessage("appearance-brand-message","เปลี่ยนโลโก้แล้ว","success")}catch(err){showMessage("appearance-brand-message",err.message)}return}
+  const remove=e.target.closest("[data-logo-remove]");if(remove&&isManagement()){appearanceState.logoLibrary.splice(+remove.dataset.logoRemove,1);try{await saveGuildAppearanceSettings();renderAppearanceLogoLibrary()}catch(err){showMessage("appearance-brand-message",err.message)}}
+ });
+ root.addEventListener("input",e=>{const input=e.target.closest("[data-appearance-token]");if(!input)return;appearanceState.customTokens[input.dataset.appearanceToken]=input.value;applyAppearanceTheme(appearanceState.themeId,appearanceState.customTokens)});
+ $("appearance-save-custom")?.addEventListener("click",saveAppearancePreferences);
+ $("appearance-reset-custom")?.addEventListener("click",async()=>{appearanceState.customTokens={};applyAppearanceTheme(appearanceState.themeId);renderAppearancePage();await saveAppearancePreferences()});
+ $("appearance-save-default")?.addEventListener("click",async()=>{if(!isManagement())return;appearanceState.defaultThemeId=$("appearance-default-theme").value;try{await saveGuildAppearanceSettings();showMessage("appearance-admin-message","บันทึก Default Theme แล้ว","success")}catch(e){showMessage("appearance-admin-message","บันทึกไม่สำเร็จ: "+e.message)}});
+ $("appearance-save-logo")?.addEventListener("click",async()=>{if(!isManagement())return;const url=$("appearance-logo-url").value.trim();if(!/^https:\/\//i.test(url)){showMessage("appearance-brand-message","กรุณาใช้ URL ที่ขึ้นต้นด้วย https://");return}appearanceState.activeLogoUrl=url;if(!appearanceState.logoLibrary.some(x=>x.url===url))appearanceState.logoLibrary.unshift({name:"Guild logo",url});updateGuildLogo(url);try{await saveGuildAppearanceSettings();renderAppearancePage();showMessage("appearance-brand-message","ตั้งโลโก้หลักแล้ว","success")}catch(e){showMessage("appearance-brand-message","บันทึกไม่สำเร็จ: "+e.message)}});
+ $("appearance-logo-upload")?.addEventListener("change",async e=>{if(!isManagement())return;const file=e.target.files?.[0];if(!file)return;if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type)||file.size>5242880){showMessage("appearance-brand-message","รองรับ PNG/JPG/WEBP/GIF ไม่เกิน 5 MB");e.target.value="";return}try{const path="guild-logos/"+Date.now()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"-");const {error}=await supabaseClient.storage.from("guild-assets").upload(path,file,{contentType:file.type});if(error)throw error;const url=supabaseClient.storage.from("guild-assets").getPublicUrl(path).data.publicUrl;appearanceState.activeLogoUrl=url;appearanceState.logoLibrary.unshift({name:file.name,url,storage_path:path});updateGuildLogo(url);await saveGuildAppearanceSettings();renderAppearancePage();showMessage("appearance-brand-message","อัปโหลดและตั้งโลโก้สำเร็จ","success")}catch(err){showMessage("appearance-brand-message","อัปโหลดไม่สำเร็จ: "+err.message+" — ตรวจสอบ SQL Migration / Storage policy")}finally{e.target.value=""}});
+}
+
 function syncManagementMenuVisibility() {
   document.querySelectorAll("[data-management-only]").forEach(item => {
     const allowed = isManagement();
@@ -4932,6 +5008,7 @@ function openGuildPage(pageName) {
     renderAccountDetails();
     loadDiscordAccount();
   }
+  if (pageName === "appearance") renderAppearancePage();
 
   if (pageName === "portfolio") loadPortfolios();
   if (pageName === "war") loadWarEvents();
@@ -5126,6 +5203,7 @@ function registerAppEventListeners() {
   });
   $("refresh-members")?.addEventListener("click", loadMembers);
   $("connect-discord")?.addEventListener("click", connectDiscord);
+  registerAppearanceEvents();
 
   document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
     button.addEventListener("click", () => {
