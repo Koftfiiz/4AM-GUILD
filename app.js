@@ -523,7 +523,7 @@ function showRegistrationScreen(errorMessage = "") {
     screen.innerHTML = `
       <div class="login-logo registration-guild-logo">
         <img
-          src="https://i.postimg.cc/xqVN8XTs/4AM-Logo.png"
+          src="/assets/4am-guild-logo.png"
           alt="4AM GUILD Logo"
           onerror="this.style.display='none'"
         >
@@ -2953,7 +2953,7 @@ async function exportWarImage(raidFilter = null){
   try{
     const [background,logo,fontCss]=await Promise.all([
       fetch("assets/4am-web-bg.jpg").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ assets/4am-web-bg.jpg");return response.blob();}).then(toDataUrl),
-      fetch("https://i.postimg.cc/xqVN8XTs/4AM-Logo.png").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ https://i.postimg.cc/xqVN8XTs/4AM-Logo.png");return response.blob();}).then(toDataUrl),
+      fetch("/assets/4am-guild-logo.png").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ /assets/4am-guild-logo.png");return response.blob();}).then(toDataUrl),
       getThaiFontCss()
     ]);
     const rosterClassNames=[...new Set(currentWarParties.flatMap(party=>(party.war_party_members||[]).map(assignment=>{
@@ -3068,7 +3068,7 @@ async function exportWarPartyImage(partyId){
   try{
     const [bg,logo,fontCss]=await Promise.all([
       fetch("assets/4am-web-bg.jpg").then(r=>{if(!r.ok)throw Error("ไม่พบภาพพื้นหลัง");return r.blob();}).then(toDataUrl),
-      fetch("https://i.postimg.cc/xqVN8XTs/4AM-Logo.png").then(r=>{if(!r.ok)throw Error("ไม่พบโลโก้");return r.blob();}).then(toDataUrl),
+      fetch("/assets/4am-guild-logo.png").then(r=>{if(!r.ok)throw Error("ไม่พบโลโก้");return r.blob();}).then(toDataUrl),
       getThaiFontCss()
     ]);
     const members=(party.war_party_members||[]).map(row=>({row,member:allMembers.find(item=>item.user_id===row.member_id)}));
@@ -4847,7 +4847,7 @@ const APPEARANCE_THEMES={
  "minimal-light":{name:"Minimal Light",description:"Clean White · Silver · Soft Indigo",colors:{primary:"#5968b8",secondary:"#8c96b8",background:"#f1f3f8",surface:"#ffffff"}}
 };
 const APPEARANCE_LOCAL_KEY="4am-guild:appearance:v1";
-const GUILD_LOGO_FALLBACK="https://i.postimg.cc/xqVN8XTs/4AM-Logo.png";
+const GUILD_LOGO_FALLBACK="/assets/4am-guild-logo.png";
 let appearanceState={themeId:"4am-original",defaultThemeId:"4am-original",customTokens:{},activeLogoUrl:GUILD_LOGO_FALLBACK,logoLibrary:[],loaded:false};
 function appearanceLocal(){try{return JSON.parse(localStorage.getItem(APPEARANCE_LOCAL_KEY)||"{}")}catch{return{}}}
 function applyAppearanceTheme(id,tokens={}){
@@ -4859,9 +4859,16 @@ function applyAppearanceTheme(id,tokens={}){
  updateGuildLogo(appearanceState.activeLogoUrl);
 }
 function updateGuildLogo(url){
- const safe=/^https?:\/\//i.test(String(url||""))?String(url):GUILD_LOGO_FALLBACK;appearanceState.activeLogoUrl=safe;
- document.querySelectorAll(".login-emblem img,.sidebar-brand img,.registration-guild-logo img").forEach(img=>{img.src=safe;img.onerror=()=>{img.onerror=null;img.src=GUILD_LOGO_FALLBACK}});
- const preview=$("appearance-brand-preview");if(preview)preview.src=safe;
+ const candidate=String(url||"").trim();
+ const isLegacyLogo=candidate.includes("i.postimg.cc");
+ const isLocalAsset=candidate.startsWith("/")||candidate.startsWith("assets/")||candidate.startsWith("./assets/");
+ const safe=(!candidate||isLegacyLogo)?GUILD_LOGO_FALLBACK:(isLocalAsset||/^https?:\/\//i.test(candidate)?candidate:GUILD_LOGO_FALLBACK);
+ appearanceState.activeLogoUrl=safe;
+ document.querySelectorAll(".login-emblem img,.sidebar-brand img,.registration-guild-logo img").forEach(img=>{
+  img.onerror=()=>{img.onerror=null;img.src=GUILD_LOGO_FALLBACK};
+  img.src=safe;
+ });
+ const preview=$("appearance-brand-preview");if(preview){preview.onerror=()=>{preview.onerror=null;preview.src=GUILD_LOGO_FALLBACK};preview.src=safe}
  const input=$("appearance-logo-url");if(input&&document.activeElement!==input)input.value=safe;
 }
 async function loadAppearanceSettings(){
@@ -4869,7 +4876,7 @@ async function loadAppearanceSettings(){
  try{
   const [p,g]=await Promise.all([supabaseClient.from("member_appearance_preferences").select("*").eq("user_id",currentUser.id).maybeSingle(),supabaseClient.from("guild_appearance_settings").select("*").eq("id",true).maybeSingle()]);
   if(p.error)throw p.error;if(g.error)throw g.error;
-  const guild=g.data||{};appearanceState.defaultThemeId=APPEARANCE_THEMES[guild.default_theme_id]?guild.default_theme_id:"4am-original";appearanceState.activeLogoUrl=guild.active_logo_url||GUILD_LOGO_FALLBACK;appearanceState.logoLibrary=Array.isArray(guild.logo_library)?guild.logo_library:[];
+  const guild=g.data||{};appearanceState.defaultThemeId=APPEARANCE_THEMES[guild.default_theme_id]?guild.default_theme_id:"4am-original";appearanceState.activeLogoUrl=(!guild.active_logo_url||String(guild.active_logo_url).includes("i.postimg.cc"))?GUILD_LOGO_FALLBACK:guild.active_logo_url;appearanceState.logoLibrary=Array.isArray(guild.logo_library)?guild.logo_library:[];
   appearanceState.themeId=APPEARANCE_THEMES[p.data?.theme_id]?p.data.theme_id:appearanceState.defaultThemeId;appearanceState.customTokens=p.data?.custom_tokens||{};appearanceState.loaded=true;
  }catch(e){console.warn("Appearance SQL migration not applied or unavailable:",e.message||e);appearanceState.defaultThemeId="4am-original";appearanceState.loaded=false}
  applyAppearanceTheme(appearanceState.themeId,appearanceState.customTokens);updateGuildLogo(appearanceState.activeLogoUrl);
