@@ -5052,3 +5052,42 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 #page-war .war-skill-edit-panel small{color:#bca8a8;font-size:11px}
 #page-war .war-skill-edit-panel .rule-editor-actions{display:flex;justify-content:flex-end;gap:8px}
 #page-war .war-skill-library-item [data-war-skill-edit]{white-space:nowrap}
+
+/* Skill assignment modal: one shared frame around all available skill choices */
+#page-war .war-member-skill-choice-list{
+  display:flex;
+  align-items:center;
+  gap:8px 10px;
+  flex-wrap:wrap;
+  padding:12px;
+  border:1px solid rgba(139,177,221,.42);
+  border-radius:9px;
+  background:linear-gradient(135deg,rgba(23,49,78,.58),rgba(12,27,48,.5));
+}
+#page-war .war-member-skill-choice{
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  padding:3px 4px;
+  border:0;
+  border-radius:4px;
+  background:transparent;
+}
+#page-war .war-member-skill-choice img{
+  width:14px;
+  height:14px;
+  flex:0 0 14px;
+  object-fit:contain;
+  border-radius:3px;
+}
+
+/* War party roster: prominently enlarge assigned skill icons */
+#page-war .war-member-skills{
+  gap:7px;
+  max-width:220px;
+}
+#page-war .war-member-skill-icon{
+  width:48px;
+  height:48px;
+  flex:0 0 48px;
+}
