@@ -2521,8 +2521,8 @@ function renderWarSkillManager(){
  }
 async function saveWarSkillDefinition(event){
  event.preventDefault();if(!isManagement())return;
- const name=$("war-skill-name")?.value.trim(),gameClass=$("war-skill-class")?.value,file=$("war-skill-icon")?.files?.[0],status=$("war-skill-form-status"),button=$("war-skill-submit");
- if(!name||!gameClass||!file){if(status)status.textContent="กรุณากรอกชื่อ เลือก Class และเลือกไอคอน";return;}
+ const name=$("war-skill-name")?.value.trim(),file=$("war-skill-icon")?.files?.[0],status=$("war-skill-form-status"),button=$("war-skill-submit");
+ if(!name||!file){if(status)status.textContent="กรุณากรอกชื่อ Skill และเลือกไอคอน";return;}
  if(!file.type.startsWith("image/")||file.size>3*1024*1024){if(status)status.textContent="ไฟล์ต้องเป็นรูปภาพและมีขนาดไม่เกิน 3 MB";return;}
  if(button){button.disabled=true;button.textContent="กำลังเพิ่ม Skill...";}
  if(status)status.textContent="กำลังอัปโหลดไอคอนและบันทึกข้อมูล...";
