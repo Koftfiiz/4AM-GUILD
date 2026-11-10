@@ -5550,3 +5550,89 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
   #war-skill-edit-modal .rule-editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   #war-skill-edit-modal .rule-editor-actions .btn{min-width:0;width:100%}
 }
+
+
+/* Skill edit modal — enforce a clean vertical form layout */
+#war-skill-edit-modal{
+  box-sizing:border-box;
+  padding:24px;
+}
+#war-skill-edit-modal .war-assignment-modal-panel.war-skill-edit-panel{
+  box-sizing:border-box;
+  width:min(520px,calc(100vw - 48px));
+  max-width:520px;
+  padding:30px 32px;
+}
+#war-skill-edit-modal #war-skill-edit-form{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:0;
+  width:100%;
+  min-width:0;
+}
+#war-skill-edit-modal #war-skill-edit-form .war-skill-edit-field{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:9px;
+  width:100%;
+  min-width:0;
+  margin:0 0 21px;
+}
+#war-skill-edit-modal #war-skill-edit-form .war-skill-edit-label{
+  display:block;
+  width:100%;
+  margin:0;
+  font-size:14px;
+  line-height:1.6;
+}
+#war-skill-edit-modal #war-skill-edit-form #war-skill-edit-name,
+#war-skill-edit-modal #war-skill-edit-form #war-skill-edit-icon{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  min-height:46px;
+  margin:0;
+}
+#war-skill-edit-modal #war-skill-edit-form #war-skill-edit-icon{
+  padding:8px;
+  font-size:12px;
+}
+#war-skill-edit-modal #war-skill-edit-form .war-skill-edit-field small{
+  display:block;
+  width:100%;
+  margin:0;
+  line-height:1.65;
+}
+#war-skill-edit-modal #war-skill-edit-form #war-skill-edit-status{
+  width:100%;
+  margin:0 0 14px;
+}
+#war-skill-edit-modal #war-skill-edit-form .rule-editor-actions{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  align-items:center;
+  gap:10px;
+  width:100%;
+  margin:0;
+  padding-top:17px;
+}
+@media(max-width:520px){
+  #war-skill-edit-modal{padding:12px}
+  #war-skill-edit-modal .war-assignment-modal-panel.war-skill-edit-panel{
+    width:calc(100vw - 24px);
+    padding:24px 20px;
+  }
+  #war-skill-edit-modal #war-skill-edit-form .rule-editor-actions{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+  }
+  #war-skill-edit-modal #war-skill-edit-form .rule-editor-actions .btn{
+    width:100%;
+    min-width:0;
+  }
+}
