@@ -347,7 +347,7 @@ function frame(now){
   checker(X0,S.cam);checker(X0+finishWorld,S.cam);
   rows.sort((a,b)=>a.y-b.y).forEach(o=>{
     // Bright concentric wake rings make the ducks visibly swim, not walk on top of the water
-    cx.save();cx.strokeStyle='rgba(225,255,255,.48)';cx.lineWidth=1.5;const pulse=1+Math.sin(now/190+o.k.ph)*.25;cx.beginPath();cx.ellipse(o.x-S.cam,o.y+s*.48,s*.55*pulse,s*.10,0,0,Math.PI*2);cx.stroke();cx.restore();
+    cx.save();cx.strokeStyle='rgba(225,255,255,.48)';cx.lineWidth=1.5;const wakeClock=S.fin&&!o.k.win?(S.finishAnimTime||now/1000)*1000:now;const pulse=1+Math.sin(wakeClock/190+o.k.ph)*.25;cx.beginPath();cx.ellipse(o.x-S.cam,o.y+s*.48,s*.55*pulse,s*.10,0,0,Math.PI*2);cx.stroke();cx.restore();
     const frozenTime=S.fin&&!o.k.win?(S.finishAnimTime||now/1000):now/1000;
     drawDuck(o.k,o.x-S.cam,o.y,s,frozenTime);
     if(S.fin&&o.k.win)drawWinnerCrown(o.x-S.cam,o.y-s*.68,s,S.celebrateT||0);
