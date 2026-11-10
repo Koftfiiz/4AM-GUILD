@@ -121,7 +121,7 @@ function roleLabel(role) {
   const roles = {
     developer: "4AM Dev",
     leader: "Leader",
-    admin: "Admin",
+    admin: "HR",
     management: "Management",
     member: "Member"
   };
@@ -3644,7 +3644,7 @@ function renderClassLegend() {
 
 const SYSTEM_ROLE_OPTIONS = [
   { value: "member", label: "Member" },
-  { value: "admin", label: "Admin" },
+  { value: "admin", label: "HR" },
   { value: "management", label: "Management" },
   { value: "leader", label: "Leader" }
 ];
@@ -3657,7 +3657,7 @@ function systemRoleLabel(role) {
     developer: "4AM Dev",
     leader: "Leader",
     management: "Management",
-    admin: "Admin",
+    admin: "HR",
     member: "Member"
   };
   return labels[String(role || "member").toLowerCase()] || "Member";
