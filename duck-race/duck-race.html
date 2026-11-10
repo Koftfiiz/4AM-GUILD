@@ -311,15 +311,60 @@ const baseProgress=()=>RACE_SPEED*Math.min(S.t,S.T);
 const prog=k=>baseProgress()+(k.offset||0)+(S.fin&&k.win?Math.min(W*.34,RACE_SPEED*1.05*(S.celebrateT||0)):0);
 const leader=()=>ducks.reduce((best,k)=>!best||prog(k)>prog(best)?k:best,null);
 
+
+/* Real-time arcade particles: effects are drawn into the water scene, never as status icons. */
+function drawBoostEffect(k,x,y,s,t){
+  const c=cx,phase=(t*9+k.ph*7),alpha=.82;
+  c.save();c.globalCompositeOperation='lighter';
+  if(k.fx==='fart'){
+    // Soft translucent green gas puffs drift backwards and spread across nearby lanes.
+    for(let i=0;i<13;i++){
+      const age=((t*1.25+i*.137+k.ph)%1.35)/1.35;
+      const px=x-s*.42-age*s*(.75+(i%4)*.19);
+      const py=y+s*.30+Math.sin(phase+i*2.1)*s*.12+(i%5-2)*s*.055;
+      const radius=s*(.055+age*.19+(i%3)*.018);
+      const g=c.createRadialGradient(px,py,1,px,py,radius);
+      g.addColorStop(0,'rgba(157,244,91,'+(.24*(1-age*.55))+')');
+      g.addColorStop(.62,'rgba(112,213,73,'+(.17*(1-age*.5))+')');
+      g.addColorStop(1,'rgba(91,180,68,0)');
+      c.fillStyle=g;c.beginPath();c.arc(px,py,radius,0,Math.PI*2);c.fill();
+    }
+  }else if(k.fx==='flash'){
+    c.strokeStyle='rgba(255,45,65,.9)';c.lineWidth=Math.max(2,s*.055);
+    for(let i=0;i<4;i++){const yy=y-s*.05+(i-1.5)*s*.16,tail=s*(.7+(i%2)*.45);
+      c.beginPath();c.moveTo(x-s*.32,yy);c.lineTo(x-tail*.65,yy-s*.12);c.lineTo(x-tail,yy+s*.05);c.stroke();}
+    c.fillStyle='rgba(255,70,90,.18)';c.beginPath();c.ellipse(x-s*.55,y+s*.12,s*.62,s*.29,0,0,Math.PI*2);c.fill();
+  }else if(k.fx==='sonic'){
+    for(let i=0;i<5;i++){const r=s*(.18+i*.13),a=phase*.8+i*1.2;
+      c.strokeStyle='rgba(55,190,255,'+(.75-i*.1)+')';c.lineWidth=Math.max(2,s*.035);
+      c.beginPath();c.ellipse(x-s*.22,y+s*.16,r*1.55,r*.55,a,Math.PI*.12,Math.PI*1.75);c.stroke();}
+    c.fillStyle='rgba(65,190,255,.18)';c.beginPath();c.ellipse(x-s*.42,y+s*.16,s*.62,s*.34,0,0,Math.PI*2);c.fill();
+  }else if(k.fx==='fire'){
+    for(let i=0;i<18;i++){const age=((t*2.2+i*.071+k.ph)%1),px=x-s*.38-age*s*.9,py=y+s*.35+Math.sin(phase+i*3)*s*.17;
+      const r=s*(.035+(1-age)*.10),g=c.createRadialGradient(px,py,0,px,py,r*2.2);
+      g.addColorStop(0,'rgba(255,245,155,.95)');g.addColorStop(.35,'rgba(255,128,35,.75)');g.addColorStop(1,'rgba(255,55,20,0)');
+      c.fillStyle=g;c.beginPath();c.arc(px,py,r*2.2,0,Math.PI*2);c.fill();}
+  }
+  c.globalCompositeOperation='source-over';c.restore();
+}
+function drawFatigueEffect(k,x,y,s,t){
+  // Subtle sweat droplets and a heavier, slower bob; no emoji or text labels.
+  const c=cx;c.save();c.fillStyle='rgba(155,225,255,.78)';
+  for(let i=0;i<2;i++){const p=(t*1.15+i*.5+k.ph)%1,dx=(i?1:-1)*s*.27;
+    c.globalAlpha=1-p*.65;c.beginPath();c.ellipse(x+dx+p*s*.08,y-s*.72+p*s*.25,s*.025,s*(.045+p*.025),-.35,0,Math.PI*2);c.fill();}
+  c.restore();
+}
+
 function frame(now){
   const dt=Math.min(.05,(now-S.last)/1000);S.last=now;
   if(S.st==='run'){
+    const previousProgress=new Map(ducks.map(k=>[k,RACE_SPEED*S.t+(k.offset||0)]));
     S.t=Math.min(S.T,S.t+dt);
     const base=D/Math.max(1,S.T);
     if(!S.fin)ducks.forEach(k=>{
       if(!k.mode||k.mode==='normal'){
         k.eventIn-=dt;
-        if(k.eventIn<=0){k.mode=Math.random()<.58?'tired':'boost';k.modeLeft=k.mode==='tired'?2.2+Math.random()*3.4:1.1+Math.random()*1.5;k.eventIn=5+Math.random()*8;k.fx=k.mode==='boost'?(Math.random()<.5?'fart':'rocket'):'sweat'}
+        if(k.eventIn<=0){k.mode=Math.random()<.58?'tired':'boost';k.modeLeft=k.mode==='tired'?2.2+Math.random()*3.4:1.1+Math.random()*1.5;k.eventIn=5+Math.random()*8;k.fx=k.mode==='boost'?rnd(['fart','flash','sonic','fire']):'sweat'}
       }else{
         k.modeLeft-=dt;
         if(k.modeLeft<=0){k.mode='normal';k.eventIn=2.5+Math.random()*5;k.fx=''}
@@ -328,7 +373,14 @@ function frame(now){
       const offsetLimit=Math.max(36,W*.22);
       k.offset=Math.max(-offsetLimit,Math.min(offsetLimit,(k.offset||0)+base*(mult-1)*dt));
     });
-    if(S.t>=S.T&&!S.fin)onFinish();
+    if(!S.fin){
+      const crossings=ducks.map(k=>({k,from:previousProgress.get(k)||0,to:RACE_SPEED*S.t+(k.offset||0)}))
+        .filter(v=>v.from<D&&v.to>=D)
+        .map(v=>({...v,at: v.from>=D?0:(D-v.from)/Math.max(.0001,v.to-v.from)}))
+        .sort((a,b)=>a.at-b.at);
+      if(crossings.length)onFinish(crossings[0].k);
+      else if(S.t>=S.T)onFinish(leader());
+    }
   }else if(S.st==='celebrate'){
     S.celebrateT=(S.celebrateT||0)+dt;
   }
@@ -342,8 +394,7 @@ function frame(now){
   S.cam=baseProgress();
   scene(S.cam,now/1000);
   const maxSpeed=(D/Math.max(1,S.T))*2.25;
-  const finishWorld=S.fin?S.finishWorld:(Math.max(...ducks.map(k=>baseProgress()+(k.offset||0)),baseProgress())+maxSpeed*Math.max(0,S.T-S.t));
-  if(!S.fin)S.finishWorld=finishWorld;
+  const finishWorld=S.fin?S.finishWorld:D;
   checker(X0,S.cam);checker(X0+finishWorld,S.cam);
   rows.sort((a,b)=>a.y-b.y).forEach(o=>{
     // Bright concentric wake rings make the ducks visibly swim, not walk on top of the water
@@ -351,19 +402,8 @@ function frame(now){
     const frozenTime=S.fin&&!o.k.win?(S.finishAnimTime||now/1000):now/1000;
     drawDuck(o.k,o.x-S.cam,o.y,s,frozenTime);
     if(S.fin&&o.k.win)drawWinnerCrown(o.x-S.cam,o.y-s*.68,s,S.celebrateT||0);
-    if(S.st==='run'&&o.k.mode==='boost'){
-      const bx=o.x-S.cam,by=o.y+s*.38;
-      cx.save();cx.font='900 '+Math.max(11,s*.25)+'px system-ui';cx.textAlign='center';
-      if(o.k.fx==='fart'){
-        cx.fillStyle='rgba(120,230,85,.8)';for(let j=0;j<5;j++){const rr=(now/65+j*17)%Math.max(24,s*.85);cx.globalAlpha=Math.max(0,1-rr/(s*.9));cx.beginPath();cx.arc(bx-s*.55-rr*.35,by+Math.sin(now/90+j)*rr*.12,Math.max(2,s*.06-rr*.025),0,Math.PI*2);cx.fill()}
-        cx.globalAlpha=1;cx.fillText('💨',bx-s*.72,by+s*.38);
-      }else{
-        cx.fillText('🚀',bx-s*.62,by+s*.25);cx.strokeStyle='#ffdf70';cx.lineWidth=3;cx.beginPath();cx.moveTo(bx-s*.48,by+s*.22);cx.lineTo(bx-s*1.1,by+s*.22);cx.stroke();
-      }
-      cx.fillStyle='#fff';cx.fillText('BOOST!',bx,by-s*.92);cx.restore();
-    }else if(S.st==='run'&&o.k.mode==='tired'){
-      cx.save();cx.font='900 '+Math.max(10,s*.22)+'px system-ui';cx.textAlign='center';cx.fillText('😮‍💨',o.x-S.cam,o.y-s*.95);cx.restore();
-    }
+    if(S.st==='run'&&o.k.mode==='boost')drawBoostEffect(o.k,o.x-S.cam,o.y,s,now/1000);
+    if(S.st==='run'&&o.k.mode==='tired')drawFatigueEffect(o.k,o.x-S.cam,o.y,s,now/1000);
   });
   $('clk').textContent=hms(S.T-S.t);
   requestAnimationFrame(frame);
@@ -382,10 +422,10 @@ function reset(){
   rmWin=false;$('rm').classList.remove('on');$('rm').textContent='✕';
 }
 const order=()=>ducks.slice().sort((a,b)=>a.fin-b.fin);
-function onFinish(){
-  const winner=leader();
+function onFinish(winner=leader()){
+  if(S.fin)return;
   S.fin=true;S.st='celebrate';S.celebrateT=0;S.finishAnimTime=performance.now()/1000;
-  S.finishWorld=baseProgress()+(winner?.offset||0);
+  S.finishWorld=D;
   ducks.forEach(k=>{k.win=k===winner;k.mode='normal';k.fx='';k.fin=k===winner?0:Math.max(1,S.T-(k.offset||0)/RACE_SPEED)});
   $('bGo').textContent='🏆 WINNER';
   $('again').classList.remove('hide');$('trophy').classList.remove('hide');
