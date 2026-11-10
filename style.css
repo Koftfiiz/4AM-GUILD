@@ -5150,3 +5150,21 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 
 /* Remove the shared frame around the skill gallery; keep each icon tile framed */
 #page-war .war-skill-library-grid{border:0;background:transparent;box-shadow:none;padding:10px 2px}
+
+
+/* Skill Library form refinement — align fields and improve readability */
+#page-war .war-skill-gallery-heading p{font-size:12px !important;line-height:1.5}
+#page-war .war-skill-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 20px;align-items:end}
+#page-war .war-skill-form .form-group{display:grid;grid-template-rows:auto 48px auto;align-content:start;gap:8px;min-width:0}
+#page-war .war-skill-form label{display:block;min-height:24px;margin:0;color:#f0d4b8;font-size:16px !important;font-weight:700;line-height:1.5}
+#page-war .war-skill-form input{width:100%;height:48px;min-height:48px;padding:8px 12px;font-size:15px}
+#page-war .war-skill-form input[type=file]{display:flex;align-items:center;padding:7px 9px;font-size:13px}
+#page-war .war-skill-form small{display:block;min-height:18px;font-size:11px;line-height:1.5}
+#page-war .war-skill-form #war-skill-submit{grid-column:1/-1;justify-self:end;min-width:150px;min-height:42px}
+#page-war .war-skill-form .war-skill-status{grid-column:1/-1}
+#page-war .war-skill-icon-button{width:96px;height:96px;padding:8px;border-radius:22px}
+#page-war .war-skill-icon-button img{width:78px;height:78px}
+#page-war .war-skill-library-grid{grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:18px}
+#page-war .war-skill-library-item{min-height:112px}
+@media(max-width:850px){#page-war .war-skill-form{grid-template-columns:1fr;gap:14px}#page-war .war-skill-form #war-skill-submit{grid-column:1;justify-self:stretch}}
+@media(max-width:600px){#page-war .war-skill-icon-button{width:82px;height:82px}#page-war .war-skill-icon-button img{width:66px;height:66px}}
