@@ -1014,7 +1014,7 @@ function renderMembers(members) {
     const className = getMemberClass(member);
     const classInfo = getClassInfo(className);
     const classColor = classInfo?.color || "#a9a9a9";
-    const guildPosition = member.guild_position || "สมาชิกแก๊ง";
+    const guildPosition = member.guild_position || "ยังไม่ได้กำหนดตำแหน่ง";
     const gameUID = String(member.game_uid || "");
     const recordType = member.is_manual_record ? "manual" : "account";
     const avatarKey = member.user_id || member.id || name;
@@ -1031,7 +1031,7 @@ function renderMembers(members) {
           <div class="member-details">
             <h4>${escapeHTML(name)}</h4>
             <span class="member-guild-position-badge">${escapeHTML(guildPosition)}</span>
-            <small class="member-secondary-name">ชื่อเล่น: ${escapeHTML(member.nickname || "-")}</small>
+            <small class="member-secondary-name">ชื่อเล่น: ${escapeHTML(member.nickname || "-")}</small>${member.discord_name ? `<small class="member-secondary-name">Discord: ${escapeHTML(member.discord_name)}</small>` : ""}
           </div>
           <div class="member-game-uid">
             <span class="member-uid-label">UID ตัวละคร</span>
@@ -1216,8 +1216,10 @@ async function saveManualGuildMember(form) {
     let result;
     if (recordType === "account") {
       if (!userId) throw new Error("ไม่พบ User ID ของบัญชีสมาชิก");
+      const accountPayload = { ...payload };
+      delete accountPayload.updated_at;
       result = await supabaseClient.from("guild_members")
-        .update(payload)
+        .update(accountPayload)
         .eq("user_id", userId).select("*").single();
     } else if (id) {
       result = await supabaseClient.from("guild_manual_members")
