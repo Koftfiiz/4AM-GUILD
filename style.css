@@ -4758,3 +4758,96 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 #page-war .war-member-skill-upload{display:inline-flex;align-items:center;justify-content:center;min-height:36px;padding:7px 10px;border:1px dashed rgba(226,165,144,.5);border-radius:6px;color:#f0d4c4;font-size:11px;font-weight:700;cursor:pointer}
 #page-war .war-member-skill-upload input{display:none}
 #page-war .war-member-skill-create-form>small{color:#bca8a8;font-size:10px}
+
+/* WAR ROSTER — shared assignment/published party table spacing */
+#page-war .raid-section,
+.war-attendance-boards .raid-section{
+  padding:16px 0 22px;
+  margin:0 0 34px;
+}
+#page-war .raid-title,
+.war-attendance-boards .raid-title{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin:0 0 20px;
+  padding:0 2px 2px;
+}
+#page-war .raid-title h2,
+.war-attendance-boards .raid-title h2{
+  margin:0 0 7px;
+  line-height:1.3;
+}
+#page-war .raid-title p,
+.war-attendance-boards .raid-title p{
+  margin:0;
+  line-height:1.6;
+}
+#page-war .raid-grid,
+.war-attendance-boards .raid-grid{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(380px,1fr));
+  gap:8px;
+  align-items:start;
+  overflow-x:auto;
+  padding:0 0 10px;
+  scrollbar-width:thin;
+}
+.war-attendance-boards .party-card{
+  display:grid;
+  grid-template-rows:34px auto;
+  gap:0;
+  min-width:380px;
+  min-height:0;
+  padding:0;
+  background:transparent;
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+}
+.war-attendance-boards .party-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin:0;
+  padding:0 4px 8px;
+  border:0;
+}
+.war-attendance-boards .party-header h3{font-size:16px;line-height:1;font-weight:900}
+.war-attendance-boards .party-count{font-size:12px;color:rgba(220,218,230,.6)}
+.war-attendance-boards .party-slots{display:grid;grid-template-rows:repeat(6,108px);gap:6px}
+.war-attendance-boards .party-slot{
+  display:flex;
+  align-items:center;
+  gap:13px;
+  min-width:0;
+  min-height:108px;
+  height:108px;
+  padding:12px 10px;
+  border:1px solid color-mix(in srgb,var(--class-color,#a43b4c) 92%,transparent);
+  border-radius:11px;
+  background:linear-gradient(112deg,color-mix(in srgb,var(--class-color,#a43b4c) 17%,rgba(18,17,30,.24)),rgba(18,17,30,.34));
+  backdrop-filter:blur(13px) saturate(125%);
+}
+.war-attendance-boards .party-slot:not(.war-member-slot){
+  border:1px dashed rgba(225,205,220,.22);
+  background:rgba(18,17,30,.42);
+}
+.war-attendance-boards .war-slot-class-icon{display:block;width:58px;height:58px;flex:0 0 58px;object-fit:contain}
+.war-attendance-boards .war-member-identity{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}
+.war-attendance-boards .slot-member-name{display:block;max-width:100%;overflow:hidden;color:#fff;font-size:15px;line-height:1.25;font-weight:850;text-overflow:ellipsis;white-space:nowrap}
+.war-attendance-boards .war-member-class{color:var(--class-color);font-size:12px;line-height:1.2;font-weight:950;letter-spacing:1px;text-transform:uppercase}
+.party-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px;min-width:0}
+.war-party-image-button{flex:0 0 auto;min-height:27px;padding:4px 8px;font-size:10px;white-space:nowrap}
+#page-war .party-header{gap:8px}
+#page-war .party-header-actions .party-count{white-space:nowrap}
+@media(max-width:900px){
+  .war-attendance-boards .raid-grid{grid-template-columns:repeat(5,minmax(350px,1fr))}
+  .war-attendance-boards .party-card{min-width:350px}
+}
+@media(max-width:600px){
+  .war-attendance-boards .raid-title{margin-bottom:22px}
+  .war-attendance-boards .raid-section{margin-bottom:30px}
+  .war-party-image-button{font-size:9px;padding:4px 6px}
+}
