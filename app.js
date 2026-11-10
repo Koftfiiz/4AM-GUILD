@@ -91,6 +91,7 @@ const PAGE_TITLES = {
   rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
   "community-board": "Community Board",
+  "duck-race": "Duck Race",
   "guild-news": "Guild News",
   "guild-activities": "Guild Activities",
   feedback: "แจ้งปัญหา / Feedback",
@@ -4906,7 +4907,7 @@ function openGuildPage(pageName) {
   warParent?.classList.toggle("active", warPage);
   if (warPage && warSubmenu) warSubmenu.classList.add("is-open");
 
-  const guildCommunityPage = ["community-board", "guild-news", "guild-activities"].includes(pageName);
+  const guildCommunityPage = ["community-board", "guild-news", "guild-activities", "duck-race"].includes(pageName);
   const guildCommunityParent = document.querySelector('[data-toggle-submenu="guild-community-submenu"]');
   const guildCommunitySubmenu = $("guild-community-submenu");
   guildCommunityParent?.classList.toggle("active", guildCommunityPage);
