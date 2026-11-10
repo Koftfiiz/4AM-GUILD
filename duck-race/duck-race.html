@@ -28,7 +28,20 @@
 
 /* Full-size game canvas inside the existing 4AM GUILD sidebar layout */
 html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
-#duck-race-root{width:100%;min-height:100vh;margin:0;padding:0}\n/* Initial setup screen: keep the race canvas and all ducks hidden until settings are saved. */\n#duck-race-root.is-setup .stage{visibility:hidden}\n#duck-race-root .setup-screen{background:radial-gradient(ellipse at 50% 28%,rgba(177,32,54,.24),transparent 48%),linear-gradient(145deg,#050912 0%,#101c2b 52%,#070b13 100%);}\n#duck-race-root .setup-screen::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(135deg,transparent 0 46px,rgba(255,255,255,.018) 47px 48px);}\n#duck-race-root .setup-screen .mc{position:relative;width:min(540px,100%);padding:30px;background:linear-gradient(160deg,rgba(22,34,52,.98),rgba(8,14,25,.98));border:1px solid rgba(255,92,110,.42);border-radius:22px;box-shadow:0 24px 80px #000b,0 0 45px rgba(209,34,59,.12);color:#f4f7fb;}\n#duck-race-root .setup-screen .settings-head{justify-content:center;margin-bottom:20px}\n#duck-race-root .setup-screen .settings-head h2{font-size:clamp(28px,5vw,42px);font-weight:900;letter-spacing:1.5px;text-align:center;color:#fff;text-shadow:0 0 24px rgba(255,67,91,.32)}\n#duck-race-root .setup-screen .settings-head h2::after{content:"GUILD COMMUNITY · ARCADE MINI GAME";display:block;margin-top:7px;font-size:10px;letter-spacing:2.5px;color:#f18b9a;font-weight:800}\n#duck-race-root .setup-screen .settings-close{display:none}\n#duck-race-root .setup-screen label{color:#e7edf5}\n#duck-race-root .setup-screen .hint{color:#aab8c9}\n#duck-race-root .setup-screen .go{background:linear-gradient(135deg,#ff5368,#b91f3d);box-shadow:0 8px 22px rgba(194,29,58,.28);}\n#duck-race-root .setup-screen .go:hover{filter:brightness(1.12);transform:translateY(-1px)}
+#duck-race-root{width:100%;min-height:100vh;margin:0;padding:0}
+/* Initial setup screen: keep the race canvas and all ducks hidden until settings are saved. */
+#duck-race-root.is-setup .stage{visibility:hidden}
+#duck-race-root .setup-screen{background:radial-gradient(ellipse at 50% 28%,rgba(177,32,54,.24),transparent 48%),linear-gradient(145deg,#050912 0%,#101c2b 52%,#070b13 100%);}
+#duck-race-root .setup-screen::before{content:"";position:absolute;inset:0;pointer-events:none;background:repeating-linear-gradient(135deg,transparent 0 46px,rgba(255,255,255,.018) 47px 48px);}
+#duck-race-root .setup-screen .mc{position:relative;width:min(540px,100%);padding:30px;background:linear-gradient(160deg,rgba(22,34,52,.98),rgba(8,14,25,.98));border:1px solid rgba(255,92,110,.42);border-radius:22px;box-shadow:0 24px 80px #000b,0 0 45px rgba(209,34,59,.12);color:#f4f7fb;}
+#duck-race-root .setup-screen .settings-head{justify-content:center;margin-bottom:20px}
+#duck-race-root .setup-screen .settings-head h2{font-size:clamp(28px,5vw,42px);font-weight:900;letter-spacing:1.5px;text-align:center;color:#fff;text-shadow:0 0 24px rgba(255,67,91,.32)}
+#duck-race-root .setup-screen .settings-head h2::after{content:"GUILD COMMUNITY · ARCADE MINI GAME";display:block;margin-top:7px;font-size:10px;letter-spacing:2.5px;color:#f18b9a;font-weight:800}
+#duck-race-root .setup-screen .settings-close{display:none}
+#duck-race-root .setup-screen label{color:#e7edf5}
+#duck-race-root .setup-screen .hint{color:#aab8c9}
+#duck-race-root .setup-screen .go{background:linear-gradient(135deg,#ff5368,#b91f3d);box-shadow:0 8px 22px rgba(194,29,58,.28);}
+#duck-race-root .setup-screen .go:hover{filter:brightness(1.12);transform:translateY(-1px)}
 #duck-race-root .stage{width:100%;max-width:none;min-height:100vh;margin:0;border-radius:0}
 #duck-race-root canvas{width:100%;}
 </style>
