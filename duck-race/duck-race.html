@@ -211,13 +211,15 @@ function drawDuck(k,x,y,s,t){
 }
 
 /* ---------- scene ---------- */
+const RACE_SPEED=190; // world pixels per second: keeps visible movement at every race duration
 function size(){
   W=$('stage').clientWidth;
-  /* Use the iframe's full viewport height instead of a fixed 16:9 canvas. */
+  /* Fill the iframe viewport while keeping canvas coordinates in CSS pixels. */
   H=Math.max(420,Math.floor(window.innerHeight||W*.566));
   DPR=Math.min(2,window.devicePixelRatio||1);
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
-  cv.style.height=H+'px';D=W*2.2;
+  cv.style.width='100%';cv.style.height=H+'px';
+  cx.setTransform(DPR,0,0,DPR,0,0);
 }
 addEventListener('resize',size);
 const bank=()=>H*.25;
@@ -229,7 +231,7 @@ function checker(wx,cam){
   cx.lineWidth=3;cx.strokeStyle='#111';cx.strokeRect(0,top,q*2,H+q-top);cx.restore();
 }
 function scene(cam,t){
-  const c=cx,B=bank(),phase=Math.min(4,Math.floor(Math.max(0,S.t/Math.max(1,S.T))*5));
+  const c=cx,B=bank(),segment=Math.min(4,Math.floor(Math.max(0,S.t/Math.max(1,S.T))*5)),phase=(S.sceneOrder||[0,1,2,3,4])[segment];
   const scenes=[
     {name:'SUNNY MEADOW',sky:['#76d9ff','#e6f9ff'],water:['#55c8dc','#145675'],land:'#398c3b'},
     {name:'SNOW MOUNTAINS',sky:['#7398c7','#e8f5ff'],water:['#b7e8f5','#477d9c'],land:'#dceaf2'},
@@ -274,7 +276,7 @@ function scene(cam,t){
 }
 const hms=n=>{n=Math.max(0,Math.ceil(n));const p=v=>String(v).padStart(2,'0');return p(Math.floor(n/3600))+':'+p(Math.floor(n%3600/60))+':'+p(n%60)};
 const dist=(d,t)=>t+.35/d.a*(Math.cos(d.p)-Math.cos(d.a*t+d.p))+.2/d.b*(Math.cos(d.q)-Math.cos(d.b*t+d.q));
-const prog=k=>{const pT=Math.max(0,Math.min(D*1.08,D*(Math.min(S.t,S.T)/Math.max(1,S.T))+(k.offset||0)));if(S.t<=S.T)return pT;const u=Math.min(1,(S.t-S.T)/5),e=1-Math.pow(1-u,3);return k.win?pT+W*.5*e:pT+(D-pT)*e};
+const prog=k=>RACE_SPEED*Math.min(S.t,S.T)+(k.offset||0);
 
 function frame(now){
   const dt=Math.min(.05,(now-S.last)/1000);S.last=now;
@@ -300,8 +302,9 @@ function frame(now){
     const y=yMin+(k.slot+.5)/n*(yMax-yMin)+Math.sin(S.t*.9+k.ph)*s*.03;
     return{k,y,x:X0-SL*(y-B)-s*.5+prog(k)};
   });
-  const lead=rows.reduce((m,o)=>Math.max(m,o.x+SL*(o.y-B)),0);
-  S.cam+=(Math.max(0,lead-W*.62)-S.cam)*Math.min(1,dt*3);
+  /* Track the shared forward swim from the very first frame.
+     Ducks stay in view while the world and shoreline scroll continuously behind them. */
+  S.cam=RACE_SPEED*Math.min(S.t,S.T);
   scene(S.cam,now/1000);
   checker(X0,S.cam);checker(X0+D,S.cam);
   rows.sort((a,b)=>a.y-b.y).forEach(o=>{
@@ -328,9 +331,11 @@ function frame(now){
 
 /* ---------- race control ---------- */
 function reset(){
+  D=RACE_SPEED*Math.max(1,cfg.T);
   const n=roster.length,slots=[...Array(n).keys()].sort(()=>Math.random()-.5);
   ducks=roster.map((r,i)=>({r,slot:slots[i],ph:Math.random()*6.28,offset:0,mode:'normal',modeLeft:0,eventIn:2+Math.random()*5,fx:''}));
-  S={st:'idle',t:0,T:cfg.T,sc:1,cam:0,last:performance.now(),fin:false};
+  const sceneOrder=[0,1,2,3,4].sort(()=>Math.random()-.5);
+  S={st:'idle',t:0,T:cfg.T,sc:1,cam:0,last:performance.now(),fin:false,sceneOrder};
   ducks.forEach(k=>k.fin=cfg.T);ducks.forEach(k=>k.win=false);order()[0].win=true;
   $('bGo').textContent='▶ START';$('again').classList.add('hide');$('trophy').classList.add('hide');
   $('clk').textContent=hms(S.T);stopMus();if(aud)aud.currentTime=0;
@@ -338,7 +343,7 @@ function reset(){
 }
 const order=()=>ducks.slice().sort((a,b)=>a.fin-b.fin);
 function onFinish(){
-  S.fin=true;ducks.forEach(k=>k.fin=Math.max(S.T*.82,Math.min(S.T*1.18,S.T*(1-(k.offset||0)/D))));ducks.forEach(k=>k.win=false);order()[0].win=true;$('bGo').textContent='▶ FINISH';
+  S.fin=true;ducks.forEach(k=>k.fin=Math.max(S.T*.82,Math.min(S.T*1.18,S.T-(k.offset||0)/RACE_SPEED)));ducks.forEach(k=>k.win=false);order()[0].win=true;$('bGo').textContent='▶ FINISH';
   $('again').classList.remove('hide');$('trophy').classList.remove('hide');
   if(bellOn)bell();
   const w=order()[0].r.label;
