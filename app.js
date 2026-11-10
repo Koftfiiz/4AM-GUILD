@@ -1217,7 +1217,7 @@ async function saveManualGuildMember(form) {
     if (recordType === "account") {
       if (!userId) throw new Error("ไม่พบ User ID ของบัญชีสมาชิก");
       result = await supabaseClient.from("guild_members")
-        .update({ ...payload, updated_by: currentUser.id })
+        .update(payload)
         .eq("user_id", userId).select("*").single();
     } else if (id) {
       result = await supabaseClient.from("guild_manual_members")
@@ -5186,15 +5186,6 @@ function registerAppEventListeners() {
     if (event.target.id !== "account-profile-form") return;
     event.preventDefault();
     await saveOwnCharacterProfile(event.target);
-  });
-
-  $("members-list")?.addEventListener("change", async (event) => {
-    const select = event.target.closest(
-      "select[data-action='assign-guild-position']"
-    );
-
-    if (!select) return;
-    await assignGuildPosition(select);
   });
 
   initializeAuth();
