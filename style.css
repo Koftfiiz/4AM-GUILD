@@ -3087,7 +3087,7 @@ body #registration-screen.login-card::after {
 .developer-only.is-role-hidden { display: none !important; }
 .system-role-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 14px;
   margin: 0 0 22px;
 }
@@ -3198,6 +3198,7 @@ body #registration-screen.login-card::after {
 }
 .system-role-badge.role-developer { color: #ff9cab; border-color: rgba(255,120,145,.45); }
 .system-role-badge.role-management { color: #f2ce83; border-color: rgba(242,206,131,.4); }
+.system-role-badge.role-admin { color: #e7a0ff; border-color: rgba(231,160,255,.4); }
 .system-role-badge.role-leader { color: #9bcaff; border-color: rgba(120,180,255,.4); }
 .system-role-action select:disabled { opacity: .55; cursor: not-allowed; }
 .system-role-status.is-success { color: var(--green); }
