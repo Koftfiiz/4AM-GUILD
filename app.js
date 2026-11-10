@@ -3644,6 +3644,7 @@ function renderClassLegend() {
 
 const SYSTEM_ROLE_OPTIONS = [
   { value: "member", label: "Member" },
+  { value: "admin", label: "Admin" },
   { value: "management", label: "Management" },
   { value: "leader", label: "Leader" }
 ];
@@ -3656,7 +3657,7 @@ function systemRoleLabel(role) {
     developer: "4AM Dev",
     leader: "Leader",
     management: "Management",
-    admin: "Admin (Legacy)",
+    admin: "Admin",
     member: "Member"
   };
   return labels[String(role || "member").toLowerCase()] || "Member";
@@ -3665,7 +3666,8 @@ function systemRoleLabel(role) {
 function renderSystemRoleSummary(members) {
   const counts = {
     total: members.length,
-    management: members.filter(m => ["management", "admin"].includes(String(m.role || "").toLowerCase())).length,
+    management: members.filter(m => String(m.role || "").toLowerCase() === "management").length,
+    admins: members.filter(m => String(m.role || "").toLowerCase() === "admin").length,
     leaders: members.filter(m => String(m.role || "").toLowerCase() === "leader").length,
     pending: members.filter(m => m.active === false).length
   };
@@ -3676,6 +3678,7 @@ function renderSystemRoleSummary(members) {
   };
   set("system-role-total", counts.total);
   set("system-role-management", counts.management);
+  set("system-role-admin", counts.admins);
   set("system-role-leaders", counts.leaders);
   set("system-role-pending", counts.pending);
 }
@@ -3685,7 +3688,6 @@ function getFilteredSystemRoleMembers() {
   return systemRoleMembers.filter(member => {
     const role = String(member.role || "member").toLowerCase();
     const matchesRole = systemRoleFilter === "all"
-      || (systemRoleFilter === "management" && ["management", "admin"].includes(role))
       || role === systemRoleFilter;
     const searchable = [
       getMemberName(member),
@@ -3720,9 +3722,6 @@ function renderSystemRoleMembers() {
         ${option.label}
       </option>
     `).join("");
-    const legacyRoleOption = role === "admin"
-      ? '<option value="" selected disabled>Admin (Legacy) — เลือก Role ใหม่</option>'
-      : "";
     const status = member.active === false ? "รอตรวจสอบ / ไม่ Active" : "Active";
     const createdAt = member.created_at ? formatDate(member.created_at) : "ไม่ระบุวันที่";
 
@@ -3747,7 +3746,7 @@ function renderSystemRoleMembers() {
             ${locked ? "disabled" : ""}
             aria-label="เปลี่ยน System Role ของ ${escapeHTML(getMemberName(member))}"
           >
-            ${isProtected ? '<option selected>Developer (Protected)</option>' : legacyRoleOption + options}
+            ${isProtected ? '<option selected>Developer (Protected)</option>' : options}
           </select>
           <small class="system-role-status" aria-live="polite">${isProtected ? "บัญชี Developer ถูกป้องกัน" : (isSelf ? "ไม่สามารถเปลี่ยน Role ของบัญชีตัวเอง" : "")}</small>
         </div>
