@@ -51,7 +51,7 @@
 
 const root=document.getElementById('duck-race-root');
 const $=id=>root.querySelector('#'+id);
-const MUSIC_URL='';/* วางลิงก์ไฟล์เพลงของคุณที่นี่ เช่น 'music/race.mp3' (ถ้าเว้นว่างจะใช้เพลงในเกม) */
+const MUSIC_URL='/duck-race/audio/duck-race-music.mp3';/* Custom Duck Race background music */
 const cv=$('cv'),cx=cv.getContext('2d');
 const MAXN=120,SL=.42,NEED=20;
 let W=1000,H=566,DPR=1,D=2000,mode='num',roster=[],ducks=[],rmWin=false,musOn=false,bellOn=false;
