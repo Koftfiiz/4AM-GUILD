@@ -489,8 +489,19 @@
       <!-- ============ GUILD WAR ============ -->
       <section id="page-war" class="page page-padded hidden">
         <div class="page-intro"><span class="section-kicker">BATTLE MANAGEMENT</span><h1>จัดตี้วอร์</h1><p>สร้างตี้วอร์ จัดสมาชิกเข้าปาร์ตี้ และเผยแพร่รายชื่อตี้วอร์ให้สมาชิกกิลด์</p></div>
-        <div class="war-create-toolbar"><div><span class="panel-kicker">WAR MANAGEMENT</span><h2>รายการ Guild War</h2><p>เลือกวอร์ที่มีอยู่เพื่อจัดการ หรือสร้างตี้วอร์ใหม่</p></div><button id="war-create-open" class="btn btn-primary" type="button"><span aria-hidden="true">＋</span> สร้างตี้วอร์</button></div>
+        <div class="war-create-toolbar"><div><span class="panel-kicker">WAR MANAGEMENT</span><h2>รายการ Guild War</h2><p>เลือกวอร์ที่มีอยู่เพื่อจัดการ หรือสร้างตี้วอร์ใหม่</p></div><div class="war-toolbar-actions"><button id="war-skill-library-toggle" class="btn btn-outline" type="button">จัดการคลัง Skill</button><button id="war-create-open" class="btn btn-primary" type="button"><span aria-hidden="true">＋</span> สร้างตี้วอร์</button></div></div>
         <div id="war-events" class="war-event-list"></div>
+        <section id="war-skill-management" class="panel war-skill-management hidden">
+          <div class="panel-heading"><div><span class="panel-kicker">SKILL LIBRARY</span><h3>คลัง Skill ของกิลด์</h3><p>เพิ่ม Skill แยกตาม Class พร้อมอัปโหลดไอคอน เพื่อให้ฝ่ายบริหารเลือกใช้กับสมาชิกแต่ละคน</p></div><button id="war-skill-library-close" class="btn btn-ghost btn-sm" type="button">ปิด</button></div>
+          <form id="war-skill-form" class="war-skill-form">
+            <div class="form-group"><label for="war-skill-name">ชื่อ Skill</label><input id="war-skill-name" name="skill-name" type="text" maxlength="80" placeholder="ชื่อ Skill" required></div>
+            <div class="form-group"><label for="war-skill-class">Class</label><select id="war-skill-class" name="skill-class" required></select></div>
+            <div class="form-group"><label for="war-skill-icon">ไอคอน Skill</label><input id="war-skill-icon" name="skill-icon" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" required><small>รองรับ PNG, JPG, WEBP, GIF หรือ SVG · ไม่เกิน 3 MB</small></div>
+            <button id="war-skill-submit" class="btn btn-primary" type="submit">＋ เพิ่ม Skill เข้าคลัง</button>
+            <p id="war-skill-form-status" class="war-skill-status" role="status"></p>
+          </form>
+          <div id="war-skill-library-list" class="war-skill-library-list"><p class="muted">กำลังโหลดคลัง Skill...</p></div>
+        </section>
         <section id="war-create-panel" class="panel war-create-panel hidden"><div class="panel-heading"><div><span class="panel-kicker">CREATE WAR EVENT</span><h3>สร้างตี้วอร์</h3></div><button id="war-create-close" class="btn btn-ghost btn-sm" type="button">ปิด</button></div>
           <form id="war-create-form"><div class="war-mode-options"><label class="war-mode-option"><input type="radio" name="war-mode" value="official" checked><span><strong>วอร์จริง</strong><small>2 Raid · 10 ปาร์ตี้ · 60 คน</small></span></label><label class="war-mode-option"><input type="radio" name="war-mode" value="practice"><span><strong>ซ้อมวอร์</strong><small>เลือกได้ 1–4 Raid · สูงสุด 120 คน</small></span></label></div>
             <div id="war-raid-count-wrap" class="form-group hidden"><label for="war-raid-count">จำนวน Raid สำหรับซ้อม</label><select id="war-raid-count" name="raid-count"><option value="1">1 Raid · 30 คน</option><option value="2">2 Raid · 60 คน</option><option value="3">3 Raid · 90 คน</option><option value="4" selected>4 Raid · 120 คน</option></select></div>
