@@ -429,9 +429,17 @@ function frame(now){
         }
       }
       const mult=k.mode==='tired'?.42:k.mode==='boost'?1.85:1;
-      // Keep each duck in its own row, but allow enough horizontal separation to show real overtakes.
-      const offsetLimit=Math.max(120,W*.62);
-      k.offset=Math.max(-offsetLimit,Math.min(offsetLimit,(k.offset||0)+base*(mult-1)*dt));
+      // Keep overtakes temporary: boost gains fade gradually during normal swimming,
+      // so ducks regroup instead of permanently collecting at the front.
+      const offsetLimit=Math.max(100,W*.38);
+      let nextOffset=k.offset||0;
+      if(k.mode==='normal'){
+        const recovery=base*.22*dt;
+        nextOffset=nextOffset>0?Math.max(0,nextOffset-recovery):Math.min(0,nextOffset+recovery);
+      }else{
+        nextOffset+=base*(mult-1)*dt;
+      }
+      k.offset=Math.max(-offsetLimit,Math.min(offsetLimit,nextOffset));
     });
     if(!S.fin&&S.t>=S.T){S.t=S.T;onFinish(leader());}
   }else if(S.st==='celebrate'){
