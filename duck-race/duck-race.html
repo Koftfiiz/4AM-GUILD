@@ -307,7 +307,7 @@ function scene(cam,t){
 }
 const hms=n=>{n=Math.max(0,Math.ceil(n));const p=v=>String(v).padStart(2,'0');return p(Math.floor(n/3600))+':'+p(Math.floor(n%3600/60))+':'+p(n%60)};
 const dist=(d,t)=>t+.35/d.a*(Math.cos(d.p)-Math.cos(d.a*t+d.p))+.2/d.b*(Math.cos(d.q)-Math.cos(d.b*t+d.q));
-const baseProgress=()=>RACE_SPEED*Math.min(S.t,S.T);
+const baseProgress=()=>RACE_SPEED*(Math.min(S.t,S.T)+(S.overtime||0));
 const prog=k=>baseProgress()+(k.offset||0)+(S.fin&&k.win?Math.min(W*.34,RACE_SPEED*1.05*(S.celebrateT||0)):0);
 const leader=()=>ducks.reduce((best,k)=>!best||prog(k)>prog(best)?k:best,null);
 
@@ -360,6 +360,7 @@ function frame(now){
   if(S.st==='run'){
     const previousProgress=new Map(ducks.map(k=>[k,RACE_SPEED*S.t+(k.offset||0)]));
     S.t=Math.min(S.T,S.t+dt);
+    if(S.t>=S.T)S.overtime=(S.overtime||0)+dt;
     const base=D/Math.max(1,S.T);
     if(!S.fin)ducks.forEach(k=>{
       if(!k.mode||k.mode==='normal'){
@@ -379,7 +380,6 @@ function frame(now){
         .map(v=>({...v,at: v.from>=D?0:(D-v.from)/Math.max(.0001,v.to-v.from)}))
         .sort((a,b)=>a.at-b.at);
       if(crossings.length)onFinish(crossings[0].k);
-      else if(S.t>=S.T)onFinish(leader());
     }
   }else if(S.st==='celebrate'){
     S.celebrateT=(S.celebrateT||0)+dt;
@@ -415,7 +415,7 @@ function reset(){
   const n=roster.length,slots=[...Array(n).keys()].sort(()=>Math.random()-.5);
   ducks=roster.map((r,i)=>({r,slot:slots[i],ph:Math.random()*6.28,offset:0,mode:'normal',modeLeft:0,eventIn:2+Math.random()*5,fx:''}));
   const sceneOrder=[0,1,2,3,4].sort(()=>Math.random()-.5);
-  S={st:'idle',t:0,T:cfg.T,sc:1,cam:0,last:performance.now(),fin:false,sceneOrder,celebrateT:0,finishWorld:D,finishAnimTime:0};
+  S={st:'idle',t:0,T:cfg.T,sc:1,cam:0,last:performance.now(),fin:false,sceneOrder,celebrateT:0,finishWorld:D,finishAnimTime:0,overtime:0};
   ducks.forEach(k=>k.fin=cfg.T);ducks.forEach(k=>k.win=false);order()[0].win=true;
   $('bGo').textContent='▶ START';$('again').classList.add('hide');$('trophy').classList.add('hide');
   $('clk').textContent=hms(S.T);stopMus();if(aud)aud.currentTime=0;
