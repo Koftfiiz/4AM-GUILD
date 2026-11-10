@@ -258,6 +258,7 @@
       <div class="sidebar-divider"><span>ACCOUNT</span></div>
 
       <nav class="sidebar-nav">
+        <button class="nav-item" data-page="appearance"><svg class="icon"><use href="#i-image"/></svg><span>Appearance</span></button>
         <button class="nav-item" data-page="settings">
           <svg class="icon"><use href="#i-gear"/></svg>
           <span>ตั้งค่าบัญชี</span>
@@ -996,6 +997,22 @@
         </div>
       </section>
 
+
+      <section id="page-appearance" class="page page-padded hidden">
+        <div class="page-intro"><span class="section-kicker">4AM PERSONALIZATION STUDIO</span><h1>Appearance</h1><p>เลือกธีม ปรับแต่งหน้าตา และจัดการอัตลักษณ์ของ 4AM GUILD</p></div>
+        <div class="appearance-layout" id="appearance-workspace">
+          <section class="panel appearance-section"><div class="panel-heading"><div><span class="panel-kicker">THEME LIBRARY</span><h3>เลือกธีมเว็บไซต์</h3></div><span class="appearance-active-pill" id="appearance-active-label">กำลังโหลด...</span></div><div class="appearance-theme-grid" id="appearance-theme-grid"></div></section>
+          <section class="panel appearance-section"><div class="panel-heading"><div><span class="panel-kicker">PERSONAL CUSTOMIZATION</span><h3>Customize</h3></div></div><p class="appearance-help">ปรับสีเฉพาะบัญชีของคุณ ไม่กระทบธีมสมาชิกคนอื่น</p><div class="appearance-custom-grid">
+            <label class="appearance-color-field"><span>สีหลัก</span><input type="color" data-appearance-token="primary"></label><label class="appearance-color-field"><span>สีรอง</span><input type="color" data-appearance-token="secondary"></label><label class="appearance-color-field"><span>สีพื้นหลัง</span><input type="color" data-appearance-token="background"></label><label class="appearance-color-field"><span>สีพื้นผิว / การ์ด</span><input type="color" data-appearance-token="surface"></label>
+          </div><div class="appearance-actions"><button class="btn btn-primary" id="appearance-save-custom" type="button">บันทึกการปรับแต่ง</button><button class="btn btn-outline" id="appearance-reset-custom" type="button">คืนค่าสีของธีม</button></div><p class="message" id="appearance-personal-message"></p></section>
+          <section class="panel appearance-section"><div class="panel-heading"><div><span class="panel-kicker">GUILD BRAND IDENTITY</span><h3>Brand Assets</h3></div><span class="appearance-role-note">Management</span></div>
+            <div class="appearance-brand-current"><img id="appearance-brand-preview" src="https://i.postimg.cc/xqVN8XTs/4AM-Logo.png" alt="Guild logo"><div><strong>Active Guild Logo</strong><small>โลโก้ที่ใช้กับ Login และ Sidebar</small></div></div>
+            <div class="appearance-brand-form"><label for="appearance-logo-url">URL โลโก้</label><input id="appearance-logo-url" type="url" placeholder="https://example.com/logo.png"><div class="appearance-actions"><button class="btn btn-primary" id="appearance-save-logo" type="button">ตั้งเป็นโลโก้หลัก</button><label class="btn btn-outline appearance-upload-label" for="appearance-logo-upload">อัปโหลดโลโก้</label><input id="appearance-logo-upload" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden></div><p class="message" id="appearance-brand-message"></p></div>
+            <div class="appearance-logo-library"><h4>Logo Library</h4><div id="appearance-logo-list" class="appearance-logo-list"></div></div>
+          </section>
+          <section class="panel appearance-section appearance-admin-section" id="appearance-admin-section"><div class="panel-heading"><div><span class="panel-kicker">GUILD-WIDE SETTINGS</span><h3>Theme Management</h3></div><span class="appearance-role-note">Leader / Management / Developer</span></div><div class="appearance-admin-grid"><label>Default Theme for new members<select id="appearance-default-theme"></select></label><button class="btn btn-primary" id="appearance-save-default" type="button">บันทึก Default Theme</button></div><p class="appearance-help">สมาชิกเดิมยังคงใช้ธีมส่วนตัว หากไม่เคยเลือกธีมจะใช้ Default Theme</p><p class="message" id="appearance-admin-message"></p></section>
+        </div>
+      </section>
       <footer class="site-footer">
         <span>◈</span>
         4AM GUILD · SWORD OF JUSTICE
