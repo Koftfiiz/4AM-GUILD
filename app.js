@@ -40,7 +40,7 @@ let warRealtimeChannel = null;
 let registrationBusy = false;
 let warArrangeMode = false;
 let warAssignmentFilter="all",warAssignmentClassFilter="all",warAssignmentSearch="",warAssignmentSignups=[],warAssignmentLeaves=[],warAssignmentAbsentees=[],warAssignmentRosterSnapshot=[],warAssignmentModalSlot=null;
-let warSkillCatalog=[],warMemberSkillMap=new Map(),warSkillLoadError="";
+let warSkillCatalog=[],warMemberSkillMap=new Map(),warSkillLoadError="",warSkillDeleteMode=false;
 const WAR_SKILL_BUCKET="war-skill-icons";
 
 const $ = (id) => document.getElementById(id);
@@ -2509,9 +2509,15 @@ function renderWarSkillManager(){
   if(toggle)toggle.classList.toggle("hidden",!manager);
   if(panel&&!manager)panel.classList.add("hidden");
   if(!list)return;
-  if(warSkillLoadError){list.innerHTML=`<p class="war-skill-error">ยังโหลดคลัง Skill ไม่ได้: ${escapeHTML(warSkillLoadError)}</p>`;return;}
-  if(!warSkillCatalog.length){list.innerHTML='<p class="muted">ยังไม่มี Skill ในคลัง · เพิ่ม Skill แรกได้จากแบบฟอร์มด้านบน</p>';return;}
-  list.innerHTML='<section class="war-skill-class-group"><h4>ALL SKILLS · ใช้ได้ทุก Class</h4><div class="war-skill-library-grid">'+warSkillCatalog.map(skill=>`<article class="war-skill-library-item"><img src="${escapeHTML(skill.iconUrl)}" alt=""><span>${escapeHTML(skill.skill_name)}</span><button type="button" class="btn btn-outline btn-sm" data-war-skill-edit="${escapeHTML(skill.id)}" aria-label="แก้ไข ${escapeHTML(skill.skill_name)}">แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-war-skill-delete="${escapeHTML(skill.id)}" aria-label="ลบ ${escapeHTML(skill.skill_name)}">ลบ</button></article>`).join("")+'</div></section>';
+  const modeButton=$("war-skill-delete-mode");
+  if(modeButton){
+    modeButton.textContent=warSkillDeleteMode?"เสร็จสิ้น":"จัดการ";
+    modeButton.classList.toggle("is-active",warSkillDeleteMode);
+    modeButton.setAttribute("aria-pressed",String(warSkillDeleteMode));
+  }
+  if(warSkillLoadError){list.innerHTML=`<p class="war-skill-error">${escapeHTML(warSkillLoadError)}</p>`;return;}
+  if(!warSkillCatalog.length){list.innerHTML='<div class="war-skill-empty"><span>✦</span><strong>ยังไม่มี Skill ในคลัง</strong><p>กด “＋ เพิ่ม Skill” เพื่อเริ่มต้น</p></div>';return;}
+  list.innerHTML='<div class="war-skill-library-grid'+(warSkillDeleteMode?' is-delete-mode':'')+'">'+warSkillCatalog.map(skill=>`<article class="war-skill-library-item"><button type="button" class="war-skill-icon-button" data-war-skill-edit="${escapeHTML(skill.id)}" aria-label="แก้ไข ${escapeHTML(skill.skill_name)}" title="${escapeHTML(skill.skill_name)}"><img src="${escapeHTML(skill.iconUrl)}" alt="${escapeHTML(skill.skill_name)}"></button>${warSkillDeleteMode?`<button type="button" class="war-skill-delete-badge" data-war-skill-delete="${escapeHTML(skill.id)}" aria-label="ลบ ${escapeHTML(skill.skill_name)}" title="ลบ Skill">−</button>`:""}</article>`).join("")+'</div>';
  }
 async function saveWarSkillDefinition(event){
  event.preventDefault();if(!isManagement())return;
@@ -2527,7 +2533,10 @@ async function saveWarSkillDefinition(event){
   if(upload.error)throw upload.error;
   const insert=await supabaseClient.from("war_skill_catalog").insert({skill_name:name,icon_path:path,created_by:currentUser?.id}).select("id").single();
   if(insert.error){await supabaseClient.storage.from(WAR_SKILL_BUCKET).remove([path]);throw insert.error;}
-  $("war-skill-form")?.reset();await loadWarSkillData();
+  $("war-skill-form")?.reset();
+  $("war-skill-form")?.classList.add("hidden");
+  $("war-skill-add-toggle")?.setAttribute("aria-expanded","false");
+  await loadWarSkillData();
   if(status)status.textContent="เพิ่ม Skill ลงคลังเรียบร้อยแล้ว";
  }catch(error){console.error("Create Skill error:",error);if(status)status.textContent="เพิ่ม Skill ไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่");}
  finally{if(button){button.disabled=false;button.textContent="＋ เพิ่ม Skill เข้าคลัง";}}
@@ -3629,10 +3638,12 @@ function subscribeToWarRealtime() {
 
 function registerWarCreationEvents(){
  $("war-skill-library-toggle")?.addEventListener("click",()=>{if(!isManagement())return;const panel=$("war-skill-management");panel?.classList.toggle("hidden");if(!panel?.classList.contains("hidden")){renderWarSkillManager();panel.scrollIntoView({behavior:"smooth",block:"start"});}});
+ $("war-skill-add-toggle")?.addEventListener("click",()=>{if(!isManagement())return;const form=$("war-skill-form"),opening=form?.classList.contains("hidden");form?.classList.toggle("hidden");$("war-skill-add-toggle")?.setAttribute("aria-expanded",String(Boolean(opening)));if(opening)$("war-skill-name")?.focus();});
+ $("war-skill-delete-mode")?.addEventListener("click",()=>{if(!isManagement())return;warSkillDeleteMode=!warSkillDeleteMode;renderWarSkillManager();});
  $("war-skill-library-close")?.addEventListener("click",()=>$("war-skill-management")?.classList.add("hidden"));
  $("war-skill-form")?.addEventListener("submit",saveWarSkillDefinition);
   document.body.addEventListener("submit",event=>{if(event.target.id==="war-member-skill-create-form")saveWarMemberSkillFromEditor(event);});
- $("war-skill-library-list")?.addEventListener("click",event=>{const edit=event.target.closest("[data-war-skill-edit]"),button=event.target.closest("[data-war-skill-delete]");if(edit){openWarSkillEditor(edit.dataset.warSkillEdit);return;}if(button)deleteWarSkill(button.dataset.warSkillDelete,button);});
+ $("war-skill-library-list")?.addEventListener("click",event=>{const button=event.target.closest("[data-war-skill-delete]"),edit=event.target.closest("[data-war-skill-edit]");if(button&&warSkillDeleteMode){deleteWarSkill(button.dataset.warSkillDelete,button);return;}if(edit&&!warSkillDeleteMode)openWarSkillEditor(edit.dataset.warSkillEdit);});
  document.body.addEventListener("submit",event=>{if(event.target.id==="war-skill-edit-form")saveWarSkillEdit(event);});
  document.body.addEventListener("click",event=>{if(event.target.closest("[data-war-skill-edit-close]"))$("war-skill-edit-modal")?.remove();});
 
