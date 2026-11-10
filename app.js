@@ -2511,7 +2511,7 @@ function renderWarSkillManager(){
   if(!list)return;
   if(warSkillLoadError){list.innerHTML=`<p class="war-skill-error">ยังโหลดคลัง Skill ไม่ได้: ${escapeHTML(warSkillLoadError)}</p>`;return;}
   if(!warSkillCatalog.length){list.innerHTML='<p class="muted">ยังไม่มี Skill ในคลัง · เพิ่ม Skill แรกได้จากแบบฟอร์มด้านบน</p>';return;}
-  list.innerHTML='<section class="war-skill-class-group"><h4>ALL SKILLS · ใช้ได้ทุก Class</h4><div class="war-skill-library-grid">'+warSkillCatalog.map(skill=>`<article class="war-skill-library-item"><img src="${escapeHTML(skill.iconUrl)}" alt=""><span>${escapeHTML(skill.skill_name)}</span><button type="button" class="btn btn-danger btn-sm" data-war-skill-delete="${escapeHTML(skill.id)}" aria-label="ลบ ${escapeHTML(skill.skill_name)}">ลบ</button></article>`).join("")+'</div></section>';
+  list.innerHTML='<section class="war-skill-class-group"><h4>ALL SKILLS · ใช้ได้ทุก Class</h4><div class="war-skill-library-grid">'+warSkillCatalog.map(skill=>`<article class="war-skill-library-item"><img src="${escapeHTML(skill.iconUrl)}" alt=""><span>${escapeHTML(skill.skill_name)}</span><button type="button" class="btn btn-outline btn-sm" data-war-skill-edit="${escapeHTML(skill.id)}" aria-label="แก้ไข ${escapeHTML(skill.skill_name)}">แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-war-skill-delete="${escapeHTML(skill.id)}" aria-label="ลบ ${escapeHTML(skill.skill_name)}">ลบ</button></article>`).join("")+'</div></section>';
  }
 async function saveWarSkillDefinition(event){
  event.preventDefault();if(!isManagement())return;
@@ -2543,6 +2543,42 @@ async function deleteWarSkill(skillId,button){
   if(skill.icon_path)await supabaseClient.storage.from(WAR_SKILL_BUCKET).remove([skill.icon_path]);
   await loadWarSkillData();
  }catch(error){alert("ลบ Skill ไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่"));if(button){button.disabled=false;button.textContent="ลบ";}}
+}
+function openWarSkillEditor(skillId){
+ if(!isManagement())return;
+ const skill=warSkillCatalog.find(item=>item.id===skillId);if(!skill)return;
+ document.getElementById("war-skill-edit-modal")?.remove();
+ const modal=document.createElement("div");modal.id="war-skill-edit-modal";modal.className="war-assignment-modal";
+ modal.innerHTML=`<div class="war-assignment-modal-backdrop" data-war-skill-edit-close></div><section class="war-assignment-modal-panel war-skill-edit-panel" role="dialog" aria-modal="true" aria-labelledby="war-skill-edit-title"><button class="war-modal-close" data-war-skill-edit-close type="button" aria-label="ปิด">×</button><span class="panel-kicker">SKILL LIBRARY</span><h3 id="war-skill-edit-title">แก้ไข Skill</h3><form id="war-skill-edit-form" data-skill-id="${escapeHTML(skill.id)}"><label class="war-skill-edit-label" for="war-skill-edit-name">ชื่อ Skill</label><input id="war-skill-edit-name" name="skill-name" type="text" maxlength="80" value="${escapeHTML(skill.skill_name)}" required><label class="war-skill-edit-label" for="war-skill-edit-icon">เปลี่ยนรูปไอคอน (ไม่บังคับ)</label><input id="war-skill-edit-icon" name="skill-icon" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml"><small>หากไม่เลือกรูปใหม่ ระบบจะใช้ไอคอนเดิม · ไม่เกิน 3 MB</small><p id="war-skill-edit-status" class="war-skill-status" role="status"></p><div class="rule-editor-actions"><button type="button" class="btn btn-outline" data-war-skill-edit-close>ยกเลิก</button><button id="war-skill-edit-submit" type="submit" class="btn btn-primary">บันทึกการแก้ไข</button></div></form></section>`;
+ document.body.appendChild(modal);$("war-skill-edit-name")?.focus();
+}
+async function saveWarSkillEdit(event){
+ event.preventDefault();if(!isManagement())return;
+ const form=event.currentTarget,skillId=form.dataset.skillId,skill=warSkillCatalog.find(item=>item.id===skillId);
+ const name=$("war-skill-edit-name")?.value.trim(),file=$("war-skill-edit-icon")?.files?.[0],status=$("war-skill-edit-status"),button=$("war-skill-edit-submit");
+ if(!skill||!name){if(status)status.textContent="กรุณากรอกชื่อ Skill";return;}
+ if(file&&(!file.type.startsWith("image/")||file.size>3*1024*1024)){if(status)status.textContent="ไฟล์ต้องเป็นรูปภาพและมีขนาดไม่เกิน 3 MB";return;}
+ if(button){button.disabled=true;button.textContent="กำลังบันทึก...";}
+ let newPath=null;
+ try{
+  if(file){
+   const extension=(file.name.split(".").pop()||"png").toLowerCase().replace(/[^a-z0-9]/g,"")||"png";
+   newPath=`skills/${Date.now()}-${Math.random().toString(36).slice(2,9)}.${extension}`;
+   const upload=await supabaseClient.storage.from(WAR_SKILL_BUCKET).upload(newPath,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+   if(upload.error)throw upload.error;
+  }
+  const update=await supabaseClient.from("war_skill_catalog").update({skill_name:name,...(newPath?{icon_path:newPath}:{})}).eq("id",skillId);
+  if(update.error)throw update.error;
+  if(newPath&&skill.icon_path&&!/^https?:\\/\\//i.test(skill.icon_path)){
+   const cleanup=await supabaseClient.storage.from(WAR_SKILL_BUCKET).remove([skill.icon_path]);
+   if(cleanup.error)console.warn("Old Skill icon cleanup failed:",cleanup.error);
+  }
+  $("war-skill-edit-modal")?.remove();await loadWarSkillData();
+ }catch(error){
+  if(newPath)await supabaseClient.storage.from(WAR_SKILL_BUCKET).remove([newPath]);
+  console.error("Update Skill error:",error);if(status)status.textContent="แก้ไข Skill ไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่");
+  if(button){button.disabled=false;button.textContent="บันทึกการแก้ไข";}
+ }
 }
 function renderWarMemberSkillEditor(member){
   const root=$("war-member-skill-editor");if(!root||!member)return;
@@ -3596,7 +3632,9 @@ function registerWarCreationEvents(){
  $("war-skill-library-close")?.addEventListener("click",()=>$("war-skill-management")?.classList.add("hidden"));
  $("war-skill-form")?.addEventListener("submit",saveWarSkillDefinition);
   document.body.addEventListener("submit",event=>{if(event.target.id==="war-member-skill-create-form")saveWarMemberSkillFromEditor(event);});
- $("war-skill-library-list")?.addEventListener("click",event=>{const button=event.target.closest("[data-war-skill-delete]");if(button)deleteWarSkill(button.dataset.warSkillDelete,button);});
+ $("war-skill-library-list")?.addEventListener("click",event=>{const edit=event.target.closest("[data-war-skill-edit]"),button=event.target.closest("[data-war-skill-delete]");if(edit){openWarSkillEditor(edit.dataset.warSkillEdit);return;}if(button)deleteWarSkill(button.dataset.warSkillDelete,button);});
+ document.body.addEventListener("submit",event=>{if(event.target.id==="war-skill-edit-form")saveWarSkillEdit(event);});
+ document.body.addEventListener("click",event=>{if(event.target.closest("[data-war-skill-edit-close]"))$("war-skill-edit-modal")?.remove();});
 
  $("war-raid-boards")?.addEventListener("click",e=>{const add=e.target.closest("[data-war-add-slot]"),manage=e.target.closest("[data-war-manage-slot]");if(add)openWarAssignmentModal(add.dataset.partyId,Number(add.dataset.position));else if(manage)openWarAssignmentModal(manage.dataset.partyId,Number(manage.dataset.position),manage.dataset.assignmentId);});
  $("war-assignment-toolbar")?.addEventListener("click",e=>{const f=e.target.closest("[data-war-filter]"),c=e.target.closest("[data-war-class-filter]"),pool=e.target.closest("[data-war-pool-member]");if(f){warAssignmentFilter=f.dataset.warFilter||"all";applyWarAssignmentMemberFilters();}if(c){warAssignmentClassFilter=c.dataset.warClassFilter||"all";applyWarAssignmentMemberFilters();}if(pool){const p=currentWarParties.find(x=>x.raid===warAssignmentFilter&&(x.war_party_members||[]).length<6)||currentWarParties.find(x=>(x.war_party_members||[]).length<6);if(!p){alert("ไม่พบ Party ที่ว่าง");return;}const used=new Set((p.war_party_members||[]).map(x=>Number(x.position))),pos=[1,2,3,4,5,6].find(x=>!used.has(x));if(pos){openWarAssignmentModal(p.id,pos);const picked=allMembers.find(m=>m.user_id===pool.dataset.warPoolMember);const search=$("war-modal-member-search");if(picked&&search){search.value=getMemberName(picked);renderWarAssignmentModalMembers();}}}});
