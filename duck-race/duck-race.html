@@ -178,7 +178,7 @@ function drawDuck(k,x,y,s,t){
   while(w>maxw&&fs>6){fs-=1;c.font='700 '+fs+'px "Noto Sans Thai",Arial,sans-serif';w=c.measureText(txt).width}
   if(w>maxw){while(txt.length>2&&c.measureText(txt+'…').width>maxw)txt=txt.slice(0,-1);txt+='…';w=c.measureText(txt).width}
   const bw=Math.max(s*.32,w+s*.1),bh=Math.max(fs*1.5,s*.2);
-  const tagY=yb-s*.88;
+  const tagY=yb-s*1.22;
   c.save();c.shadowColor='rgba(0,0,0,.28)';c.shadowBlur=Math.max(2,s*.045);c.shadowOffsetY=Math.max(1,s*.018);
   c.fillStyle='#fff';c.strokeStyle='#5a4a2a';c.lineWidth=Math.max(1,s*.018);
   c.beginPath();c.roundRect(tx-bw/2,tagY-bh/2,bw,bh,bh/2);c.fill();c.stroke();
@@ -335,7 +335,7 @@ let mt=null,mi=0,aud=null;
 const ROOT=[130.8,98,110,87.3],LEAD=[[523,659,784,659,523,659,784,1047],[494,587,784,587,494,587,784,988],[440,523,659,523,440,523,659,880],[349,440,523,440,349,440,523,698]];
 function stopMus(){clearInterval(mt);if(aud)aud.pause()}
 function startMus(){stopMus();
-  if(MUSIC_URL){if(!aud){aud=new Audio(MUSIC_URL);aud.loop=true;aud.volume=.6}aud.play().catch(()=>{});return}
+  if(MUSIC_URL){if(!aud){aud=new Audio(MUSIC_URL);aud.loop=true;aud.volume=.6}aud.currentTime=0;aud.play().catch(()=>{});return}
   ac();if(!AC)return;
   mt=setInterval(()=>{if(S.st!=='run')return;const bar=Math.floor(mi/8)%4,n=mi%8;
     tone(ROOT[bar]*(n%4===2?2:1),.17,'triangle',.12);tone(LEAD[bar][n],.15,'square',.035);if(n%2)tone(6000,.03,'square',.012);mi++},190)}
