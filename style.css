@@ -5141,3 +5141,9 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 @keyframes warSkillDeletePop{from{opacity:0;transform:scale(.55)}to{opacity:1;transform:scale(1)}}
 @keyframes warSkillWiggle{from{transform:rotate(-1deg)}to{transform:rotate(1deg)}}
 @media(max-width:600px){#page-war .war-skill-gallery-heading{align-items:flex-start;flex-direction:column}#page-war .war-skill-gallery-actions{width:100%}#page-war .war-skill-gallery-actions .btn{flex:1}#page-war .war-skill-library-grid{grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:10px}#page-war .war-skill-icon-button{width:66px;height:66px;border-radius:17px}#page-war .war-skill-icon-button img{width:50px;height:50px}}
+
+/* Skill library heading and close control — match WAR MANAGEMENT typography and guild palette */
+#page-war .war-skill-gallery-heading > div:first-child > .panel-kicker{font-size:16px !important;letter-spacing:2px}
+#page-war #war-skill-library-close{display:grid;place-items:center;width:34px;height:34px;min-width:34px;padding:0;border:1px solid rgba(216,176,106,.55);border-radius:10px;background:linear-gradient(145deg,rgba(216,176,106,.2),rgba(125,36,43,.22));color:var(--gold-light);font-size:23px;font-weight:400;line-height:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);transition:background .18s ease,border-color .18s ease,transform .18s ease}
+#page-war #war-skill-library-close:hover{border-color:var(--gold);background:linear-gradient(145deg,rgba(216,176,106,.32),rgba(125,36,43,.36));color:#fff0d2;transform:translateY(-1px)}
+#page-war #war-skill-library-close:focus-visible{outline:2px solid var(--gold-light);outline-offset:3px}
