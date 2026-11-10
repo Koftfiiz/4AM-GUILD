@@ -5378,3 +5378,175 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
   #page-war #war-skill-form > .form-group label{font-size:20px !important}
   #page-war #war-skill-form #war-skill-submit{width:100%;max-width:none;justify-self:stretch}
 }
+
+
+/* Skill Library edit dialog — balanced spacing and responsive alignment */
+#war-skill-edit-modal{padding:20px}
+#war-skill-edit-modal .war-skill-edit-panel{
+  width:min(460px,100%);
+  max-height:min(86vh,680px);
+  padding:30px;
+  overflow-y:auto;
+  background:linear-gradient(150deg,rgba(35,13,20,.98),rgba(9,8,12,.98));
+  border:1px solid rgba(220,91,105,.42);
+  border-radius:16px;
+  box-shadow:0 26px 90px rgba(0,0,0,.72),inset 0 1px rgba(255,220,205,.04);
+}
+#war-skill-edit-modal .war-skill-edit-panel .panel-kicker{
+  display:block;
+  margin:0 42px 8px 0;
+  color:#d9a36f;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:2px;
+  line-height:1.4;
+}
+#war-skill-edit-modal .war-skill-edit-panel h3{
+  margin:0;
+  color:#fff4ed;
+  font-size:25px;
+  font-weight:900;
+  line-height:1.3;
+}
+#war-skill-edit-modal .war-skill-edit-description{
+  margin:7px 0 23px;
+  color:#bda9a8;
+  font-size:13px;
+  line-height:1.65;
+}
+#war-skill-edit-modal #war-skill-edit-form{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  gap:0;
+  margin:0;
+}
+#war-skill-edit-modal .war-skill-edit-field{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  align-content:start;
+  gap:8px;
+  min-width:0;
+  margin:0 0 19px;
+}
+#war-skill-edit-modal .war-skill-edit-label{
+  display:block;
+  margin:0;
+  color:#f0c98e;
+  font-size:13px;
+  font-weight:800;
+  line-height:1.5;
+}
+#war-skill-edit-modal .war-skill-edit-label span{
+  color:#a99898;
+  font-size:11px;
+  font-weight:500;
+}
+#war-skill-edit-modal #war-skill-edit-name{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:46px;
+  margin:0;
+  padding:11px 13px;
+  color:#fff;
+  background:rgba(0,0,0,.42);
+  border:1px solid rgba(210,139,125,.3);
+  border-radius:8px;
+  font:inherit;
+  font-size:14px;
+  line-height:1.4;
+  transition:border-color .18s,box-shadow .18s;
+}
+#war-skill-edit-modal #war-skill-edit-name:focus{
+  outline:none;
+  border-color:#bd4654;
+  box-shadow:0 0 0 3px rgba(189,70,84,.14);
+}
+#war-skill-edit-modal #war-skill-edit-icon{
+  display:block;
+  box-sizing:border-box;
+  width:100%;
+  min-width:0;
+  min-height:46px;
+  margin:0;
+  padding:7px;
+  color:#e9d8d0;
+  background:rgba(0,0,0,.32);
+  border:1px dashed rgba(210,139,125,.38);
+  border-radius:8px;
+  font-size:12px;
+  line-height:1.5;
+}
+#war-skill-edit-modal #war-skill-edit-icon::file-selector-button{
+  min-height:30px;
+  margin:0 10px 0 0;
+  padding:6px 11px;
+  color:#fff2ec;
+  background:linear-gradient(135deg,#842536,#4b1420);
+  border:1px solid rgba(224,111,121,.48);
+  border-radius:6px;
+  font:inherit;
+  font-weight:800;
+  cursor:pointer;
+}
+#war-skill-edit-modal #war-skill-edit-icon::file-selector-button:hover{
+  background:linear-gradient(135deg,#a52d42,#641b2a);
+}
+#war-skill-edit-modal .war-skill-edit-field small{
+  display:block;
+  margin:0;
+  color:#a99898;
+  font-size:11px;
+  line-height:1.6;
+}
+#war-skill-edit-modal #war-skill-edit-status{
+  min-height:0;
+  margin:0 0 15px;
+  padding:0;
+  color:#bfe7c9;
+  font-size:12px;
+  line-height:1.5;
+}
+#war-skill-edit-modal .rule-editor-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  margin:0;
+  padding-top:16px;
+  border-top:1px solid rgba(226,151,127,.15);
+}
+#war-skill-edit-modal .rule-editor-actions .btn{
+  min-width:116px;
+  min-height:42px;
+  margin:0;
+  border-radius:7px;
+  font-size:13px;
+  font-weight:800;
+}
+#war-skill-edit-modal .war-modal-close{
+  top:17px;
+  right:17px;
+  width:34px;
+  height:34px;
+  display:grid;
+  place-items:center;
+  color:#f5d9d1;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:8px;
+  line-height:1;
+}
+#war-skill-edit-modal .war-modal-close:hover{
+  color:#fff;
+  background:rgba(160,38,55,.3);
+  border-color:rgba(220,91,105,.5);
+}
+@media(max-width:520px){
+  #war-skill-edit-modal{padding:14px}
+  #war-skill-edit-modal .war-skill-edit-panel{width:100%;padding:25px 20px;border-radius:13px}
+  #war-skill-edit-modal .war-skill-edit-panel h3{font-size:22px}
+  #war-skill-edit-modal .rule-editor-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #war-skill-edit-modal .rule-editor-actions .btn{min-width:0;width:100%}
+}
