@@ -410,13 +410,13 @@ function frame(now){
   const dt=Math.max(0,(now-S.last)/1000);S.last=now;
   if(S.st==='run'){
     S.t=Math.min(S.T,S.t+dt);
-    const base=D/Math.max(1,S.T);
+    const base=RACE_SPEED;
     if(!S.fin)ducks.forEach(k=>{
       if(!k.mode||k.mode==='normal'){
         k.eventIn-=dt;
         if(k.eventIn<=0){
           k.mode=Math.random()<.62?'boost':'tired';
-          k.modeLeft=k.mode==='tired'?2.0+Math.random()*2.0:1.4+Math.random()*1.6;
+          k.modeLeft=k.mode==='tired'?2.0+Math.random()*2.0:1.2+Math.random()*1.4;
           k.fx=k.mode==='boost'?rnd(['fart','flash','sonic','fire']):'sweat';
         }
       }else{
@@ -428,9 +428,9 @@ function frame(now){
           k.fx='';
         }
       }
-      const mult=k.mode==='tired'?.42:k.mode==='boost'?2.25:1;
+      const mult=k.mode==='tired'?.42:k.mode==='boost'?1.85:1;
       // Keep each duck in its own row, but allow enough horizontal separation to show real overtakes.
-      const offsetLimit=Math.max(120,W*.72);
+      const offsetLimit=Math.max(120,W*.62);
       k.offset=Math.max(-offsetLimit,Math.min(offsetLimit,(k.offset||0)+base*(mult-1)*dt));
     });
     if(!S.fin&&S.t>=S.T){S.t=S.T;onFinish(leader());}
@@ -464,7 +464,8 @@ function frame(now){
 
 /* ---------- race control ---------- */
 function reset(){
-  D=RACE_SPEED*Math.max(1,cfg.T);
+  // Leave a performance buffer before the finish line so the fastest duck reaches it at timer zero.
+  D=RACE_SPEED*Math.max(1,cfg.T)+Math.max(120,W*.62);
   const n=roster.length,slots=[...Array(n).keys()].sort(()=>Math.random()-.5);
   ducks=roster.map((r,i)=>({
     r,slot:slots[i],ph:Math.random()*6.28,offset:0,mode:'normal',modeLeft:0,
