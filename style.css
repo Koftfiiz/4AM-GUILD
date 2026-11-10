@@ -4851,3 +4851,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
   .war-attendance-boards .raid-section{margin-bottom:30px}
   .war-party-image-button{font-size:9px;padding:4px 6px}
 }
+
+.war-attendance-boards .war-member-skills{display:flex;flex:0 0 auto;align-items:center;gap:6px;min-width:0;max-width:92px;flex-wrap:wrap}
+.war-attendance-boards .war-member-skill-icon{width:25px;height:25px;object-fit:contain;border-radius:5px;filter:drop-shadow(0 2px 4px rgba(0,0,0,.45))}
+.war-attendance-boards .party-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px}
