@@ -38,10 +38,9 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
   justify-content:center;
   padding:clamp(128px,19vh,176px) 14px 24px;
   background:
-    radial-gradient(ellipse at 50% 23%,rgba(239,67,86,.25),transparent 35%),
-    radial-gradient(ellipse at 12% 82%,rgba(24,133,151,.22),transparent 38%),
-    radial-gradient(ellipse at 88% 78%,rgba(32,91,138,.24),transparent 40%),
-    linear-gradient(180deg,#07101e 0%,#10263a 48%,#07121e 100%);
+    linear-gradient(180deg,rgba(3,9,20,.28) 0%,rgba(3,9,20,.12) 48%,rgba(3,9,20,.38) 100%),
+    url("./race-backgrounds/race-backgrounds.jpg") center center / cover no-repeat,
+    #07121e;
 }
 #duck-race-root.is-setup .setup-screen::before{
   content:"";position:absolute;inset:0;pointer-events:none;
