@@ -2438,8 +2438,23 @@ async function loadSelectedWarEvent(eventId){
 function renderAllWarParties(){
  const event=allWarEvents.find(item=>item.id===currentWarAssignmentEventId);if(!event)return;
  const config=getWarEventConfig(event),editable=isManagement();
- ["A","B","C","D"].slice(0,config.raidCount).forEach(letter=>renderRaid(`raid-${letter.toLowerCase()}`,letter,currentWarParties.filter(p=>p.raid===letter),{editable}));
+ ["A","B","C","D"].slice(0,config.raidCount).forEach(letter=>{
+  renderRaid(`raid-${letter.toLowerCase()}`,letter,currentWarParties.filter(p=>p.raid===letter),{editable});
+  addWarRaidExportButton(letter);
+ });
  applyWarAssignmentMemberFilters();
+}
+function addWarRaidExportButton(raidName){
+ const section=document.querySelector(`[data-raid-section="${raidName}"]`);
+ const header=section?.querySelector(".raid-title");
+ if(!header||header.querySelector(".war-raid-image-button"))return;
+ const button=document.createElement("button");
+ button.type="button";
+ button.className="btn btn-outline btn-sm war-raid-image-button";
+ button.textContent="บันทึกเป็นรูปภาพ";
+ button.setAttribute("aria-label",`บันทึก Raid ${raidName} เป็นรูปภาพ`);
+ button.addEventListener("click",()=>exportWarImage(raidName));
+ header.appendChild(button);
 }
 function getAssignedWarMemberIds(exceptAssignmentId = null) {
   return new Set(currentWarPartyAssignments
@@ -2831,11 +2846,13 @@ function getThaiFontCss() {
   }
   return thaiFontCssPromise;
 }
-async function exportWarImage(){
+async function exportWarImage(raidFilter = null){
   const event=allWarEvents.find(item=>item.id===selectedWarEventId);
   if(!event||!event.is_draft_confirmed)return;
-  const config=getWarEventConfig(event),width=1600,raidNames=["A","B","C","D"].slice(0,config.raidCount);
-  const height=330+config.raidCount*510,esc=value=>escapeHTML(String(value??""));
+  const config=getWarEventConfig(event),width=1600,allRaidNames=["A","B","C","D"].slice(0,config.raidCount);
+  const raidNames=raidFilter?allRaidNames.filter(raid=>raid===raidFilter):allRaidNames;
+  if(raidFilter&&!raidNames.length)return;
+  const height=330+raidNames.length*510,esc=value=>escapeHTML(String(value??""));
   const roundTimes=config.rounds?.length?config.rounds:[formatTime(event.start_time)];
   const dateTimeLabel=config.mode==="official"
     ? `${formatDate(event.event_date)} ${roundTimes.map((time,index)=>`รอบ ${index+1} เวลา ${time} น.`).join(" | ")}`
@@ -2921,7 +2938,7 @@ async function exportWarImage(){
       const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
       if(!png)throw Error("PNG export failed");
       const url=URL.createObjectURL(png),link=document.createElement("a");
-      link.href=url;link.download=`4AM-War-${event.event_date}.png`;link.click();
+      link.href=url;link.download=raidFilter?`4AM-War-Raid-${raidFilter}-${event.event_date}.png`:`4AM-War-${event.event_date}.png`;link.click();
       setTimeout(()=>URL.revokeObjectURL(url),1000);
     }finally{URL.revokeObjectURL(svgUrl);}
   }catch(error){
@@ -2929,39 +2946,6 @@ async function exportWarImage(){
     alert("บันทึกรูปไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));
   }
 }
-function addWarPartyExportButtons(container,parties){
-  if(!container)return;
-  container.querySelectorAll(".party-card").forEach(card=>{
-    const title=card.querySelector(".party-header h3")?.textContent?.trim()||"";
-    const party=(parties||[]).find(item=>item.raid+String(item.party_number)===title);
-    if(!party?.id||card.querySelector(".war-party-image-button"))return;
-    const header=card.querySelector(".party-header");if(!header)return;
-    const actions=document.createElement("div");actions.className="party-header-actions";
-    const count=document.createElement("span");count.className="party-count";count.textContent=(party.war_party_members||[]).length+"/6";
-    const button=document.createElement("button");button.type="button";button.className="btn btn-outline btn-sm war-party-image-button";button.textContent="บันทึกรูปตี้";button.addEventListener("click",()=>exportWarPartyImage(party.id));
-    actions.append(count,button);header.appendChild(actions);
-  });
-}
-async function exportWarPartyImage(partyId){
-  let party=currentWarParties.find(item=>item.id===partyId)||null;
-  if(!party){const result=await supabaseClient.from("war_parties").select("id,event_id,raid,party_number,party_name,war_party_members(id,member_id,position)").eq("id",partyId).maybeSingle();if(result.error||!result.data){alert("ไม่พบข้อมูลปาร์ตี้");return;}party=result.data;}
-  const event=allWarEvents.find(item=>item.id===party.event_id)||warAttendanceEvents.find(item=>item.id===party.event_id);
-  const esc=value=>escapeHTML(String(value??""));const toDataUrl=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});
-  try{
-    const [bg,logo,fontCss]=await Promise.all([fetch("assets/4am-web-bg.jpg").then(r=>{if(!r.ok)throw Error("ไม่พบภาพพื้นหลัง");return r.blob();}).then(toDataUrl),fetch("assets/4am-guild-logo.png").then(r=>{if(!r.ok)throw Error("ไม่พบโลโก้");return r.blob();}).then(toDataUrl),getThaiFontCss()]);
-    const members=(party.war_party_members||[]).map(row=>({row,member:allMembers.find(item=>item.user_id===row.member_id)}));
-    const names=[...new Set(members.filter(x=>x.member).map(x=>getMemberClass(x.member)))];
-    const icons=Object.fromEntries(await Promise.all(names.map(async name=>{const info=getClassInfo(name);if(!info?.iconPath)return[name,""];try{const response=await fetch(info.iconPath);return[name,response.ok?await toDataUrl(await response.blob()):""];}catch{return[name,""];}})));
-    const rows=[];
-    for(let n=1;n<=6;n++){const entry=members.find(x=>Number(x.row.position)===n),member=entry?.member,info=member?getClassInfo(getMemberClass(member)):null,y=385+(n-1)*78;rows.push(`<rect x="95" y="${y-43}" width="910" height="64" rx="9" fill="#100b10" fill-opacity=".92" stroke="${info?.color||"#85313d"}" stroke-width="2"/>`);rows.push(`<circle cx="137" cy="${y-11}" r="18" fill="#a7192e"/><text x="137" y="${y-5}" text-anchor="middle" fill="#fff" font-size="17" font-weight="900">${n}</text>`);if(member&&icons[getMemberClass(member)])rows.push(`<image x="180" y="${y-34}" width="44" height="44" href="${icons[getMemberClass(member)]}"/>`);rows.push(`<text x="245" y="${y-5}" fill="${member?"#fff":"#96888e"}" font-size="25" font-weight="700">${esc(member?getMemberName(member):"ว่าง")}</text>`);if(member)rows.push(`<text x="980" y="${y-5}" text-anchor="end" fill="${info?.color||"#e7c5c8"}" font-size="17" font-weight="700">${esc(getMemberClass(member))}</text>`);}
-    const label=party.raid+party.party_number,width=1100,height=900;
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><image width="${width}" height="${height}" href="${bg}"/><rect width="100%" height="100%" fill="#050306" fill-opacity=".78"/><rect x="25" y="25" width="1050" height="850" rx="20" fill="#080608" fill-opacity=".72" stroke="#b51d34" stroke-width="4"/><image x="65" y="55" width="100" height="100" href="${logo}"/><text x="190" y="108" fill="#fff" font-size="43" font-weight="900" letter-spacing="3">4AM GUILD</text><text x="190" y="145" fill="#f04a5c" font-size="18" font-weight="800">GUILD WAR ROSTER</text><text x="1015" y="100" text-anchor="end" fill="#fff" font-size="38" font-weight="900">${label}</text><text x="1015" y="140" text-anchor="end" fill="#d9c5c9" font-size="17">${esc(event?.event_name||"4AM GUILD WAR")} · ${event?formatDate(event.event_date):""}</text><rect x="75" y="215" width="950" height="82" rx="10" fill="#841526" stroke="#ef4358" stroke-width="2"/><text x="115" y="267" fill="#fff" font-size="31" font-weight="900">RAID ${esc(party.raid)} · PARTY ${label}</text><text x="985" y="267" text-anchor="end" fill="#ffe5e8" font-size="22" font-weight="800">${members.filter(x=>x.member).length}/6</text>${rows.join("")}<text x="550" y="845" text-anchor="middle" fill="#f1d8dc" font-size="19" font-weight="800" letter-spacing="4">THE OUTRAGEOUS · 4AM GUILD</text></svg>`;
-    const svgWithFonts=fontCss?svg.replace(">",`><style>${fontCss}</style>`):svg;
-    const svgUrl=URL.createObjectURL(new Blob([svgWithFonts],{type:"image/svg+xml;charset=utf-8"}));
-    try{const img=new Image();img.src=svgUrl;await img.decode();const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;const ctx=canvas.getContext("2d");if(!ctx)throw Error("ไม่สามารถสร้าง Canvas ได้");ctx.drawImage(img,0,0);const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));if(!blob)throw Error("สร้าง PNG ไม่สำเร็จ");const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download="4AM-"+label+"-"+(event?.event_date||"War")+".png";link.click();setTimeout(()=>URL.revokeObjectURL(url),1200);}finally{URL.revokeObjectURL(svgUrl);}
-  }catch(error){console.error("Party image export failed:",error);alert("บันทึกรูปตี้ไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));}
-}
-window.exportWarPartyImage=exportWarPartyImage;
 async function loadWarAttendance(){
   const container=$("war-attendance-content");if(!container)return;container.innerHTML='<p class="muted">กำลังโหลดวอร์ที่เผยแพร่แล้ว...</p>';
   const {data,error}=await supabaseClient.from("war_events").select("*").eq("is_published",true).order("event_date",{ascending:false});
