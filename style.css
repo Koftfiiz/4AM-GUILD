@@ -5819,3 +5819,122 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
     min-height:820px;
   }
 }
+
+
+/* Skill Management — accessible typography, spacing and modern file picker */
+#page-war #war-skill-form{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:22px 24px;
+  align-items:start;
+  padding:24px;
+  margin:18px 0 26px;
+}
+#page-war #war-skill-form .form-group{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:10px;
+  min-width:0;
+}
+#page-war #war-skill-form .form-group label{
+  min-height:0;
+  margin:0;
+  color:#ffe0b8;
+  font-size:18px !important;
+  font-weight:800;
+  line-height:1.45;
+  letter-spacing:.15px;
+}
+#page-war #war-skill-form input[type="text"]{
+  box-sizing:border-box;
+  width:100%;
+  min-height:54px;
+  padding:12px 15px;
+  border:1px solid rgba(226,165,144,.36);
+  border-radius:11px;
+  background:rgba(7,5,8,.62);
+  color:#fff;
+  font-size:16px;
+  line-height:1.4;
+  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+}
+#page-war #war-skill-form input[type="text"]::placeholder{color:#a99a9b}
+#page-war #war-skill-form input[type="text"]:focus{
+  outline:none;
+  border-color:#d6a15e;
+  background:rgba(7,5,8,.82);
+  box-shadow:0 0 0 3px rgba(214,161,94,.16);
+}
+#page-war #war-skill-form input[type="file"]{
+  box-sizing:border-box;
+  display:block;
+  width:100%;
+  min-width:0;
+  min-height:54px;
+  height:auto;
+  padding:7px;
+  overflow:hidden;
+  border:1px solid rgba(226,165,144,.36);
+  border-radius:11px;
+  background:rgba(7,5,8,.48);
+  color:#e8d8d2;
+  font-size:14px;
+  line-height:1.5;
+}
+#page-war #war-skill-form input[type="file"]::file-selector-button{
+  min-height:38px;
+  margin:0 12px 0 0;
+  padding:8px 16px;
+  border:1px solid rgba(232,190,112,.58);
+  border-radius:8px;
+  background:linear-gradient(135deg,#9f2938,#6f1b2a);
+  color:#fff3e2;
+  font:700 14px/1.2 inherit;
+  cursor:pointer;
+  transition:filter .18s ease,transform .18s ease,box-shadow .18s ease;
+}
+#page-war #war-skill-form input[type="file"]::file-selector-button:hover{
+  filter:brightness(1.18);
+  transform:translateY(-1px);
+  box-shadow:0 4px 12px rgba(0,0,0,.25);
+}
+#page-war #war-skill-form .form-group small{
+  min-height:0;
+  margin:0;
+  color:#c7b5b2;
+  font-size:13px;
+  line-height:1.6;
+}
+#page-war #war-skill-form #war-skill-submit{
+  grid-column:1/-1;
+  justify-self:start;
+  min-width:190px;
+  min-height:48px;
+  margin-top:2px;
+  padding:11px 22px;
+  border-radius:10px;
+  font-size:15px;
+}
+#page-war #war-skill-form .war-skill-status{
+  grid-column:1/-1;
+  min-height:20px;
+  margin:0;
+  font-size:14px;
+  line-height:1.5;
+}
+#page-war .war-skill-gallery-heading p{
+  font-size:14px !important;
+  line-height:1.6;
+}
+@media(max-width:700px){
+  #page-war #war-skill-form{
+    grid-template-columns:minmax(0,1fr);
+    gap:19px;
+    padding:18px;
+  }
+  #page-war #war-skill-form #war-skill-submit{
+    width:100%;
+    justify-self:stretch;
+  }
+}
