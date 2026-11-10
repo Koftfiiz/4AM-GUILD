@@ -2313,7 +2313,7 @@ function getMemberSkillIconsMarkup(memberId){
 }
 async function loadWarSkillData(){
  const [catalogResult,memberResult]=await Promise.all([
-  supabaseClient.from("war_skill_catalog").select("id,game_class,skill_name,icon_path,created_at").order("game_class").order("skill_name"),
+  supabaseClient.from("war_skill_catalog").select("id,skill_name,icon_path,created_at").order("skill_name"),
   supabaseClient.from("guild_member_skills").select("member_id,skill_id")
  ]);
  if(catalogResult.error||memberResult.error){
@@ -2332,20 +2332,15 @@ async function loadWarSkillData(){
  renderWarSkillManager();
 }
 function renderWarSkillManager(){
- const panel=$("war-skill-management"),toggle=$("war-skill-library-toggle"),classSelect=$("war-skill-class"),list=$("war-skill-library-list");
- const manager=isManagement();
- if(toggle)toggle.classList.toggle("hidden",!manager);
- if(panel&&!manager)panel.classList.add("hidden");
- if(classSelect&&!classSelect.options.length)classSelect.innerHTML=CLASS_DATA.map(item=>`<option value="${escapeHTML(item.name)}">${escapeHTML(item.name)}</option>`).join("");
- if(!list)return;
- if(warSkillLoadError){list.innerHTML=`<p class="war-skill-error">ยังโหลดคลัง Skill ไม่ได้: ${escapeHTML(warSkillLoadError)}<br>กรุณารันไฟล์ SQL migration ใน Supabase ก่อน</p>`;return;}
- if(!warSkillCatalog.length){list.innerHTML='<p class="muted">ยังไม่มี Skill ในคลัง · เพิ่ม Skill แรกได้จากแบบฟอร์มด้านบน</p>';return;}
- list.innerHTML=CLASS_DATA.map(cls=>{
-  const skills=warSkillCatalog.filter(skill=>skill.game_class.toLowerCase()===cls.name.toLowerCase());
-  if(!skills.length)return "";
-  return `<section class="war-skill-class-group"><h4>${escapeHTML(cls.name)}</h4><div class="war-skill-library-grid">${skills.map(skill=>`<article class="war-skill-library-item"><img src="${escapeHTML(skill.iconUrl)}" alt=""><span>${escapeHTML(skill.skill_name)}</span><button type="button" class="btn btn-danger btn-sm" data-war-skill-delete="${escapeHTML(skill.id)}" aria-label="ลบ ${escapeHTML(skill.skill_name)}">ลบ</button></article>`).join("")}</div></section>`;
- }).join("");
-}
+  const panel=$("war-skill-management"),toggle=$("war-skill-library-toggle"),list=$("war-skill-library-list");
+  const manager=isManagement();
+  if(toggle)toggle.classList.toggle("hidden",!manager);
+  if(panel&&!manager)panel.classList.add("hidden");
+  if(!list)return;
+  if(warSkillLoadError){list.innerHTML=`<p class="war-skill-error">ยังโหลดคลัง Skill ไม่ได้: ${escapeHTML(warSkillLoadError)}</p>`;return;}
+  if(!warSkillCatalog.length){list.innerHTML='<p class="muted">ยังไม่มี Skill ในคลัง · เพิ่ม Skill แรกได้จากแบบฟอร์มด้านบน</p>';return;}
+  list.innerHTML='<section class="war-skill-class-group"><h4>ALL SKILLS · ใช้ได้ทุก Class</h4><div class="war-skill-library-grid">'+warSkillCatalog.map(skill=>`<article class="war-skill-library-item"><img src="${escapeHTML(skill.iconUrl)}" alt=""><span>${escapeHTML(skill.skill_name)}</span><button type="button" class="btn btn-danger btn-sm" data-war-skill-delete="${escapeHTML(skill.id)}" aria-label="ลบ ${escapeHTML(skill.skill_name)}">ลบ</button></article>`).join("")+'</div></section>';
+ }
 async function saveWarSkillDefinition(event){
  event.preventDefault();if(!isManagement())return;
  const name=$("war-skill-name")?.value.trim(),gameClass=$("war-skill-class")?.value,file=$("war-skill-icon")?.files?.[0],status=$("war-skill-form-status"),button=$("war-skill-submit");
@@ -2358,7 +2353,7 @@ async function saveWarSkillDefinition(event){
  try{
   const upload=await supabaseClient.storage.from(WAR_SKILL_BUCKET).upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
   if(upload.error)throw upload.error;
-  const insert=await supabaseClient.from("war_skill_catalog").insert({game_class:gameClass,skill_name:name,icon_path:path,created_by:currentUser?.id}).select("id").single();
+  const insert=await supabaseClient.from("war_skill_catalog").insert({skill_name:name,icon_path:path,created_by:currentUser?.id}).select("id").single();
   if(insert.error){await supabaseClient.storage.from(WAR_SKILL_BUCKET).remove([path]);throw insert.error;}
   $("war-skill-form")?.reset();await loadWarSkillData();
   if(status)status.textContent="เพิ่ม Skill ลงคลังเรียบร้อยแล้ว";
@@ -2378,10 +2373,40 @@ async function deleteWarSkill(skillId,button){
  }catch(error){alert("ลบ Skill ไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่"));if(button){button.disabled=false;button.textContent="ลบ";}}
 }
 function renderWarMemberSkillEditor(member){
- const root=$("war-member-skill-editor");if(!root||!member)return;
- const className=getMemberClass(member),skills=warSkillCatalog.filter(skill=>skill.game_class.toLowerCase()===className.toLowerCase()),selected=new Set((warMemberSkillMap.get(member.user_id)||[]).map(skill=>skill.id));
- if(warSkillLoadError){root.innerHTML='<p class="war-skill-error">ระบบ Skill ยังไม่พร้อม · กรุณารัน SQL migration ใน Supabase</p>';return;}
- root.innerHTML=`<div class="war-member-skill-heading"><strong>SKILLS · ${escapeHTML(className)}</strong><span>เลือกได้หลาย Skill</span></div>${skills.length?'<div class="war-member-skill-choice-list">'+skills.map(skill=>`<label class="war-member-skill-choice"><input type="checkbox" value="${escapeHTML(skill.id)}" ${selected.has(skill.id)?"checked":""}><img src="${escapeHTML(skill.iconUrl)}" alt=""><span>${escapeHTML(skill.skill_name)}</span></label>`).join("")+'</div>':'<p class="muted">ยังไม่มี Skill สำหรับ Class นี้ในคลัง</p>'}<button type="button" class="btn btn-outline btn-sm" data-war-save-member-skills="${escapeHTML(member.user_id)}">บันทึก Skill ของสมาชิก</button><p id="war-member-skill-status" class="war-skill-status" role="status"></p>`;
+  const root=$("war-member-skill-editor");if(!root||!member)return;
+  const skills=warSkillCatalog,selected=new Set((warMemberSkillMap.get(member.user_id)||[]).map(skill=>skill.id));
+  if(warSkillLoadError){root.innerHTML='<p class="war-skill-error">ระบบ Skill ยังไม่พร้อม: '+escapeHTML(warSkillLoadError)+'</p>';return;}
+  root.innerHTML=`<div class="war-member-skill-heading"><strong>SKILLS · ${escapeHTML(getMemberName(member))}</strong><span>ใช้ได้ทุก Class · เลือกได้หลายรายการ</span></div>
+  <form id="war-member-skill-create-form" class="war-member-skill-create-form">
+    <label for="war-member-skill-new-name">เพิ่ม Skill ใหม่เข้าคลัง</label>
+    <div class="war-member-skill-create-fields"><input id="war-member-skill-new-name" type="text" maxlength="80" placeholder="ชื่อ Skill" required><label class="war-member-skill-upload" for="war-member-skill-new-icon">＋ เลือกรูปไอคอน<input id="war-member-skill-new-icon" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" required></label><button id="war-member-skill-create-submit" type="submit" class="btn btn-primary btn-sm">เพิ่ม Skill</button></div>
+    <small>รองรับ PNG, JPG, WEBP, GIF หรือ SVG · ไม่เกิน 3 MB</small><p id="war-member-skill-create-status" class="war-skill-status" role="status"></p>
+  </form>
+  ${skills.length?'<div class="war-member-skill-choice-list">'+skills.map(skill=>`<label class="war-member-skill-choice"><input type="checkbox" value="${escapeHTML(skill.id)}" ${selected.has(skill.id)?"checked":""}><img src="${escapeHTML(skill.iconUrl)}" alt=""><span>${escapeHTML(skill.skill_name)}</span></label>`).join("")+'</div>':'<p class="muted">ยังไม่มี Skill ในคลัง · เพิ่ม Skill ใหม่ได้จากช่องด้านบน</p>'}
+  <button type="button" class="btn btn-outline btn-sm" data-war-save-member-skills="${escapeHTML(member.user_id)}">บันทึก Skill ของสมาชิก</button><p id="war-member-skill-status" class="war-skill-status" role="status"></p>`;
+ }
+async function saveWarMemberSkillFromEditor(event){
+  event.preventDefault();if(!isManagement())return;
+  const name=$("war-member-skill-new-name")?.value.trim(),file=$("war-member-skill-new-icon")?.files?.[0],status=$("war-member-skill-create-status"),button=$("war-member-skill-create-submit");
+  if(!name||!file){if(status)status.textContent="กรุณากรอกชื่อ Skill และเลือกรูปไอคอน";return;}
+  if(!file.type.startsWith("image/")||file.size>3*1024*1024){if(status)status.textContent="ไฟล์ต้องเป็นรูปภาพและมีขนาดไม่เกิน 3 MB";return;}
+  if(button){button.disabled=true;button.textContent="กำลังเพิ่ม...";}
+  if(status)status.textContent="กำลังอัปโหลดไอคอน...";
+  const extension=(file.name.split(".").pop()||"png").toLowerCase().replace(/[^a-z0-9]/g,"")||"png";
+  const path=`skills/${Date.now()}-${Math.random().toString(36).slice(2,9)}.${extension}`;
+  try{
+    const upload=await supabaseClient.storage.from(WAR_SKILL_BUCKET).upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+    if(upload.error)throw upload.error;
+    const insert=await supabaseClient.from("war_skill_catalog").insert({skill_name:name,icon_path:path,created_by:currentUser?.id}).select("id").single();
+    if(insert.error){await supabaseClient.storage.from(WAR_SKILL_BUCKET).remove([path]);throw insert.error;}
+    const memberId=document.querySelector("#war-member-skill-editor [data-war-save-member-skills]")?.dataset.warSaveMemberSkills;
+    await loadWarSkillData();
+    const member=allMembers.find(item=>item.user_id===memberId);
+    if(member)renderWarMemberSkillEditor(member);
+    const refreshedStatus=$("war-member-skill-create-status");
+    if(refreshedStatus)refreshedStatus.textContent="เพิ่ม Skill ลงคลังแล้ว · เลือก Skill และกดบันทึกด้านล่าง";
+  }catch(error){console.error("Create member Skill error:",error);if(status)status.textContent="เพิ่ม Skill ไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่");}
+  finally{if(button){button.disabled=false;button.textContent="เพิ่ม Skill";}}
 }
 async function saveWarMemberSkills(memberId,button){
  if(!isManagement()||!memberId)return;
@@ -3328,6 +3353,7 @@ function registerWarCreationEvents(){
  $("war-skill-library-toggle")?.addEventListener("click",()=>{if(!isManagement())return;const panel=$("war-skill-management");panel?.classList.toggle("hidden");if(!panel?.classList.contains("hidden")){renderWarSkillManager();panel.scrollIntoView({behavior:"smooth",block:"start"});}});
  $("war-skill-library-close")?.addEventListener("click",()=>$("war-skill-management")?.classList.add("hidden"));
  $("war-skill-form")?.addEventListener("submit",saveWarSkillDefinition);
+  $("war-member-skill-editor")?.addEventListener("submit",event=>{if(event.target.id==="war-member-skill-create-form")saveWarMemberSkillFromEditor(event);});
  $("war-skill-library-list")?.addEventListener("click",event=>{const button=event.target.closest("[data-war-skill-delete]");if(button)deleteWarSkill(button.dataset.warSkillDelete,button);});
 
  $("war-raid-boards")?.addEventListener("click",e=>{const add=e.target.closest("[data-war-add-slot]"),manage=e.target.closest("[data-war-manage-slot]");if(add)openWarAssignmentModal(add.dataset.partyId,Number(add.dataset.position));else if(manage)openWarAssignmentModal(manage.dataset.partyId,Number(manage.dataset.position),manage.dataset.assignmentId);});
