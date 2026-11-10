@@ -1137,7 +1137,7 @@ function renderManualMemberManagement() {
       <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
       <td><div class="manual-member-actions">
         <button type="button" class="btn btn-outline btn-sm" data-account-edit="${escapeHTML(member.user_id)}">แก้ไข</button>
-        <button type="button" class="btn btn-ghost btn-sm" data-account-toggle="${escapeHTML(member.user_id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
+        <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-account-toggle="${escapeHTML(member.user_id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
       </div></td>
     </tr>`;
   }).join("");
@@ -1151,7 +1151,7 @@ function renderManualMemberManagement() {
       <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
       <td><div class="manual-member-actions">
         <button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button>
-        <button type="button" class="btn btn-ghost btn-sm" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
+        <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
         <button type="button" class="btn btn-danger btn-sm" data-manual-delete="${escapeHTML(member.id)}">ลบ</button>
       </div></td>
     </tr>`;
