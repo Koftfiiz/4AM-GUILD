@@ -887,8 +887,12 @@
             <strong id="system-role-total">0</strong>
           </article>
           <article class="system-role-stat">
-            <span>ฝ่ายบริหาร</span>
+            <span>Management</span>
             <strong id="system-role-management">0</strong>
+          </article>
+          <article class="system-role-stat">
+            <span>Admin</span>
+            <strong id="system-role-admin">0</strong>
           </article>
           <article class="system-role-stat">
             <span>หัวหน้ากิลด์</span>
@@ -914,7 +918,8 @@
             <select id="system-role-filter" aria-label="กรองตาม System Role">
               <option value="all">ทุก Role</option>
               <option value="member">Member</option>
-              <option value="management">Management / Admin เดิม</option>
+              <option value="admin">Admin</option>
+              <option value="management">Management</option>
               <option value="leader">Leader</option>
               <option value="developer">Developer</option>
             </select>
@@ -922,7 +927,7 @@
 
           <div class="system-role-notice">
             <strong>Developer protected</strong>
-            <span>หน้านี้เปลี่ยนได้เฉพาะ Member, Management และ Leader เท่านั้น บัญชี Developer และบัญชีของคุณจะถูกล็อกไว้</span>
+            <span>หน้านี้เปลี่ยนได้เฉพาะ Member, Admin, Management และ Leader เท่านั้น บัญชี Developer และบัญชีของคุณจะถูกล็อกไว้</span>
           </div>
 
           <div id="system-role-list" class="system-role-list" aria-live="polite">
