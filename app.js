@@ -2251,8 +2251,8 @@ function renderWarLayout(eventId = selectedWarEventId) {
   $("war-export-image")?.classList.toggle("hidden",!confirmed);
   const sync=$("war-sync-discord");sync?.classList.toggle("hidden",!confirmed);if(sync){sync.disabled=true;sync.title="Discord Bot integration ยังไม่เปิดใช้งาน";}
   const label=$("war-detail-stage-label");if(label)label.textContent=published?"PUBLISHED · สมาชิกมองเห็นแล้ว":confirmed?"DRAFT · ยืนยันรายชื่อแล้ว":"กำลังจัดตี้ · ยังไม่ยืนยัน";
-  const notice=$("war-edit-notice");if(notice)notice.textContent=published?"วอร์นี้เผยแพร่แล้ว · เปิดดูรายชื่อได้อย่างเดียว":"เลือก + ADD เพื่อจัดสมาชิกผ่านหน้าต่าง Party Management";
-  if(boards)boards.innerHTML=letters.map((letter,index)=>`<div class="raid-section" data-raid-section="${letter}"><div class="raid-title"><span class="raid-badge ${index?"raid-b":""}">${letter}</span><div><h2>Raid ${letter}</h2><p>${config.mode==="practice"?"Practice battle formation":"Official battle formation"}</p></div></div><div id="raid-${letter.toLowerCase()}" class="raid-grid"></div></div>`).join("");
+  const notice=$("war-edit-notice");if(notice)notice.textContent=published?"วอร์นี้เผยแพร่แล้ว · ฝ่ายบริหารยังสามารถแก้ไขและบันทึกการจัดตี้ได้":"เลือก + ADD เพื่อจัดสมาชิกผ่านหน้าต่าง Party Management";
+  if(boards)boards.innerHTML=letters.map((letter,index)=>`<div class="raid-section" data-raid-section="${letter}"><div class="raid-title"><span class="raid-badge raid-${letter.toLowerCase()}">${letter}</span><div><h2>Raid ${letter}</h2><p>${config.mode==="practice"?"Practice battle formation":"Official battle formation"}</p></div></div><div id="raid-${letter.toLowerCase()}" class="raid-grid"></div></div>`).join("");
   renderWarAssignmentToolbar(config.raidCount);loadSelectedWarEvent(event.id);
 }
 
@@ -2277,7 +2277,7 @@ async function loadSelectedWarEvent(eventId){
 }
 function renderAllWarParties(){
  const event=allWarEvents.find(item=>item.id===currentWarAssignmentEventId);if(!event)return;
- const config=getWarEventConfig(event),editable=isManagement()&&!event.is_published;
+ const config=getWarEventConfig(event),editable=isManagement();
  ["A","B","C","D"].slice(0,config.raidCount).forEach(letter=>renderRaid(`raid-${letter.toLowerCase()}`,letter,currentWarParties.filter(p=>p.raid===letter),{editable}));
  applyWarAssignmentMemberFilters();
 }
@@ -2323,7 +2323,7 @@ function applyWarAssignmentMemberFilters(){
 }
 function closeWarAssignmentModal(){$("war-assignment-modal")?.remove();warAssignmentModalSlot=null;}
 function openWarAssignmentModal(partyId,position,assignmentId=null){
- const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event||event.is_published)return;const party=currentWarParties.find(x=>x.id===partyId);if(!party)return;
+ const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event)return;const party=currentWarParties.find(x=>x.id===partyId);if(!party)return;
  const assignment=assignmentId?currentWarPartyAssignments.find(x=>x.id===assignmentId):null,current=assignment?allMembers.find(x=>x.user_id===assignment.member_id):null;
  closeWarAssignmentModal();warAssignmentModalSlot={partyId,position,assignmentId};const modal=document.createElement("div");modal.id="war-assignment-modal";modal.className="war-assignment-modal";
  modal.innerHTML=`<div class="war-assignment-modal-backdrop" data-war-modal-close></div><section class="war-assignment-modal-panel" role="dialog" aria-modal="true"><button class="war-modal-close" data-war-modal-close type="button">×</button><span class="panel-kicker">PARTY MANAGEMENT</span><h3>${party.raid}${party.party_number} · SLOT ${position}</h3><p class="war-modal-subtitle">${assignment?"จัดการสมาชิกในช่องนี้":"เลือกสมาชิกเพื่อเพิ่มลง Party"}</p>${current?`<div class="war-modal-current-member"><img src="${escapeHTML(getClassInfo(getMemberClass(current))?.iconPath||"")}" alt=""><div><strong>${escapeHTML(getMemberName(current))}</strong><small>${escapeHTML(getMemberClass(current))} · UID ${escapeHTML(current.game_uid||"—")}</small></div><button class="btn btn-danger btn-sm" data-war-modal-remove type="button">นำออก</button></div>`:""}<label class="war-modal-search">ค้นหาชื่อ / UID<input id="war-modal-member-search" type="search" placeholder="พิมพ์ชื่อหรือตัวเลข UID"></label><div class="war-modal-class-tabs"><button class="is-active" data-war-modal-class="all" type="button">ALL</button><button data-war-modal-reserve type="button">สำรอง <span>${warAssignmentSignups.filter(x=>Number(x.queue_position)>=61&&!currentWarPartyAssignments.some(a=>a.member_id===x.member_id)).length}</span></button>${CLASS_DATA.map(x=>`<button data-war-modal-class="${escapeHTML(x.name)}" type="button"><img src="${escapeHTML(x.iconPath)}" alt=""></button>`).join("")}</div><div class="war-modal-member-list" id="war-modal-member-list"></div><p class="war-modal-status" id="war-modal-status"></p></section>`;document.body.appendChild(modal);renderWarAssignmentModalMembers();
@@ -2334,7 +2334,7 @@ function renderWarAssignmentModalMembers(){
  list.innerHTML=members.length?members.map(m=>{const info=getClassInfo(getMemberClass(m));return `<button class="war-modal-member-option" data-war-modal-assign="${escapeHTML(m.user_id)}" style="--class-color:${info?.color||"#aaa"}" type="button"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span><strong>${escapeHTML(getMemberName(m))}</strong><small>${escapeHTML(getMemberClass(m))} · UID ${escapeHTML(m.game_uid||"—")}</small></span><b>ADD</b></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่สามารถเพิ่มได้</p>';
 }
 async function assignWarMemberToSlot(id){
- const slot=warAssignmentModalSlot;if(!slot)return;const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event||event.is_published)return;const party=currentWarParties.find(x=>x.id===slot.partyId);if(!party)return;
+ const slot=warAssignmentModalSlot;if(!slot)return;const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event)return;const party=currentWarParties.find(x=>x.id===slot.partyId);if(!party)return;
  if(getAssignedWarMemberIds(slot.assignmentId).has(id)){alert("สมาชิกคนนี้ถูกจัดลงปาร์ตี้อื่นในวอร์รอบนี้แล้ว");return;}
  try{
   const snapshot=warAssignmentRosterSnapshot.find(x=>x.member_id===id);
@@ -2350,7 +2350,7 @@ async function assignWarMemberToSlot(id){
  }catch(e){console.error(e);const status=$("war-modal-status");if(status)status.textContent="บันทึกไม่สำเร็จ: "+(e.message||"กรุณาลองใหม่");}
 }
 async function removeWarPartyMember(id,button){
- const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event||event.is_published||!id)return;if(button){button.disabled=true;button.textContent="กำลังนำออก...";}
+ const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event||!id)return;if(button){button.disabled=true;button.textContent="กำลังนำออก...";}
  try{const r=await supabaseClient.from("war_party_members").delete().eq("id",id);if(r.error)throw r.error;await loadSelectedWarEvent(currentWarAssignmentEventId);closeWarAssignmentModal();}
  catch(e){alert("นำสมาชิกออกไม่สำเร็จ: "+(e.message||"กรุณาลองใหม่"));if(button)button.disabled=false;}
 }
@@ -2404,7 +2404,7 @@ function updateWarCreateMode() {
   const raidCount=isPractice?Number($("war-raid-count")?.value||4):2;
   const summary=$("war-create-capacity");
   if(summary)summary.textContent=isPractice?"ซ้อมวอร์: "+raidCount+" Raid · "+(raidCount*5)+" ปาร์ตี้ · รองรับ "+(raidCount*30)+" คน":"วอร์จริงวันเสาร์ "+formatWarDateDisplay(dateInput?.value)+" · "+rounds.length+" รอบ ("+rounds.join(" / ")+") น. · 2 Raid · 10 ปาร์ตี้ · รองรับ 60 คน";
-  if(scheduleNote)scheduleNote.textContent=isPractice?"ซ้อมวอร์: กรอกวันที่ dd/mm/yyyy และเวลา 00:00–23:59 ได้เอง":(rounds.length===2?"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด · รอบ 1 เวลา 20:00 น. / รอบ 2 เวลา 20:30 น.":"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด · วอร์ 1 รอบ เวลา 20:00 น.");
+  if(scheduleNote)scheduleNote.textContent=isPractice?"ซ้อมวอร์: กรอกวันที่ dd/mm/yyyy และเวลา 00:00–23:59 ได้เอง":(rounds.length===2?"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด 2 เสาร์ · วันเสาร์ที่มีวอร์ 2 รอบ จะแสดง รอบ 1 เวลา 20:00 น. / รอบ 2 เวลา 20:30 น.":"ระบบกำหนดวันเสาร์ที่ใกล้ที่สุด 2 เสาร์ · วันเสาร์ที่มีวอร์ 1 รอบ จะแสดง รอบ 1 เวลา 20:00 น.");
 }
 function syncPracticeDateDisplay(){
   const display=$("war-event-date-display"),dateInput=$("war-event-date");if(!display||!dateInput)return;
