@@ -4936,3 +4936,77 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 .manual-member-setup-warning small{color:#bba7a9;font-size:10px;overflow-wrap:anywhere}
 @media(max-width:850px){.manual-member-form{grid-template-columns:repeat(2,minmax(0,1fr))}.member-admin-overview{grid-template-columns:1fr}}
 @media(max-width:560px){.manual-member-form{grid-template-columns:1fr}.manual-member-field-wide,.manual-member-active-toggle,.manual-member-form-status,.manual-member-form-actions{grid-column:1}.manual-member-form-actions{justify-content:stretch}.manual-member-form-actions .btn{flex:1}.member-directory-card .member-record-status{position:static;width:max-content;margin-top:8px}.member-admin-stat,.member-admin-note{padding:14px}}
+
+
+/* ==========================================
+   MANUAL MEMBER FORM — readability + guild theme
+   ========================================== */
+.manual-member-form-panel .manual-member-field > span {
+  color: #f4dfbd;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: .01em;
+}
+
+.manual-member-form-panel .manual-member-field input,
+.manual-member-form-panel .manual-member-field select,
+.manual-member-form-panel .manual-member-field textarea {
+  min-height: 48px;
+  padding: 12px 14px;
+  font-size: 15px;
+  color: #fff4e7;
+}
+
+.manual-member-form-panel .manual-member-field input::placeholder,
+.manual-member-form-panel .manual-member-field textarea::placeholder {
+  color: #a99488;
+  opacity: 1;
+}
+
+/* Dark burgundy + gold dropdowns for Class and Guild Position */
+.manual-member-form-panel .manual-member-field select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 42px;
+  border: 1px solid rgba(216,176,106,.48);
+  border-radius: 10px;
+  color: #f7e4c5;
+  background-color: #241216;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23e0b96f' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  background-size: 16px;
+  cursor: pointer;
+}
+
+.manual-member-form-panel .manual-member-field select:hover {
+  border-color: rgba(224,185,111,.78);
+  background-color: #30151b;
+}
+
+.manual-member-form-panel .manual-member-field select:focus {
+  border-color: #e0b96f;
+  background-color: #30151b;
+  box-shadow: 0 0 0 3px rgba(216,176,106,.16);
+}
+
+.manual-member-form-panel .manual-member-field select option {
+  color: #f7e4c5;
+  background: #241216;
+}
+
+.manual-member-form-panel .manual-member-active-toggle {
+  font-size: 14px;
+  font-weight: 650;
+}
+
+@media (max-width: 560px) {
+  .manual-member-form-panel .manual-member-field > span {
+    font-size: 15px;
+  }
+  .manual-member-form-panel .manual-member-field input,
+  .manual-member-form-panel .manual-member-field select,
+  .manual-member-form-panel .manual-member-field textarea {
+    font-size: 16px;
+  }
+}
