@@ -150,7 +150,87 @@ const DUCK_DATA={
     {id:'unicorn',name:'Unicorn',rarity:'epic',head:'uni',main:'#f6b8e5',accent:'#8c6be8',emblem:'rainbow'},
     {id:'speedster',name:'The Flash',rarity:'legendary',head:'speedster',main:'#d92736',accent:'#ffd43b',emblem:'lightning'},
     {id:'goldenking',name:'Golden King',rarity:'legendary',head:'goldenking',main:'#e8b923',accent:'#fff0a0',emblem:'crown'},
-    {id:'cosmic',name:'Cosmic Duck',rarity:'legendary',head:'cosmic',main:'#30265e',accent:'#6de5ff',emblem:'galaxy'}
+    {id:'cosmic',name:'Cosmic Duck',rarity:'legendary',head:'cosmic',main:'#30265e',accent:'#6de5ff',emblem:'galaxy'},
+    {id:'thai-student',name:'Thai School Student',rarity:'common',head:'thai-student',headStyle:0,main:'#243f86',accent:'#f5f5f5',emblem:'school',theme:'occupation'},
+    {id:'nurse',name:'Nurse',rarity:'common',head:'nurse',headStyle:1,main:'#f8fbff',accent:'#e75b86',emblem:'medical',theme:'occupation'},
+    {id:'businessman',name:'Business Executive',rarity:'common',head:'businessman',headStyle:2,main:'#26364d',accent:'#d8b36a',emblem:'briefcase',theme:'occupation'},
+    {id:'teacher',name:'Teacher',rarity:'common',head:'teacher',headStyle:3,main:'#6a4c93',accent:'#f2d06b',emblem:'book',theme:'occupation'},
+    {id:'chef-deluxe',name:'Master Chef',rarity:'common',head:'chef-deluxe',headStyle:4,main:'#fff8eb',accent:'#dc5147',emblem:'chef',theme:'occupation'},
+    {id:'barista',name:'Barista',rarity:'common',head:'barista',headStyle:5,main:'#76503b',accent:'#f0d2a0',emblem:'coffee',theme:'occupation'},
+    {id:'construction-worker',name:'Construction Worker',rarity:'common',head:'construction-worker',headStyle:6,main:'#f2a900',accent:'#27364b',emblem:'hardhat',theme:'occupation'},
+    {id:'farmer',name:'Farmer',rarity:'common',head:'farmer',headStyle:7,main:'#5d8c3a',accent:'#e7c45b',emblem:'leaf',theme:'occupation'},
+    {id:'pilot',name:'Airline Pilot',rarity:'common',head:'pilot',headStyle:8,main:'#263c66',accent:'#f0d9a0',emblem:'wings',theme:'occupation'},
+    {id:'mail-carrier',name:'Mail Carrier',rarity:'common',head:'mail-carrier',headStyle:9,main:'#3b65a8',accent:'#f5d45b',emblem:'letter',theme:'occupation'},
+    {id:'delivery-rider',name:'Delivery Rider',rarity:'common',head:'delivery-rider',headStyle:10,main:'#e75b31',accent:'#f7df55',emblem:'parcel',theme:'occupation'},
+    {id:'artist',name:'Visual Artist',rarity:'common',head:'artist',headStyle:11,main:'#a64d79',accent:'#ffe0a8',emblem:'palette',theme:'occupation'},
+    {id:'scientist',name:'Scientist',rarity:'common',head:'scientist',headStyle:0,main:'#e8f2f8',accent:'#49a6bb',emblem:'flask',theme:'occupation'},
+    {id:'mechanic',name:'Mechanic',rarity:'common',head:'mechanic',headStyle:1,main:'#394b59',accent:'#f3b544',emblem:'gear',theme:'occupation'},
+    {id:'police-detective',name:'Police Detective',rarity:'common',head:'police-detective',headStyle:2,main:'#203b69',accent:'#d8c26a',emblem:'badge',theme:'occupation'},
+    {id:'lifeguard',name:'Lifeguard',rarity:'common',head:'lifeguard',headStyle:3,main:'#f04c43',accent:'#fff1d6',emblem:'lifebuoy',theme:'occupation'},
+    {id:'footballer',name:'Football Player',rarity:'common',head:'footballer',headStyle:4,main:'#247a48',accent:'#f5e9c5',emblem:'football',theme:'occupation'},
+    {id:'basketballer',name:'Basketball Player',rarity:'common',head:'basketballer',headStyle:5,main:'#d76b2d',accent:'#f7e5c7',emblem:'basketball',theme:'occupation'},
+    {id:'musician',name:'Rock Musician',rarity:'common',head:'musician',headStyle:6,main:'#262631',accent:'#e14d63',emblem:'music',theme:'occupation'},
+    {id:'photographer',name:'Photographer',rarity:'common',head:'photographer',headStyle:7,main:'#374d60',accent:'#e9d3a7',emblem:'camera',theme:'occupation'},
+    {id:'fire-chief',name:'Fire Chief',rarity:'uncommon',head:'fire-chief',headStyle:8,main:'#bd292d',accent:'#ffd35a',emblem:'flame',theme:'occupation'},
+    {id:'surgeon',name:'Surgeon',rarity:'uncommon',head:'surgeon',headStyle:9,main:'#3b9d91',accent:'#f6ffff',emblem:'medical',theme:'occupation'},
+    {id:'paramedic',name:'Paramedic',rarity:'uncommon',head:'paramedic',headStyle:10,main:'#f4f4f4',accent:'#d93e4d',emblem:'medical',theme:'occupation'},
+    {id:'judge',name:'Judge',rarity:'uncommon',head:'judge',headStyle:11,main:'#242631',accent:'#d9bd73',emblem:'scales',theme:'occupation'},
+    {id:'lawyer',name:'Lawyer',rarity:'uncommon',head:'lawyer',headStyle:0,main:'#27344a',accent:'#c8a56a',emblem:'scales',theme:'occupation'},
+    {id:'police-commander',name:'Police Commander',rarity:'uncommon',head:'police-commander',headStyle:1,main:'#1e3e76',accent:'#f5d45b',emblem:'badge',theme:'occupation'},
+    {id:'astronomer',name:'Astronomer',rarity:'uncommon',head:'astronomer',headStyle:2,main:'#24365e',accent:'#7ad8ed',emblem:'planet',theme:'occupation'},
+    {id:'sushi-master',name:'Japanese Sushi Master',rarity:'uncommon',head:'sushi-master',headStyle:3,main:'#fff9ed',accent:'#df3d46',emblem:'sushi',theme:'occupation'},
+    {id:'royal-guard',name:'Royal Guard',rarity:'uncommon',head:'royal-guard',headStyle:4,main:'#3c4b83',accent:'#e5c15c',emblem:'shield',theme:'occupation'},
+    {id:'detective-noir',name:'Noir Detective',rarity:'uncommon',head:'detective-noir',headStyle:5,main:'#45404a',accent:'#d5b98b',emblem:'magnifier',theme:'occupation'},
+    {id:'iron-man',name:'Iron Man',rarity:'rare',head:'iron-man',headStyle:6,main:'#bd2932',accent:'#f5c64c',emblem:'arc-reactor',theme:'superhero'},
+    {id:'thor',name:'Thor',rarity:'rare',head:'thor',headStyle:7,main:'#385a9a',accent:'#d8dce7',emblem:'hammer',theme:'superhero'},
+    {id:'hulk',name:'Hulk',rarity:'rare',head:'hulk',headStyle:8,main:'#398044',accent:'#a9d46a',emblem:'gamma',theme:'superhero'},
+    {id:'wolverine',name:'Wolverine',rarity:'rare',head:'wolverine',headStyle:9,main:'#e5b52f',accent:'#315a9d',emblem:'claws',theme:'superhero'},
+    {id:'black-panther',name:'Black Panther',rarity:'rare',head:'black-panther',headStyle:10,main:'#242432',accent:'#a78bfa',emblem:'panther',theme:'superhero'},
+    {id:'doctor-strange',name:'Doctor Strange',rarity:'rare',head:'doctor-strange',headStyle:11,main:'#9d3037',accent:'#e4b65c',emblem:'mystic-eye',theme:'superhero'},
+    {id:'deadpool',name:'Deadpool',rarity:'rare',head:'deadpool',headStyle:0,main:'#c62f3a',accent:'#25252d',emblem:'dual-katanas',theme:'superhero'},
+    {id:'captain-marvel',name:'Captain Marvel',rarity:'rare',head:'captain-marvel',headStyle:1,main:'#2855a5',accent:'#d7b94c',emblem:'starburst',theme:'superhero'},
+    {id:'ant-man',name:'Ant-Man',rarity:'rare',head:'ant-man',headStyle:2,main:'#a72c36',accent:'#c9d8df',emblem:'ant',theme:'superhero'},
+    {id:'black-widow',name:'Black Widow',rarity:'rare',head:'black-widow',headStyle:3,main:'#26262d',accent:'#c74b55',emblem:'hourglass',theme:'superhero'},
+    {id:'batman',name:'Batman',rarity:'epic',head:'batman',headStyle:4,main:'#252b3b',accent:'#e0bd55',emblem:'bat',theme:'superhero'},
+    {id:'superman',name:'Superman',rarity:'epic',head:'superman',headStyle:5,main:'#2c5eaa',accent:'#df3c43',emblem:'crest',theme:'superhero'},
+    {id:'wonder-woman',name:'Wonder Woman',rarity:'epic',head:'wonder-woman',headStyle:6,main:'#a52e3b',accent:'#f2c84b',emblem:'eagle',theme:'superhero'},
+    {id:'green-lantern',name:'Green Lantern',rarity:'epic',head:'green-lantern',headStyle:7,main:'#278b54',accent:'#b7f58a',emblem:'lantern',theme:'superhero'},
+    {id:'aquaman',name:'Aquaman',rarity:'epic',head:'aquaman',headStyle:8,main:'#237f79',accent:'#e6b34d',emblem:'trident',theme:'superhero'},
+    {id:'joker',name:'Joker',rarity:'epic',head:'joker',headStyle:9,main:'#633a8b',accent:'#e4d46a',emblem:'joker',theme:'superhero'},
+    {id:'harley-quinn',name:'Harley Quinn',rarity:'epic',head:'harley-quinn',headStyle:10,main:'#d83b56',accent:'#283b75',emblem:'diamond',theme:'superhero'},
+    {id:'nightwing',name:'Nightwing',rarity:'epic',head:'nightwing',headStyle:11,main:'#254e9c',accent:'#49b9ef',emblem:'wing',theme:'superhero'},
+    {id:'shazam',name:'Shazam',rarity:'epic',head:'shazam',headStyle:0,main:'#c72f36',accent:'#f4c84a',emblem:'lightning',theme:'superhero'},
+    {id:'supergirl',name:'Supergirl',rarity:'epic',head:'supergirl',headStyle:1,main:'#2d64ad',accent:'#e6c94e',emblem:'crest',theme:'superhero'},
+    {id:'sung-jinwoo',name:'Sung Jin-Woo (Solo Leveling)',rarity:'rare',head:'sung-jinwoo',headStyle:2,main:'#252b3e',accent:'#7355c9',emblem:'shadow',theme:'anime'},
+    {id:'shadow-monarch',name:'Shadow Monarch',rarity:'rare',head:'shadow-monarch',headStyle:3,main:'#201c36',accent:'#8b6bdf',emblem:'monarch',theme:'anime'},
+    {id:'tanjiro',name:'Tanjiro Kamado (Demon Slayer)',rarity:'rare',head:'tanjiro',headStyle:4,main:'#347b4d',accent:'#d54a42',emblem:'sun-breath',theme:'anime'},
+    {id:'nezuko',name:'Nezuko Kamado (Demon Slayer)',rarity:'rare',head:'nezuko',headStyle:5,main:'#d978a8',accent:'#75a56b',emblem:'bamboo',theme:'anime'},
+    {id:'zenitsu',name:'Zenitsu Agatsuma (Demon Slayer)',rarity:'rare',head:'zenitsu',headStyle:6,main:'#e4bd38',accent:'#f4e4a0',emblem:'thunder',theme:'anime'},
+    {id:'inosuke',name:'Inosuke Hashibira (Demon Slayer)',rarity:'rare',head:'inosuke',headStyle:7,main:'#7195b7',accent:'#e8c6a2',emblem:'boar',theme:'anime'},
+    {id:'naruto',name:'Naruto Uzumaki',rarity:'rare',head:'naruto',headStyle:8,main:'#e68a31',accent:'#2c65a5',emblem:'leaf',theme:'anime'},
+    {id:'sasuke',name:'Sasuke Uchiha',rarity:'rare',head:'sasuke',headStyle:9,main:'#354c86',accent:'#9b4c55',emblem:'fan',theme:'anime'},
+    {id:'sakura',name:'Sakura Haruno',rarity:'rare',head:'sakura',headStyle:10,main:'#d9789c',accent:'#e9d7d4',emblem:'medical',theme:'anime'},
+    {id:'kakashi',name:'Kakashi Hatake',rarity:'rare',head:'kakashi',headStyle:11,main:'#6b7f91',accent:'#26313e',emblem:'leaf',theme:'anime'},
+    {id:'ichigo',name:'Ichigo Kurosaki (Bleach)',rarity:'epic',head:'ichigo',headStyle:0,main:'#e77b32',accent:'#282832',emblem:'zanpakuto',theme:'anime'},
+    {id:'rukia',name:'Rukia Kuchiki (Bleach)',rarity:'epic',head:'rukia',headStyle:1,main:'#242c3a',accent:'#b9d9e8',emblem:'snowflake',theme:'anime'},
+    {id:'deku',name:'Izuku Midoriya (My Hero Academia)',rarity:'epic',head:'deku',headStyle:2,main:'#368c65',accent:'#a8d9e7',emblem:'one-for-all',theme:'anime'},
+    {id:'bakugo',name:'Katsuki Bakugo (My Hero Academia)',rarity:'epic',head:'bakugo',headStyle:3,main:'#d5a53c',accent:'#d34a3d',emblem:'explosion',theme:'anime'},
+    {id:'todoroki',name:'Shoto Todoroki (My Hero Academia)',rarity:'epic',head:'todoroki',headStyle:4,main:'#e8e8ed',accent:'#cf4a4c',emblem:'half-fire-ice',theme:'anime'},
+    {id:'all-might',name:'All Might (My Hero Academia)',rarity:'epic',head:'all-might',headStyle:5,main:'#d9b33d',accent:'#315fa8',emblem:'peace',theme:'anime'},
+    {id:'anya',name:'Anya Forger (Spy x Family)',rarity:'epic',head:'anya',headStyle:6,main:'#d78eae',accent:'#4b3a82',emblem:'telepathy',theme:'anime'},
+    {id:'yor',name:'Yor Forger (Spy x Family)',rarity:'epic',head:'yor',headStyle:7,main:'#a52d3d',accent:'#171923',emblem:'thorn',theme:'anime'},
+    {id:'loid',name:'Loid Forger (Spy x Family)',rarity:'epic',head:'loid',headStyle:8,main:'#668d9d',accent:'#d8c69d',emblem:'spy',theme:'anime'},
+    {id:'goku',name:'Goku (Dragon Ball)',rarity:'epic',head:'goku',headStyle:9,main:'#e67d2f',accent:'#315fa7',emblem:'kanji',theme:'anime'},
+    {id:'vegeta',name:'Vegeta (Dragon Ball)',rarity:'epic',head:'vegeta',headStyle:10,main:'#315a9c',accent:'#dce4ed',emblem:'saiyan',theme:'anime'},
+    {id:'piccolo',name:'Piccolo (Dragon Ball)',rarity:'epic',head:'piccolo',headStyle:11,main:'#3c8a61',accent:'#d7d8dc',emblem:'namek',theme:'anime'},
+    {id:'doraemon',name:'Doraemon',rarity:'epic',head:'doraemon',headStyle:0,main:'#2e8fd0',accent:'#f5f5f5',emblem:'bell',theme:'anime'},
+    {id:'nobita',name:'Nobita (Doraemon)',rarity:'epic',head:'nobita',headStyle:1,main:'#e7c94a',accent:'#d96b43',emblem:'glasses',theme:'anime'},
+    {id:'shinchan',name:'Shin-chan (Crayon Shin-chan)',rarity:'epic',head:'shinchan',headStyle:2,main:'#e64b42',accent:'#e7c94a',emblem:'action-kamen',theme:'anime'},
+    {id:'luffy',name:'Monkey D. Luffy (One Piece)',rarity:'legendary',head:'luffy',headStyle:3,main:'#b83b36',accent:'#e9bd43',emblem:'straw-hat',theme:'anime'},
+    {id:'zoro',name:'Roronoa Zoro (One Piece)',rarity:'legendary',head:'zoro',headStyle:4,main:'#39865b',accent:'#e1d7c5',emblem:'three-swords',theme:'anime'},
+    {id:'sailor-moon',name:'Sailor Moon',rarity:'legendary',head:'sailor-moon',headStyle:5,main:'#3158a4',accent:'#f0c64c',emblem:'moon',theme:'anime'},
+    {id:'edward-elric',name:'Edward Elric (Fullmetal Alchemist)',rarity:'legendary',head:'edward-elric',headStyle:6,main:'#b83b35',accent:'#e3c15a',emblem:'alchemy',theme:'anime'},
+    {id:'saitama',name:'Saitama (One Punch Man)',rarity:'legendary',head:'saitama',headStyle:7,main:'#e4c63b',accent:'#d4483e',emblem:'hero',theme:'anime'}
   ]
 };
 const RARITY_ORDER=['common','uncommon','rare','epic','legendary'];
@@ -205,7 +285,7 @@ function generateDucks(count){
     const co={
       bc:item.color.value,pattern:item.pattern.id,
       su:item.costume.head,costumeId:item.costume.id,costumeName:item.costume.name,
-      rarity:item.costume.rarity,costumeMain:item.costume.main,costumeAccent:item.costume.accent,
+      rarity:item.costume.rarity,costumeMain:item.costume.main,costumeAccent:item.costume.accent,headStyle:item.costume.headStyle||0,costumeTheme:item.costume.theme||'classic',costumeEmblem:item.costume.emblem||'',
       c:item.costume.accent,hc:item.costume.main,
       gl:Math.random()<.38?rnd(GL):null,
       nk:Math.random()<.22?rnd(NK):null,
@@ -297,6 +377,18 @@ function drawDuck(k,x,y,s,t){
       case 'goldenking':star(0,0,.17,.07,ac);break;
       case 'cosmic':for(let i=0;i<5;i++)star(-.14+i*.07,-.08+(i%2)*.12,.035,.015,ac);break;
       case 'casual':line(-.12,0,.12,0,ac,.04);break;
+      default:{
+        const emblem=co.costumeEmblem||'star';
+        if(/medical|cross/.test(emblem)){R(-.035,-.16,.07,.32,ac);R(-.16,-.035,.32,.07,ac)}
+        else if(/sword|claw|katana|trident/.test(emblem)){line(-.12,.13,.12,-.13,ac,.045);line(-.15,-.1,-.08,-.17,ac,.035)}
+        else if(/shield|crest|panther|bat|eagle/.test(emblem)){poly([[-.15,-.13],[.15,-.13],[.12,.07],[0,.17],[-.12,.07]],ac)}
+        else if(/lightning|thunder|flash|reactor/.test(emblem)){poly([[-.02,-.16],[.1,-.16],[.02,-.02],[.13,-.02],[-.1,.17],[-.03,.04],[-.13,.04]],ac)}
+        else if(/book|letter|briefcase|camera|coffee|parcel|palette|flask|gear|music|football|basketball|scales|spy|bell|dog/.test(emblem)){R(-.14,-.1,.28,.2,ac);line(-.08,-.1,-.08,.1,'#fff',.018)}
+        else if(/moon|planet|sun|shadow|monarch|galaxy/.test(emblem)){circ(0,0,.14,ac);circ(.06,-.05,.12,co.costumeMain)}
+        else if(/star|peace|one-for-all|hero/.test(emblem)){star(0,0,.17,.07,ac)}
+        else{c.beginPath();c.arc(0,0,.14,0,7);c.strokeStyle=ac;c.lineWidth=.035;c.stroke();circ(0,0,.045,ac)}
+        break;
+      }
     }
     c.restore();
   }
@@ -365,6 +457,22 @@ function drawDuck(k,x,y,s,t){
    case 'ninja':R(-.34,-.18,.68,.18,hc);R(-.34,-.04,.68,.07,co.c);break;
    case 'goldenking':poly([[-.22,.02],[-.22,-.22],[-.1,-.12],[0,-.32],[.1,-.12],[.22,-.22],[.22,.02]],hc);circ(0,-.08,.04,co.c);break;
    case 'cosmic':c.beginPath();c.arc(0,.02,.33,PI,0);c.closePath();FS(hc);R(-.35,-.01,.7,.07,co.c);for(let i=0;i<5;i++)circ(-.2+i*.1,-.15-(i%2)*.06,.025,'#fff');break;
+   default:{
+     const hs=co.headStyle||0;
+     if(hs%12===0){c.beginPath();c.arc(0,.02,.33,PI,0);c.closePath();FS(hc);R(-.36,-.01,.72,.07,co.c);circ(0,-.12,.055,co.c)}
+     else if(hs%12===1){poly([[-.34,.02],[-.27,-.2],[0,-.38],[.27,-.2],[.34,.02]],hc);R(-.36,0,.72,.06,co.c)}
+     else if(hs%12===2){R(-.3,-.12,.6,.12,hc);poly([[-.25,-.12],[-.18,-.34],[.18,-.34],[.25,-.12]],hc);R(-.34,-.02,.68,.06,co.c)}
+     else if(hs%12===3){poly([[-.34,.02],[.34,.02],[.24,-.2],[0,-.4],[-.24,-.2]],hc);R(-.36,0,.72,.06,co.c);star(0,-.19,.07,.03,co.c)}
+     else if(hs%12===4){c.beginPath();c.ellipse(0,-.08,.36,.2,0,Math.PI,0);c.closePath();FS(hc);R(-.38,-.04,.76,.07,co.c);line(-.2,-.12,.2,-.12,co.c,.025)}
+     else if(hs%12===5){poly([[-.34,.02],[-.28,-.25],[-.1,-.14],[0,-.42],[.1,-.14],[.28,-.25],[.34,.02]],hc);R(-.36,0,.72,.06,co.c)}
+     else if(hs%12===6){c.beginPath();c.arc(0,.02,.34,PI,0);c.closePath();FS(hc);R(-.36,-.02,.72,.07,co.c);R(-.08,-.28,.16,.13,co.c);circ(0,-.31,.035,'#fff')}
+     else if(hs%12===7){poly([[-.32,.02],[-.24,-.2],[0,-.35],[.24,-.2],[.32,.02]],hc);poly([[-.24,-.12],[-.42,-.34],[-.15,-.24]],co.c);poly([[.24,-.12],[.42,-.34],[.15,-.24]],co.c)}
+     else if(hs%12===8){R(-.34,-.12,.68,.14,hc);poly([[-.3,-.12],[-.2,-.36],[.2,-.36],[.3,-.12]],hc);line(-.28,-.04,.28,-.04,co.c,.045)}
+     else if(hs%12===9){c.beginPath();c.ellipse(0,-.08,.38,.16,0,Math.PI,0);c.closePath();FS(hc);R(-.4,-.03,.8,.07,co.c);circ(0,-.16,.04,'#fff')}
+     else if(hs%12===10){poly([[-.32,.02],[-.25,-.23],[0,-.45],[.25,-.23],[.32,.02]],hc);R(-.36,0,.72,.06,co.c);circ(-.2,-.14,.035,co.c);circ(.2,-.14,.035,co.c)}
+     else{c.beginPath();c.arc(0,.02,.34,PI,0);c.closePath();FS(hc);R(-.36,-.02,.72,.07,co.c);poly([[-.08,-.12],[0,-.25],[.08,-.12]],co.c)}
+     break;
+   }
   }
   c.restore();c.restore();
   // number / name tag on the belly
