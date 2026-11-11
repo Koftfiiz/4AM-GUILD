@@ -838,10 +838,13 @@ function drawRaceEmote(k,x,y,s){
   const alpha=Math.min(1,remaining/.3);
   const omg=RAGNAROK_EMOTES.overtaken.find(e=>e.name==='omg')?.img;
   const refRatio=omg&&omg.complete&&omg.naturalWidth?omg.naturalWidth/omg.naturalHeight:1;
-  const boxW=Math.min(s*1.18,s*1.12*refRatio),boxH=boxW/refRatio;
+  // Keep each emote anchored over the corresponding side of the duck's head.
+  // hlp and go are slightly larger because their artwork reads better at a larger scale.
+  const sizeBoost=(k.emote.name==='hlp'||k.emote.name==='go')?1.14:1;
+  const boxW=Math.min(s*1.18*sizeBoost,s*1.12*sizeBoost*refRatio),boxH=boxW/refRatio;
   const left=LEFT_EMOTES.has(k.emote.name);
-  const emoteX=x+(left?-1:1)*s*.86;
-  const emoteY=y-s*.34;
+  const emoteX=x+(left?-1:1)*s*.23;
+  const emoteY=y-s*.43;
   const node=k.emoteNode;
   node.style.width=boxW+'px';node.style.height=boxH+'px';
   node.style.left=(emoteX-boxW/2)+'px';node.style.top=(emoteY-boxH/2)+'px';
@@ -1189,6 +1192,11 @@ function frame(now){
 
 /* ---------- race control ---------- */
 function reset(){
+  // Clear DOM-based GIF overlays as well as race state. The previous duck objects
+  // are replaced below, so their emote nodes must be removed explicitly here.
+  ducks.forEach(k=>{if(k.emoteNode){k.emoteNode.remove();k.emoteNode=null;}});
+  const emoteLayer=$('emoteLayer');
+  if(emoteLayer)emoteLayer.replaceChildren();
   // The shared base distance reaches the finish line exactly when the countdown reaches zero.
   D=RACE_SPEED*Math.max(1,cfg.T);
   const n=roster.length,slots=[...Array(n).keys()].sort(()=>Math.random()-.5);
