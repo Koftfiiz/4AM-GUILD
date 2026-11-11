@@ -272,7 +272,7 @@ const duckSize=()=>{
   // Fit ducks to their actual lane spacing so adjacent rows do not collapse
   // into one oversized cluster. This preserves a visible gap at every roster size.
   const laneFit=(H*.585)/(n+.8);
-  return Math.max(5,Math.min(existing,laneFit));
+  return Math.max(2,Math.min(existing,laneFit));
 };
 function checker(wx,cam){
   const q=Math.max(14,H/26),top=bank()-q;
