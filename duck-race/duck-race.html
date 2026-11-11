@@ -660,20 +660,28 @@ function drawDuck(k,x,y,s,t){
 }
 
 
-const OVERTAKEN_EMOTES=[{code:'/omg',icon:'😱'},{code:'/an',icon:'😰'},{code:'/sob',icon:'😭'},{code:'/bzz',icon:'😖'},{code:'/hlp',icon:'🆘'}];
-const OVERTAKER_EMOTES=[{code:'/kis',icon:'😘'},{code:'/heh',icon:'😏'},{code:'/gg',icon:'😆'},{code:'/slur',icon:'🤤'},{code:'/com',icon:'😎'}];
+const EMOTE_BASE_URL='https://raw.githubusercontent.com/Koftfiiz/4AM-GUILD/main/duck-race/assets/ragnarok-emotes/';
+const makeEmote=(name)=>{const img=new Image();img.src=EMOTE_BASE_URL+name+'.gif';return {name,img};};
+const RAGNAROK_EMOTES={
+  overtaken:['omg','an','sob','bzz','hlp'].map(makeEmote),
+  overtaker:['kis','heh','gg','slur','go'].map(makeEmote)
+};
+const OVERTAKEN_EMOTES=RAGNAROK_EMOTES.overtaken;
+const OVERTAKER_EMOTES=RAGNAROK_EMOTES.overtaker;
 function drawRaceEmote(k,x,y,s){
   if(!k.emote||!S||S.t>=k.emoteUntil)return;
-  const c=cx,remaining=Math.max(0,k.emoteUntil-S.t),alpha=Math.min(1,remaining/.28),lift=(1-Math.min(1,remaining/1.8))*s*.18;
-  const w=s*1.42,h=s*.48,bx=x-w/2,by=y-s*1.92-lift;
-  c.save();c.globalAlpha=alpha;c.shadowColor='rgba(0,0,0,.28)';c.shadowBlur=s*.08;c.shadowOffsetY=s*.025;
-  c.fillStyle=k.emote.side==='passer'?'#fff2c8':'#e8f5ff';c.strokeStyle=k.emote.side==='passer'?'#bd8b22':'#477da5';c.lineWidth=Math.max(1,s*.025);
-  c.beginPath();c.roundRect(bx,by,w,h,h*.24);c.fill();c.stroke();
-  c.beginPath();c.moveTo(x-s*.09,by+h*.86);c.lineTo(x,by+h+s*.12);c.lineTo(x+s*.10,by+h*.84);c.closePath();c.fill();c.stroke();
-  c.shadowBlur=0;c.shadowOffsetY=0;c.textAlign='center';c.textBaseline='middle';
-  c.font='900 '+Math.max(12,s*.25)+'px system-ui';c.fillStyle='#17202b';c.fillText(k.emote.icon,x-s*.29,by+h*.48);
-  c.font='900 '+Math.max(9,s*.17)+'px system-ui';c.fillStyle='#273342';c.fillText(k.emote.code,x+s*.22,by+h*.5);
-  c.restore();
+  const img=k.emote.img;
+  if(!img||!img.complete||!img.naturalWidth)return;
+  const remaining=Math.max(0,k.emoteUntil-S.t);
+  const alpha=Math.min(1,remaining/.28);
+  const lift=(1-Math.min(1,remaining/1.8))*s*.18;
+  const maxW=s*.88,maxH=s*.88;
+  const ratio=img.naturalWidth/img.naturalHeight;
+  const w=Math.min(maxW,maxH*ratio),h=w/ratio;
+  cx.save();
+  cx.globalAlpha=alpha;
+  cx.drawImage(img,x-w/2,y-s*1.62-h-lift,w,h);
+  cx.restore();
 }
 
 function drawWinnerCrown(x,y,s,elapsed){
