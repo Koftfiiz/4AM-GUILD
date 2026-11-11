@@ -266,14 +266,7 @@ function size(){
 }
 addEventListener('resize',size);
 const bank=()=>H*.25;
-const duckSize=()=>{
-  const n=Math.max(1,ducks.length);
-  const existing=Math.min(W*.11,W*.78/Math.sqrt(n));
-  // Fit ducks to their actual lane spacing so adjacent rows do not collapse
-  // into one oversized cluster. This preserves a visible gap at every roster size.
-  const laneFit=(H*.585)/(n+.8);
-  return Math.max(2,Math.min(existing,laneFit));
-};
+const duckSize=()=>Math.max(26,Math.min(W*.11,W*.78/Math.sqrt(Math.max(1,ducks.length))));
 function checker(wx,cam){
   const q=Math.max(14,H/26),top=bank()-q;
   cx.save();cx.translate(wx-cam+SL*bank(),0);cx.transform(1,0,-SL,1,0,0);
