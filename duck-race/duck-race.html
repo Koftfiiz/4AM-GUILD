@@ -315,11 +315,12 @@ function assignCo(list){
   list.forEach((r,i)=>{r.co=generated[i].co;r.appearanceId=generated[i].id;r.costumeId=generated[i].costumeId;r.rarity=generated[i].rarity});
 }
 
-/* ---------- duck drawing: fluffy front-facing duck (unit coords, width = 1) ---------- */
+/* ---------- duck drawing: right-facing side profile (unit coords) ---------- */
 const shade=(h,f)=>{const n=parseInt(h.slice(1),16),m=v=>Math.max(0,Math.min(255,Math.round(v*f)));return '#'+[n>>16,n>>8&255,n&255].map(v=>m(v).toString(16).padStart(2,'0')).join('')};
 const PI=Math.PI,PH=new Path2D(),PB=new Path2D(),PD=new Path2D();
-PH.ellipse(0,-.38,.39,.34,0,0,7);PH.moveTo(.36,.12);PH.ellipse(0,.12,.36,.38,0,0,7);
-PB.ellipse(0,.12,.36,.38,0,0,7);PD.ellipse(0,-.38,.39,.34,0,0,7);
+PH.moveTo(-.34,-.28);PH.bezierCurveTo(-.4,-.53,-.2,-.75,.08,-.73);PH.bezierCurveTo(.29,-.72,.4,-.56,.37,-.36);PH.bezierCurveTo(.36,-.19,.25,-.08,.16,-.02);PH.bezierCurveTo(.4,.02,.48,.19,.37,.39);PH.bezierCurveTo(.29,.57,-.05,.62,-.3,.48);PH.bezierCurveTo(-.43,.4,-.48,.2,-.4,.04);PH.bezierCurveTo(-.34,-.08,-.3,-.16,-.34,-.28);PH.closePath();
+PB.moveTo(-.4,.04);PB.bezierCurveTo(-.25,-.12,.03,-.14,.25,-.02);PB.bezierCurveTo(.44,.08,.47,.3,.34,.46);PB.bezierCurveTo(.18,.62,-.18,.61,-.36,.43);PB.bezierCurveTo(-.47,.31,-.49,.14,-.4,.04);PB.closePath();
+PD.moveTo(-.34,-.28);PD.bezierCurveTo(-.4,-.53,-.2,-.75,.08,-.73);PD.bezierCurveTo(.29,-.72,.4,-.56,.37,-.36);PD.bezierCurveTo(.36,-.19,.25,-.08,.16,-.02);PD.bezierCurveTo(-.02,-.05,-.25,-.12,-.34,-.28);PD.closePath();
 function drawDuck(k,x,y,s,t){
   const c=cx,co=k.r.co,bc=co.bc,hc=co.hc,lw=.02,ol=co.ol||(co.ol=shade(bc,.6)),INK='#2b2100';
   const FS=(col,o)=>{c.fillStyle=col;c.fill();c.lineWidth=lw;c.strokeStyle=o||INK;c.stroke()};
@@ -330,28 +331,25 @@ function drawDuck(k,x,y,s,t){
   const heart=(a,b,z,col)=>{c.beginPath();c.moveTo(a,b+z);c.bezierCurveTo(a-z*1.4,b-z*.2,a-z*.6,b-z*1.2,a,b-z*.5);c.bezierCurveTo(a+z*.6,b-z*1.2,a+z*1.4,b-z*.2,a,b+z);FS(col)};
   const line=(a,b,d,e,col,w)=>{c.beginPath();c.moveTo(a,b);c.lineTo(d,e);c.lineWidth=w||lw;c.strokeStyle=col||INK;c.stroke()};
   const yb=y+Math.sin(t*4+k.ph)*s*.03+Math.sin(t*9+k.ph)*s*.045;
-  c.save();c.translate(x,yb);c.rotate(Math.sin(t*3+k.ph)*.05);c.scale(s,s);c.lineJoin='round';c.lineCap='round';
+  c.save();c.translate(x,yb);c.rotate(Math.sin(t*3+k.ph)*.035);c.scale(s,s);c.scale(.92,1);c.transform(1,0,.10,1,0,0);c.lineJoin='round';c.lineCap='round';
   c.fillStyle='rgba(255,255,255,.3)';c.beginPath();c.ellipse(0,.56,.62,.12,0,0,7);c.fill();for(let z=0;z<3;z++){c.strokeStyle='rgba(230,255,255,'+(.42-z*.1)+')';c.lineWidth=.018;c.beginPath();c.ellipse(-.52-z*.15,.57,.16+z*.05,.045,0,0,7);c.stroke()}
   // wigs behind the head
-  if(co.h==='afro')circ(0,-.52,.5,hc,shade(hc,.6));
-  if(co.h==='bob'){c.beginPath();c.ellipse(0,-.35,.46,.42,0,0,7);FS(hc,shade(hc,.6))}
-  if(co.h==='long'){c.beginPath();c.ellipse(0,-.2,.46,.55,0,0,7);FS(hc,shade(hc,.6))}
-  if(co.h==='pigtail'){circ(-.44,-.45,.12,hc,shade(hc,.6));circ(.44,-.45,.12,hc,shade(hc,.6));circ(-.47,-.28,.1,hc,shade(hc,.6));circ(.47,-.28,.1,hc,shade(hc,.6))}
+  if(co.h==='afro')circ(-.02,-.52,.43,hc,shade(hc,.6));
+  if(co.h==='bob'){c.beginPath();c.ellipse(-.04,-.35,.39,.42,-.08,0,7);FS(hc,shade(hc,.6))}
+  if(co.h==='long'){c.beginPath();c.ellipse(-.08,-.2,.38,.55,-.08,0,7);FS(hc,shade(hc,.6))}
+  if(co.h==='pigtail'){circ(-.34,-.45,.12,hc,shade(hc,.6));circ(-.37,-.28,.1,hc,shade(hc,.6))}
   if(co.h==='curly')for(let i=0;i<10;i++){const a=PI*.9+i*PI*.133;circ(.46*Math.cos(a),-.38+.42*Math.sin(a),.1,hc,shade(hc,.6))}
   if(co.su==='bee'){[-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.3,-.15,.1,.26,d*.5,0,7);FS('rgba(255,255,255,.85)','#7a7a7a')})}
-  // feet
   const fp=Math.sin(t*9+k.ph)*.075;
-  [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.17,.52+fp*d,.14,.055,0,0,7);FS('#f0a020','#8a5a00');[-.07,0,.07].forEach(o=>circ(d*.17+o,.56+fp*d,.03,'#f0a020','#8a5a00'))});
-  // wings
-  [-1,1].forEach(d=>{c.save();c.translate(d*.43,.12);c.rotate(k.mode==='tired'?d*.55:Math.sin(t*9+k.ph*(k.mode==='boost'?2:1))*(k.mode==='boost'?.9:.48)*d);c.beginPath();c.ellipse(0,0,.12,.22,0,0,7);FS(bc,ol);c.restore()});
-  // Character capes are drawn behind the duck silhouette.
+  c.beginPath();c.ellipse(.12,.5+fp,.13,.055,.04,0,7);FS('#f0a020','#8a5a00');
+  [-.06,0,.06].forEach(o=>circ(.12+o,.54+fp,.028,'#f0a020','#8a5a00'));
+  c.save();c.translate(-.22,.13);c.rotate(k.mode==='tired'?.48:Math.sin(t*9+k.ph*(k.mode==='boost'?2:1))*(k.mode==='boost'?.9:.48));c.beginPath();c.ellipse(0,0,.12,.22,-.22,0,7);FS(bc,ol);c.restore();
   const characterCostume=co.costumeTheme==='superhero'||co.costumeTheme==='anime';
-  if(characterCostume&&['superhero','anime'].includes(co.costumeTheme)){
-    const id=co.costumeId||'';
+  if(characterCostume){
+    const id=co.costumeId||'',cape=co.costumeAccent||co.c;
     if(['superman','batman','wonder-woman','thor','green-lantern','aquaman','nightwing','shazam','supergirl','luffy','zoro','sailor-moon','sung-jinwoo','shadow-monarch','tanjiro','nezuko','ichigo','rukia','all-might','yor','loid','goku','vegeta','piccolo'].includes(id)){
-      const cape=co.costumeAccent||co.c;
-      poly([[-.27,-.08],[-.43,.43],[-.34,.55],[0,.4],[.34,.55],[.43,.43],[.27,-.08]],cape,shade(cape,.55));
-      line(-.31,.02,-.34,.42,'rgba(255,255,255,.55)',.018);line(.31,.02,.34,.42,'rgba(255,255,255,.55)',.018);
+      poly([[-.12,-.12],[-.42,-.02],[-.62,.46],[-.42,.52],[-.08,.34],[.02,.02]],cape,shade(cape,.55));
+      line(-.28,.04,-.45,.43,'rgba(255,255,255,.55)',.018);
     }
   }
   // body + head
@@ -500,12 +498,11 @@ function drawDuck(k,x,y,s,t){
       line(d*.17-.07,.51+Math.sin(t*9+k.ph)*.075*d,d*.17+.07,.51+Math.sin(t*9+k.ph)*.075*d,'rgba(255,255,255,.7)',.018);
     });
   }
-  // collar, straps, bell
-  c.beginPath();c.moveTo(-.34,-.08);c.quadraticCurveTo(0,.06,.34,-.08);c.lineTo(.33,-.03);c.quadraticCurveTo(0,.11,-.33,-.03);c.closePath();FS('#8a3a2a','#4a1a10');
-  line(-.33,-.01,-.41,.17,'#4a3020',.025);line(.33,-.01,.41,.17,'#4a3020',.025);
-  if(co.nk==='bow'){poly([[0,.03],[-.14,-.05],[-.14,.1]],co.nc);poly([[0,.03],[.14,-.05],[.14,.1]],co.nc);circ(0,.03,.04,co.nc)}
-  else if(co.nk==='scarf'||co.su==='snow'){const sc=co.nc||co.c;c.beginPath();c.moveTo(-.34,-.09);c.quadraticCurveTo(0,.05,.34,-.09);c.lineTo(.33,.01);c.quadraticCurveTo(0,.14,-.33,.01);c.closePath();FS(sc);poly([[.1,.06],[.24,.04],[.2,.3],[.08,.28]],sc)}
-  else{circ(0,.11,.07,'#e0c060','#6a5010');line(-.05,.12,.05,.12,'#6a5010',.012);circ(0,.03,.018,'#c9a84a','#6a5010')}
+  c.beginPath();c.moveTo(-.25,-.04);c.quadraticCurveTo(-.02,.12,.28,-.06);c.lineTo(.25,.02);c.quadraticCurveTo(-.02,.19,-.29,.04);c.closePath();FS('#8a3a2a','#4a1a10');
+  line(-.24,.02,-.34,.19,'#4a3020',.025);
+  if(co.nk==='bow'){poly([[-.03,.04],[-.19,-.03],[-.16,.12]],co.nc);poly([[-.03,.04],[.08,-.02],[.05,.13]],co.nc);circ(-.03,.04,.035,co.nc)}
+  else if(co.nk==='scarf'||co.su==='snow'){const sc=co.nc||co.c;poly([[-.26,-.05],[.16,.02],[.26,.12],[-.2,.08]],sc);poly([[-.08,.08],[.08,.12],[-.02,.39],[-.15,.35]],sc)}
+  else{circ(-.03,.12,.065,'#e0c060','#6a5010');line(-.08,.12,.02,.12,'#6a5010',.012)}
   // Front hair styles: hair is independent from hats and remains inside the head silhouette.
   const hairShade=shade(hc,.72);
   if(['afro','curly','fluffy'].includes(co.h)){for(let i=0;i<13;i++){const a=PI*1.08+i*PI*.07;circ(.37*Math.cos(a),-.39+.31*Math.sin(a),co.h==='afro'?.105:.075,hc,hairShade)}}
@@ -521,11 +518,10 @@ function drawDuck(k,x,y,s,t){
     else{c.beginPath();c.ellipse(0,-.5,.39,.18,0,PI,0);c.closePath();FS(hc,hairShade);if(co.h==='sidepart')line(.05,-.68,.25,-.51,hairShade,.025)}
   }
   if(!co.h&&!co.su){poly([[-.05,-.7],[-.17,-.84],[-.1,-.68]],'#3a2a1a');poly([[.05,-.7],[.18,-.85],[.1,-.68]],'#3a2a1a')}
-  // Right-facing side profile: one visible eye and a beak projecting forward.
-  c.beginPath();c.ellipse(.23,-.4,.075,.085,.08,0,7);FS('#fff',shade(bc,.5));
-  circ(.255,-.39,.038,'#1a1a1a','#1a1a1a');
-  c.beginPath();c.moveTo(.34,-.31);c.quadraticCurveTo(.55,-.34,.69,-.27);c.quadraticCurveTo(.58,-.19,.36,-.22);c.closePath();FS('#ebb82a','#8a6a00');
-  line(.39,-.265,.62,-.27,'#a07a10',.012);
+  c.beginPath();c.ellipse(.19,-.43,.066,.075,.05,0,7);FS('#fff',shade(bc,.5));
+  circ(.214,-.425,.033,'#1a1a1a','#1a1a1a');
+  c.beginPath();c.moveTo(.29,-.32);c.quadraticCurveTo(.39,-.37,.49,-.31);c.quadraticCurveTo(.52,-.27,.48,-.235);c.quadraticCurveTo(.38,-.22,.3,-.25);c.closePath();FS('#ebb82a','#8a6a00');
+  line(.34,-.275,.47,-.285,'#a07a10',.012);
   // Face accessories: varied facial identity details, independent from eyewear.
   const fc=co.faceColor||co.costumeAccent||'#e85d75';
   switch(co.face){
@@ -564,8 +560,7 @@ function drawDuck(k,x,y,s,t){
    case 'halfmoon':g2(a=>{c.beginPath();c.arc(a,-.4,.12,0,7);FS('rgba(255,255,255,.25)','#c69b35');R(a-.13,-.4,.26,.08,'#c69b35')});break;
    case 'tech':g2(a=>{c.beginPath();c.roundRect(a-.12,-.48,.24,.16,.04);FS('rgba(70,220,255,.35)','#55d9ef');line(a-.08,-.4,a+.08,-.4,'#fff',.012)});line(-.08,-.4,.08,-.4,'#55d9ef',.02);break;
   }
-  // Single angled brow follows the visible eye in the right-facing profile.
-  line(.16,-.53,.34,-.47,'#3a2a1a',.045);
+  line(.13,-.54,.27,-.49,'#3a2a1a',.035);
   // headwear / suit top (origin on top of head)
   c.save();c.translate(0,-.64);
   switch(co.su||co.h){
