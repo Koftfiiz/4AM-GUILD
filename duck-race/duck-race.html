@@ -319,9 +319,9 @@ function scene(cam,t){
 }
 const hms=n=>{n=Math.max(0,Math.ceil(n));const p=v=>String(v).padStart(2,'0');return p(Math.floor(n/3600))+':'+p(Math.floor(n%3600/60))+':'+p(n%60)};
 const dist=(d,t)=>t+.35/d.a*(Math.cos(d.p)-Math.cos(d.a*t+d.p))+.2/d.b*(Math.cos(d.q)-Math.cos(d.b*t+d.q));
-const baseProgress=()=>RACE_SPEED*Math.min(S.t,S.T);
-// Each duck has its own starting lane offset and temporary speed-earned offset.
-const rawProg=k=>baseProgress()+(k.offset||0);
+// Each duck keeps its own accumulated world distance. Speed changes affect
+// only future movement; returning to base speed never erases earned distance.
+const rawProg=k=>k.distance||0;
 const prog=k=>S.fin
   ? (k.win ? D+Math.min(W*.34,RACE_SPEED*1.05*(S.celebrateT||0)) : Math.min(D-2,rawProg(k)))
   : Math.min(D-2,rawProg(k));
@@ -437,14 +437,9 @@ function frame(now){
       const targetMultiplier=k.mode==='boost'?1.55:k.mode==='tired'?.72:1;
       const smoothing=1-Math.exp(-raceDt/.28);
       k.currentSpeedX+=(base*targetMultiplier-k.currentSpeedX)*smoothing;
-      let nextOffset=(k.offset||0)+(k.currentSpeedX-base)*raceDt;
-      // Gently fade temporary gains/losses after the event without snapping.
-      if(k.mode==='normal'){
-        const recovery=base*.10*raceDt;
-        nextOffset=nextOffset>0?Math.max(0,nextOffset-recovery):Math.min(0,nextOffset+recovery);
-      }
-      const offsetLimit=Math.max(40,W*.08);
-      k.offset=Math.max(-offsetLimit,Math.min(offsetLimit,nextOffset));
+      // Accumulate this duck's actual travelled distance. Do not decay or
+      // clamp the lead/gap when its temporary Boost/Tired state ends.
+      k.distance=(k.distance||0)+k.currentSpeedX*raceDt;
     });
     if(!S.fin&&S.t>=S.T){S.t=S.T;onFinish(leader());}
   }else if(S.st==='celebrate'){
@@ -492,8 +487,9 @@ function reset(){
   const n=roster.length,slots=[...Array(n).keys()].sort(()=>Math.random()-.5);
   ducks=roster.map((r,i)=>({
     r,slot:slots[i],ph:Math.random()*6.28,
-    // All ducks share the exact same horizontal start line; race events create gaps only after Start.
-    offset:0,currentSpeedX:RACE_SPEED,mode:'normal',modeLeft:0,
+    // All ducks share the exact same horizontal start line. Each gets an
+    // independent distance counter; race events create gaps only after Start.
+    distance:0,currentSpeedX:RACE_SPEED,mode:'normal',modeLeft:0,
     // A few ducks can boost immediately; every duck receives an independent first trigger.
     eventIn:Math.random()<.12?0:Math.random()*Math.min(24,Math.max(1,cfg.T*.12)),
     fx:''
@@ -512,7 +508,7 @@ function onFinish(winner=leader()){
   S.fin=true;S.st='celebrate';S.celebrateT=0;S.finishAnimTime=performance.now()/1000;
   ducks.forEach(k=>{
     k.win=k===winner;k.mode='normal';k.fx='';
-    k.fin=k===winner?0:Math.max(1,S.T-(k.offset||0)/RACE_SPEED);
+    k.fin=k===winner?0:Math.max(1,S.T-(k.distance-D)/RACE_SPEED);
   });
   $('bGo').textContent='🏆 WINNER';
   $('again').classList.remove('hide');$('trophy').classList.remove('hide');
