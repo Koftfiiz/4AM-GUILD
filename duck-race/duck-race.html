@@ -64,7 +64,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 <div id="duck-race-root" class="is-setup">
 <div class="stage" id="stage">
   <canvas id="cv"></canvas>
-  <div class="ic"><button id="bSet" title="ตั้งค่า">⚙</button><button id="bMus" title="เปิด/ปิดเพลง">♫✕</button><button id="bBell" title="เสียงระฆัง">🔔✕</button></div><div class="music-volume hide" id="musicVolumePanel"><label for="musicVolume" style="margin:0;color:#fff">♫ Volume</label><input id="musicVolume" type="range" min="0" max="100" value="60"><output id="musicVolumeValue">60%</output></div>
+  <div class="ic"><button id="bSet" title="ตั้งค่า">⚙</button><button id="bMus" title="เปิด/ปิดเพลง">♫✕</button><button id="bVol" title="ปรับระดับเสียงเพลง">🔊</button><button id="bBell" title="เสียงระฆัง">🔔✕</button></div><div class="music-volume hide" id="musicVolumePanel"><label for="musicVolume" style="margin:0;color:#fff">♫ Volume</label><input id="musicVolume" type="range" min="0" max="100" value="60"><output id="musicVolumeValue">60%</output></div>
   <button id="bShuf">🔀 Shuffle Characters</button>
   <div class="ctl"><button id="bGo">▶ START</button><button id="bClr">↺ CLEAR</button><button id="bSkip" class="sm">ข้ามไปจบ</button></div>
   <div class="clock" id="clk">00:00:30</div>
@@ -553,11 +553,9 @@ function startMus(){
   ac();if(!AC)return;
   mt=setInterval(()=>{if(S.st!=='run')return;const bar=Math.floor(mi/8)%4,n=mi%8;
     tone(ROOT[bar]*(n%4===2?2:1),.17,'triangle',.12);tone(LEAD[bar][n],.15,'square',.035);if(n%2)tone(6000,.03,'square',.012);mi++},190)}
-$('bMus').onclick=()=>{musOn=!musOn;$('bMus').textContent=musOn?'♫ ON':'♫✕';if(!musOn)stopMus();else if(S.st==='run')startMus();$('musicVolumePanel').classList.toggle('hide',!$('musicVolumePanel').classList.contains('hide')?true:true)};
-$('bMus').addEventListener('contextmenu',e=>e.preventDefault());
-$('bMus').ondblclick=()=>{$('musicVolumePanel').classList.toggle('hide')};
+$('bMus').onclick=()=>{musOn=!musOn;$('bMus').textContent=musOn?'♫ ON':'♫✕';if(!musOn)stopMus();else if(S.st==='run')startMus()};
+$('bVol').onclick=()=>{$('musicVolumePanel').classList.toggle('hide')};
 $('musicVolume').oninput=e=>{musicVolume=(+e.target.value)/100;applyMusicVolume()};
-$('bMus').title='คลิกเปิด/ปิดเพลง · ดับเบิลคลิกเพื่อปรับ Volume';
 $('bBell').onclick=()=>{bellOn=!bellOn;$('bBell').textContent=bellOn?'🔔 ON':'🔔 OFF';ac();if(bellOn)tone(880,.4,'sine',.15)};
 
 /* ---------- settings ---------- */
