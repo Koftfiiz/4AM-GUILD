@@ -266,7 +266,14 @@ function size(){
 }
 addEventListener('resize',size);
 const bank=()=>H*.25;
-const duckSize=()=>Math.max(26,Math.min(W*.11,W*.78/Math.sqrt(Math.max(1,ducks.length))));
+const duckSize=()=>{
+  const n=Math.max(1,ducks.length);
+  const existing=Math.min(W*.11,W*.78/Math.sqrt(n));
+  // Fit ducks to their actual lane spacing so adjacent rows do not collapse
+  // into one oversized cluster. This preserves a visible gap at every roster size.
+  const laneFit=(H*.585)/(n+.8);
+  return Math.max(5,Math.min(existing,laneFit));
+};
 function checker(wx,cam){
   const q=Math.max(14,H/26),top=bank()-q;
   cx.save();cx.translate(wx-cam+SL*bank(),0);cx.transform(1,0,-SL,1,0,0);
@@ -452,8 +459,12 @@ function frame(now){
   }
   const s=duckSize(),B=bank(),yMin=B+s*.4,yMax=H-s*.62,n=ducks.length;
   const X0=W*.2,rows=ducks.map(k=>{
-    const y=yMin+(k.slot+.5)/n*(yMax-yMin)+Math.sin(S.t*.9+k.ph)*s*.03;
-    return{k,y,x:X0-SL*(y-B)-s*.5+prog(k)};
+    const y=yMin+(k.slot+.5)/n*(yMax-yMin);
+    // Match the checker stripe at the duck's animated body position, not its
+    // unanimated lane anchor, so vertical bobbing cannot make it cross Start.
+    const drawTime=S.fin&&!k.win?(S.finishAnimTime||now/1000):now/1000;
+    const yVisual=y+Math.sin(drawTime*4+k.ph)*s*.03+Math.sin(drawTime*9+k.ph)*s*.045;
+    return{k,y,x:X0-SL*(yVisual-B)-s*.5+prog(k)};
   });
   // Keep every duck on the same starting plane. Once racing, follow the foremost
   // duck with a forward-only camera target so changes in the leader never pan
