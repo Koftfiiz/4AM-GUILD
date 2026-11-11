@@ -412,18 +412,20 @@ function drawFatigueEffect(k,x,y,s,t){
 function frame(now){
   const dt=Math.max(0,(now-S.last)/1000);S.last=now;
   if(S.st==='run'){
+    const previousRaceTime=S.t;
     S.t=Math.min(S.T,S.t+dt);
+    const raceDt=Math.max(0,S.t-previousRaceTime);
     const base=RACE_SPEED;
     if(!S.fin)ducks.forEach(k=>{
       if(!k.mode||k.mode==='normal'){
-        k.eventIn-=dt;
+        k.eventIn-=raceDt;
         if(k.eventIn<=0){
           k.mode=Math.random()<.62?'boost':'tired';
           k.modeLeft=k.mode==='tired'?2.0+Math.random()*2.0:1.2+Math.random()*1.4;
           k.fx=k.mode==='boost'?rnd(['fart','flash','sonic','fire']):'sweat';
         }
       }else{
-        k.modeLeft-=dt;
+        k.modeLeft-=raceDt;
         if(k.modeLeft<=0){
           k.mode='normal';
           // Each duck gets its own long, duration-scaled random recovery interval.
@@ -433,12 +435,12 @@ function frame(now){
       }
       // Smoothly approach the target speed; Base Speed remains unchanged.
       const targetMultiplier=k.mode==='boost'?1.55:k.mode==='tired'?.72:1;
-      const smoothing=1-Math.exp(-dt/.28);
+      const smoothing=1-Math.exp(-raceDt/.28);
       k.currentSpeedX+=(base*targetMultiplier-k.currentSpeedX)*smoothing;
-      let nextOffset=(k.offset||0)+(k.currentSpeedX-base)*dt;
+      let nextOffset=(k.offset||0)+(k.currentSpeedX-base)*raceDt;
       // Gently fade temporary gains/losses after the event without snapping.
       if(k.mode==='normal'){
-        const recovery=base*.10*dt;
+        const recovery=base*.10*raceDt;
         nextOffset=nextOffset>0?Math.max(0,nextOffset-recovery):Math.min(0,nextOffset+recovery);
       }
       const offsetLimit=Math.max(40,W*.08);
