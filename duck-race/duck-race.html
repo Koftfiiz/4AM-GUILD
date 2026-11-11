@@ -365,9 +365,9 @@ function drawDuck(k,x,y,s,t){
     c.restore();c.beginPath();c.ellipse(0,.12,.36,.38,0,0,PI);c.lineWidth=lw*1.6;c.strokeStyle=ol;c.stroke()}
   // Unique garment construction: distinct panel cuts, seams, collars, belts and trims.
   if(co.outfitStyle!==undefined){
-    const st=co.outfitStyle,variant=Math.floor(st/12),accent=co.outfitAccent||co.c;
+    const st=co.outfitStyle,variant=Math.floor(st/20),accent=co.outfitAccent||co.c;
     c.save();c.clip(PB);
-    switch(st%12){
+    switch(st%20){
       case 0:poly([[-.25,-.02],[0,.18],[.25,-.02],[.16,.55],[-.16,.55]],accent);line(-.12,.08,0,.2,'#fff',.018);break;
       case 1:poly([[-.3,.02],[-.12,-.03],[0,.1],[.12,-.03],[.3,.02],[.23,.58],[-.23,.58]],accent);R(-.045,.08,.09,.5,'#fff');break;
       case 2:poly([[-.3,-.02],[0,.13],[.3,-.02],[.22,.58],[-.22,.58]],accent);line(-.25,.12,.25,.12,'#fff',.025);line(-.2,.3,.2,.3,'#fff',.02);break;
@@ -379,7 +379,15 @@ function drawDuck(k,x,y,s,t){
       case 8:for(let j=0;j<5;j++){poly([[-.3+j*.12,.02],[-.23+j*.12,.02],[-.17+j*.12,.2],[-.24+j*.12,.2]],accent)}break;
       case 9:poly([[-.32,.02],[.32,.02],[.24,.58],[-.24,.58]],accent);R(-.13,.05,.26,.22,'#fff');line(-.2,.3,.2,.3,'#fff',.025);break;
       case 10:poly([[-.3,.02],[-.12,.02],[0,.18],[.12,.02],[.3,.02],[.23,.58],[-.23,.58]],accent);line(-.28,.48,.28,.48,'#fff',.025);break;
-      case 11:for(let j=0;j<4;j++){circ(-.17+(j%2)*.34,.12+Math.floor(j/2)*.2,.035,accent);};line(-.25,.52,.25,.52,accent,.035);break;
+      case 11:for(let j=0;j<4;j++){circ(-.17+(j%2)*.34,.12+Math.floor(j/2)*.2,.035,accent)}line(-.25,.52,.25,.52,accent,.035);break;
+      case 12:poly([[-.3,.02],[.3,.02],[.18,.58],[-.18,.58]],accent);line(-.2,.12,.2,.12,'#fff',.025);line(-.16,.3,.16,.3,'#fff',.025);break;
+      case 13:R(-.29,.02,.58,.56,accent);R(-.08,.02,.16,.22,'#fff');R(-.28,.38,.56,.045,'#fff');break;
+      case 14:poly([[-.3,.02],[.3,.02],[.24,.58],[-.24,.58]],accent);poly([[-.3,.02],[-.08,.02],[.12,.58],[-.08,.58]],'#fff');break;
+      case 15:poly([[-.28,.02],[.28,.02],[.2,.58],[-.2,.58]],accent);for(let j=0;j<3;j++)circ(0,.14+j*.13,.025,'#fff');break;
+      case 16:poly([[-.3,.02],[.3,.02],[.22,.58],[-.22,.58]],accent);line(-.28,.08,.28,.48,'#fff',.045);line(-.28,.48,.28,.08,'#fff',.045);break;
+      case 17:poly([[-.3,.02],[-.12,.02],[0,.15],[.12,.02],[.3,.02],[.2,.58],[-.2,.58]],accent);line(-.2,.52,.2,.52,'#fff',.035);break;
+      case 18:poly([[-.28,.02],[.28,.02],[.18,.58],[-.18,.58]],accent);R(-.22,.12,.44,.08,'#fff');R(-.18,.32,.36,.08,'#fff');break;
+      case 19:poly([[-.3,.02],[.3,.02],[.2,.58],[-.2,.58]],accent);for(let j=0;j<4;j++){line(-.2,.12+j*.1,.2,.12+j*.1,'#fff',.018)}break;
     }
     // Per-costume variant marks make silhouettes distinguishable beyond the base color.
     if(variant>0){
@@ -388,6 +396,8 @@ function drawDuck(k,x,y,s,t){
       if(variant%3===0)star(vx,.26,.075,.03,accent);
       else if(variant%3===1){circ(vx,.25,.06,accent);circ(vx,.25,.027,'#fff')}
       else{poly([[vx-.07,.18],[vx+.07,.18],[vx,.32]],accent)}
+      if(variant>=2){circ(-.2,.17,.035,'#fff');circ(.2,.17,.035,'#fff')}
+      if(variant>=4){line(-.28,.39,.28,.39,accent,.03);line(-.28,.43,.28,.43,'#fff',.015)}
     }
     c.restore();
   }
