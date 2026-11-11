@@ -332,16 +332,17 @@ const prog=k=>S.fin
 // Select by true world progress, not by the visual finish-line clamp.
 const leader=()=>ducks.reduce((best,k)=>!best||rawProg(k)>rawProg(best)?k:best,null);
 
-// Back markers receive a longer Boost when they roll one. The gap is
-// recalculated at the moment of the roll, so a duck that catches up naturally
-// receives a shorter Boost next time. Keep short races from being dominated
-// by one oversized Boost while allowing a meaningful catch-up window in long races.
-function catchUpBoostDuration(k){
+// Comeback profile: independently rolled Boosts become stronger for ducks
+// further behind, with a late-race lift. Earned distance is never rolled back.
+function catchUpBoostProfile(k){
   const front=leader();
   const gap=front?Math.max(0,rawProg(front)-rawProg(k)):0;
   const gapRatio=Math.min(1,gap/Math.max(1,D*.12));
-  const maxExtra=Math.min(7,Math.max(1,S.T*.08));
-  return 3+Math.random()*2+gapRatio*maxExtra;
+  const phase=Math.min(1,Math.max(0,S.t/Math.max(1,S.T)));
+  return {
+    duration:3+Math.random()*2+gapRatio*(7+phase*4),
+    multiplier:1.28+gapRatio*.26+phase*.10
+  };
 }
 
 
@@ -437,41 +438,63 @@ function frame(now){
       if(!k.mode||k.mode==='normal'){
         k.eventIn-=raceDt;
         if(k.eventIn<=0){
-          k.mode=Math.random()<.5?'boost':'tired';
-          // Boost duration scales with the duck's live gap to the leader.
-          // The race timer and shared finish-line pacing remain untouched.
-          k.modeLeft=k.mode==='boost'?catchUpBoostDuration(k):3+Math.random()*2;
+          const front=leader();
+          const gap=front?Math.max(0,rawProg(front)-rawProg(k)):0;
+          const gapRatio=Math.min(1,gap/Math.max(1,D*.12));
+          const phase=Math.min(1,Math.max(0,S.t/Math.max(1,S.T)));
+          // Trailing ducks roll Boost more often, but every duck rolls independently.
+          const boostChance=Math.min(.88,.36+gapRatio*.36+phase*.12);
+          k.mode=Math.random()<boostChance?'boost':'tired';
+          if(k.mode==='boost'){
+            const boost=catchUpBoostProfile(k);
+            k.modeLeft=boost.duration;
+            k.boostMultiplier=boost.multiplier;
+            k.tiredMultiplier=.84;
+          }else{
+            k.modeLeft=3+Math.random()*2;
+            k.tiredMultiplier=.84;
+            k.boostMultiplier=1.28;
+          }
           k.fx=k.mode==='boost'?rnd(['fart','flash','sonic','fire']):'sweat';
         }
       }else{
         k.modeLeft-=raceDt;
         if(k.modeLeft<=0){
           k.mode='normal';
+          k.boostMultiplier=1.28;
+          k.tiredMultiplier=.84;
           // Each duck gets its own long, duration-scaled random recovery interval.
           k.eventIn=12+Math.random()*18;
           k.fx='';
         }
       }
       // Smoothly approach the target speed; Base Speed remains unchanged.
-      const targetMultiplier=(k.mode==='boost'?1.28:k.mode==='tired'?.84:1)*(k.cruiseFactor||1);
+      const targetMultiplier=(k.mode==='boost'?(k.boostMultiplier||1.28):k.mode==='tired'?(k.tiredMultiplier||.84):1)*(k.cruiseFactor||1);
       const smoothing=1-Math.exp(-raceDt/.28);
       k.currentSpeedX+=(base*targetMultiplier-k.currentSpeedX)*smoothing;
     });
-    // A sustained, meaningful lead can occasionally trigger extra fatigue.
-    // This is probabilistic and never removes distance already earned.
+    // Sustained leaders face noticeable but probabilistic fatigue. The
+    // pressure scales with the gap and race phase; it never erases earned distance.
     if(!S.fin&&ducks.length>1){
       const ranked=ducks.slice().sort((a,b)=>rawProg(b)-rawProg(a));
       const front=ranked[0],gap=rawProg(front)-rawProg(ranked[1]);
+      const gapRatio=Math.min(1,gap/Math.max(1,D*.12));
+      const phase=Math.min(1,Math.max(0,S.t/Math.max(1,S.T)));
+      const pressureHold=Math.max(4,Math.min(7,S.T*.025));
       ducks.forEach(k=>{
-        if(k!==front||gap<duckSize()*1.5){k.leadHold=0;return;}
+        if(k!==front||gap<duckSize()*1.2){k.leadHold=0;return;}
         k.leadHold=(k.leadHold||0)+raceDt;
-        if(k.leadHold>=8&&(k.leadPressureCooldown||0)<=0){
+        if(k.leadHold>=pressureHold&&(k.leadPressureCooldown||0)<=0){
           k.leadHold=0;
-          if(k.mode!=='tired'&&Math.random()<.28){
-            k.mode='tired';k.modeLeft=5+Math.random()*2;k.fx='sweat';
-            k.leadPressureCooldown=18;
+          const fatigueChance=Math.min(.92,.52+gapRatio*.28+phase*.10);
+          if(k.mode!=='tired'&&Math.random()<fatigueChance){
+            k.mode='tired';
+            k.modeLeft=5.5+Math.random()*3;
+            k.tiredMultiplier=.72+Math.random()*.06;
+            k.fx='sweat';
+            k.leadPressureCooldown=9+Math.random()*6;
           }else{
-            k.leadPressureCooldown=5;
+            k.leadPressureCooldown=3+Math.random()*3;
           }
         }
       });
@@ -543,7 +566,7 @@ function reset(){
     // All ducks share the exact same horizontal start line. Each gets an
     // independent distance counter; race events create gaps only after Start.
     distance:0,currentSpeedX:RACE_SPEED,cruiseFactor:.985+Math.random()*.03,mode:'normal',modeLeft:0,
-    leadHold:0,leadPressureCooldown:0,
+    leadHold:0,leadPressureCooldown:0,boostMultiplier:1.28,tiredMultiplier:.84,
     // A few ducks can boost immediately; every duck receives an independent first trigger.
     eventIn:Math.random()<.18?0:Math.random()*Math.min(30,Math.max(1,cfg.T*.10)),
     fx:''
