@@ -425,7 +425,7 @@ function frame(now){
         k.eventIn-=raceDt;
         if(k.eventIn<=0){
           k.mode=Math.random()<.5?'boost':'tired';
-          k.modeLeft=k.mode==='tired'?2.4+Math.random()*1.6:1.8+Math.random()*1.2;
+          k.modeLeft=k.mode==='tired'?2.5+Math.random()*1.5:3+Math.random()*2;
           k.fx=k.mode==='boost'?rnd(['fart','flash','sonic','fire']):'sweat';
         }
       }else{
@@ -462,9 +462,10 @@ function frame(now){
   // duck with a forward-only camera target so changes in the leader never pan
   // the view backwards or make it oscillate left/right.
   if(S.st==='run'||S.st==='celebrate'){
-    const pack=rows.slice().sort((a,b)=>a.x-b.x);
-    const packFocus=pack[Math.min(pack.length-1,Math.floor((pack.length-1)*.68))];
-    const cameraTarget=Math.max(0,(packFocus?packFocus.x:X0)-W*.66);
+    const leadRow=rows.reduce((best,o)=>!best||o.x>best.x?o:best,null);
+    // Keep the leader in the right-hand portion of the frame so nearby chasers
+    // remain visible behind it; distant back markers may naturally leave view.
+    const cameraTarget=Math.max(0,(leadRow?leadRow.x:X0)-W*.68);
     S.camTarget=Math.max(S.camTarget||0,cameraTarget);
     const cameraSmoothing=1-Math.exp(-dt/.48);
     S.cam+=Math.max(0,S.camTarget-S.cam)*cameraSmoothing;
