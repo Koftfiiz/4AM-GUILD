@@ -696,7 +696,7 @@ function drawRaceEmote(k,x,y,s){
   const alpha=Math.min(1,remaining/.3);
   const omg=RAGNAROK_EMOTES.overtaken.find(e=>e.name==='omg')?.img;
   const refRatio=omg&&omg.complete&&omg.naturalWidth?omg.naturalWidth/omg.naturalHeight:1;
-  const boxW=s*1.18,boxH=boxW/refRatio;
+  const boxW=Math.min(s*1.18,s*1.12*refRatio),boxH=boxW/refRatio;
   const left=LEFT_EMOTES.has(k.emote.name);
   const emoteX=x+(left?-1:1)*s*.86;
   const emoteY=y-s*.34;
