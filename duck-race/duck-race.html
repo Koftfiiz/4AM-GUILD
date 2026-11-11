@@ -320,10 +320,13 @@ function scene(cam,t){
 const hms=n=>{n=Math.max(0,Math.ceil(n));const p=v=>String(v).padStart(2,'0');return p(Math.floor(n/3600))+':'+p(Math.floor(n%3600/60))+':'+p(n%60)};
 const dist=(d,t)=>t+.35/d.a*(Math.cos(d.p)-Math.cos(d.a*t+d.p))+.2/d.b*(Math.cos(d.q)-Math.cos(d.b*t+d.q));
 const baseProgress=()=>RACE_SPEED*Math.min(S.t,S.T);
+// Each duck has its own starting lane offset and temporary speed-earned offset.
+const rawProg=k=>baseProgress()+(k.startOffset||0)+(k.offset||0);
 const prog=k=>S.fin
-  ? (k.win ? D+Math.min(W*.34,RACE_SPEED*1.05*(S.celebrateT||0)) : Math.min(D-2,baseProgress()+(k.offset||0)))
-  : Math.min(D-2,baseProgress()+(k.offset||0));
-const leader=()=>ducks.reduce((best,k)=>!best||prog(k)>prog(best)?k:best,null);
+  ? (k.win ? D+Math.min(W*.34,RACE_SPEED*1.05*(S.celebrateT||0)) : Math.min(D-2,rawProg(k)))
+  : Math.min(D-2,rawProg(k));
+// Select by true world progress, not by the visual finish-line clamp.
+const leader=()=>ducks.reduce((best,k)=>!best||rawProg(k)>rawProg(best)?k:best,null);
 
 
 /* Real-time arcade particles: effects are drawn into the water scene, never as status icons. */
@@ -428,17 +431,17 @@ function frame(now){
           k.fx='';
         }
       }
-      const mult=k.mode==='tired'?.42:k.mode==='boost'?1.85:1;
-      // Keep overtakes temporary: boost gains fade gradually during normal swimming,
-      // so ducks regroup instead of permanently collecting at the front.
-      const offsetLimit=Math.max(100,W*.38);
-      let nextOffset=k.offset||0;
+      // Smoothly approach the target speed; Base Speed remains unchanged.
+      const targetMultiplier=k.mode==='boost'?1.55:k.mode==='tired'?.72:1;
+      const smoothing=1-Math.exp(-dt/.28);
+      k.currentSpeedX+=(base*targetMultiplier-k.currentSpeedX)*smoothing;
+      let nextOffset=(k.offset||0)+(k.currentSpeedX-base)*dt;
+      // Gently fade temporary gains/losses after the event without snapping.
       if(k.mode==='normal'){
-        const recovery=base*.22*dt;
+        const recovery=base*.10*dt;
         nextOffset=nextOffset>0?Math.max(0,nextOffset-recovery):Math.min(0,nextOffset+recovery);
-      }else{
-        nextOffset+=base*(mult-1)*dt;
       }
+      const offsetLimit=Math.max(40,W*.08);
       k.offset=Math.max(-offsetLimit,Math.min(offsetLimit,nextOffset));
     });
     if(!S.fin&&S.t>=S.T){S.t=S.T;onFinish(leader());}
@@ -450,11 +453,13 @@ function frame(now){
     const y=yMin+(k.slot+.5)/n*(yMax-yMin)+Math.sin(S.t*.9+k.ph)*s*.03;
     return{k,y,x:X0-SL*(y-B)-s*.5+prog(k)};
   });
-  /* Track the shared forward swim from the very first frame.
-     Ducks stay in view while the world and shoreline scroll continuously behind them. */
-  S.cam=baseProgress();
+  // Follow the actual leader, keeping it around 60% of the viewport width.
+  // Exponential smoothing makes the camera frame-rate independent.
+  const leadRow=rows.reduce((best,o)=>!best||rawProg(o.k)>rawProg(best.k)?o:best,null);
+  const cameraTarget=(leadRow?leadRow.x:X0)-W*.60;
+  const cameraSmoothing=1-Math.exp(-dt/.32);
+  S.cam+=(cameraTarget-S.cam)*cameraSmoothing;
   scene(S.cam,now/1000);
-  const maxSpeed=(D/Math.max(1,S.T))*2.25;
   const finishWorld=S.fin?S.finishWorld:D;
   checker(X0,S.cam);checker(X0+finishWorld,S.cam);
   rows.sort((a,b)=>a.y-b.y).forEach(o=>{
@@ -472,11 +477,16 @@ function frame(now){
 
 /* ---------- race control ---------- */
 function reset(){
-  // Leave a performance buffer before the finish line so the fastest duck reaches it at timer zero.
-  D=RACE_SPEED*Math.max(1,cfg.T)+Math.max(120,W*.62);
+  // The shared base distance reaches the finish line exactly when the countdown reaches zero.
+  D=RACE_SPEED*Math.max(1,cfg.T);
   const n=roster.length,slots=[...Array(n).keys()].sort(()=>Math.random()-.5);
+  const xSlots=[...Array(n).keys()].sort(()=>Math.random()-.5);
+  const startSpread=Math.max(80,W*.34);
   ducks=roster.map((r,i)=>({
-    r,slot:slots[i],ph:Math.random()*6.28,offset:0,mode:'normal',modeLeft:0,
+    r,slot:slots[i],ph:Math.random()*6.28,
+    // Stagger the pack behind the front-most duck so every racer is visible from the start.
+    startOffset:(xSlots[i]/Math.max(1,n-1)-1)*startSpread,
+    offset:0,currentSpeedX:RACE_SPEED,mode:'normal',modeLeft:0,
     // A few ducks can boost immediately; every duck receives an independent first trigger.
     eventIn:Math.random()<.12?0:Math.random()*Math.min(24,Math.max(1,cfg.T*.12)),
     fx:''
@@ -493,7 +503,10 @@ function onFinish(winner=leader()){
   if(S.fin)return;
   S.finishWorld=D;
   S.fin=true;S.st='celebrate';S.celebrateT=0;S.finishAnimTime=performance.now()/1000;
-  ducks.forEach(k=>{k.win=k===winner;k.mode='normal';k.fx='';k.fin=k===winner?0:Math.max(1,S.T-(k.offset||0)/RACE_SPEED)});
+  ducks.forEach(k=>{
+    k.win=k===winner;k.mode='normal';k.fx='';
+    k.fin=k===winner?0:Math.max(1,S.T-((k.startOffset||0)+(k.offset||0))/RACE_SPEED);
+  });
   $('bGo').textContent='🏆 WINNER';
   $('again').classList.remove('hide');$('trophy').classList.remove('hide');
   if(bellOn)bell();
