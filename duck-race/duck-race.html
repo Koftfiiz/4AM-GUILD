@@ -97,7 +97,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 </div>
 
 <div class="modal hide" id="resM">
-  <div class="mc"><h2 id="winT"></h2><div class="list" id="list"></div><button class="go" id="resX" style="margin:0">ปิด</button></div>
+  <div class="mc"><h2 id="winT"></h2><div class="list" id="list"></div><button class="go" id="copyResults" style="margin:0 0 8px">📋 Copy Results for Discord</button><div class="hint" id="copyStatus" aria-live="polite"></div><button class="go" id="resX" style="margin:8px 0 0">ปิด</button></div>
 </div>
 </div>
 <script>
@@ -519,9 +519,11 @@ function drawDuck(k,x,y,s,t){
     else{c.beginPath();c.ellipse(0,-.5,.39,.18,0,PI,0);c.closePath();FS(hc,hairShade);if(co.h==='sidepart')line(.05,-.68,.25,-.51,hairShade,.025)}
   }
   if(!co.h&&!co.su){poly([[-.05,-.7],[-.17,-.84],[-.1,-.68]],'#3a2a1a');poly([[.05,-.7],[.18,-.85],[.1,-.68]],'#3a2a1a')}
-  // eyes + beak
-  [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.2,-.4,.075,.08,0,0,7);FS('#fff',shade(bc,.5));circ(d*.19,-.39,.037,'#1a1a1a','#1a1a1a')});
-  c.beginPath();c.ellipse(0,-.29,.2,.08,0,0,7);FS('#ebb82a','#8a6a00');line(-.12,-.3,.12,-.3,'#a07a10',.012);
+  // Right-facing side profile: one visible eye and a beak projecting forward.
+  c.beginPath();c.ellipse(.23,-.4,.075,.085,.08,0,7);FS('#fff',shade(bc,.5));
+  circ(.255,-.39,.038,'#1a1a1a','#1a1a1a');
+  c.beginPath();c.moveTo(.34,-.31);c.quadraticCurveTo(.55,-.34,.69,-.27);c.quadraticCurveTo(.58,-.19,.36,-.22);c.closePath();FS('#ebb82a','#8a6a00');
+  line(.39,-.265,.62,-.27,'#a07a10',.012);
   // Face accessories: varied facial identity details, independent from eyewear.
   const fc=co.faceColor||co.costumeAccent||'#e85d75';
   switch(co.face){
@@ -560,8 +562,8 @@ function drawDuck(k,x,y,s,t){
    case 'halfmoon':g2(a=>{c.beginPath();c.arc(a,-.4,.12,0,7);FS('rgba(255,255,255,.25)','#c69b35');R(a-.13,-.4,.26,.08,'#c69b35')});break;
    case 'tech':g2(a=>{c.beginPath();c.roundRect(a-.12,-.48,.24,.16,.04);FS('rgba(70,220,255,.35)','#55d9ef');line(a-.08,-.4,a+.08,-.4,'#fff',.012)});line(-.08,-.4,.08,-.4,'#55d9ef',.02);break;
   }
-  // angry brows
-  line(-.32,-.53,-.13,-.46,'#3a2a1a',.045);line(.32,-.53,.13,-.46,'#3a2a1a',.045);
+  // Single angled brow follows the visible eye in the right-facing profile.
+  line(.16,-.53,.34,-.47,'#3a2a1a',.045);
   // headwear / suit top (origin on top of head)
   c.save();c.translate(0,-.64);
   switch(co.su||co.h){
@@ -1084,6 +1086,26 @@ $('bAgain').onclick=()=>{
   reset();S.st='run';$('bGo').textContent='Ⅱ PAUSE';if(musOn)startMus();
 };
 $('trophy').onclick=()=>$('resM').classList.remove('hide');
+$('copyResults').onclick=async()=>{
+  const results=order();
+  const lines=['🏆 DUCK RACE RESULTS',''];
+  results.forEach((k,i)=>{
+    const label=String(k.r.label??'').trim()||'Duck';
+    const display=/^\\d+$/.test(label)?'เป็ดหมายเลข '+label:label;
+    lines.push((i+1)+'. '+display+' — '+hms(Math.min(k.fin,99*3600)));
+  });
+  const text=lines.join('\\n');
+  const status=$('copyStatus');
+  try{
+    if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);
+    else{
+      const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');
+      ta.style.position='fixed';ta.style.opacity='0';root.appendChild(ta);ta.select();
+      const copied=document.execCommand('copy');ta.remove();if(!copied)throw new Error('Copy unavailable');
+    }
+    status.textContent='คัดลอกผลการแข่งขันครบทุกอันดับแล้ว นำไปวางใน Discord ได้เลย';
+  }catch(err){status.textContent='คัดลอกอัตโนมัติไม่สำเร็จ กรุณาลองเปิดหน้าเว็บผ่าน HTTPS แล้วกดอีกครั้ง';}
+};
 $('resX').onclick=()=>$('resM').classList.add('hide');
 
 /* ---------- sound ---------- */
