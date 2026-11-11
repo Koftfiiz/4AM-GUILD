@@ -124,7 +124,6 @@ function assignCo(list){
  const outfits=shuffleDesign(COSTUME_DESIGNS.slice()),heads=shuffleDesign(HEAD_DESIGNS.slice()),faces=shuffleDesign(FACE_DESIGNS.slice());
  list.forEach((r,i)=>{const co=genCo();co.costumeDesign=i<50?outfits[i]:null;co.headDesign=i<50?heads[i]:null;co.faceDesign=i<50?faces[i]:null;co.costumeId=co.costumeDesign?.id||'none';if(co.costumeDesign)co.bc=DESIGN_COLORS[co.costumeDesign.palette][0];co.hc=co.headDesign?DESIGN_COLORS[co.headDesign.palette][1]:rnd(COL);r.co=co});
 }
-function assignCo(list){const used=new Set();list.forEach(r=>{let co,n=0;do{co=genCo()}while(used.has(JSON.stringify(co))&&++n<800);used.add(JSON.stringify(co));r.co=co})}
 
 /* ---------- duck drawing: fluffy front-facing duck (unit coords, width = 1) ---------- */
 const shade=(h,f)=>{const n=parseInt(h.slice(1),16),m=v=>Math.max(0,Math.min(255,Math.round(v*f)));return '#'+[n>>16,n>>8&255,n&255].map(v=>m(v).toString(16).padStart(2,'0')).join('')};
