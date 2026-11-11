@@ -234,7 +234,8 @@ const DUCK_DATA={
   ]
 };
 const RARITY_ORDER=['common','uncommon','rare','epic','legendary'];
-const RARITY_WEIGHTS={common:.50,uncommon:.25,rare:.15,epic:.08,legendary:.02};
+// More generous costume drop rates: higher-tier outfits appear more often.
+const RARITY_WEIGHTS={common:.35,uncommon:.25,rare:.20,epic:.14,legendary:.06};
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
 function shufflePool(pool){
   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
@@ -290,13 +291,15 @@ function generateDucks(count){
     if(used.has(key))throw new Error('Duplicate duck appearance combination: '+key);
     used.add(key);
     const costumeIndex=DUCK_DATA.costumes.indexOf(item.costume);
-    const hair=rnd(HAIR_STYLES),wear=Math.random()<.24?rnd(HEADWEAR_STYLES):null;
-    const face=rnd(FACE_STYLES),gl=Math.random()<.42?rnd(GL):null,nk=Math.random()<.35?rnd(NK):'none';
+    const characterCostume=item.costume.theme==='superhero'||item.costume.theme==='anime';
+    // Character costumes use their own head-to-toe design; no random hair, hats or face accessories.
+    const hair=characterCostume?'none':rnd(HAIR_STYLES),wear=characterCostume?null:(Math.random()<.24?rnd(HEADWEAR_STYLES):null);
+    const face=characterCostume?'none':rnd(FACE_STYLES),gl=characterCostume?null:(Math.random()<.42?rnd(GL):null),nk=characterCostume?'none':(Math.random()<.35?rnd(NK):'none');
     const co={
       bc:item.color.value,pattern:item.pattern.id,
       su:wear,h:hair,costumeId:item.costume.id,costumeName:item.costume.name,
       rarity:item.costume.rarity,costumeMain:item.costume.main,costumeAccent:item.costume.accent,
-      headStyle:costumeIndex,costumeTheme:item.costume.theme||'classic',costumeEmblem:item.costume.emblem||'',
+      headStyle:costumeIndex,costumeTheme:item.costume.theme||'classic',costumeEmblem:item.costume.emblem||'',characterCostume,
       outfitStyle:costumeIndex,outfitAccent:item.costume.accent,
       face,faceColor:rnd(['#e84b58','#f4b5a6','#fff0cf','#25252d','#5d7ed0']),
       gl,nk,nc:item.costume.accent,
@@ -341,6 +344,16 @@ function drawDuck(k,x,y,s,t){
   [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.17,.52+fp*d,.14,.055,0,0,7);FS('#f0a020','#8a5a00');[-.07,0,.07].forEach(o=>circ(d*.17+o,.56+fp*d,.03,'#f0a020','#8a5a00'))});
   // wings
   [-1,1].forEach(d=>{c.save();c.translate(d*.43,.12);c.rotate(k.mode==='tired'?d*.55:Math.sin(t*9+k.ph*(k.mode==='boost'?2:1))*(k.mode==='boost'?.9:.48)*d);c.beginPath();c.ellipse(0,0,.12,.22,0,0,7);FS(bc,ol);c.restore()});
+  // Character capes are drawn behind the duck silhouette.
+  const characterCostume=co.costumeTheme==='superhero'||co.costumeTheme==='anime';
+  if(characterCostume&&['superhero','anime'].includes(co.costumeTheme)){
+    const id=co.costumeId||'';
+    if(['superman','batman','wonder-woman','thor','green-lantern','aquaman','nightwing','shazam','supergirl','luffy','zoro','sailor-moon','sung-jinwoo','shadow-monarch','tanjiro','nezuko','ichigo','rukia','all-might','yor','loid','goku','vegeta','piccolo'].includes(id)){
+      const cape=co.costumeAccent||co.c;
+      poly([[-.27,-.08],[-.43,.43],[-.34,.55],[0,.4],[.34,.55],[.43,.43],[.27,-.08]],cape,shade(cape,.55));
+      line(-.31,.02,-.34,.42,'rgba(255,255,255,.55)',.018);line(.31,.02,.34,.42,'rgba(255,255,255,.55)',.018);
+    }
+  }
   // body + head
   c.lineWidth=lw*2;c.strokeStyle=ol;c.stroke(PH);c.fillStyle=bc;c.fill(PH);
   c.fillStyle='rgba(255,255,255,.2)';c.beginPath();c.ellipse(-.12,-.56,.2,.09,-.3,0,7);c.fill();
@@ -441,6 +454,49 @@ function drawDuck(k,x,y,s,t){
       }
     }
     c.restore();
+  }
+  // Full-body character costume layer: suit/robe panels, gloves, belt and boots.
+  // It intentionally covers the random base pattern and generic shirt so viewers
+  // can recognize superhero/anime outfits from head to toe.
+  if(characterCostume){
+    const main=co.costumeMain||co.s1||bc,accent=co.costumeAccent||co.s2||'#fff',id=co.costumeId||'';
+    c.save();c.clip(PB);c.globalAlpha=1;
+    c.fillStyle=main;c.fillRect(-.48,-.27,.96,.82);
+    if(co.costumeTheme==='superhero'){
+      poly([[-.29,-.08],[-.12,-.02],[0,.06],[.12,-.02],[.29,-.08],[.24,.52],[-.24,.52]],main);
+      poly([[-.12,-.02],[0,.12],[.12,-.02],[.09,.48],[-.09,.48]],accent);
+      R(-.29,.36,.58,.09,accent);R(-.34,.42,.68,.045,shade(main,.72));
+      poly([[-.31,-.12],[-.17,-.18],[-.08,.02],[-.22,.14]],accent);
+      poly([[.31,-.12],[.17,-.18],[.08,.02],[.22,.14]],accent);
+      for(let d of [-1,1]){R(d*.27-.075,.12,.15,.19,shade(main,.72));R(d*.25-.09,.42,.18,.16,accent)}
+      if(/iron-man|ant-man|black-panther|black-widow|deadpool|batman|wolverine|captain-marvel/.test(id)){
+        R(-.34,.02,.68,.075,shade(main,.72));
+      }
+    }else{
+      // Anime uniforms, jackets and robes use a clear center panel and waist sash.
+      poly([[-.28,-.12],[0,.08],[.28,-.12],[.2,.53],[-.2,.53]],main);
+      poly([[-.13,-.08],[0,.13],[.13,-.08],[.08,.48],[-.08,.48]],accent);
+      R(-.29,.31,.58,.09,accent);
+      poly([[-.28,-.08],[-.38,.12],[-.28,.27],[-.18,.06]],accent);
+      poly([[.28,-.08],[.38,.12],[.28,.27],[.18,.06]],accent);
+      line(-.2,.05,.2,.42,'rgba(255,255,255,.72)',.018);
+      if(/tanjiro|nezuko|zenitsu|inosuke|sung-jinwoo|shadow-monarch|ichigo|rukia|yor|loid|luffy|zoro|sailor-moon|edward-elric/.test(id)){
+        for(let j=0;j<3;j++)line(-.23+j*.23,.08,-.15+j*.23,.45,shade(accent,.78),.022);
+      }
+    }
+    // Costume-specific waist insignia and armor plates.
+    if(/iron-man|ant-man|captain-marvel/.test(id)){circ(0,.19,.085,'#d9f8ff',accent);circ(0,.19,.045,'#fff','#9ceaff')}
+    else if(/batman|black-panther|nightwing|wolverine|superman|wonder-woman|green-lantern|aquaman|shazam|supergirl/.test(id)){star(0,.18,.105,.045,accent)}
+    else if(/naruto|sasuke|sakura|kakashi|tanjiro|nezuko|zenitsu|inosuke/.test(id)){R(-.23,.14,.46,.065,accent);circ(0,.18,.045,'#f7f2d7',main)}
+    else{circ(0,.19,.065,accent);circ(0,.19,.03,'#fff')}
+    c.restore();
+    // Gloves and boots complete the full-length silhouette.
+    [-1,1].forEach(d=>{
+      c.save();c.translate(d*.43,.13);c.rotate(d*.18);
+      c.beginPath();c.ellipse(0,0,.105,.19,.05,0,Math.PI*2);FS(accent,shade(accent,.62));c.restore();
+      c.beginPath();c.roundRect(d*.17-.105,.43+Math.sin(t*9+k.ph)*.075*d,.21,.16,.055);FS(accent,shade(accent,.58));
+      line(d*.17-.07,.51+Math.sin(t*9+k.ph)*.075*d,d*.17+.07,.51+Math.sin(t*9+k.ph)*.075*d,'rgba(255,255,255,.7)',.018);
+    });
   }
   // collar, straps, bell
   c.beginPath();c.moveTo(-.34,-.08);c.quadraticCurveTo(0,.06,.34,-.08);c.lineTo(.33,-.03);c.quadraticCurveTo(0,.11,-.33,-.03);c.closePath();FS('#8a3a2a','#4a1a10');
@@ -548,6 +604,46 @@ function drawDuck(k,x,y,s,t){
    case 'cosmic':c.beginPath();c.arc(0,.02,.33,PI,0);c.closePath();FS(hc);R(-.35,-.01,.7,.07,co.c);for(let i=0;i<5;i++)circ(-.2+i*.1,-.15-(i%2)*.06,.025,'#fff');break;
    default:break;
   }
+  // Character-specific headgear, helmets, masks and anime hairstyles.
+  if(characterCostume){
+    const id=co.costumeId||'',main=co.costumeMain||hc,accent=co.costumeAccent||co.c||'#fff';
+    c.save();
+    if(co.costumeTheme==='superhero'){
+      // Helmet/cowl shell and faceplate; keep the eyes visible for expression.
+      c.beginPath();c.moveTo(-.39,.23);c.lineTo(-.36,-.02);c.quadraticCurveTo(0,-.34,.36,-.02);c.lineTo(.39,.23);c.quadraticCurveTo(0,.08,-.39,.23);c.closePath();FS(main,shade(main,.55));
+      if(/iron-man|ant-man|deadpool|black-panther|black-widow|batman|wolverine|captain-marvel|doctor-strange|black-panther/.test(id)){
+        if(id==='iron-man'){poly([[-.34,.22],[-.24,.12],[.24,.12],[.34,.22],[.22,.43],[-.22,.43]],accent);line(-.25,.25,.25,.25,'#fff1a0',.025)}
+        else if(id==='deadpool'){poly([[-.32,.15],[-.1,.12],[0,.28],[.1,.12],[.32,.15],[.24,.42],[-.24,.42]],'#171923');circ(-.17,.23,.055,'#fff');circ(.17,.23,.055,'#fff')}
+        else if(id==='batman'){poly([[-.34,.14],[-.31,-.14],[-.17,-.02],[0,-.18],[.17,-.02],[.31,-.14],[.34,.14],[.22,.4],[-.22,.4]],'#171923');line(-.23,.24,.23,.24,'#e5c75a',.025)}
+        else{poly([[-.34,.22],[-.25,.12],[.25,.12],[.34,.22],[.22,.42],[-.22,.42]],shade(main,.72));line(-.25,.23,.25,.23,accent,.035)}
+      }else{
+        poly([[-.34,.22],[-.25,.13],[.25,.13],[.34,.22],[.2,.4],[-.2,.4]],accent);
+      }
+      if(id==='wolverine'){poly([[-.28,.03],[-.42,-.24],[-.12,-.12]],accent);poly([[.28,.03],[.42,-.24],[.12,-.12]],accent)}
+      if(id==='thor'||id==='aquaman'){poly([[-.25,.02],[-.4,-.18],[-.31,.15]],accent);poly([[.25,.02],[.4,-.18],[.31,.15]],accent)}
+    }else{
+      // Anime hair is deliberately sculpted rather than randomly assigned.
+      const hair=main;
+      if(/naruto|goku|vegeta|sung-jinwoo|shadow-monarch|bakugo|deku|tanjiro|zenitsu|inosuke|ichigo|saitama/.test(id)){
+        const spikes=id==='goku'||id==='vegeta'||id==='bakugo'?7:5;
+        for(let i=0;i<spikes;i++){
+          const x=-.32+i*(.64/(spikes-1)),tipY=(i%2===0?-.23:-.15);
+          poly([[x-.10,.04],[x,tipY],[x+.11,.05]],hair,shade(hair,.58));
+        }
+      }else{
+        c.beginPath();c.ellipse(0,-.015,.38,.17,0,Math.PI,0);c.closePath();FS(hair,shade(hair,.58));
+        circ(-.3,.02,.09,hair,shade(hair,.58));circ(.3,.02,.09,hair,shade(hair,.58));
+      }
+      if(/naruto|sakura|kakashi|tanjiro|zenitsu|inosuke|deku|bakugo|todoroki/.test(id)){
+        R(-.36,.055,.72,.075,accent);circ(0,.09,.035,'#fff',accent);
+      }
+      if(id==='nezuko'){poly([[-.28,.05],[-.4,-.16],[-.18,-.08]],accent);poly([[.28,.05],[.4,-.16],[.18,-.08]],accent);R(-.2,.31,.4,.09,'#8a4b46')}
+      if(id==='anya'){circ(-.3,-.06,.12,accent);circ(.3,-.06,.12,accent)}
+      if(id==='luffy'){c.beginPath();c.ellipse(0,-.02,.4,.09,0,0,Math.PI*2);FS('#d9a33b','#6b4518');R(-.32,-.08,.64,.055,'#d9a33b')}
+      if(id==='sailor-moon'){circ(-.28,-.08,.12,'#e9c64d');circ(.28,-.08,.12,'#e9c64d');poly([[-.08,-.05],[0,-.2],[.08,-.05]],'#e9c64d')}
+    }
+    c.restore();
+  }
   c.restore();c.restore();
   // number / name tag on the belly
   const tx=x,ty=yb+s*.34;let fs=s*.17,txt=k.r.label;
@@ -563,6 +659,22 @@ function drawDuck(k,x,y,s,t){
   c.restore();c.fillStyle='#111';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,tx,tagY+fs*.05);
 }
 
+
+const OVERTAKEN_EMOTES=[{code:'/omg',icon:'😱'},{code:'/an',icon:'😰'},{code:'/sob',icon:'😭'},{code:'/bzz',icon:'😖'},{code:'/hlp',icon:'🆘'}];
+const OVERTAKER_EMOTES=[{code:'/kis',icon:'😘'},{code:'/heh',icon:'😏'},{code:'/gg',icon:'😆'},{code:'/slur',icon:'🤤'},{code:'/com',icon:'😎'}];
+function drawRaceEmote(k,x,y,s){
+  if(!k.emote||!S||S.t>=k.emoteUntil)return;
+  const c=cx,remaining=Math.max(0,k.emoteUntil-S.t),alpha=Math.min(1,remaining/.28),lift=(1-Math.min(1,remaining/1.8))*s*.18;
+  const w=s*1.42,h=s*.48,bx=x-w/2,by=y-s*1.92-lift;
+  c.save();c.globalAlpha=alpha;c.shadowColor='rgba(0,0,0,.28)';c.shadowBlur=s*.08;c.shadowOffsetY=s*.025;
+  c.fillStyle=k.emote.side==='passer'?'#fff2c8':'#e8f5ff';c.strokeStyle=k.emote.side==='passer'?'#bd8b22':'#477da5';c.lineWidth=Math.max(1,s*.025);
+  c.beginPath();c.roundRect(bx,by,w,h,h*.24);c.fill();c.stroke();
+  c.beginPath();c.moveTo(x-s*.09,by+h*.86);c.lineTo(x,by+h+s*.12);c.lineTo(x+s*.10,by+h*.84);c.closePath();c.fill();c.stroke();
+  c.shadowBlur=0;c.shadowOffsetY=0;c.textAlign='center';c.textBaseline='middle';
+  c.font='900 '+Math.max(12,s*.25)+'px system-ui';c.fillStyle='#17202b';c.fillText(k.emote.icon,x-s*.29,by+h*.48);
+  c.font='900 '+Math.max(9,s*.17)+'px system-ui';c.fillStyle='#273342';c.fillText(k.emote.code,x+s*.22,by+h*.5);
+  c.restore();
+}
 
 function drawWinnerCrown(x,y,s,elapsed){
   const c=cx,fall=Math.min(1,Math.max(0,elapsed/1.05));
@@ -839,6 +951,27 @@ function frame(now){
         k.distance=(k.distance||0)+k.currentSpeedX*paceFactor*raceDt;
       });
     }
+    // Detect actual pass events between consecutive race frames. Only a duck
+    // that was in the previous Top 5 can trigger a reaction when overtaken.
+    if(!S.fin&&raceDt>0){
+      const rankedNow=ducks.slice().sort((a,b)=>rawProg(b)-rawProg(a));
+      const currentRanks=new Map(rankedNow.map((k,i)=>[k,i+1]));
+      const previous=S.rankSnapshot||new Map();
+      for(const victim of ducks){
+        const oldVictim=previous.get(victim);
+        if(!oldVictim||oldVictim.rank>5)continue;
+        for(const passer of ducks){
+          if(passer===victim)continue;
+          const oldPasser=previous.get(passer);
+          if(!oldPasser||oldPasser.distance>=oldVictim.distance)continue;
+          if(rawProg(passer)<=rawProg(victim))continue;
+          if((victim.emoteUntil||0)<=S.t){const e=rnd(OVERTAKEN_EMOTES);victim.emote={...e,side:'victim'};victim.emoteUntil=S.t+1.8;}
+          if((passer.emoteUntil||0)<=S.t){const e=rnd(OVERTAKER_EMOTES);passer.emote={...e,side:'passer'};passer.emoteUntil=S.t+1.8;}
+          break;
+        }
+      }
+      S.rankSnapshot=new Map(rankedNow.map((k,i)=>[k,{distance:rawProg(k),rank:i+1}]));
+    }
     if(!S.fin&&S.t>=S.T){S.t=S.T;onFinish(leader());}
   }else if(S.st==='celebrate'){
     S.celebrateT=(S.celebrateT||0)+dt;
@@ -872,6 +1005,7 @@ function frame(now){
     cx.save();cx.strokeStyle='rgba(225,255,255,.48)';cx.lineWidth=1.5;const wakeClock=S.fin&&!o.k.win?(S.finishAnimTime||now/1000)*1000:now;const pulse=1+Math.sin(wakeClock/190+o.k.ph)*.25;cx.beginPath();cx.ellipse(o.x-S.cam,o.y+s*.48,s*.55*pulse,s*.10,0,0,Math.PI*2);cx.stroke();cx.restore();
     const frozenTime=S.fin&&!o.k.win?(S.finishAnimTime||now/1000):now/1000;
     drawDuck(o.k,o.x-S.cam,o.y,s,frozenTime);
+    if(!S.fin)drawRaceEmote(o.k,o.x-S.cam,o.y,s);
     if(S.fin&&o.k.win)drawWinnerCrown(o.x-S.cam,o.y-s*.68,s,S.celebrateT||0);
     if(S.st==='run'&&o.k.mode==='boost')drawBoostEffect(o.k,o.x-S.cam,o.y,s,now/1000);
     if(S.st==='run'&&o.k.mode==='tired')drawFatigueEffect(o.k,o.x-S.cam,o.y,s,now/1000);
@@ -897,6 +1031,7 @@ function reset(){
   }));
   const sceneOrder=[0,1,2,3,4].sort(()=>Math.random()-.5);
   S={st:'idle',t:0,T:cfg.T,sc:1,cam:0,camTarget:0,last:performance.now(),fin:false,sceneOrder,celebrateT:0,finishWorld:D,finishAnimTime:0};
+  S.rankSnapshot=new Map(ducks.slice().sort((a,b)=>rawProg(b)-rawProg(a)).map((k,i)=>[k,{distance:rawProg(k),rank:i+1}]));
   ducks.forEach(k=>k.fin=cfg.T);ducks.forEach(k=>k.win=false);order()[0].win=true;
   $('bGo').textContent='▶ START';$('again').classList.add('hide');$('trophy').classList.add('hide');
   $('clk').textContent=hms(S.T);stopMus();if(aud)aud.currentTime=0;
