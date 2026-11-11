@@ -421,11 +421,13 @@ function frame(now){
     const raceDt=Math.max(0,S.t-previousRaceTime);
     const base=RACE_SPEED;
     if(!S.fin)ducks.forEach(k=>{
+      if((k.leadPressureCooldown||0)>0)k.leadPressureCooldown=Math.max(0,k.leadPressureCooldown-raceDt);
       if(!k.mode||k.mode==='normal'){
         k.eventIn-=raceDt;
         if(k.eventIn<=0){
           k.mode=Math.random()<.5?'boost':'tired';
-          k.modeLeft=k.mode==='tired'?2.5+Math.random()*1.5:3+Math.random()*2;
+          // Each duck independently rolls a 3–5 second Boost or Tired duration.
+          k.modeLeft=3+Math.random()*2;
           k.fx=k.mode==='boost'?rnd(['fart','flash','sonic','fire']):'sweat';
         }
       }else{
@@ -433,7 +435,7 @@ function frame(now){
         if(k.modeLeft<=0){
           k.mode='normal';
           // Each duck gets its own long, duration-scaled random recovery interval.
-          k.eventIn=Math.max(12,Math.min(30,S.T*(.05+Math.random()*.05)));
+          k.eventIn=12+Math.random()*18;
           k.fx='';
         }
       }
@@ -441,10 +443,38 @@ function frame(now){
       const targetMultiplier=(k.mode==='boost'?1.28:k.mode==='tired'?.84:1)*(k.cruiseFactor||1);
       const smoothing=1-Math.exp(-raceDt/.28);
       k.currentSpeedX+=(base*targetMultiplier-k.currentSpeedX)*smoothing;
-      // Accumulate this duck's actual travelled distance. Do not decay or
-      // clamp the lead/gap when its temporary Boost/Tired state ends.
-      k.distance=(k.distance||0)+k.currentSpeedX*raceDt;
     });
+    // A sustained, meaningful lead can occasionally trigger extra fatigue.
+    // This is probabilistic and never removes distance already earned.
+    if(!S.fin&&ducks.length>1){
+      const ranked=ducks.slice().sort((a,b)=>rawProg(b)-rawProg(a));
+      const front=ranked[0],gap=rawProg(front)-rawProg(ranked[1]);
+      ducks.forEach(k=>{
+        if(k!==front||gap<duckSize()*1.5){k.leadHold=0;return;}
+        k.leadHold=(k.leadHold||0)+raceDt;
+        if(k.leadHold>=8&&(k.leadPressureCooldown||0)<=0){
+          k.leadHold=0;
+          if(k.mode!=='tired'&&Math.random()<.28){
+            k.mode='tired';k.modeLeft=5+Math.random()*2;k.fx='sweat';
+            k.leadPressureCooldown=18;
+          }else{
+            k.leadPressureCooldown=5;
+          }
+        }
+      });
+    }
+    // One shared pacing factor aligns the leader's projected progress with
+    // the official finish time while preserving relative gaps between ducks.
+    if(!S.fin&&raceDt>0){
+      const front=leader();
+      const timeWindow=Math.max(raceDt,S.T-previousRaceTime);
+      const remainingDistance=Math.max(0,D-rawProg(front));
+      const paceFactor=front&&front.currentSpeedX>0
+        ? remainingDistance/(front.currentSpeedX*timeWindow) : 1;
+      ducks.forEach(k=>{
+        k.distance=(k.distance||0)+k.currentSpeedX*paceFactor*raceDt;
+      });
+    }
     if(!S.fin&&S.t>=S.T){S.t=S.T;onFinish(leader());}
   }else if(S.st==='celebrate'){
     S.celebrateT=(S.celebrateT||0)+dt;
@@ -489,13 +519,14 @@ function frame(now){
 /* ---------- race control ---------- */
 function reset(){
   // The shared base distance reaches the finish line exactly when the countdown reaches zero.
-  D=RACE_SPEED*Math.max(1,cfg.T)*1.055;
+  D=RACE_SPEED*Math.max(1,cfg.T);
   const n=roster.length,slots=[...Array(n).keys()].sort(()=>Math.random()-.5);
   ducks=roster.map((r,i)=>({
     r,slot:slots[i],ph:Math.random()*6.28,
     // All ducks share the exact same horizontal start line. Each gets an
     // independent distance counter; race events create gaps only after Start.
     distance:0,currentSpeedX:RACE_SPEED,cruiseFactor:.985+Math.random()*.03,mode:'normal',modeLeft:0,
+    leadHold:0,leadPressureCooldown:0,
     // A few ducks can boost immediately; every duck receives an independent first trigger.
     eventIn:Math.random()<.18?0:Math.random()*Math.min(30,Math.max(1,cfg.T*.10)),
     fx:''
@@ -514,7 +545,10 @@ function onFinish(winner=leader()){
   S.fin=true;S.st='celebrate';S.celebrateT=0;S.finishAnimTime=performance.now()/1000;
   ducks.forEach(k=>{
     k.win=k===winner;k.mode='normal';k.fx='';
-    k.fin=k===winner?0:Math.max(1,S.T-(k.distance-D)/RACE_SPEED);
+    // The winner touches the finish line on the exact zero-second frame.
+    if(k===winner)k.distance=D;
+    else k.distance=Math.min(k.distance,D-2);
+    k.fin=k===winner?0:Math.max(1,S.T+(D-k.distance)/RACE_SPEED);
   });
   $('bGo').textContent='🏆 WINNER';
   $('again').classList.remove('hide');$('trophy').classList.remove('hide');
