@@ -5,13 +5,17 @@
 
 #duck-race-root *{box-sizing:border-box}
 
-#duck-race-root{color:var(--tx);font-family:"Noto Sans Thai",system-ui,sans-serif;line-height:1.4}#duck-race-root .stage{position:relative;max-width:1100px;margin:0 auto;container-type:inline-size;background:#000;user-select:none}#duck-race-root canvas{display:block;width:100%}#duck-race-root .stage button{font-family:inherit}#duck-race-root .ic{display:flex;position:absolute;left:0;top:0;background:#000}#duck-race-root .ic button{width:max(34px,4.9cqw);height:max(34px,4.9cqw);background:#000;color:#fff;border:0;font-size:max(17px,2.5cqw);cursor:pointer;padding:0}#duck-race-root #bShuf{position:absolute;left:0;top:max(34px,4.9cqw);background:#1a7f37;color:#fff;border:0;font-size:max(9px,1.25cqw);padding:3px 8px;cursor:pointer;border-radius:0 0 6px 0}#duck-race-root .ctl{position:absolute;left:max(70px,16cqw);top:1.6cqw;display:flex;flex-direction:column;align-items:flex-start;gap:max(2px,.8cqw)}#duck-race-root .ctl button{background:none;border:0;color:#fff;font-size:max(13px,2.3cqw);cursor:pointer;padding:0;font-family:Arial,sans-serif}#duck-race-root .ctl .sm{font-size:max(10px,1.4cqw);opacity:.8}#duck-race-root .clock{position:absolute;left:31.5cqw;top:1cqw;width:37cqw;text-align:center;background:#e8e8ff;border:.45cqw solid #333;border-radius:1.4cqw;font:max(22px,8.2cqw)/1.25 Arial,sans-serif;color:#000;box-shadow:0 2px 0 #0003}#duck-race-root .again{position:absolute;left:max(40px,5.5cqw);top:3px;background:#fff;border:3px solid #000;border-radius:12px;padding:5px;font-size:max(9px,1.15cqw);color:#000;z-index:3;width:max(120px,17cqw)}#duck-race-root .again .rm{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:4px}#duck-race-root .again .rm button{border:0;background:none;font-size:1.6em;cursor:pointer;color:#d00;padding:0;line-height:1}#duck-race-root .again .rm button.on{color:#1a9a1a}#duck-race-root #bAgain{width:100%;background:#5cc81a;border:2px solid #2d7a05;border-radius:8px;color:#fff;font-weight:800;font-size:1.5em;padding:3px;cursor:pointer}#duck-race-root #trophy{position:absolute;right:2cqw;bottom:2cqw;width:max(44px,8cqw);height:max(44px,8cqw);border-radius:50%;background:#000;border:3px solid #fff;font-size:max(22px,4cqw);cursor:pointer;z-index:3}#duck-race-root .hide{display:none!important}#duck-race-root .modal{position:fixed;inset:0;background:rgba(5,15,25,.7);display:flex;align-items:center;justify-content:center;padding:14px;z-index:10}#duck-race-root .mc{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:16px;padding:18px;width:min(520px,100%);max-height:100%;overflow:auto}#duck-race-root .mc h2{margin:0;font-size:1.3rem}#duck-race-root .settings-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}#duck-race-root .settings-close{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid var(--bd);border-radius:50%;background:rgba(220,40,55,.12);color:#d62828;font:700 28px/1 Arial,sans-serif;cursor:pointer;transition:transform .18s,background .18s}#duck-race-root .settings-close:hover{transform:rotate(90deg);background:rgba(220,40,55,.22)}#duck-race-root .tabs{display:flex;gap:8px;margin:12px 0}#duck-race-root .tab{flex:1;padding:9px;border:2px solid var(--bd);background:transparent;color:var(--tx);border-radius:12px;font:inherit;font-weight:600;cursor:pointer}#duck-race-root .tab.on{background:var(--ac);border-color:var(--ac);color:#fff}#duck-race-root label{display:block;font-weight:600;margin:12px 0 6px}#duck-race-root .row{display:flex;align-items:center;gap:10px}#duck-race-root .tm{display:flex;gap:8px}#duck-race-root .tm div{flex:1;text-align:center;font-size:.85rem;color:var(--mut)}#duck-race-root input[type=range]{flex:1;accent-color:var(--ac)}#duck-race-root input[type=number],#duck-race-root textarea{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px;font:inherit}#duck-race-root .tm input{width:100%;text-align:center;font-size:1.5rem;font-weight:800}#duck-race-root #cnt{width:84px;text-align:center;font-weight:800}#duck-race-root textarea{width:100%;min-height:170px;resize:vertical}#duck-race-root .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}#duck-race-root .chip,#duck-race-root .btn{padding:6px 12px;border:1px solid var(--bd);background:transparent;color:var(--tx);border-radius:999px;font:inherit;cursor:pointer;font-size:.9rem}#duck-race-root .hint{color:var(--mut);font-size:.88rem;margin-top:6px}#duck-race-root .go{width:100%;margin-top:16px;padding:13px;border:0;border-radius:12px;background:var(--ac);color:#fff;font:inherit;font-weight:800;font-size:1.1rem;cursor:pointer}#duck-race-root .list{border:1px solid var(--bd);border-radius:10px;margin:10px 0;max-height:55vh;overflow:auto}#duck-race-root .list div{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid var(--bd)}#duck-race-root .list b{width:2.4em;color:var(--mut)}#duck-race-root .list span:last-child{margin-left:auto;color:var(--mut)}
+#duck-race-root{color:var(--tx);font-family:"Noto Sans Thai",system-ui,sans-serif;line-height:1.4}#duck-race-root .stage{position:relative;max-width:1100px;margin:0 auto;container-type:inline-size;background:#000;user-select:none}#duck-race-root canvas{display:block;width:100%}#duck-race-root .emote-layer{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}#duck-race-root .emote-layer img{position:absolute;display:none;object-fit:contain;pointer-events:none;user-select:none}#duck-race-root .stage button{font-family:inherit}#duck-race-root .ic{display:flex;position:absolute;left:0;top:0;background:#000}#duck-race-root .ic button{width:max(34px,4.9cqw);height:max(34px,4.9cqw);background:#000;color:#fff;border:0;font-size:max(17px,2.5cqw);cursor:pointer;padding:0}#duck-race-root #bShuf{position:absolute;left:0;top:max(34px,4.9cqw);background:#1a7f37;color:#fff;border:0;font-size:max(9px,1.25cqw);padding:3px 8px;cursor:pointer;border-radius:0 0 6px 0}#duck-race-root .ctl{position:absolute;left:max(70px,16cqw);top:1.6cqw;display:flex;flex-direction:column;align-items:flex-start;gap:max(2px,.8cqw)}#duck-race-root .ctl button{background:none;border:0;color:#fff;font-size:max(13px,2.3cqw);cursor:pointer;padding:0;font-family:Arial,sans-serif}#duck-race-root .ctl .sm{font-size:max(10px,1.4cqw);opacity:.8}#duck-race-root .clock{position:absolute;left:31.5cqw;top:1cqw;width:37cqw;text-align:center;background:#e8e8ff;border:.45cqw solid #333;border-radius:1.4cqw;font:max(22px,8.2cqw)/1.25 Arial,sans-serif;color:#000;box-shadow:0 2px 0 #0003}#duck-race-root .again{position:absolute;left:max(40px,5.5cqw);top:3px;background:#fff;border:3px solid #000;border-radius:12px;padding:5px;font-size:max(9px,1.15cqw);color:#000;z-index:3;width:max(120px,17cqw)}#duck-race-root .again .rm{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-bottom:4px}#duck-race-root .again .rm button{border:0;background:none;font-size:1.6em;cursor:pointer;color:#d00;padding:0;line-height:1}#duck-race-root .again .rm button.on{color:#1a9a1a}#duck-race-root #bAgain{width:100%;background:#5cc81a;border:2px solid #2d7a05;border-radius:8px;color:#fff;font-weight:800;font-size:1.5em;padding:3px;cursor:pointer}#duck-race-root #trophy{position:absolute;right:2cqw;bottom:2cqw;width:max(44px,8cqw);height:max(44px,8cqw);border-radius:50%;background:#000;border:3px solid #fff;font-size:max(22px,4cqw);cursor:pointer;z-index:3}#duck-race-root .hide{display:none!important}#duck-race-root .modal{position:fixed;inset:0;background:rgba(5,15,25,.7);display:flex;align-items:center;justify-content:center;padding:14px;z-index:10}#duck-race-root .mc{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:16px;padding:18px;width:min(520px,100%);max-height:100%;overflow:auto}#duck-race-root .mc h2{margin:0;font-size:1.3rem}#duck-race-root .settings-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}#duck-race-root .settings-close{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border:1px solid var(--bd);border-radius:50%;background:rgba(220,40,55,.12);color:#d62828;font:700 28px/1 Arial,sans-serif;cursor:pointer;transition:transform .18s,background .18s}#duck-race-root .settings-close:hover{transform:rotate(90deg);background:rgba(220,40,55,.22)}#duck-race-root .tabs{display:flex;gap:8px;margin:12px 0}#duck-race-root .tab{flex:1;padding:9px;border:2px solid var(--bd);background:transparent;color:var(--tx);border-radius:12px;font:inherit;font-weight:600;cursor:pointer}#duck-race-root .tab.on{background:var(--ac);border-color:var(--ac);color:#fff}#duck-race-root label{display:block;font-weight:600;margin:12px 0 6px}#duck-race-root .row{display:flex;align-items:center;gap:10px}#duck-race-root .tm{display:flex;gap:8px}#duck-race-root .tm div{flex:1;text-align:center;font-size:.85rem;color:var(--mut)}#duck-race-root input[type=range]{flex:1;accent-color:var(--ac)}#duck-race-root input[type=number],#duck-race-root textarea{background:var(--bg);color:var(--tx);border:1px solid var(--bd);border-radius:10px;padding:8px;font:inherit}#duck-race-root .tm input{width:100%;text-align:center;font-size:1.5rem;font-weight:800}#duck-race-root #cnt{width:84px;text-align:center;font-weight:800}#duck-race-root textarea{width:100%;min-height:170px;resize:vertical}#duck-race-root .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}#duck-race-root .chip,#duck-race-root .btn{padding:6px 12px;border:1px solid var(--bd);background:transparent;color:var(--tx);border-radius:999px;font:inherit;cursor:pointer;font-size:.9rem}#duck-race-root .hint{color:var(--mut);font-size:.88rem;margin-top:6px}#duck-race-root .go{width:100%;margin-top:16px;padding:13px;border:0;border-radius:12px;background:var(--ac);color:#fff;font:inherit;font-weight:800;font-size:1.1rem;cursor:pointer}#duck-race-root .list{border:1px solid var(--bd);border-radius:10px;margin:10px 0;max-height:55vh;overflow:auto}#duck-race-root .list div{display:flex;gap:10px;padding:6px 12px;border-bottom:1px solid var(--bd)}#duck-race-root .list b{width:2.4em;color:var(--mut)}#duck-race-root .list span:last-child{margin-left:auto;color:var(--mut)}
 
 /* Modern arcade controls */
 #duck-race-root .stage{overflow:hidden;border:1px solid rgba(255,255,255,.28);border-radius:18px;box-shadow:0 18px 50px rgba(0,0,0,.25);background:#071b29}
 #duck-race-root .ic{gap:6px;left:12px;top:12px;background:rgba(5,15,27,.58);padding:7px;border:1px solid rgba(255,255,255,.18);border-radius:14px;backdrop-filter:blur(12px);z-index:5}
 #duck-race-root .ic button{width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);font-size:19px;transition:transform .18s,background .18s}
 #duck-race-root .ic button:hover{transform:translateY(-2px);background:rgba(255,255,255,.22)}
+#duck-race-root .music-volume{position:absolute;left:12px;top:62px;z-index:7;display:flex;align-items:center;gap:9px;padding:10px 12px;border:1px solid #ffffff35;border-radius:12px;background:rgba(5,15,27,.9);color:#fff;backdrop-filter:blur(12px);box-shadow:0 8px 22px #0007;font:600 12px Arial,sans-serif}
+#duck-race-root .music-volume input{width:116px;accent-color:#7dd3fc}
+#duck-race-root .music-volume output{min-width:34px;text-align:right;font-variant-numeric:tabular-nums}
+@media(max-width:600px){#duck-race-root .music-volume{top:54px;left:8px;padding:8px 9px}#duck-race-root .music-volume input{width:92px}}
 #duck-race-root #bShuf{left:12px;top:67px;border-radius:10px;padding:8px 12px;background:linear-gradient(135deg,#167b51,#0c493d);border:1px solid rgba(163,255,211,.35);font-size:12px;font-weight:800;box-shadow:0 5px 15px #0018}
 #duck-race-root .ctl{left:12px;top:auto;bottom:14px;flex-direction:row;align-items:center;gap:9px;padding:8px;background:rgba(5,15,27,.62);border:1px solid rgba(255,255,255,.18);border-radius:15px;backdrop-filter:blur(12px);z-index:5}
 #duck-race-root .ctl button{min-width:94px;padding:10px 17px;border-radius:11px;border:1px solid rgba(255,255,255,.22);font-size:14px;font-weight:900;letter-spacing:.3px;background:linear-gradient(135deg,#263c50,#172a3c);box-shadow:0 4px 12px #0005;transition:transform .16s,filter .16s}
@@ -59,8 +63,8 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 </style>
 <div id="duck-race-root" class="is-setup">
 <div class="stage" id="stage">
-  <canvas id="cv"></canvas>
-  <div class="ic"><button id="bSet" title="ตั้งค่า">⚙</button><button id="bMus" title="เปิด/ปิดเพลง (เพลงเริ่มเมื่อกด Start)">♫✕</button><button id="bBell" title="เสียงระฆัง">🔔✕</button></div>
+  <canvas id="cv"></canvas><div class="emote-layer" id="emoteLayer" aria-hidden="true"></div>
+  <div class="ic"><button id="bSet" title="ตั้งค่า">⚙</button><button id="bMus" title="เปิด/ปิดเพลง">♫✕</button><button id="bVol" title="ปรับระดับเสียงเพลง">🔊</button><button id="bBell" title="เสียงระฆัง">🔔✕</button></div><div class="music-volume hide" id="musicVolumePanel"><label for="musicVolume" style="margin:0;color:#fff">♫ Volume</label><input id="musicVolume" type="range" min="0" max="100" value="5"><output id="musicVolumeValue">5%</output></div>
   <button id="bShuf">🔀 Shuffle Characters</button>
   <div class="ctl"><button id="bGo">▶ START</button><button id="bClr">↺ CLEAR</button><button id="bSkip" class="sm">ข้ามไปจบ</button></div>
   <div class="clock" id="clk">00:00:30</div>
@@ -93,7 +97,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 </div>
 
 <div class="modal hide" id="resM">
-  <div class="mc"><h2 id="winT"></h2><div class="list" id="list"></div><button class="go" id="resX" style="margin:0">ปิด</button></div>
+  <div class="mc"><h2 id="winT"></h2><div class="list" id="list"></div><button class="go" id="copyResults" style="margin:0 0 8px">📋 Copy Results for Discord</button><div class="hint" id="copyStatus" aria-live="polite"></div><button class="go" id="resX" style="margin:8px 0 0">ปิด</button></div>
 </div>
 </div>
 <script>
@@ -107,29 +111,285 @@ const MAXN=120,SL=.42,NEED=20;
 let W=1000,H=566,DPR=1,D=2000,mode='num',roster=[],ducks=[],rmWin=false,musOn=false,bellOn=false;
 let S={st:'idle',t:0,T:30,sc:1,cam:0,last:0,fin:false};
 
-/* ---------- costumes (every duck is unique) ---------- */
-const BODY=['#ffd84a','#e63946','#f78fb3','#8e44ad','#2fcf3a','#a7d129','#2f6fe0','#6ec6ff','#ff7a00','#14a8a0','#f4f4f4','#4a4a4a','#8d5524','#9aa5b1','#e0409a','#fff08a'];
-
-const COSTUME_DESIGNS=[{id:'outfit-1',name:"Iron Vanguard",shape:0,palette:0},{id:'outfit-2',name:"Deep Sea Diver",shape:1,palette:1},{id:'outfit-3',name:"Mad Scientist",shape:2,palette:2},{id:'outfit-4',name:"Royal Jester",shape:3,palette:3},{id:'outfit-5',name:"Space Tourist",shape:4,palette:4},{id:'outfit-6',name:"Mummy Wrap",shape:5,palette:5},{id:'outfit-7',name:"Disco Ball",shape:6,palette:6},{id:'outfit-8',name:"Cactus Gardener",shape:7,palette:7},{id:'outfit-9',name:"Sushi Roll",shape:8,palette:8},{id:'outfit-10',name:"Giant Waffle",shape:9,palette:9},{id:'outfit-11',name:"Racing Pit Crew",shape:10,palette:0},{id:'outfit-12',name:"Haunted Sheet",shape:11,palette:1},{id:'outfit-13',name:"Dragon Pajamas",shape:12,palette:2},{id:'outfit-14',name:"Banana Suit",shape:13,palette:3},{id:'outfit-15',name:"Toilet Paper Hero",shape:14,palette:4},{id:'outfit-16',name:"Wizard Robes",shape:15,palette:5},{id:'outfit-17',name:"Bee Keeper",shape:16,palette:6},{id:'outfit-18',name:"Lava Armor",shape:17,palette:7},{id:'outfit-19',name:"Cloud Pajamas",shape:18,palette:8},{id:'outfit-20',name:"Popcorn Seller",shape:19,palette:9},{id:'outfit-21',name:"Ramen Bowl",shape:20,palette:0},{id:'outfit-22',name:"Tropical Lifeguard",shape:21,palette:1},{id:'outfit-23',name:"Steampunk Pilot",shape:22,palette:2},{id:'outfit-24',name:"Frog Raincoat",shape:23,palette:3},{id:'outfit-25',name:"Cardboard Robot",shape:24,palette:4},{id:'outfit-26',name:"Royal Knight",shape:25,palette:5},{id:'outfit-27',name:"Circus Strongduck",shape:26,palette:6},{id:'outfit-28',name:"Detective Trenchcoat",shape:27,palette:7},{id:'outfit-29',name:"Alien Tourist",shape:28,palette:8},{id:'outfit-30',name:"Volcano Monster",shape:29,palette:9},{id:'outfit-31',name:"Bubble Tea Suit",shape:30,palette:0},{id:'outfit-32',name:"Cereal Mascot",shape:31,palette:1},{id:'outfit-33',name:"Gardening Overalls",shape:32,palette:2},{id:'outfit-34',name:"Deep Forest Ranger",shape:33,palette:3},{id:'outfit-35',name:"Pirate Captain",shape:34,palette:4},{id:'outfit-36',name:"Arctic Explorer",shape:35,palette:5},{id:'outfit-37',name:"Disco Elvis",shape:36,palette:6},{id:'outfit-38',name:"Mushroom Forager",shape:37,palette:7},{id:'outfit-39',name:"Vampire Formal",shape:38,palette:8},{id:'outfit-40',name:"Dinosaur Onesie",shape:39,palette:9},{id:'outfit-41',name:"Arcade Champion",shape:40,palette:0},{id:'outfit-42',name:"Soda Can Suit",shape:41,palette:1},{id:'outfit-43',name:"Moon Astronaut",shape:42,palette:2},{id:'outfit-44',name:"Beach Cabana",shape:43,palette:3},{id:'outfit-45',name:"Construction Mech",shape:44,palette:4},{id:'outfit-46',name:"Pancake Stack",shape:45,palette:5},{id:'outfit-47',name:"Ghost Bride",shape:46,palette:6},{id:'outfit-48',name:"Cyborg Mechanic",shape:47,palette:7},{id:'outfit-49',name:"Trophy Champion",shape:48,palette:8},{id:'outfit-50',name:"Rubber Duck Lifeguard",shape:49,palette:9}];
-const HEAD_DESIGNS=[{id:'head-1',name:"Wizard Spiral Hat",shape:0,palette:0},{id:'head-2',name:"Shark Fin Helmet",shape:1,palette:1},{id:'head-3',name:"Twin Cherry Clips",shape:2,palette:2},{id:'head-4',name:"Satellite Dish",shape:3,palette:3},{id:'head-5',name:"Cactus Bloom",shape:4,palette:4},{id:'head-6',name:"Tiny Castle",shape:5,palette:5},{id:'head-7',name:"Octopus Crown",shape:6,palette:6},{id:'head-8',name:"Traffic Cone",shape:7,palette:7},{id:'head-9',name:"Birthday Cake",shape:8,palette:8},{id:'head-10',name:"Viking Horns",shape:9,palette:9},{id:'head-11',name:"UFO Saucer",shape:10,palette:0},{id:'head-12',name:"Pineapple Crown",shape:11,palette:1},{id:'head-13',name:"Bunny Ears",shape:12,palette:2},{id:'head-14',name:"Ram Horns",shape:13,palette:3},{id:'head-15',name:"Diving Helmet",shape:14,palette:4},{id:'head-16',name:"Flower Pot",shape:15,palette:5},{id:'head-17',name:"Mini Windmill",shape:16,palette:6},{id:'head-18',name:"Crown of Fries",shape:17,palette:7},{id:'head-19',name:"Mushroom Cap",shape:18,palette:8},{id:'head-20',name:"Meteor Mohawk",shape:19,palette:9},{id:'head-21',name:"Royal Turban",shape:20,palette:0},{id:'head-22',name:"Propeller Beanie",shape:21,palette:1},{id:'head-23',name:"Crocodile Snout Hat",shape:22,palette:2},{id:'head-24',name:"Antler Branches",shape:23,palette:3},{id:'head-25',name:"Unicorn Horn",shape:24,palette:4},{id:'head-26',name:"Jellyfish Hood",shape:25,palette:5},{id:'head-27',name:"Chef Pancake Stack",shape:26,palette:6},{id:'head-28',name:"Cowboy Cactus Hat",shape:27,palette:7},{id:'head-29',name:"Knight Plume",shape:28,palette:8},{id:'head-30',name:"Banana Peel Hat",shape:29,palette:9},{id:'head-31',name:"Fish Bowl Helmet",shape:30,palette:0},{id:'head-32',name:"Mini Volcano",shape:31,palette:1},{id:'head-33',name:"Cloud Halo",shape:32,palette:2},{id:'head-34',name:"Bee Antennae",shape:33,palette:3},{id:'head-35',name:"Lighthouse Hat",shape:34,palette:4},{id:'head-36',name:"Candy Cane Hat",shape:35,palette:5},{id:'head-37',name:"Dragon Spines",shape:36,palette:6},{id:'head-38',name:"Turtle Shell Cap",shape:37,palette:7},{id:'head-39',name:"Dumpling Hat",shape:38,palette:8},{id:'head-40',name:"Broken Robot Antenna",shape:39,palette:9},{id:'head-41',name:"Feather Fan",shape:40,palette:0},{id:'head-42',name:"Paper Boat Hat",shape:41,palette:1},{id:'head-43',name:"Hotdog Hat",shape:42,palette:2},{id:'head-44',name:"Crown of Leaves",shape:43,palette:3},{id:'head-45',name:"Snow Globe Hood",shape:44,palette:4},{id:'head-46',name:"Bat Wing Hood",shape:45,palette:5},{id:'head-47',name:"Sailor Anchor Cap",shape:46,palette:6},{id:'head-48',name:"Giant Bow",shape:47,palette:7},{id:'head-49',name:"Meteor Ring",shape:48,palette:8},{id:'head-50',name:"Tiny UFO Abduction",shape:49,palette:9}];
-const FACE_DESIGNS=[{id:'face-1',name:"Handlebar Mustache",shape:0,palette:0},{id:'face-2',name:"Oversized Buck Teeth",shape:1,palette:1},{id:'face-3',name:"Star Cheek Stickers",shape:2,palette:2},{id:'face-4',name:"Bandage X",shape:3,palette:3},{id:'face-5',name:"Round Clown Nose",shape:4,palette:4},{id:'face-6',name:"Vampire Fangs",shape:5,palette:5},{id:'face-7',name:"Monocle Chain",shape:6,palette:6},{id:'face-8',name:"Bubblegum Bubble",shape:7,palette:7},{id:'face-9',name:"Fake Beak Guard",shape:8,palette:8},{id:'face-10',name:"Pixel Shades",shape:9,palette:9},{id:'face-11',name:"Sleepy Eye Mask",shape:10,palette:0},{id:'face-12',name:"Heart Freckles",shape:11,palette:1},{id:'face-13',name:"Lightning Face Paint",shape:12,palette:2},{id:'face-14',name:"Swirly Cheeks",shape:13,palette:3},{id:'face-15',name:"Detective Magnifier",shape:14,palette:4},{id:'face-16',name:"Robot Jaw",shape:15,palette:5},{id:'face-17',name:"Gold Grill",shape:16,palette:6},{id:'face-18',name:"Tiny Bandit Mask",shape:17,palette:7},{id:'face-19',name:"Whisker Dots",shape:18,palette:8},{id:'face-20',name:"Pirate Eyepatch",shape:19,palette:9},{id:'face-21',name:"Rainbow Tears",shape:20,palette:0},{id:'face-22',name:"Zigzag Smile",shape:21,palette:1},{id:'face-23',name:"Duck Bill Piercing",shape:22,palette:2},{id:'face-24',name:"Candy Lips",shape:23,palette:3},{id:'face-25',name:"Snorkel Mouthpiece",shape:24,palette:4},{id:'face-26',name:"Comedy Tragedy Mask",shape:25,palette:5},{id:'face-27',name:"Alien Respirator",shape:26,palette:6},{id:'face-28',name:"Kiss Marks",shape:27,palette:7},{id:'face-29',name:"Scribble Scar",shape:28,palette:8},{id:'face-30',name:"Oversized Goggles",shape:29,palette:9},{id:'face-31',name:"Three Eyes Sticker",shape:30,palette:0},{id:'face-32',name:"Bandana Teeth",shape:31,palette:1},{id:'face-33',name:"Fang Smile",shape:32,palette:2},{id:'face-34',name:"Star Sunglasses",shape:33,palette:3},{id:'face-35',name:"Nerd Tape Glasses",shape:34,palette:4},{id:'face-36',name:"Spiral Eyes",shape:35,palette:5},{id:'face-37',name:"Sleep Drool",shape:36,palette:6},{id:'face-38',name:"Mustache Curl",shape:37,palette:7},{id:'face-39',name:"Shark Teeth",shape:38,palette:8},{id:'face-40',name:"Mosaic Mask",shape:39,palette:9},{id:'face-41',name:"Clown Makeup",shape:40,palette:0},{id:'face-42',name:"Cat Nose and Whiskers",shape:41,palette:1},{id:'face-43',name:"Bone Smile",shape:42,palette:2},{id:'face-44',name:"Robot Visor",shape:43,palette:3},{id:'face-45',name:"Rainbow Cheeks",shape:44,palette:4},{id:'face-46',name:"Freckle Cluster",shape:45,palette:5},{id:'face-47',name:"One Big Tooth",shape:46,palette:6},{id:'face-48',name:"Bubble Blower",shape:47,palette:7},{id:'face-49',name:"Gold Nose Ring",shape:48,palette:8},{id:'face-50',name:"Crossed Plasters",shape:49,palette:9}];
-const DESIGN_COLORS=[['#a61f2b','#f4c542','#f6eee0'],['#176b83','#7ee0d0','#e9f7ff'],['#553b91','#c8a4ff','#fff2a8'],['#e64c83','#f9d66b','#fff4f7'],['#34465e','#7ad8ee','#f5f0d8'],['#d6d0bd','#817b72','#4a4540'],['#3d245d','#f6d84c','#f7f0e5'],['#3c8c48','#d2ed72','#f7f0c4'],['#e65b36','#fff0d1','#29252b'],['#3d526b','#d2a86c','#f5f0e8']];
-const shuffleDesign=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
-const COL=['#d62828','#2f6fe0','#2fcf3a','#8e44ad','#ff7a00','#f78fb3','#14a8a0','#151515','#ffffff','#f4b400','#6ec6ff','#8d5524'];
-const HATS=['chef','top','crown','hard','helmet','cap','santa','pirate','guard','party','beanie','cowboy'],WIGS=['afro','mohawk','long','curly','pigtail','bob'];
-const GL=['round','shades','star','heart','goggles','monocle'],NK=['bow','scarf'],SH=['solid','stripe','dots','sailor','vest','check'],SUITS=['straw','bee','dino','uni','snow','mask'];
+/* ---------- data-driven costumes + hybrid rarity + unique combination pool ---------- */
+const DUCK_DATA={
+  colors:[
+    {id:'sunshine',value:'#ffd84a'},{id:'cherry',value:'#e63946'},{id:'bubblegum',value:'#f78fb3'},
+    {id:'violet',value:'#8e44ad'},{id:'lime',value:'#2fcf3a'},{id:'moss',value:'#a7d129'},
+    {id:'ocean',value:'#2f6fe0'},{id:'sky',value:'#6ec6ff'},{id:'tangerine',value:'#ff7a00'},
+    {id:'teal',value:'#14a8a0'},{id:'snow',value:'#f4f4f4'},{id:'charcoal',value:'#4a4a4a'},
+    {id:'cocoa',value:'#8d5524'},{id:'silver',value:'#9aa5b1'},{id:'rose',value:'#e0409a'},
+    {id:'lemon',value:'#fff08a'},{id:'mint',value:'#9de5c2'},{id:'lavender',value:'#c7a6ff'},
+    {id:'coral',value:'#ff8d75'},{id:'ice',value:'#a8e6ff'}
+  ],
+  patterns:[
+    {id:'solid',name:'Solid'},{id:'dots',name:'Polka Dots'},{id:'stripes',name:'Stripes'},
+    {id:'checker',name:'Checker'},{id:'camo',name:'Camo'},{id:'stars',name:'Stars'},
+    {id:'waves',name:'Waves'},{id:'zigzag',name:'Zigzag'}
+  ],
+  costumes:[
+    {id:'casual',name:'Street Casual',rarity:'common',head:'cap',main:'#2876b8',accent:'#f7d34a',emblem:'bolt'},
+    {id:'gamer',name:'Pro Gamer',rarity:'common',head:'gamer',main:'#202a44',accent:'#55e6ff',emblem:'controller'},
+    {id:'sushi',name:'Sushi Chef',rarity:'common',head:'sushi',main:'#fff7e8',accent:'#e34c43',emblem:'sushi'},
+    {id:'burger',name:'Burger Boss',rarity:'common',head:'burger',main:'#d78a32',accent:'#62a83b',emblem:'burger'},
+    {id:'detective',name:'Detective',rarity:'common',head:'detective',main:'#765638',accent:'#e6c98d',emblem:'magnifier'},
+    {id:'pirate',name:'Pirate Captain',rarity:'uncommon',head:'pirate',main:'#20242c',accent:'#d8a63b',emblem:'anchor'},
+    {id:'firefighter',name:'Firefighter',rarity:'uncommon',head:'firefighter',main:'#d83232',accent:'#ffce45',emblem:'flame'},
+    {id:'police',name:'Police Officer',rarity:'uncommon',head:'police',main:'#234a86',accent:'#f4d34e',emblem:'badge'},
+    {id:'doctor',name:'Doctor',rarity:'uncommon',head:'doctor',main:'#f5f7fa',accent:'#df3b55',emblem:'cross'},
+    {id:'racer',name:'Racing Driver',rarity:'uncommon',head:'racer',main:'#e33b35',accent:'#f5f5f5',emblem:'flag'},
+    {id:'ninja',name:'Shadow Ninja',rarity:'uncommon',head:'ninja',main:'#252638',accent:'#e33b55',emblem:'shuriken'},
+    {id:'wizard',name:'Wizard',rarity:'rare',head:'wizard',main:'#563b91',accent:'#f5d65b',emblem:'moon'},
+    {id:'astronaut',name:'Astronaut',rarity:'rare',head:'astronaut',main:'#dce8f2',accent:'#4ba9df',emblem:'planet'},
+    {id:'samurai',name:'Samurai',rarity:'rare',head:'samurai',main:'#a52b36',accent:'#f2c65d',emblem:'sword'},
+    {id:'vampire',name:'Vampire Count',rarity:'rare',head:'vampire',main:'#29243d',accent:'#c82d50',emblem:'bat'},
+    {id:'dragon',name:'Dragon Knight',rarity:'rare',head:'dragon',main:'#27764b',accent:'#f0a53a',emblem:'dragon'},
+    {id:'colonel',name:'Colonel Sanders',rarity:'epic',head:'colonel',main:'#fffdf4',accent:'#d62828',emblem:'bowtie'},
+    {id:'webhero',name:'Spider-Man',rarity:'epic',head:'webhero',main:'#d92736',accent:'#2463bd',emblem:'web'},
+    {id:'starhero',name:'Captain America',rarity:'epic',head:'starhero',main:'#2456a6',accent:'#f4f4f4',emblem:'shieldstar'},
+    {id:'unicorn',name:'Unicorn',rarity:'epic',head:'uni',main:'#f6b8e5',accent:'#8c6be8',emblem:'rainbow'},
+    {id:'speedster',name:'The Flash',rarity:'legendary',head:'speedster',main:'#d92736',accent:'#ffd43b',emblem:'lightning'},
+    {id:'goldenking',name:'Golden King',rarity:'legendary',head:'goldenking',main:'#e8b923',accent:'#fff0a0',emblem:'crown'},
+    {id:'cosmic',name:'Cosmic Duck',rarity:'legendary',head:'cosmic',main:'#30265e',accent:'#6de5ff',emblem:'galaxy'},
+    {id:'thai-student',name:'Thai School Student',rarity:'common',head:'thai-student',headStyle:0,main:'#243f86',accent:'#f5f5f5',emblem:'school',theme:'occupation'},
+    {id:'nurse',name:'Nurse',rarity:'common',head:'nurse',headStyle:1,main:'#f8fbff',accent:'#e75b86',emblem:'medical',theme:'occupation'},
+    {id:'businessman',name:'Business Executive',rarity:'common',head:'businessman',headStyle:2,main:'#26364d',accent:'#d8b36a',emblem:'briefcase',theme:'occupation'},
+    {id:'teacher',name:'Teacher',rarity:'common',head:'teacher',headStyle:3,main:'#6a4c93',accent:'#f2d06b',emblem:'book',theme:'occupation'},
+    {id:'chef-deluxe',name:'Master Chef',rarity:'common',head:'chef-deluxe',headStyle:4,main:'#fff8eb',accent:'#dc5147',emblem:'chef',theme:'occupation'},
+    {id:'barista',name:'Barista',rarity:'common',head:'barista',headStyle:5,main:'#76503b',accent:'#f0d2a0',emblem:'coffee',theme:'occupation'},
+    {id:'construction-worker',name:'Construction Worker',rarity:'common',head:'construction-worker',headStyle:6,main:'#f2a900',accent:'#27364b',emblem:'hardhat',theme:'occupation'},
+    {id:'farmer',name:'Farmer',rarity:'common',head:'farmer',headStyle:7,main:'#5d8c3a',accent:'#e7c45b',emblem:'leaf',theme:'occupation'},
+    {id:'pilot',name:'Airline Pilot',rarity:'common',head:'pilot',headStyle:8,main:'#263c66',accent:'#f0d9a0',emblem:'wings',theme:'occupation'},
+    {id:'mail-carrier',name:'Mail Carrier',rarity:'common',head:'mail-carrier',headStyle:9,main:'#3b65a8',accent:'#f5d45b',emblem:'letter',theme:'occupation'},
+    {id:'delivery-rider',name:'Delivery Rider',rarity:'common',head:'delivery-rider',headStyle:10,main:'#e75b31',accent:'#f7df55',emblem:'parcel',theme:'occupation'},
+    {id:'artist',name:'Visual Artist',rarity:'common',head:'artist',headStyle:11,main:'#a64d79',accent:'#ffe0a8',emblem:'palette',theme:'occupation'},
+    {id:'scientist',name:'Scientist',rarity:'common',head:'scientist',headStyle:12,main:'#e8f2f8',accent:'#49a6bb',emblem:'flask',theme:'occupation'},
+    {id:'mechanic',name:'Mechanic',rarity:'common',head:'mechanic',headStyle:13,main:'#394b59',accent:'#f3b544',emblem:'gear',theme:'occupation'},
+    {id:'police-detective',name:'Police Detective',rarity:'common',head:'police-detective',headStyle:14,main:'#203b69',accent:'#d8c26a',emblem:'badge',theme:'occupation'},
+    {id:'lifeguard',name:'Lifeguard',rarity:'common',head:'lifeguard',headStyle:15,main:'#f04c43',accent:'#fff1d6',emblem:'lifebuoy',theme:'occupation'},
+    {id:'footballer',name:'Football Player',rarity:'common',head:'footballer',headStyle:16,main:'#247a48',accent:'#f5e9c5',emblem:'football',theme:'occupation'},
+    {id:'basketballer',name:'Basketball Player',rarity:'common',head:'basketballer',headStyle:17,main:'#d76b2d',accent:'#f7e5c7',emblem:'basketball',theme:'occupation'},
+    {id:'musician',name:'Rock Musician',rarity:'common',head:'musician',headStyle:18,main:'#262631',accent:'#e14d63',emblem:'music',theme:'occupation'},
+    {id:'photographer',name:'Photographer',rarity:'common',head:'photographer',headStyle:19,main:'#374d60',accent:'#e9d3a7',emblem:'camera',theme:'occupation'},
+    {id:'fire-chief',name:'Fire Chief',rarity:'uncommon',head:'fire-chief',headStyle:20,main:'#bd292d',accent:'#ffd35a',emblem:'flame',theme:'occupation'},
+    {id:'surgeon',name:'Surgeon',rarity:'uncommon',head:'surgeon',headStyle:21,main:'#3b9d91',accent:'#f6ffff',emblem:'medical',theme:'occupation'},
+    {id:'paramedic',name:'Paramedic',rarity:'uncommon',head:'paramedic',headStyle:22,main:'#f4f4f4',accent:'#d93e4d',emblem:'medical',theme:'occupation'},
+    {id:'judge',name:'Judge',rarity:'uncommon',head:'judge',headStyle:23,main:'#242631',accent:'#d9bd73',emblem:'scales',theme:'occupation'},
+    {id:'lawyer',name:'Lawyer',rarity:'uncommon',head:'lawyer',headStyle:24,main:'#27344a',accent:'#c8a56a',emblem:'scales',theme:'occupation'},
+    {id:'police-commander',name:'Police Commander',rarity:'uncommon',head:'police-commander',headStyle:25,main:'#1e3e76',accent:'#f5d45b',emblem:'badge',theme:'occupation'},
+    {id:'astronomer',name:'Astronomer',rarity:'uncommon',head:'astronomer',headStyle:26,main:'#24365e',accent:'#7ad8ed',emblem:'planet',theme:'occupation'},
+    {id:'sushi-master',name:'Japanese Sushi Master',rarity:'uncommon',head:'sushi-master',headStyle:27,main:'#fff9ed',accent:'#df3d46',emblem:'sushi',theme:'occupation'},
+    {id:'royal-guard',name:'Royal Guard',rarity:'uncommon',head:'royal-guard',headStyle:28,main:'#3c4b83',accent:'#e5c15c',emblem:'shield',theme:'occupation'},
+    {id:'detective-noir',name:'Noir Detective',rarity:'uncommon',head:'detective-noir',headStyle:29,main:'#45404a',accent:'#d5b98b',emblem:'magnifier',theme:'occupation'},
+    {id:'iron-man',name:'Iron Man',rarity:'common',head:'iron-man',headStyle:30,main:'#bd2932',accent:'#f5c64c',emblem:'arc-reactor',theme:'superhero'},
+    {id:'thor',name:'Thor',rarity:'common',head:'thor',headStyle:31,main:'#385a9a',accent:'#d8dce7',emblem:'hammer',theme:'superhero'},
+    {id:'hulk',name:'Hulk',rarity:'common',head:'hulk',headStyle:32,main:'#398044',accent:'#a9d46a',emblem:'gamma',theme:'superhero'},
+    {id:'wolverine',name:'Wolverine',rarity:'uncommon',head:'wolverine',headStyle:33,main:'#e5b52f',accent:'#315a9d',emblem:'claws',theme:'superhero'},
+    {id:'black-panther',name:'Black Panther',rarity:'rare',head:'black-panther',headStyle:34,main:'#242432',accent:'#a78bfa',emblem:'panther',theme:'superhero'},
+    {id:'doctor-strange',name:'Doctor Strange',rarity:'rare',head:'doctor-strange',headStyle:35,main:'#9d3037',accent:'#e4b65c',emblem:'mystic-eye',theme:'superhero'},
+    {id:'deadpool',name:'Deadpool',rarity:'uncommon',head:'deadpool',headStyle:36,main:'#c62f3a',accent:'#25252d',emblem:'dual-katanas',theme:'superhero'},
+    {id:'captain-marvel',name:'Captain Marvel',rarity:'rare',head:'captain-marvel',headStyle:37,main:'#2855a5',accent:'#d7b94c',emblem:'starburst',theme:'superhero'},
+    {id:'ant-man',name:'Ant-Man',rarity:'rare',head:'ant-man',headStyle:38,main:'#a72c36',accent:'#c9d8df',emblem:'ant',theme:'superhero'},
+    {id:'black-widow',name:'Black Widow',rarity:'rare',head:'black-widow',headStyle:39,main:'#26262d',accent:'#c74b55',emblem:'hourglass',theme:'superhero'},
+    {id:'batman',name:'Batman',rarity:'common',head:'batman',headStyle:40,main:'#252b3b',accent:'#e0bd55',emblem:'bat',theme:'superhero'},
+    {id:'superman',name:'Superman',rarity:'common',head:'superman',headStyle:41,main:'#2c5eaa',accent:'#df3c43',emblem:'crest',theme:'superhero'},
+    {id:'wonder-woman',name:'Wonder Woman',rarity:'common',head:'wonder-woman',headStyle:42,main:'#a52e3b',accent:'#f2c84b',emblem:'eagle',theme:'superhero'},
+    {id:'green-lantern',name:'Green Lantern',rarity:'epic',head:'green-lantern',headStyle:43,main:'#278b54',accent:'#b7f58a',emblem:'lantern',theme:'superhero'},
+    {id:'aquaman',name:'Aquaman',rarity:'epic',head:'aquaman',headStyle:44,main:'#237f79',accent:'#e6b34d',emblem:'trident',theme:'superhero'},
+    {id:'joker',name:'Joker',rarity:'epic',head:'joker',headStyle:45,main:'#633a8b',accent:'#e4d46a',emblem:'joker',theme:'superhero'},
+    {id:'harley-quinn',name:'Harley Quinn',rarity:'epic',head:'harley-quinn',headStyle:46,main:'#d83b56',accent:'#283b75',emblem:'diamond',theme:'superhero'},
+    {id:'nightwing',name:'Nightwing',rarity:'epic',head:'nightwing',headStyle:47,main:'#254e9c',accent:'#49b9ef',emblem:'wing',theme:'superhero'},
+    {id:'shazam',name:'Shazam',rarity:'uncommon',head:'shazam',headStyle:48,main:'#c72f36',accent:'#f4c84a',emblem:'lightning',theme:'superhero'},
+    {id:'supergirl',name:'Supergirl',rarity:'epic',head:'supergirl',headStyle:49,main:'#2d64ad',accent:'#e6c94e',emblem:'crest',theme:'superhero'},
+    {id:'sung-jinwoo',name:'Sung Jin-Woo (Solo Leveling)',rarity:'common',head:'sung-jinwoo',headStyle:50,main:'#252b3e',accent:'#7355c9',emblem:'shadow',theme:'anime'},
+    {id:'shadow-monarch',name:'Shadow Monarch',rarity:'rare',head:'shadow-monarch',headStyle:51,main:'#201c36',accent:'#8b6bdf',emblem:'monarch',theme:'anime'},
+    {id:'tanjiro',name:'Tanjiro Kamado (Demon Slayer)',rarity:'common',head:'tanjiro',headStyle:52,main:'#347b4d',accent:'#d54a42',emblem:'sun-breath',theme:'anime'},
+    {id:'nezuko',name:'Nezuko Kamado (Demon Slayer)',rarity:'rare',head:'nezuko',headStyle:53,main:'#d978a8',accent:'#75a56b',emblem:'bamboo',theme:'anime'},
+    {id:'zenitsu',name:'Zenitsu Agatsuma (Demon Slayer)',rarity:'common',head:'zenitsu',headStyle:54,main:'#e4bd38',accent:'#f4e4a0',emblem:'thunder',theme:'anime'},
+    {id:'inosuke',name:'Inosuke Hashibira (Demon Slayer)',rarity:'rare',head:'inosuke',headStyle:55,main:'#7195b7',accent:'#e8c6a2',emblem:'boar',theme:'anime'},
+    {id:'naruto',name:'Naruto Uzumaki',rarity:'common',head:'naruto',headStyle:56,main:'#e68a31',accent:'#2c65a5',emblem:'leaf',theme:'anime'},
+    {id:'sasuke',name:'Sasuke Uchiha',rarity:'common',head:'sasuke',headStyle:57,main:'#354c86',accent:'#9b4c55',emblem:'fan',theme:'anime'},
+    {id:'sakura',name:'Sakura Haruno',rarity:'rare',head:'sakura',headStyle:58,main:'#d9789c',accent:'#e9d7d4',emblem:'medical',theme:'anime'},
+    {id:'kakashi',name:'Kakashi Hatake',rarity:'rare',head:'kakashi',headStyle:59,main:'#6b7f91',accent:'#26313e',emblem:'leaf',theme:'anime'},
+    {id:'ichigo',name:'Ichigo Kurosaki (Bleach)',rarity:'epic',head:'ichigo',headStyle:60,main:'#e77b32',accent:'#282832',emblem:'zanpakuto',theme:'anime'},
+    {id:'rukia',name:'Rukia Kuchiki (Bleach)',rarity:'epic',head:'rukia',headStyle:61,main:'#242c3a',accent:'#b9d9e8',emblem:'snowflake',theme:'anime'},
+    {id:'deku',name:'Izuku Midoriya (My Hero Academia)',rarity:'common',head:'deku',headStyle:62,main:'#368c65',accent:'#a8d9e7',emblem:'one-for-all',theme:'anime'},
+    {id:'bakugo',name:'Katsuki Bakugo (My Hero Academia)',rarity:'epic',head:'bakugo',headStyle:63,main:'#d5a53c',accent:'#d34a3d',emblem:'explosion',theme:'anime'},
+    {id:'todoroki',name:'Shoto Todoroki (My Hero Academia)',rarity:'uncommon',head:'todoroki',headStyle:64,main:'#e8e8ed',accent:'#cf4a4c',emblem:'half-fire-ice',theme:'anime'},
+    {id:'all-might',name:'All Might (My Hero Academia)',rarity:'epic',head:'all-might',headStyle:65,main:'#d9b33d',accent:'#315fa8',emblem:'peace',theme:'anime'},
+    {id:'anya',name:'Anya Forger (Spy x Family)',rarity:'common',head:'anya',headStyle:66,main:'#d78eae',accent:'#4b3a82',emblem:'telepathy',theme:'anime'},
+    {id:'yor',name:'Yor Forger (Spy x Family)',rarity:'epic',head:'yor',headStyle:67,main:'#a52d3d',accent:'#171923',emblem:'thorn',theme:'anime'},
+    {id:'loid',name:'Loid Forger (Spy x Family)',rarity:'epic',head:'loid',headStyle:68,main:'#668d9d',accent:'#d8c69d',emblem:'spy',theme:'anime'},
+    {id:'goku',name:'Goku (Dragon Ball)',rarity:'common',head:'goku',headStyle:69,main:'#e67d2f',accent:'#315fa7',emblem:'kanji',theme:'anime'},
+    {id:'vegeta',name:'Vegeta (Dragon Ball)',rarity:'epic',head:'vegeta',headStyle:70,main:'#315a9c',accent:'#dce4ed',emblem:'saiyan',theme:'anime'},
+    {id:'piccolo',name:'Piccolo (Dragon Ball)',rarity:'epic',head:'piccolo',headStyle:71,main:'#3c8a61',accent:'#d7d8dc',emblem:'namek',theme:'anime'},
+    {id:'doraemon',name:'Doraemon',rarity:'common',head:'doraemon',headStyle:72,main:'#2e8fd0',accent:'#f5f5f5',emblem:'bell',theme:'anime'},
+    {id:'nobita',name:'Nobita (Doraemon)',rarity:'epic',head:'nobita',headStyle:73,main:'#e7c94a',accent:'#d96b43',emblem:'glasses',theme:'anime'},
+    {id:'shinchan',name:'Shin-chan (Crayon Shin-chan)',rarity:'epic',head:'shinchan',headStyle:74,main:'#e64b42',accent:'#e7c94a',emblem:'action-kamen',theme:'anime'},
+    {id:'luffy',name:'Monkey D. Luffy (One Piece)',rarity:'legendary',head:'luffy',headStyle:75,main:'#b83b36',accent:'#e9bd43',emblem:'straw-hat',theme:'anime'},
+    {id:'zoro',name:'Roronoa Zoro (One Piece)',rarity:'legendary',head:'zoro',headStyle:76,main:'#39865b',accent:'#e1d7c5',emblem:'three-swords',theme:'anime'},
+    {id:'sailor-moon',name:'Sailor Moon',rarity:'legendary',head:'sailor-moon',headStyle:77,main:'#3158a4',accent:'#f0c64c',emblem:'moon',theme:'anime'},
+    {id:'edward-elric',name:'Edward Elric (Fullmetal Alchemist)',rarity:'legendary',head:'edward-elric',headStyle:78,main:'#b83b35',accent:'#e3c15a',emblem:'alchemy',theme:'anime'},
+    {id:'saitama',name:'Saitama (One Punch Man)',rarity:'legendary',head:'saitama',headStyle:79,main:'#e4c63b',accent:'#d4483e',emblem:'hero',theme:'anime'},
+    {id:'miles-morales',name:'Miles Morales',rarity:'rare',head:'miles-morales',headStyle:80,main:'#20232c',accent:'#d83b42',emblem:'spider',theme:'superhero'},
+    {id:'hawkeye',name:'Hawkeye',rarity:'uncommon',head:'hawkeye',headStyle:81,main:'#4a354e',accent:'#a9b4c4',emblem:'bow',theme:'superhero'},
+    {id:'loki',name:'Loki',rarity:'epic',head:'loki',headStyle:82,main:'#315c4c',accent:'#d6b45a',emblem:'horns',theme:'superhero'},
+    {id:'thanos',name:'Thanos',rarity:'legendary',head:'thanos',headStyle:83,main:'#594a91',accent:'#d2a84d',emblem:'infinity',theme:'superhero'},
+    {id:'venom',name:'Venom',rarity:'epic',head:'venom',headStyle:84,main:'#171820',accent:'#dce4ec',emblem:'symbiote',theme:'superhero'},
+    {id:'carnage',name:'Carnage',rarity:'legendary',head:'carnage',headStyle:85,main:'#9e202d',accent:'#171820',emblem:'symbiote',theme:'superhero'},
+    {id:'green-goblin',name:'Green Goblin',rarity:'epic',head:'green-goblin',headStyle:86,main:'#4c8b4c',accent:'#8b4aa8',emblem:'goblin',theme:'superhero'},
+    {id:'doctor-doom',name:'Doctor Doom',rarity:'legendary',head:'doctor-doom',headStyle:87,main:'#53635b',accent:'#c5a76a',emblem:'armor',theme:'superhero'},
+    {id:'ultron',name:'Ultron',rarity:'epic',head:'ultron',headStyle:88,main:'#a9b3bd',accent:'#d83d42',emblem:'robot',theme:'superhero'},
+    {id:'star-lord',name:'Star-Lord',rarity:'rare',head:'star-lord',headStyle:89,main:'#7a3940',accent:'#d5ad65',emblem:'helmet',theme:'superhero'},
+    {id:'groot',name:'Groot',rarity:'rare',head:'groot',headStyle:90,main:'#755239',accent:'#72a65c',emblem:'flora',theme:'superhero'},
+    {id:'rocket',name:'Rocket Raccoon',rarity:'epic',head:'rocket',headStyle:91,main:'#805b43',accent:'#d49a42',emblem:'tech',theme:'superhero'},
+    {id:'daredevil',name:'Daredevil',rarity:'rare',head:'daredevil',headStyle:92,main:'#a52b36',accent:'#d8b7a0',emblem:'devil',theme:'superhero'},
+    {id:'punisher',name:'Punisher',rarity:'rare',head:'punisher',headStyle:93,main:'#242833',accent:'#e4e8ef',emblem:'skull',theme:'superhero'},
+    {id:'ghost-rider',name:'Ghost Rider',rarity:'legendary',head:'ghost-rider',headStyle:94,main:'#27232a',accent:'#ff8a27',emblem:'flame',theme:'superhero'},
+    {id:'silver-surfer',name:'Silver Surfer',rarity:'epic',head:'silver-surfer',headStyle:95,main:'#aabac8',accent:'#e7f4ff',emblem:'cosmic',theme:'superhero'},
+    {id:'magneto',name:'Magneto',rarity:'epic',head:'magneto',headStyle:96,main:'#64364b',accent:'#c5a0a8',emblem:'magnet',theme:'superhero'},
+    {id:'storm',name:'Storm',rarity:'legendary',head:'storm',headStyle:97,main:'#d8dce5',accent:'#6b8fc7',emblem:'lightning',theme:'superhero'},
+    {id:'cyclops',name:'Cyclops',rarity:'rare',head:'cyclops',headStyle:98,main:'#314b7c',accent:'#e0a94b',emblem:'visor',theme:'superhero'},
+    {id:'jean-grey',name:'Jean Grey / Phoenix',rarity:'legendary',head:'jean-grey',headStyle:99,main:'#b73a3c',accent:'#f2bd47',emblem:'phoenix',theme:'superhero'},
+    {id:'mystique',name:'Mystique',rarity:'epic',head:'mystique',headStyle:100,main:'#287e9b',accent:'#d64c4c',emblem:'shape-shift',theme:'superhero'},
+    {id:'gambit',name:'Gambit',rarity:'rare',head:'gambit',headStyle:101,main:'#5c315c',accent:'#d6b45b',emblem:'cards',theme:'superhero'},
+    {id:'nightcrawler',name:'Nightcrawler',rarity:'rare',head:'nightcrawler',headStyle:102,main:'#3b4f9b',accent:'#d6a84a',emblem:'tail',theme:'superhero'},
+    {id:'professor-x',name:'Professor X',rarity:'rare',head:'professor-x',headStyle:103,main:'#9ba9b5',accent:'#d6c7a0',emblem:'telepathy',theme:'superhero'},
+    {id:'red-skull',name:'Red Skull',rarity:'epic',head:'red-skull',headStyle:104,main:'#7a2730',accent:'#d5c5a8',emblem:'skull',theme:'superhero'},
+    {id:'robin',name:'Robin',rarity:'rare',head:'robin',headStyle:105,main:'#2c8057',accent:'#d84a3d',emblem:'cape',theme:'superhero'},
+    {id:'batgirl',name:'Batgirl',rarity:'epic',head:'batgirl',headStyle:106,main:'#30374d',accent:'#e5c34d',emblem:'bat',theme:'superhero'},
+    {id:'catwoman',name:'Catwoman',rarity:'epic',head:'catwoman',headStyle:107,main:'#282832',accent:'#c4c7d0',emblem:'cat',theme:'superhero'},
+    {id:'cyborg',name:'Cyborg',rarity:'rare',head:'cyborg',headStyle:108,main:'#778b9b',accent:'#d94c54',emblem:'tech',theme:'superhero'},
+    {id:'riddler',name:'Riddler',rarity:'rare',head:'riddler',headStyle:109,main:'#37804b',accent:'#d4c45b',emblem:'question',theme:'superhero'},
+    {id:'bane',name:'Bane',rarity:'epic',head:'bane',headStyle:110,main:'#536047',accent:'#b94a4a',emblem:'mask',theme:'superhero'},
+    {id:'poison-ivy',name:'Poison Ivy',rarity:'epic',head:'poison-ivy',headStyle:111,main:'#36784b',accent:'#d84d78',emblem:'vines',theme:'superhero'},
+    {id:'two-face',name:'Two-Face',rarity:'rare',head:'two-face',headStyle:112,main:'#777b82',accent:'#a13b3b',emblem:'split',theme:'superhero'},
+    {id:'penguin',name:'Penguin',rarity:'uncommon',head:'penguin',headStyle:113,main:'#303744',accent:'#d8dce4',emblem:'monocle',theme:'superhero'},
+    {id:'scarecrow',name:'Scarecrow',rarity:'rare',head:'scarecrow',headStyle:114,main:'#88724f',accent:'#c8a46b',emblem:'straw',theme:'superhero'},
+    {id:'lex-luthor',name:'Lex Luthor',rarity:'rare',head:'lex-luthor',headStyle:115,main:'#a2a9b0',accent:'#6b8dc0',emblem:'armor',theme:'superhero'},
+    {id:'general-zod',name:'General Zod',rarity:'epic',head:'general-zod',headStyle:116,main:'#35495e',accent:'#b6c2cf',emblem:'crest',theme:'superhero'},
+    {id:'darkseid',name:'Darkseid',rarity:'legendary',head:'darkseid',headStyle:117,main:'#5c626d',accent:'#b65a4b',emblem:'omega',theme:'superhero'},
+    {id:'deathstroke',name:'Deathstroke',rarity:'epic',head:'deathstroke',headStyle:118,main:'#bd6a2e',accent:'#35445c',emblem:'split-mask',theme:'superhero'},
+    {id:'black-adam',name:'Black Adam',rarity:'epic',head:'black-adam',headStyle:119,main:'#292d3b',accent:'#d6b54d',emblem:'lightning',theme:'superhero'},
+    {id:'black-manta',name:'Black Manta',rarity:'epic',head:'black-manta',headStyle:120,main:'#292f3d',accent:'#df5550',emblem:'visor',theme:'superhero'},
+    {id:'raven',name:'Raven',rarity:'epic',head:'raven',headStyle:121,main:'#493b69',accent:'#b5a1d8',emblem:'cloak',theme:'superhero'},
+    {id:'starfire',name:'Starfire',rarity:'rare',head:'starfire',headStyle:122,main:'#a94b37',accent:'#e9b45c',emblem:'energy',theme:'superhero'},
+    {id:'beast-boy',name:'Beast Boy',rarity:'rare',head:'beast-boy',headStyle:123,main:'#3e965f',accent:'#d24b53',emblem:'beast',theme:'superhero'},
+    {id:'blue-beetle',name:'Blue Beetle',rarity:'epic',head:'blue-beetle',headStyle:124,main:'#176c9d',accent:'#49c7e5',emblem:'scarab',theme:'superhero'},
+    {id:'constantine',name:'John Constantine',rarity:'rare',head:'constantine',headStyle:125,main:'#b79a6c',accent:'#536b5e',emblem:'trenchcoat',theme:'superhero'},
+    {id:'lobo',name:'Lobo',rarity:'legendary',head:'lobo',headStyle:126,main:'#30343d',accent:'#d9dce2',emblem:'biker',theme:'superhero'},
+    {id:'rengoku',name:'Kyojuro Rengoku',rarity:'epic',head:'rengoku',headStyle:127,main:'#d5a33b',accent:'#d84a36',emblem:'flame',theme:'anime'},
+    {id:'shinobu',name:'Shinobu Kocho',rarity:'epic',head:'shinobu',headStyle:128,main:'#6e579b',accent:'#d8b6dc',emblem:'butterfly',theme:'anime'},
+    {id:'giyu',name:'Giyu Tomioka',rarity:'rare',head:'giyu',headStyle:129,main:'#345b77',accent:'#8e4c64',emblem:'haori',theme:'anime'},
+    {id:'muzan',name:'Muzan Kibutsuji',rarity:'legendary',head:'muzan',headStyle:130,main:'#292b3b',accent:'#a73a4b',emblem:'fedora',theme:'anime'},
+    {id:'itachi',name:'Itachi Uchiha',rarity:'epic',head:'itachi',headStyle:131,main:'#292632',accent:'#c53d4b',emblem:'cloud',theme:'anime'},
+    {id:'madara',name:'Madara Uchiha',rarity:'legendary',head:'madara',headStyle:132,main:'#8c343a',accent:'#d3b56b',emblem:'armor',theme:'anime'},
+    {id:'aizen',name:'Sosuke Aizen',rarity:'epic',head:'aizen',headStyle:133,main:'#e4e5e8',accent:'#536c9b',emblem:'captain',theme:'anime'},
+    {id:'byakuya',name:'Byakuya Kuchiki',rarity:'epic',head:'byakuya',headStyle:134,main:'#dce2e8',accent:'#b78eaa',emblem:'scarf',theme:'anime'},
+    {id:'kenpachi',name:'Kenpachi Zaraki',rarity:'epic',head:'kenpachi',headStyle:135,main:'#29272b',accent:'#c6a34c',emblem:'spikes',theme:'anime'},
+    {id:'frieza',name:'Frieza',rarity:'legendary',head:'frieza',headStyle:136,main:'#eee5ed',accent:'#9d6cae',emblem:'alien',theme:'anime'},
+    {id:'gohan',name:'Gohan',rarity:'rare',head:'gohan',headStyle:137,main:'#4b4265',accent:'#d7b35b',emblem:'gi',theme:'anime'},
+    {id:'trunks',name:'Future Trunks',rarity:'epic',head:'trunks',headStyle:138,main:'#6c8ab9',accent:'#a7bfd7',emblem:'sword',theme:'anime'},
+    {id:'majin-buu',name:'Majin Buu',rarity:'legendary',head:'majin-buu',headStyle:139,main:'#d978a8',accent:'#eee0d6',emblem:'antenna',theme:'anime'},
+    {id:'broly',name:'Broly',rarity:'legendary',head:'broly',headStyle:140,main:'#39845b',accent:'#d5bd58',emblem:'armor',theme:'anime'},
+    {id:'dinosaur',name:'Dinosaur Suit Duck',rarity:'rare',head:'dinosaur',headStyle:141,main:'#4b9b55',accent:'#e5c86a',emblem:'dino',theme:'anime'},
+    {id:'dracula',name:'Count Dracula',rarity:'epic',head:'dracula',headStyle:142,main:'#30273d',accent:'#c83d58',emblem:'vampire',theme:'anime'},
+    {id:'donald-trump',name:'Donald Trump',rarity:'rare',head:'donald-trump',headStyle:143,main:'#263b59',accent:'#d84a3d',emblem:'business',theme:'anime'}
+  ]
+};
+const RARITY_ORDER=['common','uncommon','rare','epic','legendary'];
+// More generous costume drop rates: higher-tier outfits appear more often.
+const RARITY_WEIGHTS={common:.35,uncommon:.25,rare:.20,epic:.14,legendary:.06};
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
-function genCo(){return {bc:rnd(BODY)}}
+function shufflePool(pool){
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
+  return pool;
+}
+function hybridRarityQuotas(count){
+  const quotas={},remainders=[];
+  let used=0;
+  RARITY_ORDER.forEach(r=>{
+    const raw=count*RARITY_WEIGHTS[r],base=Math.floor(raw);
+    quotas[r]=base;used+=base;remainders.push({rarity:r,fraction:raw-base});
+  });
+  remainders.sort((a,b)=>(b.fraction-a.fraction)||(Math.random()-.5));
+  for(let i=0;i<count-used;i++)quotas[remainders[i%remainders.length].rarity]++;
+  // Hybrid guarantee: races with 20+ ducks always contain at least one Legendary.
+  if(count>=20&&quotas.legendary===0){
+    const donor=RARITY_ORDER.filter(r=>r!=='legendary'&&quotas[r]>0).sort((a,b)=>quotas[b]-quotas[a])[0];
+    if(donor){quotas[donor]--;quotas.legendary++}
+  }
+  return quotas;
+}
+const HAIR_STYLES=['short','spiky','mohawk','afro','bob','long','pigtail','curly','ponytail','braid','sidepart','fluffy','undercut','twobuns','feather','swept'];
+const HEADWEAR_STYLES=['cap','beanie','chef','hard','helmet','crown','party','cowboy','pirate','guard','straw','santa','top'];
+const FACE_STYLES=['freckles','blush','scar','eyepatch','mask','bandana','mustache','beard','whiskers','facepaint','cheek-stripes','nose-ring','tear','stitches','respirator','fangs','none'];
+const GL=['round','shades','star','heart','goggles','monocle','square','aviator','visor','pixel','oval','sport','halfmoon','tech'];
+const NK=['bow','scarf','choker','medal','chain','ribbon','tie','necklace','bandana','none'];
+function generateDucks(count){
+  const n=Math.max(0,Math.floor(Number(count)||0));
+  if(!n)return [];
+  if(n>DUCK_DATA.costumes.length)throw new Error('Not enough unique costumes for '+n+' ducks');
+  const quotas=hybridRarityQuotas(n),usedCostumes=new Set(),chosenCostumes=[];
+  const takeById=id=>{
+    const costume=DUCK_DATA.costumes.find(item=>item.id===id);
+    if(costume&&!usedCostumes.has(id)){usedCostumes.add(id);chosenCostumes.push(costume);}
+  };
+  if(n>=20)['doctor','nurse','firefighter','thai-student','businessman'].forEach(takeById);
+  if(n>=20&&quotas.common>=2){takeById('batman');takeById('superman');}
+  let shortage=0;
+  RARITY_ORDER.forEach(r=>{
+    const already=chosenCostumes.filter(costume=>costume.rarity===r).length;
+    const needed=Math.max(0,quotas[r]-already);
+    const pool=shufflePool(DUCK_DATA.costumes.filter(costume=>costume.rarity===r&&!usedCostumes.has(costume.id)));
+    const take=Math.min(needed,pool.length);
+    for(let i=0;i<take;i++){usedCostumes.add(pool[i].id);chosenCostumes.push(pool[i]);}
+    shortage+=needed-take;
+  });
+  if(shortage>0){
+    const reserve=shufflePool(DUCK_DATA.costumes.filter(costume=>!usedCostumes.has(costume.id)));
+    if(reserve.length<shortage)throw new Error('Unique costume pool exhausted');
+    for(let i=0;i<shortage;i++){usedCostumes.add(reserve[i].id);chosenCostumes.push(reserve[i]);}
+  }
+  shufflePool(chosenCostumes);
+  const usedCombos=new Set();
+  return chosenCostumes.map((costume,index)=>{
+    const color=rnd(DUCK_DATA.colors),pattern=rnd(DUCK_DATA.patterns);
+    const key=color.id+'|'+pattern.id+'|'+costume.id;
+    if(usedCombos.has(key))throw new Error('Duplicate duck appearance combination: '+key);
+    usedCombos.add(key);
+    const costumeIndex=DUCK_DATA.costumes.indexOf(costume);
+    const characterCostume=costume.theme==='superhero'||costume.theme==='anime';
+    const occupation=costume.theme==='occupation';
+    const occupationHair={'thai-student':'short',nurse:'short',businessman:'sidepart',doctor:'short',firefighter:'short'};
+    const occupationHeadwear={doctor:'doctor',nurse:'nurse-cap',firefighter:'firefighter'};
+    const hair=characterCostume?'none':(occupationHair[costume.id]||rnd(HAIR_STYLES));
+    const wear=characterCostume?null:(Object.prototype.hasOwnProperty.call(occupationHeadwear,costume.id)?occupationHeadwear[costume.id]:(occupation?null:(Math.random()<.24?rnd(HEADWEAR_STYLES):null)));
+    const face=characterCostume?'none':rnd(FACE_STYLES),gl=characterCostume?null:(Math.random()<.42?rnd(GL):null),nk=characterCostume?'none':(Math.random()<.35?rnd(NK):'none');
+    const main=costume.id==='thai-student'?'#f8f8f4':costume.main;
+    const accent=costume.id==='thai-student'?'#243f86':costume.accent;
+    const co={
+      bc:color.value,pattern:pattern.id,su:wear,h:hair,costumeId:costume.id,costumeName:costume.name,
+      rarity:costume.rarity,costumeMain:main,costumeAccent:accent,headStyle:costumeIndex,
+      costumeTheme:costume.theme||'classic',costumeEmblem:costume.emblem||'',characterCostume,
+      outfitStyle:costumeIndex,outfitAccent:accent,face,faceColor:rnd(['#e84b58','#f4b5a6','#fff0cf','#25252d','#5d7ed0']),
+      gl,nk,nc:accent,c:accent,hc:main,glColor:rnd(['#222','#e2bd55','#e8f6ff','#d64b69']),
+      sh:'solid',s1:main,s2:accent
+    };
+    return {id:'duck-'+(index+1),baseColor:color.id,pattern:pattern.id,costumeId:costume.id,rarity:costume.rarity,co};
+  });
+}
 function assignCo(list){
- const outfits=shuffleDesign(COSTUME_DESIGNS.slice()),heads=shuffleDesign(HEAD_DESIGNS.slice()),faces=shuffleDesign(FACE_DESIGNS.slice());
- list.forEach((r,i)=>{const co=genCo();co.costumeDesign=i<50?outfits[i]:null;co.headDesign=i<50?heads[i]:null;co.faceDesign=i<50?faces[i]:null;co.costumeId=co.costumeDesign?.id||'none';if(co.costumeDesign)co.bc=DESIGN_COLORS[co.costumeDesign.palette][0];co.hc=co.headDesign?DESIGN_COLORS[co.headDesign.palette][1]:rnd(COL);r.co=co});
+  const generated=generateDucks(list.length);
+  list.forEach((r,i)=>{r.co=generated[i].co;r.appearanceId=generated[i].id;r.costumeId=generated[i].costumeId;r.rarity=generated[i].rarity});
 }
 
-/* ---------- duck drawing: fluffy front-facing duck (unit coords, width = 1) ---------- */
+/* ---------- duck drawing: fluffy front-facing view (unit coords) ---------- */
 const shade=(h,f)=>{const n=parseInt(h.slice(1),16),m=v=>Math.max(0,Math.min(255,Math.round(v*f)));return '#'+[n>>16,n>>8&255,n&255].map(v=>m(v).toString(16).padStart(2,'0')).join('')};
 const PI=Math.PI,PH=new Path2D(),PB=new Path2D(),PD=new Path2D();
-PH.ellipse(0,-.38,.39,.34,0,0,7);PH.moveTo(.36,.12);PH.ellipse(0,.12,.36,.38,0,0,7);
-PB.ellipse(0,.12,.36,.38,0,0,7);PD.ellipse(0,-.38,.39,.34,0,0,7);
+PH.ellipse(0,-.38,.39,.34,0,0,Math.PI*2);PH.moveTo(.36,.12);PH.ellipse(0,.12,.36,.38,0,0,Math.PI*2);
+PB.ellipse(0,.12,.36,.38,0,0,Math.PI*2);
+PD.ellipse(0,-.38,.39,.34,0,0,Math.PI*2);
 function drawDuck(k,x,y,s,t){
   const c=cx,co=k.r.co,bc=co.bc,hc=co.hc,lw=.02,ol=co.ol||(co.ol=shade(bc,.6)),INK='#2b2100';
   const FS=(col,o)=>{c.fillStyle=col;c.fill();c.lineWidth=lw;c.strokeStyle=o||INK;c.stroke()};
@@ -139,112 +399,40 @@ function drawDuck(k,x,y,s,t){
   const star=(a,b,Ro,ri,col)=>{c.beginPath();for(let i=0;i<10;i++){const rr=i%2?ri:Ro,an=-PI/2+i*PI/5;c.lineTo(a+rr*Math.cos(an),b+rr*Math.sin(an))}c.closePath();FS(col)};
   const heart=(a,b,z,col)=>{c.beginPath();c.moveTo(a,b+z);c.bezierCurveTo(a-z*1.4,b-z*.2,a-z*.6,b-z*1.2,a,b-z*.5);c.bezierCurveTo(a+z*.6,b-z*1.2,a+z*1.4,b-z*.2,a,b+z);FS(col)};
   const line=(a,b,d,e,col,w)=>{c.beginPath();c.moveTo(a,b);c.lineTo(d,e);c.lineWidth=w||lw;c.strokeStyle=col||INK;c.stroke()};
-function drawCostumeDesign(d){
- const p=DESIGN_COLORS[d.palette],a=p[0],b=p[1],w=p[2],i=d.shape;
- c.save();c.clip(PB);
- switch(i%10){
- case 0:poly([[-.34,-.08],[-.2,-.22],[0,-.12],[.2,-.22],[.34,-.08],[.25,.5],[-.25,.5]],a);poly([[-.13,-.12],[0,.03],[.13,-.12],[.09,.48],[-.09,.48]],b);R(-.34,.38,.68,.09,shade(a,.7));break;
- case 1:c.beginPath();c.ellipse(0,.16,.43,.4,0,0,7);FS(a);R(-.27,-.04,.54,.48,b);R(-.08,-.12,.16,.6,w);break;
- case 2:poly([[-.35,-.12],[-.16,-.02],[-.1,.5],[.1,.5],[.16,-.02],[.35,-.12],[.28,.52],[-.28,.52]],a);poly([[-.1,-.02],[0,.16],[.1,-.02],[.05,.5],[-.05,.5]],w);break;
- case 3:poly([[-.36,-.1],[-.18,-.22],[0,-.04],[.18,-.22],[.36,-.1],[.29,.52],[-.29,.52]],a);R(-.29,.29,.58,.12,b);break;
- case 4:c.beginPath();c.ellipse(0,.15,.38,.43,0,0,7);FS(a);poly([[-.2,-.1],[0,.13],[.2,-.1],[.12,.5],[-.12,.5]],b);break;
- case 5:poly([[-.32,-.16],[-.18,-.26],[0,-.1],[.18,-.26],[.32,-.16],[.24,.5],[-.24,.5]],a);for(let z=0;z<4;z++)line(-.28+z*.18,-.08,-.2+z*.18,.45,b,.045);break;
- case 6:c.beginPath();c.ellipse(0,.16,.4,.43,0,0,7);FS(a);for(let z=0;z<3;z++)circ(-.2+z*.2,.05,.055,b);R(-.3,.35,.6,.08,w);break;
- case 7:poly([[-.36,-.05],[-.22,-.22],[0,-.06],[.22,-.22],[.36,-.05],[.3,.5],[-.3,.5]],a);poly([[-.28,.02],[0,.2],[.28,.02],[.22,.5],[-.22,.5]],b);break;
- case 8:R(-.36,-.05,.72,.57,a);poly([[-.22,-.05],[0,.18],[.22,-.05],[.14,.52],[-.14,.52]],b);line(-.32,.05,.32,.05,w,.045);break;
- default:poly([[-.38,-.12],[-.24,-.25],[0,-.05],[.24,-.25],[.38,-.12],[.22,.52],[-.22,.52]],a);poly([[-.12,-.12],[0,.1],[.12,-.12],[.2,.52],[-.2,.52]],b);break;
- }
- const em=['✦','⚙','☂','♜','☯','♟','♫','☘','✿','★'];c.restore();
- c.save();c.font='bold .19px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle=b;c.fillText(em[i%10],0,.2);c.restore();
- if(i%5===0){line(-.31,.05,-.39,.28,b,.035);line(.31,.05,.39,.28,b,.035)}
- if(i%5===1){circ(-.24,.35,.045,w);circ(.24,.35,.045,w)}
- if(i%5===2){R(-.3,.31,.6,.045,b);for(let z=0;z<3;z++)circ(-.18+z*.18,.39,.025,w)}
- if(i%5===3){poly([[-.1,-.04],[0,.12],[.1,-.04],[.07,.3],[-.07,.3]],w)}
- if(i%5===4){line(-.25,.42,.25,.42,w,.035);circ(0,.42,.05,b)}
- const group=Math.floor(i/10);
- if(group===0){poly([[-.34,-.1],[-.24,-.23],[-.08,-.14],[-.12,.04],[-.3,.08]],b);poly([[.34,-.1],[.24,-.23],[.08,-.14],[.12,.04],[.3,.08]],b)}
- if(group===1){poly([[-.28,-.16],[-.12,-.2],[.28,.45],[.12,.48]],w);line(-.25,-.1,.22,.45,b,.025)}
- if(group===2){R(-.2,.18,.4,.22,w);R(-.14,.22,.28,.035,b);circ(0,.34,.035,a)}
- if(group===3){for(let z=0;z<3;z++)line(-.3+z*.3,.02,-.26+z*.3,.48,w,.025);R(-.32,.46,.64,.06,b)}
- if(group===4){for(let z=0;z<5;z++)circ(-.28+z*.14,-.08,.035,w);line(-.32,.48,.32,.48,b,.04)}
-}
-function drawHeadDesign(d){
- const p=DESIGN_COLORS[d.palette],a=p[0],b=p[1],i=d.shape;c.save();c.translate(0,-.64);
- switch(i%10){
- case 0:poly([[-.28,.02],[-.18,-.28],[0,-.5],[.18,-.28],[.28,.02]],a);line(-.18,-.2,.18,-.2,b,.045);circ(0,-.36,.055,b);break;
- case 1:poly([[-.22,.02],[-.2,-.32],[0,-.48],[.2,-.32],[.22,.02]],a);poly([[-.12,-.24],[0,-.38],[.12,-.24]],b);break;
- case 2:for(let d of [-1,1]){circ(d*.22,-.14,.14,a);star(d*.22,-.14,.11,.045,b)}break;
- case 3:c.beginPath();c.ellipse(0,-.12,.38,.1,0,0,7);FS(a);R(-.06,-.43,.12,.32,b);circ(0,-.45,.08,a);break;
- case 4:for(let z=0;z<3;z++){circ(-.18+z*.18,-.18,.12,a);circ(-.18+z*.18,-.18,.045,b)}break;
- case 5:poly([[-.3,.02],[-.26,-.22],[-.1,-.35],[0,-.2],[.1,-.35],[.26,-.22],[.3,.02]],a);R(-.3,-.02,.6,.06,b);break;
- case 6:for(let z=0;z<4;z++){const ang=z*Math.PI/2;line(0,-.08,Math.cos(ang)*.32,-.2+Math.sin(ang)*.22,a,.07);circ(Math.cos(ang)*.32,-.2+Math.sin(ang)*.22,.07,b)}break;
- case 7:poly([[-.24,.02],[-.12,-.48],[.12,-.48],[.24,.02]],a);R(-.2,-.12,.4,.07,b);break;
- case 8:c.beginPath();c.ellipse(0,-.12,.33,.27,0,Math.PI,0);c.closePath();FS(a);for(let z=0;z<3;z++)circ(-.18+z*.18,-.22,.035,b);break;
- default:poly([[-.32,.02],[-.18,-.2],[0,-.42],[.18,-.2],[.32,.02]],a);circ(0,-.28,.09,b);line(-.28,-.02,.28,-.02,b,.04);break;
- }
- if(i%5===0){line(-.25,-.12,.25,-.12,b,.025);circ(0,-.12,.045,a)}
- if(i%5===1)poly([[-.08,-.04],[0,-.22],[.08,-.04]],b);
- if(i%5===2){circ(-.28,-.08,.05,b);circ(.28,-.08,.05,b)}
- if(i%5===3){line(0,-.42,0,-.08,b,.035);circ(0,-.42,.045,b)}
- if(i%5===4)star(0,-.18,.1,.04,b);
- const group=Math.floor(i/10);
- if(group===0){for(let z=0;z<3;z++)poly([[-.22+z*.22,-.08],[-.16+z*.22,-.28],[-.1+z*.22,-.08]],b)}
- if(group===1){poly([[.18,-.08],[.4,-.02],[.32,.08]],b);line(.25,-.12,.4,-.25,a,.035)}
- if(group===2){for(let z=0;z<3;z++)circ(-.18+z*.18,-.35,.035,b)}
- if(group===3){poly([[-.32,-.02],[-.48,-.18],[-.34,-.28],[-.2,-.08]],a);poly([[.32,-.02],[.48,-.18],[.34,-.28],[.2,-.08]],a)}
- if(group===4){c.beginPath();c.ellipse(0,-.32,.4,.055,0,0,7);c.lineWidth=.035;c.strokeStyle=b;c.stroke()}
- c.restore();
-}
-function drawFaceDesign(d){
- const p=DESIGN_COLORS[d.palette],a=p[0],b=p[1],i=d.shape;
- switch(i%10){
- case 0:poly([[-.3,-.28],[-.18,-.38],[-.08,-.3],[0,-.36],[.08,-.3],[.18,-.38],[.3,-.28],[.2,-.22],[0,-.25],[-.2,-.22]],a);break;
- case 1:for(let z of [-1,1])poly([[z*.12,-.25],[z*.22,-.18],[z*.34,-.25],[z*.24,-.34]],b);break;
- case 2:for(let z of [-1,1])star(z*.29,-.29,.09,.035,a);break;
- case 3:for(let z of [-1,1]){line(z*.3,-.48,z*.16,-.3,b,.045);line(z*.3,-.3,z*.16,-.48,b,.045)}break;
- case 4:circ(0,-.29,.11,a);circ(0,-.29,.045,b);break;
- case 5:for(let z of [-1,1])poly([[z*.12,-.22],[z*.2,-.12],[z*.28,-.24]],'#fff');break;
- case 6:c.beginPath();c.arc(.2,-.4,.13,0,7);c.lineWidth=.025;c.strokeStyle=a;c.stroke();line(.27,-.28,.35,-.12,b,.025);break;
- case 7:circ(0,-.24,.13,'rgba(255,255,255,.7)',a);circ(.04,-.27,.04,b);break;
- case 8:R(-.34,-.39,.68,.18,a);for(let z=0;z<4;z++)line(-.28+z*.18,-.36,-.22+z*.18,-.24,b,.02);break;
- default:for(let z of [-1,1]){c.beginPath();c.ellipse(z*.2,-.4,.13,.1,0,0,7);c.lineWidth=.025;c.strokeStyle=a;c.stroke();circ(z*.2,-.4,.045,b)}break;
- }
- if(i%5===0){circ(-.32,-.22,.035,b);circ(.32,-.22,.035,b)}
- if(i%5===1)line(-.28,-.18,.28,-.18,b,.025);
- if(i%5===2)star(0,-.23,.055,.022,b);
- if(i%5===3)circ(0,-.23,.04,a);
- if(i%5===4)line(-.12,-.18,.12,-.18,a,.035);
- const group=Math.floor(i/10);
- if(group===0){for(let z=0;z<4;z++)line(-.22+z*.14,-.16,-.3+z*.14,-.08,b,.018)}
- if(group===1){for(let z of [-1,1]){circ(z*.34,-.22,.045,a);circ(z*.28,-.15,.025,b)}}
- if(group===2){R(-.18,-.19,.36,.06,a);for(let z=0;z<4;z++)line(-.12+z*.08,-.19,-.12+z*.08,-.13,b,.014)}
- if(group===3){for(let z of [-1,1])line(z*.12,-.5,z*.3,-.54,b,.028)}
- if(group===4){star(0,-.54,.08,.03,a);circ(-.3,-.32,.04,b);circ(.3,-.32,.04,b)}
-}
   const yb=y+Math.sin(t*4+k.ph)*s*.03+Math.sin(t*9+k.ph)*s*.045;
-  c.save();c.translate(x,yb);c.rotate(Math.sin(t*3+k.ph)*.05);c.scale(s,s);c.lineJoin='round';c.lineCap='round';
+  c.save();c.translate(x,yb);c.rotate(Math.sin(t*3+k.ph)*.035);c.scale(s,s);c.lineJoin='round';c.lineCap='round';
   c.fillStyle='rgba(255,255,255,.3)';c.beginPath();c.ellipse(0,.56,.62,.12,0,0,7);c.fill();for(let z=0;z<3;z++){c.strokeStyle='rgba(230,255,255,'+(.42-z*.1)+')';c.lineWidth=.018;c.beginPath();c.ellipse(-.52-z*.15,.57,.16+z*.05,.045,0,0,7);c.stroke()}
   // wigs behind the head
-  if(co.h==='afro')circ(0,-.52,.5,hc,shade(hc,.6));
-  if(co.h==='bob'){c.beginPath();c.ellipse(0,-.35,.46,.42,0,0,7);FS(hc,shade(hc,.6))}
-  if(co.h==='long'){c.beginPath();c.ellipse(0,-.2,.46,.55,0,0,7);FS(hc,shade(hc,.6))}
-  if(co.h==='pigtail'){circ(-.44,-.45,.12,hc,shade(hc,.6));circ(.44,-.45,.12,hc,shade(hc,.6));circ(-.47,-.28,.1,hc,shade(hc,.6));circ(.47,-.28,.1,hc,shade(hc,.6))}
+  if(co.h==='afro')circ(-.02,-.52,.43,hc,shade(hc,.6));
+  if(co.h==='bob'){c.beginPath();c.ellipse(-.04,-.35,.39,.42,-.08,0,7);FS(hc,shade(hc,.6))}
+  if(co.h==='long'){c.beginPath();c.ellipse(-.08,-.2,.38,.55,-.08,0,7);FS(hc,shade(hc,.6))}
+  if(co.h==='pigtail'){circ(-.34,-.45,.12,hc,shade(hc,.6));circ(-.37,-.28,.1,hc,shade(hc,.6))}
   if(co.h==='curly')for(let i=0;i<10;i++){const a=PI*.9+i*PI*.133;circ(.46*Math.cos(a),-.38+.42*Math.sin(a),.1,hc,shade(hc,.6))}
   if(co.su==='bee'){[-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.3,-.15,.1,.26,d*.5,0,7);FS('rgba(255,255,255,.85)','#7a7a7a')})}
-  // feet
   const fp=Math.sin(t*9+k.ph)*.075;
-  [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.17,.52+fp*d,.14,.055,0,0,7);FS('#f0a020','#8a5a00');[-.07,0,.07].forEach(o=>circ(d*.17+o,.56+fp*d,.03,'#f0a020','#8a5a00'))});
-  // Reuse the original left/right wings and flap them from their shoulder pivots.
-  const flap=Math.sin(t*9+k.ph*(k.mode==='boost'?2:1))*(k.mode==='boost'?.72:.42);
-  [-1,1].forEach(d=>{c.save();c.translate(d*.31,.12);c.rotate(d*(k.mode==='tired'?.22:flap));c.beginPath();c.moveTo(0,-.055);c.bezierCurveTo(d*.12,-.23,d*.37,-.24,d*.43,-.04);c.bezierCurveTo(d*.39,.13,d*.18,.19,d*.035,.105);c.quadraticCurveTo(-.025,.04,0,-.055);c.closePath();FS(bc,ol);line(d*.08,.015,d*.31,-.035,shade(bc,.72),.018);line(d*.09,.075,d*.28,.055,shade(bc,.72),.016);c.restore()});
+  [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.17,.52+fp*d,.14,.055,0,0,7);FS('#f0a020','#8a5a00');[-.07,0,.07].forEach(o=>circ(d*.17+o,.56+fp*d,.028,'#f0a020','#8a5a00'))});
+  [-1,1].forEach(d=>{c.save();c.translate(d*.34,.13);c.rotate((k.mode==='tired'?.48:Math.sin(t*9+k.ph*(k.mode==='boost'?2:1))*(k.mode==='boost'?.9:.48))*d);c.beginPath();c.ellipse(0,0,.12,.22,0,0,7);FS(bc,ol);c.restore()});
+  const characterCostume=co.costumeTheme==='superhero'||co.costumeTheme==='anime';
+  if(characterCostume){
+    const id=co.costumeId||'',cape=co.costumeAccent||co.c;
+    if(['superman','batman','wonder-woman','thor','green-lantern','aquaman','nightwing','shazam','supergirl','luffy','zoro','sailor-moon','sung-jinwoo','shadow-monarch','tanjiro','nezuko','ichigo','rukia','all-might','yor','loid','goku','vegeta','piccolo','loki','storm','jean-grey','raven','starfire','constantine','dracula'].includes(id)){
+      poly([[-.12,-.12],[-.42,-.02],[-.62,.46],[-.42,.52],[-.08,.34],[.02,.02]],cape,shade(cape,.55));
+      line(-.28,.04,-.45,.43,'rgba(255,255,255,.55)',.018);
+    }
+  }
   // body + head
   c.lineWidth=lw*2;c.strokeStyle=ol;c.stroke(PH);c.fillStyle=bc;c.fill(PH);
   c.fillStyle='rgba(255,255,255,.2)';c.beginPath();c.ellipse(-.12,-.56,.2,.09,-.3,0,7);c.fill();
   c.beginPath();c.ellipse(0,.24,.25,.24,0,0,7);c.fill();
   c.save();c.clip(PH);
-  if(co.st==='dots'){c.fillStyle='rgba(255,255,255,.55)';for(let i=0;i<7;i++)for(let j=0;j<7;j++){c.beginPath();c.arc(-.36+i*.12+(j%2)*.06,-.62+j*.17,.035,0,7);c.fill()}}
-  if(co.su==='straw'){c.fillStyle='#ffe066';for(let i=0;i<9;i++)for(let j=0;j<7;j++){c.beginPath();c.ellipse(-.4+i*.1+(j%2)*.05,-.62+j*.19,.018,.03,0,0,7);c.fill()}}
-  if(co.su==='mask'){c.save();c.clip(PD);c.fillStyle=co.c;c.fillRect(-.5,-.8,1,.5);c.restore();star(0,-.6,.1,.045,'#fff')}
+  // Base-body pattern: deterministic visual layer independent from costume rarity.
+  if(co.pattern==='dots'){c.fillStyle='rgba(255,255,255,.58)';for(let i=0;i<7;i++)for(let j=0;j<7;j++){c.beginPath();c.arc(-.36+i*.12+(j%2)*.06,-.62+j*.17,.035,0,7);c.fill()}}
+  if(co.pattern==='stripes'){c.fillStyle='rgba(255,255,255,.48)';for(let v=-.45;v<.5;v+=.16)c.fillRect(v,-.78,.055,1.12)}
+  if(co.pattern==='checker'){c.fillStyle='rgba(255,255,255,.48)';for(let i=0;i<6;i++)for(let j=0;j<7;j++)if((i+j)%2===0)c.fillRect(-.38+i*.13,-.7+j*.16,.12,.14)}
+  if(co.pattern==='camo'){['rgba(35,75,45,.48)','rgba(110,125,55,.5)','rgba(70,90,65,.42)'].forEach((col,i)=>{c.fillStyle=col;for(let j=0;j<5;j++){c.beginPath();c.ellipse(-.28+((j*3+i*2)%6)*.1,-.62+j*.23,.075,.045,(j+i)*.4,0,7);c.fill()}})}
+  if(co.pattern==='stars'){for(let i=0;i<9;i++)star(-.3+(i%3)*.3,-.62+Math.floor(i/3)*.28,.055,.025,'rgba(255,255,255,.75)')}
+  if(co.pattern==='waves'){c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=.025;for(let j=0;j<5;j++){c.beginPath();for(let i=0;i<=12;i++){const xx=-.42+i*.07,yy=-.62+j*.22+Math.sin(i*.9)*.035;i?c.lineTo(xx,yy):c.moveTo(xx,yy)}c.stroke()}}
+  if(co.pattern==='zigzag'){c.strokeStyle='rgba(255,255,255,.58)';c.lineWidth=.035;for(let j=0;j<4;j++){c.beginPath();for(let i=0;i<=8;i++){const xx=-.4+i*.1,yy=-.64+j*.25+(i%2)*.08;i?c.lineTo(xx,yy):c.moveTo(xx,yy)}c.stroke()}}
   c.restore();
   if(co.su==='bee'){c.save();c.clip(PB);c.fillStyle='#151515';[.02,.2,.38].forEach(v=>c.fillRect(-.5,v,1,.08));c.restore()}
   // shirt (below the collar)
@@ -254,30 +442,215 @@ function drawFaceDesign(d){
     if(co.sh==='vest'){c.fillRect(-.03,0,.06,.7);c.fillStyle='#111';c.fillRect(.08,.15,.04,.04);c.fillRect(.08,.3,.04,.04)}
     if(co.sh==='check'){c.globalAlpha=.7;for(let v=-.4;v<.5;v+=.14)c.fillRect(v,0,.04,.7);for(let v=.04;v<.6;v+=.14)c.fillRect(-.5,v,1,.04);c.globalAlpha=1}
     c.restore();c.beginPath();c.ellipse(0,.12,.36,.38,0,0,PI);c.lineWidth=lw*1.6;c.strokeStyle=ol;c.stroke()}
-  if(co.costumeDesign)drawCostumeDesign(co.costumeDesign);
-  // collar, straps, bell
-  c.beginPath();c.moveTo(-.34,-.08);c.quadraticCurveTo(0,.06,.34,-.08);c.lineTo(.33,-.03);c.quadraticCurveTo(0,.11,-.33,-.03);c.closePath();FS('#8a3a2a','#4a1a10');
-  line(-.33,-.01,-.41,.17,'#4a3020',.025);line(.33,-.01,.41,.17,'#4a3020',.025);
-  if(co.nk==='bow'){poly([[0,.03],[-.14,-.05],[-.14,.1]],co.nc);poly([[0,.03],[.14,-.05],[.14,.1]],co.nc);circ(0,.03,.04,co.nc)}
-  else if(co.nk==='scarf'||co.su==='snow'){const sc=co.nc||co.c;c.beginPath();c.moveTo(-.34,-.09);c.quadraticCurveTo(0,.05,.34,-.09);c.lineTo(.33,.01);c.quadraticCurveTo(0,.14,-.33,.01);c.closePath();FS(sc);poly([[.1,.06],[.24,.04],[.2,.3],[.08,.28]],sc)}
-  else{circ(0,.11,.07,'#e0c060','#6a5010');line(-.05,.12,.05,.12,'#6a5010',.012);circ(0,.03,.018,'#c9a84a','#6a5010')}
-  // front hair
-  if(['afro','bob','long','pigtail','curly'].includes(co.h)){c.beginPath();c.ellipse(0,-.38,.4,.35,0,PI*1.2,PI*1.8);c.closePath();FS(hc,shade(hc,.6))}
-  if(co.h==='mohawk')poly([[-.1,-.66],[-.08,-.88],[-.03,-.74],[0,-.94],[.04,-.74],[.09,-.88],[.1,-.66]],hc,shade(hc,.6));
+  // Unique garment construction: distinct panel cuts, seams, collars, belts and trims.
+  if(co.outfitStyle!==undefined){
+    const st=co.outfitStyle,variant=Math.floor(st/20),accent=co.outfitAccent||co.c;
+    c.save();c.clip(PB);
+    switch(st%20){
+      case 0:poly([[-.25,-.02],[0,.18],[.25,-.02],[.16,.55],[-.16,.55]],accent);line(-.12,.08,0,.2,'#fff',.018);break;
+      case 1:poly([[-.3,.02],[-.12,-.03],[0,.1],[.12,-.03],[.3,.02],[.23,.58],[-.23,.58]],accent);R(-.045,.08,.09,.5,'#fff');break;
+      case 2:poly([[-.3,-.02],[0,.13],[.3,-.02],[.22,.58],[-.22,.58]],accent);line(-.25,.12,.25,.12,'#fff',.025);line(-.2,.3,.2,.3,'#fff',.02);break;
+      case 3:R(-.29,.02,.13,.24,accent);R(.16,.02,.13,.24,accent);R(-.03,.02,.06,.52,accent);circ(-.1,.34,.025,'#fff');circ(.1,.34,.025,'#fff');break;
+      case 4:for(let j=0;j<4;j++)line(-.29+j*.19,.02,-.12+j*.19,.58,accent,.055);break;
+      case 5:poly([[-.3,.02],[-.18,.02],[-.08,.58],[-.28,.58]],accent);poly([[.3,.02],[.18,.02],[.08,.58],[.28,.58]],accent);R(-.035,.02,.07,.56,'#252a35');break;
+      case 6:R(-.3,.04,.6,.08,accent);R(-.3,.24,.6,.06,accent);R(-.3,.44,.6,.06,accent);break;
+      case 7:poly([[-.3,.02],[.3,.02],[.2,.58],[-.2,.58]],accent);line(-.24,.15,.24,.4,'#fff',.035);line(-.24,.4,.24,.15,'#fff',.035);break;
+      case 8:for(let j=0;j<5;j++){poly([[-.3+j*.12,.02],[-.23+j*.12,.02],[-.17+j*.12,.2],[-.24+j*.12,.2]],accent)}break;
+      case 9:poly([[-.32,.02],[.32,.02],[.24,.58],[-.24,.58]],accent);R(-.13,.05,.26,.22,'#fff');line(-.2,.3,.2,.3,'#fff',.025);break;
+      case 10:poly([[-.3,.02],[-.12,.02],[0,.18],[.12,.02],[.3,.02],[.23,.58],[-.23,.58]],accent);line(-.28,.48,.28,.48,'#fff',.025);break;
+      case 11:for(let j=0;j<4;j++){circ(-.17+(j%2)*.34,.12+Math.floor(j/2)*.2,.035,accent)}line(-.25,.52,.25,.52,accent,.035);break;
+      case 12:poly([[-.3,.02],[.3,.02],[.18,.58],[-.18,.58]],accent);line(-.2,.12,.2,.12,'#fff',.025);line(-.16,.3,.16,.3,'#fff',.025);break;
+      case 13:R(-.29,.02,.58,.56,accent);R(-.08,.02,.16,.22,'#fff');R(-.28,.38,.56,.045,'#fff');break;
+      case 14:poly([[-.3,.02],[.3,.02],[.24,.58],[-.24,.58]],accent);poly([[-.3,.02],[-.08,.02],[.12,.58],[-.08,.58]],'#fff');break;
+      case 15:poly([[-.28,.02],[.28,.02],[.2,.58],[-.2,.58]],accent);for(let j=0;j<3;j++)circ(0,.14+j*.13,.025,'#fff');break;
+      case 16:poly([[-.3,.02],[.3,.02],[.22,.58],[-.22,.58]],accent);line(-.28,.08,.28,.48,'#fff',.045);line(-.28,.48,.28,.08,'#fff',.045);break;
+      case 17:poly([[-.3,.02],[-.12,.02],[0,.15],[.12,.02],[.3,.02],[.2,.58],[-.2,.58]],accent);line(-.2,.52,.2,.52,'#fff',.035);break;
+      case 18:poly([[-.28,.02],[.28,.02],[.18,.58],[-.18,.58]],accent);R(-.22,.12,.44,.08,'#fff');R(-.18,.32,.36,.08,'#fff');break;
+      case 19:poly([[-.3,.02],[.3,.02],[.2,.58],[-.2,.58]],accent);for(let j=0;j<4;j++){line(-.2,.12+j*.1,.2,.12+j*.1,'#fff',.018)}break;
+    }
+    // Per-costume variant marks make silhouettes distinguishable beyond the base color.
+    if(variant>0){
+      const vx=(variant%5-2)*.045;
+      line(-.24,.53,.24,.53,accent,.025);
+      if(variant%3===0)star(vx,.26,.075,.03,accent);
+      else if(variant%3===1){circ(vx,.25,.06,accent);circ(vx,.25,.027,'#fff')}
+      else{poly([[vx-.07,.18],[vx+.07,.18],[vx,.32]],accent)}
+      if(variant>=2){circ(-.2,.17,.035,'#fff');circ(.2,.17,.035,'#fff')}
+      if(variant>=4){line(-.28,.39,.28,.39,accent,.03);line(-.28,.43,.28,.43,'#fff',.015)}
+    }
+    c.restore();
+  }
+  // Costume-specific chest insignia, kept cosmetic only (never affects race stats).
+  if(co.costumeId){
+    const ac=co.costumeAccent||'#fff';c.save();c.translate(0,.25);
+    switch(co.costumeId){
+      case 'speedster':case 'flash':poly([[-.02,-.12],[.09,-.12],[.02,.01],[.12,.01],[-.08,.2],[-.01,.05],[-.1,.05]],ac);break;
+      case 'webhero':c.strokeStyle=ac;c.lineWidth=.018;for(let i=0;i<5;i++){c.beginPath();c.moveTo(-.22+i*.11,-.12);c.lineTo(-.12+i*.11,.13);c.stroke()}c.beginPath();c.arc(0,0,.18,0,7);c.stroke();break;
+      case 'starhero':star(0,0,.16,.07,ac);break;
+      case 'colonel':poly([[-.02,-.02],[-.16,-.12],[-.16,.08]],ac);poly([[.02,-.02],[.16,-.12],[.16,.08]],ac);circ(0,-.02,.035,'#222');break;
+      case 'gamer':R(-.14,-.08,.28,.17,'#111');circ(-.08,-.02,.025,ac);circ(.08,-.02,.025,ac);break;
+      case 'sushi':R(-.15,-.09,.3,.18,'#fff');R(-.15,-.02,.3,.06,'#ed5a48');break;
+      case 'burger':c.beginPath();c.arc(0,-.01,.16,Math.PI,0);c.lineTo(.16,.08);c.lineTo(-.16,.08);c.closePath();FS('#d99b45');R(-.15,.02,.3,.045,'#5b9b3c');break;
+      case 'detective':c.beginPath();c.arc(0,0,.12,0,7);c.strokeStyle=ac;c.lineWidth=.035;c.stroke();line(.09,.09,.2,.2,ac,.035);break;
+      case 'firefighter':poly([[-.13,.1],[-.04,-.13],[0,-.03],[.06,-.16],[.14,.1]],ac);break;
+      case 'police':star(0,0,.15,.07,ac);break;
+      case 'doctor':
+        R(-.045,-.16,.09,.32,ac);R(-.16,-.045,.32,.09,ac);
+        c.strokeStyle='#303b49';c.lineWidth=.025;c.beginPath();c.moveTo(-.2,-.12);c.lineTo(-.2,.08);c.quadraticCurveTo(-.2,.2,0,.2);c.quadraticCurveTo(.2,.2,.2,.08);c.stroke();circ(.2,.08,.045,'#303b49');break;
+      case 'nurse':
+        R(-.04,-.16,.08,.3,'#e75b86');R(-.15,-.05,.3,.08,'#e75b86');
+        poly([[-.22,-.12],[-.08,-.02],[0,.1],[-.14,.08]],'#fff');poly([[.22,-.12],[.08,-.02],[0,.1],[.14,.08]],'#fff');break;
+      case 'firefighter':
+        R(-.28,-.12,.56,.055,'#ffd447');R(-.27,.09,.54,.055,'#ffd447');
+        poly([[-.11,-.14],[.11,-.14],[.09,.04],[0,.12],[-.09,.04]],'#f4c542');circ(0,-.03,.035,'#c83232');break;
+      case 'thai-student':
+        poly([[-.25,-.13],[-.1,-.04],[0,.07],[-.13,.03]],'#243f86');
+        poly([[.25,-.13],[.1,-.04],[0,.07],[.13,.03]],'#243f86');
+        poly([[-.045,.02],[.045,.02],[.075,.2],[0,.27],[-.075,.2]],'#243f86');circ(0,-.01,.045,'#243f86');break;
+      case 'businessman':
+        poly([[-.28,-.14],[-.12,-.04],[0,.08],[.12,-.04],[.28,-.14],[.2,.2],[-.2,.2]],'#f3f4f6');
+        poly([[-.055,-.12],[.055,-.12],[.075,.12],[0,.2],[-.075,.12]],'#b83b45');
+        poly([[.15,-.1],[.26,-.1],[.24,-.02],[.15,-.02]],'#f5f5f5');break;
+      case 'racer':line(-.16,-.08,.16,.08,ac,.045);line(-.16,.08,.16,-.08,ac,.045);break;
+      case 'ninja':poly([[0,-.16],[.14,0],[0,.16],[-.14,0]],ac);break;
+      case 'wizard':star(0,0,.16,.07,ac);break;
+      case 'astronaut':c.beginPath();c.arc(0,0,.15,0,7);c.strokeStyle=ac;c.lineWidth=.035;c.stroke();circ(0,0,.045,ac);break;
+      case 'samurai':line(-.14,-.1,.14,.1,ac,.045);line(-.14,.1,.14,-.1,ac,.045);break;
+      case 'vampire':poly([[-.16,-.1],[0,.13],[.16,-.1],[.08,.02],[0,-.04],[-.08,.02]],ac);break;
+      case 'dragon':poly([[0,-.16],[.13,-.04],[.1,.13],[0,.07],[-.1,.13],[-.13,-.04]],ac);break;
+      case 'unicorn':line(-.15,.1,0,-.12,ac,.04);line(0,-.12,.15,.1,ac,.04);break;
+      case 'goldenking':star(0,0,.17,.07,ac);break;
+      case 'cosmic':for(let i=0;i<5;i++)star(-.14+i*.07,-.08+(i%2)*.12,.035,.015,ac);break;
+      case 'casual':line(-.12,0,.12,0,ac,.04);break;
+      default:{
+        const emblem=co.costumeEmblem||'star';
+        if(/medical|cross/.test(emblem)){R(-.035,-.16,.07,.32,ac);R(-.16,-.035,.32,.07,ac)}
+        else if(/sword|claw|katana|trident/.test(emblem)){line(-.12,.13,.12,-.13,ac,.045);line(-.15,-.1,-.08,-.17,ac,.035)}
+        else if(/shield|crest|panther|bat|eagle/.test(emblem)){poly([[-.15,-.13],[.15,-.13],[.12,.07],[0,.17],[-.12,.07]],ac)}
+        else if(/lightning|thunder|flash|reactor/.test(emblem)){poly([[-.02,-.16],[.1,-.16],[.02,-.02],[.13,-.02],[-.1,.17],[-.03,.04],[-.13,.04]],ac)}
+        else if(/book|letter|briefcase|camera|coffee|parcel|palette|flask|gear|music|football|basketball|scales|spy|bell|dog/.test(emblem)){R(-.14,-.1,.28,.2,ac);line(-.08,-.1,-.08,.1,'#fff',.018)}
+        else if(/moon|planet|sun|shadow|monarch|galaxy/.test(emblem)){circ(0,0,.14,ac);circ(.06,-.05,.12,co.costumeMain)}
+        else if(/star|peace|one-for-all|hero/.test(emblem)){star(0,0,.17,.07,ac)}
+        else{c.beginPath();c.arc(0,0,.14,0,7);c.strokeStyle=ac;c.lineWidth=.035;c.stroke();circ(0,0,.045,ac)}
+        break;
+      }
+    }
+    c.restore();
+  }
+  // Full-body character costume layer: suit/robe panels, gloves, belt and boots.
+  // It intentionally covers the random base pattern and generic shirt so viewers
+  // can recognize superhero/anime outfits from head to toe.
+  if(characterCostume){
+    const main=co.costumeMain||co.s1||bc,accent=co.costumeAccent||co.s2||'#fff',id=co.costumeId||'';
+    c.save();c.clip(PB);c.globalAlpha=1;
+    c.fillStyle=main;c.fillRect(-.48,-.27,.96,.82);
+    if(co.costumeTheme==='superhero'){
+      poly([[-.29,-.08],[-.12,-.02],[0,.06],[.12,-.02],[.29,-.08],[.24,.52],[-.24,.52]],main);
+      poly([[-.12,-.02],[0,.12],[.12,-.02],[.09,.48],[-.09,.48]],accent);
+      R(-.29,.36,.58,.09,accent);R(-.34,.42,.68,.045,shade(main,.72));
+      poly([[-.31,-.12],[-.17,-.18],[-.08,.02],[-.22,.14]],accent);
+      poly([[.31,-.12],[.17,-.18],[.08,.02],[.22,.14]],accent);
+      for(let d of [-1,1]){R(d*.27-.075,.12,.15,.19,shade(main,.72));R(d*.25-.09,.42,.18,.16,accent)}
+      if(/iron-man|ant-man|black-panther|black-widow|deadpool|batman|wolverine|captain-marvel/.test(id)){
+        R(-.34,.02,.68,.075,shade(main,.72));
+      }
+    }else{
+      // Anime uniforms, jackets and robes use a clear center panel and waist sash.
+      poly([[-.28,-.12],[0,.08],[.28,-.12],[.2,.53],[-.2,.53]],main);
+      poly([[-.13,-.08],[0,.13],[.13,-.08],[.08,.48],[-.08,.48]],accent);
+      R(-.29,.31,.58,.09,accent);
+      poly([[-.28,-.08],[-.38,.12],[-.28,.27],[-.18,.06]],accent);
+      poly([[.28,-.08],[.38,.12],[.28,.27],[.18,.06]],accent);
+      line(-.2,.05,.2,.42,'rgba(255,255,255,.72)',.018);
+      if(/tanjiro|nezuko|zenitsu|inosuke|sung-jinwoo|shadow-monarch|ichigo|rukia|yor|loid|luffy|zoro|sailor-moon|edward-elric/.test(id)){
+        for(let j=0;j<3;j++)line(-.23+j*.23,.08,-.15+j*.23,.45,shade(accent,.78),.022);
+      }
+    }
+    // Costume-specific waist insignia and armor plates.
+    if(/iron-man|ant-man|captain-marvel/.test(id)){circ(0,.19,.085,'#d9f8ff',accent);circ(0,.19,.045,'#fff','#9ceaff')}
+    else if(id==='batman'){c.save();c.translate(-.035,.17);c.scale(.78,1);poly([[-.17,-.035],[-.1,-.075],[-.045,-.02],[0,-.09],[.045,-.02],[.1,-.075],[.17,-.035],[.13,.035],[.05,.02],[0,.09],[-.05,.02],[-.13,.035]],'#f0ce62','#7c6225');c.restore()}
+    else if(id==='superman'){poly([[-.14,-.07],[.14,-.07],[.12,.08],[0,.17],[-.12,.08]],'#d9363e','#7b1d24');poly([[-.09,-.025],[.09,-.025],[.055,.015],[-.07,.015],[-.09,.065],[.08,.065],[.055,.105],[-.12,.105],[-.1,.045],[-.01,.025],[.09,.025]],'#f6cf4a','#8b6920')}
+    else if(/black-panther|nightwing|wolverine|wonder-woman|green-lantern|aquaman|shazam|supergirl/.test(id)){star(-.04,.18,.105,.045,accent)}
+    else if(/naruto|sasuke|sakura|kakashi|tanjiro|nezuko|zenitsu|inosuke/.test(id)){R(-.23,.14,.46,.065,accent);circ(0,.18,.045,'#f7f2d7',main)}
+    else{circ(0,.19,.065,accent);circ(0,.19,.03,'#fff')}
+    if(['miles-morales','venom','carnage'].includes(id)){line(-.28,.02,.28,.42,accent,.035);line(-.28,.42,.28,.02,accent,.035)}
+    if(id==='loki'){poly([[-.3,-.06],[-.18,-.22],[0,-.08],[.18,-.22],[.3,-.06],[.22,.2],[-.22,.2]],'#3b715d');line(-.2,.23,.2,.23,'#d8b65b',.035)}
+    if(id==='thanos'){for(let j=0;j<3;j++)R(-.25+j*.17,.02,.09,.32,'#b79a55');circ(.22,.32,.045,'#8b72d1')}
+    if(id==='groot'){for(let j=0;j<5;j++){const xx=-.24+j*.12;line(xx,.02,xx-.04,.4,'#a57b4d',.045);circ(xx-.04,.4,.045,'#77a65b')}}
+    if(id==='ghost-rider'){for(let j=0;j<4;j++)poly([[-.26+j*.16,.08],[-.2+j*.16,-.08],[-.12+j*.16,.1],[-.18+j*.16,.4]],'#ff8a26')}
+    if(id==='storm'||id==='jean-grey'){line(-.22,.05,.22,.05,'#e6d9f2',.035);circ(0,.3,.055,'#f5d16a')}
+    if(id==='magneto'){poly([[-.28,-.08],[0,-.2],[.28,-.08],[.22,.15],[-.22,.15]],'#8d4055')}
+    if(id==='nightcrawler'){c.beginPath();c.moveTo(-.28,.05);c.quadraticCurveTo(-.12,.32,.15,.22);c.quadraticCurveTo(.36,.18,.3,.42);c.strokeStyle='#e0a94b';c.lineWidth=.045;c.stroke()}
+    if(id==='professor-x'){c.beginPath();c.ellipse(0,.12,.28,.09,0,0,7);FS('#a9b5c2');line(-.22,.15,.22,.15,'#e7edf2',.025)}
+    if(id==='poison-ivy'){for(let j=0;j<4;j++){const xx=-.24+j*.16;c.beginPath();c.moveTo(xx,.42);c.bezierCurveTo(xx-.1,.28,xx+.1,.2,xx,.04);c.strokeStyle='#70a85c';c.lineWidth=.035;c.stroke();circ(xx,.22,.035,'#d75b8b')}}
+    if(id==='raven'){poly([[-.28,-.08],[0,.04],[.28,-.08],[.2,.5],[-.2,.5]],'#54446f')}
+    if(id==='blue-beetle'){poly([[-.3,-.08],[0,.04],[.3,-.08],[.22,.46],[-.22,.46]],'#197da9');line(-.2,.05,.2,.42,'#61d7e9',.025)}
+    if(id==='rengoku'){for(let j=0;j<4;j++)poly([[-.26+j*.15,.05],[-.18+j*.15,.2],[-.22+j*.15,.45]],'#e5a53e')}
+    if(id==='shinobu'){for(let j=0;j<4;j++){const xx=-.2+j*.13;circ(xx,.12,.04,'#e8c9e6');line(xx,.12,xx+.04,.34,'#9875ad',.018)}}
+    if(id==='giyu'){poly([[-.3,-.04],[0,.12],[.3,-.04],[.22,.48],[-.22,.48]],'#4b526e');line(-.18,.18,.18,.18,'#b74b61',.04)}
+    if(id==='itachi'){for(let j=0;j<3;j++)circ(-.18+j*.18,.2,.035,'#c9434b')}
+    if(id==='madara'){poly([[-.28,-.05],[0,.08],[.28,-.05],[.22,.5],[-.22,.5]],'#8c343d')}
+    if(id==='frieza'){circ(0,.2,.09,'#b18abb');circ(-.2,.12,.05,'#e8ddea');circ(.2,.12,.05,'#e8ddea')}
+    if(id==='majin-buu'){circ(0,.18,.07,'#e5a4c9');line(-.04,.24,.04,.24,'#fff',.02)}
+    if(id==='dinosaur'){c.beginPath();c.moveTo(-.32,-.02);c.quadraticCurveTo(-.22,-.18,-.12,-.06);c.quadraticCurveTo(.02,-.3,.12,-.05);c.quadraticCurveTo(.25,-.2,.34,.02);c.lineTo(.22,.42);c.quadraticCurveTo(0,.5,-.22,.42);c.closePath();FS('#4b9b55','#28683a');for(let j=0;j<4;j++)poly([[-.2+j*.13,.02],[-.14+j*.13,-.12],[-.08+j*.13,.02]],'#e4c76a')}
+    if(id==='dracula'){poly([[-.3,-.04],[-.2,.08],[0,.16],[.2,.08],[.3,-.04],[.22,.42],[-.22,.42]],'#2a2535');line(-.18,.3,.18,.3,'#b94155',.035)}
+    if(id==='donald-trump'){poly([[-.18,-.04],[0,.12],[.18,-.04],[.12,.42],[-.12,.42]],'#263c5b');poly([[-.04,.05],[.04,.05],[.08,.4],[0,.47],[-.08,.4]],'#d63b42')}
+    c.restore();
+    // Gloves and boots complete the full-length silhouette.
+    [-1,1].forEach(d=>{
+      c.save();c.translate(d*.43,.13);c.rotate(d*.18);
+      c.beginPath();c.ellipse(0,0,.105,.19,.05,0,Math.PI*2);FS(accent,shade(accent,.62));c.restore();
+      c.beginPath();c.roundRect(d*.17-.105,.43+Math.sin(t*9+k.ph)*.075*d,.21,.16,.055);FS(accent,shade(accent,.58));
+      line(d*.17-.07,.51+Math.sin(t*9+k.ph)*.075*d,d*.17+.07,.51+Math.sin(t*9+k.ph)*.075*d,'rgba(255,255,255,.7)',.018);
+    });
+  }
+  c.beginPath();c.moveTo(-.25,-.04);c.quadraticCurveTo(-.02,.12,.28,-.06);c.lineTo(.25,.02);c.quadraticCurveTo(-.02,.19,-.29,.04);c.closePath();FS('#8a3a2a','#4a1a10');
+  line(-.24,.02,-.34,.19,'#4a3020',.025);
+  if(co.nk==='bow'){poly([[-.03,.04],[-.19,-.03],[-.16,.12]],co.nc);poly([[-.03,.04],[.08,-.02],[.05,.13]],co.nc);circ(-.03,.04,.035,co.nc)}
+  else if(co.nk==='scarf'||co.su==='snow'){const sc=co.nc||co.c;poly([[-.26,-.05],[.16,.02],[.26,.12],[-.2,.08]],sc);poly([[-.08,.08],[.08,.12],[-.02,.39],[-.15,.35]],sc)}
+  else{circ(-.03,.12,.065,'#e0c060','#6a5010');line(-.08,.12,.02,.12,'#6a5010',.012)}
+  // Front hair styles: hair is independent from hats and remains inside the head silhouette.
+  const hairShade=shade(hc,.72);
+  if(['afro','curly','fluffy'].includes(co.h)){for(let i=0;i<13;i++){const a=PI*1.08+i*PI*.07;circ(.37*Math.cos(a),-.39+.31*Math.sin(a),co.h==='afro'?.105:.075,hc,hairShade)}}
+  if(['bob','long'].includes(co.h)){c.beginPath();c.ellipse(0,co.h==='long'?.0:-.34,.445,co.h==='long'?.52:.39,0,0,7);FS(hc,hairShade);if(co.h==='long'){R(-.42,-.35,.1,.62,hc);R(.32,-.35,.1,.62,hc)}}
+  if(co.h==='pigtail'){circ(-.43,-.48,.13,hc,hairShade);circ(.43,-.48,.13,hc,hairShade);circ(-.48,-.3,.1,hc,hairShade);circ(.48,-.3,.1,hc,hairShade);c.beginPath();c.ellipse(0,-.48,.39,.2,0,PI,0);c.closePath();FS(hc,hairShade)}
+  if(co.h==='twobuns'){circ(-.28,-.68,.14,hc,hairShade);circ(.28,-.68,.14,hc,hairShade);c.beginPath();c.ellipse(0,-.48,.38,.18,0,PI,0);c.closePath();FS(hc,hairShade)}
+  if(co.h==='ponytail'){circ(.39,-.47,.15,hc,hairShade);poly([[.36,-.45],[.52,-.38],[.56,-.12],[.43,-.2]],hc,hairShade);c.beginPath();c.ellipse(0,-.48,.39,.17,0,PI,0);c.closePath();FS(hc,hairShade)}
+  if(co.h==='braid'){for(let i=0;i<5;i++)circ(.34+i*.035,-.25-i*.11,.075,hc,hairShade);c.beginPath();c.ellipse(0,-.49,.39,.17,0,PI,0);c.closePath();FS(hc,hairShade)}
+  if(['short','spiky','sidepart','undercut','feather','swept'].includes(co.h)){
+    if(co.h==='spiky'||co.h==='feather')poly([[-.38,-.42],[-.31,-.7],[-.19,-.56],[-.06,-.82],[.03,-.58],[.2,-.76],[.36,-.42]],hc,hairShade);
+    else if(co.h==='undercut'){poly([[-.38,-.42],[-.3,-.7],[.2,-.72],[.37,-.42]],hc,hairShade);R(.27,-.48,.1,.17,hairShade)}
+    else if(co.h==='swept'){poly([[-.4,-.4],[-.25,-.76],[.05,-.7],[.38,-.49],[.2,-.42]],hc,hairShade)}
+    else{c.beginPath();c.ellipse(0,-.5,.39,.18,0,PI,0);c.closePath();FS(hc,hairShade);if(co.h==='sidepart')line(.05,-.68,.25,-.51,hairShade,.025)}
+  }
   if(!co.h&&!co.su){poly([[-.05,-.7],[-.17,-.84],[-.1,-.68]],'#3a2a1a');poly([[.05,-.7],[.18,-.85],[.1,-.68]],'#3a2a1a')}
-  // Multiple eye poses; each duck keeps its own randomly assigned expression.
-  const eyeStyle=co.eyeStyle??(co.eyeStyle=Math.floor(Math.random()*12));
-  [-1,1].forEach(d=>{const ex=d*.2,ey=-.4;
-   c.beginPath();c.ellipse(ex,ey,.075,eyeStyle===1?.045:eyeStyle===2?.105:.08,eyeStyle===3?d*.18:0,0,7);FS('#fff',shade(bc,.5));
-   if(eyeStyle===4){line(ex-.06,ey+.02,ex+.06,ey+.02,'#171717',.035);return}
-   const px=eyeStyle===3?ex-d*.025:eyeStyle===6?ex+d*.025:ex;
-   const py=eyeStyle===5||eyeStyle===8?ey-.02:eyeStyle===6?ey+.025:ey;
-   circ(px,py,eyeStyle===2?.043:eyeStyle===7?.036:.037,'#1a1a1a','#1a1a1a');
-   if(eyeStyle===2||eyeStyle===7){circ(px-.012,py-.015,.014,'#fff','#fff')}
-   if(eyeStyle===1||eyeStyle===5||eyeStyle===8)line(ex-.07,ey-.08,ex+.07,ey-.08,INK,.02);
-  });
-  c.beginPath();c.ellipse(0,-.29,.2,.08,0,0,7);FS('#ebb82a','#8a6a00');line(-.12,-.3,.12,-.3,'#a07a10',.012);
-  if(co.faceDesign)drawFaceDesign(co.faceDesign);
+  // Front-facing eyes and centered duck bill.
+  [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.2,-.4,.075,.08,0,0,7);FS('#fff',shade(bc,.5));circ(d*.19,-.39,.037,'#1a1a1a','#1a1a1a')});
+  // Two separate inward-slanting eyebrows: both descend toward the center, with a clear gap.
+  line(-.32,-.55,-.13,-.48,'#35251b',.045);
+  line(.13,-.48,.32,-.55,'#35251b',.045);
+  c.beginPath();c.ellipse(0,-.29,.2,.08,0,0,7);FS('#ebb82a','#8a6a00');
+  line(-.12,-.3,.12,-.3,'#a07a10',.012);
+  // Face accessories: varied facial identity details, independent from eyewear.
+  const fc=co.faceColor||co.costumeAccent||'#e85d75';
+  switch(co.face){
+    case 'freckles':[-1,1].forEach(d=>{for(let j=0;j<3;j++)circ(d*(.25+j*.035),-.29+(j%2)*.045,.014,fc)});break;
+    case 'blush':[-1,1].forEach(d=>circ(d*.29,-.29,.075,'rgba(244,105,130,.55)'));break;
+    case 'scar':line(-.29,-.55,.03,-.27,fc,.035);line(-.22,-.48,-.18,-.43,'#fff',.012);break;
+    case 'eyepatch':R(.07,-.49,.25,.18,'#20202a');line(.08,-.4,.28,-.4,fc,.025);line(.28,-.4,.39,-.25,'#20202a',.018);break;
+    case 'mask':poly([[-.31,-.33],[.31,-.33],[.24,-.12],[-.24,-.12]],fc);line(-.31,-.3,-.39,-.38,fc,.025);line(.31,-.3,.39,-.38,fc,.025);break;
+    case 'bandana':poly([[-.31,-.34],[.31,-.34],[.25,-.19],[-.25,-.19]],fc);for(let j=0;j<3;j++)circ(-.12+j*.12,-.27,.018,'#fff');break;
+    case 'mustache':poly([[-.02,-.27],[-.13,-.34],[-.28,-.3],[-.2,-.22],[-.08,-.23],[0,-.2],[.08,-.23],[.2,-.22],[.28,-.3],[.13,-.34]],'#3a2a1a');break;
+    case 'beard':poly([[-.2,-.26],[.2,-.26],[.16,-.08],[0,.02],[-.16,-.08]],'#4a3028');break;
+    case 'whiskers':[-1,1].forEach(d=>{line(d*.24,-.28,d*.43,-.32,fc,.018);line(d*.24,-.24,d*.45,-.23,fc,.018);line(d*.24,-.2,d*.42,-.14,fc,.018)});break;
+    case 'facepaint':line(-.36,-.5,-.12,-.32,fc,.05);line(.12,-.32,.36,-.5,fc,.05);star(0,-.22,.045,.02,'#fff');break;
+    case 'cheek-stripes':[-1,1].forEach(d=>{line(d*.28,-.32,d*.38,-.25,fc,.025);line(d*.28,-.27,d*.38,-.2,fc,.025)});break;
+    case 'nose-ring':c.beginPath();c.arc(.08,-.27,.065,0,Math.PI);c.strokeStyle='#e7c45a';c.lineWidth=.022;c.stroke();break;
+    case 'tear':circ(.25,-.27,.035,'#6dc9f4');break;
+    case 'stitches':line(-.12,-.25,.12,-.25,fc,.025);for(let j=0;j<4;j++)line(-.1+j*.065,-.29,-.07+j*.065,-.21,'#fff',.012);break;
+    case 'respirator':R(-.24,-.36,.48,.2,'#d7e0e8');circ(-.16,-.26,.055,'#7d99a9');circ(.16,-.26,.055,'#7d99a9');break;
+    case 'fangs':poly([[-.1,-.25],[-.04,-.25],[-.08,-.16]],'#fff');poly([[.04,-.25],[.1,-.25],[.08,-.16]],'#fff');break;
+  }
   // glasses
   const g2=f=>[-1,1].forEach(d=>f(d*.2));
   switch(co.gl){
@@ -287,8 +660,15 @@ function drawFaceDesign(d){
    case 'heart':g2(a=>heart(a,-.4,.09,'#e0203a'));break;
    case 'goggles':R(-.42,-.42,.84,.04,'#333');g2(a=>circ(a,-.4,.12,'rgba(255,190,0,.6)','#333'));break;
    case 'monocle':c.beginPath();c.arc(.2,-.4,.11,0,7);c.lineWidth=lw*1.4;c.strokeStyle='#d4a000';c.stroke();line(.2,-.29,.32,.1,'#d4a000',.012);break;
+   case 'square':g2(a=>{c.beginPath();c.roundRect(a-.105,-.5,.21,.19,.025);FS('rgba(190,235,255,.38)','#252525')});line(-.09,-.4,.09,-.4,'#252525',.02);break;
+   case 'aviator':g2(a=>{c.beginPath();c.ellipse(a,-.4,.12,.09,.15,0,7);FS('rgba(255,215,100,.35)','#302b2b')});line(-.09,-.4,.09,-.4,'#302b2b',.02);break;
+   case 'visor':R(-.38,-.47,.76,.14,'rgba(80,190,230,.72)');line(-.38,-.32,.38,-.32,'#252525',.025);break;
+   case 'pixel':[-1,1].forEach(d=>R(d*.2-.09,-.48,.18,.16,'#171717'));line(-.08,-.4,.08,-.4,'#171717',.025);break;
+   case 'oval':g2(a=>{c.beginPath();c.ellipse(a,-.4,.13,.09,0,0,7);FS('rgba(255,255,255,.25)','#555')});line(-.08,-.4,.08,-.4,'#555',.02);break;
+   case 'sport':g2(a=>{c.beginPath();c.ellipse(a,-.4,.13,.1,0,0,7);FS('rgba(90,180,255,.45)','#222')});line(-.09,-.4,.09,-.4,'#222',.025);break;
+   case 'halfmoon':g2(a=>{c.beginPath();c.arc(a,-.4,.12,0,7);FS('rgba(255,255,255,.25)','#c69b35');R(a-.13,-.4,.26,.08,'#c69b35')});break;
+   case 'tech':g2(a=>{c.beginPath();c.roundRect(a-.12,-.48,.24,.16,.04);FS('rgba(70,220,255,.35)','#55d9ef');line(a-.08,-.4,a+.08,-.4,'#fff',.012)});line(-.08,-.4,.08,-.4,'#55d9ef',.02);break;
   }
-  // Removed legacy angry eyebrows; eye expression is carried by the eye shapes.
   // headwear / suit top (origin on top of head)
   c.save();c.translate(0,-.64);
   switch(co.su||co.h){
@@ -309,10 +689,109 @@ function drawFaceDesign(d){
    case 'dino':c.beginPath();c.ellipse(0,.02,.34,.3,0,PI,0);c.closePath();FS(bc,ol);circ(-.14,-.28,.08,'#fff');circ(.14,-.28,.08,'#fff');circ(-.14,-.28,.03,'#111');circ(.14,-.28,.03,'#111');poly([[-.07,-.2],[0,-.36],[.07,-.2]],'#fff',ol);break;
    case 'uni':poly([[-.06,-.02],[.06,-.02],[0,-.4]],'#ffd95a');[-1,1].forEach(d=>{circ(d*.4,.15,.1,co.c);circ(d*.44,.3,.1,'#3b82f6');circ(d*.42,.45,.1,'#2fcf3a')});break;
    case 'snow':R(-.16,-.4,.32,.42,co.c);R(-.28,-.04,.56,.06,co.c);R(-.16,-.1,.32,.05,'#fff');break;
+   case 'colonel':circ(-.15,-.13,.13,'#fff');circ(.15,-.13,.13,'#fff');circ(0,-.22,.15,'#fff');R(-.22,-.06,.44,.13,'#fff');break;
+   case 'speedster':case 'flash':c.beginPath();c.arc(0,.02,.32,PI,0);c.closePath();FS(hc);R(-.34,-.01,.68,.06,hc);poly([[-.28,-.02],[-.18,-.19],[-.1,-.02]],co.c);poly([[.28,-.02],[.18,-.19],[.1,-.02]],co.c);break;
+   case 'webhero':c.beginPath();c.arc(0,.02,.34,PI,0);c.closePath();FS(hc);R(-.34,-.01,.68,.06,hc);c.strokeStyle=co.c;c.lineWidth=.018;for(let i=-2;i<=2;i++){c.beginPath();c.moveTo(i*.11,-.28);c.lineTo(i*.16,.02);c.stroke()}break;
+   case 'starhero':c.beginPath();c.arc(0,.02,.34,PI,0);c.closePath();FS(hc);R(-.34,-.01,.68,.06,hc);star(0,-.13,.13,.055,co.c);break;
+   case 'wizard':poly([[-.34,.02],[.34,.02],[.12,-.12],[0,-.48],[-.12,-.12]],hc);R(-.35,0,.7,.06,co.c);star(0,-.24,.055,.025,co.c);break;
+   case 'astronaut':c.beginPath();c.arc(0,0,.35,PI,0);c.closePath();FS(hc);R(-.35,-.02,.7,.08,co.c);c.beginPath();c.ellipse(0,-.13,.23,.11,0,0,7);FS('rgba(65,160,220,.75)','#526b7b');break;
+   case 'samurai':poly([[-.34,.02],[-.27,-.23],[0,-.34],[.27,-.23],[.34,.02]],hc);poly([[-.08,-.23],[-.28,-.4],[-.17,-.17]],co.c);poly([[.08,-.23],[.28,-.4],[.17,-.17]],co.c);R(-.36,0,.72,.06,co.c);break;
+   case 'vampire':poly([[-.32,.02],[-.22,-.2],[0,-.34],[.22,-.2],[.32,.02]],hc);circ(0,-.28,.06,co.c);break;
+   case 'dragon':poly([[-.3,.02],[-.25,-.24],[-.12,-.12],[0,-.34],[.12,-.12],[.25,-.24],[.3,.02]],hc);poly([[-.24,-.08],[-.36,-.3],[-.12,-.2]],co.c);poly([[.24,-.08],[.36,-.3],[.12,-.2]],co.c);break;
+   case 'gamer':R(-.34,-.08,.1,.25,co.c);R(.24,-.08,.1,.25,co.c);c.beginPath();c.arc(0,.02,.3,PI,0);c.strokeStyle=co.c;c.lineWidth=.07;c.stroke();break;
+   case 'sushi':circ(0,-.12,.18,'#fff');R(-.22,-.02,.44,.1,'#fff');R(-.22,.02,.44,.04,co.c);break;
+   case 'burger':c.beginPath();c.ellipse(0,-.05,.34,.16,0,Math.PI,0);c.closePath();FS(hc);R(-.34,-.04,.68,.06,co.c);for(let i=0;i<5;i++)circ(-.22+i*.11,-.12,.018,'#fff1a8');break;
+   case 'detective':R(-.23,-.12,.46,.08,hc);poly([[-.2,-.12],[-.14,-.31],[.14,-.31],[.2,-.12]],hc);break;
+   case 'firefighter':c.beginPath();c.arc(0,.02,.33,PI,0);c.closePath();FS(hc);R(-.38,-.01,.76,.07,co.c);R(-.04,-.28,.08,.24,co.c);break;
+   case 'police':R(-.22,-.12,.44,.14,hc);c.beginPath();c.arc(0,-.1,.25,PI,0);c.closePath();FS(hc);star(0,-.06,.07,.03,co.c);break;
+   case 'doctor':c.beginPath();c.arc(0,.02,.28,PI,0);c.closePath();FS(hc);line(0,-.28,0,-.42,co.c,.035);circ(0,-.44,.07,co.c);break;
+   case 'nurse-cap':R(-.25,-.08,.5,.12,'#fff');R(-.17,-.2,.34,.14,'#fff');R(-.035,-.19,.07,.18,'#e75b86');R(-.09,-.13,.18,.06,'#e75b86');break;
+   case 'racer':c.beginPath();c.arc(0,.02,.34,PI,0);c.closePath();FS(hc);R(-.35,-.01,.7,.07,co.c);R(-.22,-.13,.44,.07,'rgba(255,255,255,.75)');break;
+   case 'ninja':R(-.34,-.18,.68,.18,hc);R(-.34,-.04,.68,.07,co.c);break;
+   case 'goldenking':poly([[-.22,.02],[-.22,-.22],[-.1,-.12],[0,-.32],[.1,-.12],[.22,-.22],[.22,.02]],hc);circ(0,-.08,.04,co.c);break;
+   case 'cosmic':c.beginPath();c.arc(0,.02,.33,PI,0);c.closePath();FS(hc);R(-.35,-.01,.7,.07,co.c);for(let i=0;i<5;i++)circ(-.2+i*.1,-.15-(i%2)*.06,.025,'#fff');break;
+   default:break;
   }
-  c.restore();
-  if(co.headDesign)drawHeadDesign(co.headDesign);
-  c.restore();
+  // Character-specific headgear, helmets, masks and anime hairstyles.
+  if(characterCostume){
+    const id=co.costumeId||'',main=co.costumeMain||hc,accent=co.costumeAccent||co.c||'#fff';
+    c.save();
+    if(co.costumeTheme==='superhero'){
+      // Helmet/cowl shell and faceplate; keep the eyes visible for expression.
+      c.beginPath();c.moveTo(-.39,.23);c.lineTo(-.36,-.02);c.quadraticCurveTo(0,-.34,.36,-.02);c.lineTo(.39,.23);c.quadraticCurveTo(0,.08,-.39,.23);c.closePath();FS(main,shade(main,.55));
+      if(/iron-man|ant-man|deadpool|black-panther|black-widow|batman|superman|wolverine|captain-marvel|doctor-strange/.test(id)){
+        if(id==='iron-man'){poly([[-.34,.22],[-.24,.12],[.24,.12],[.34,.22],[.22,.43],[-.22,.43]],accent);line(-.25,.25,.25,.25,'#fff1a0',.025)}
+        else if(id==='deadpool'){poly([[-.32,.15],[-.1,.12],[0,.28],[.1,.12],[.32,.15],[.24,.42],[-.24,.42]],'#171923');circ(-.17,.23,.055,'#fff');circ(.17,.23,.055,'#fff')}
+        else if(id==='batman'){poly([[-.36,.2],[-.34,-.02],[-.27,-.31],[-.12,-.13],[.02,-.24],[.2,-.12],[.34,.02],[.36,.2],[.2,.4],[-.2,.4]],'#171923');poly([[.08,.19],[.31,.17],[.29,.24],[.1,.27]],'#e5c75a');line(.08,.23,.29,.21,'#fff2b0',.018)}
+        else if(id==='superman'){poly([[-.34,.2],[-.32,-.02],[-.18,-.19],[-.02,-.1],[.12,-.2],[.31,-.02],[.35,.2],[.2,.4],[-.2,.4]],'#2c5eaa');poly([[.02,-.14],[.14,-.23],[.24,-.13],[.13,-.07],[.06,-.02]],'#1e2535');poly([[.12,-.13],[.22,-.19],[.29,-.1],[.2,-.05]],'#df3c43')}
+        else{poly([[-.34,.22],[-.25,.12],[.25,.12],[.34,.22],[.22,.42],[-.22,.42]],shade(main,.72));line(-.25,.23,.25,.23,accent,.035)}
+      }else{
+        poly([[-.34,.22],[-.25,.13],[.25,.13],[.34,.22],[.2,.4],[-.2,.4]],accent);
+      }
+      if(id==='wolverine'){poly([[-.28,.03],[-.42,-.24],[-.12,-.12]],accent);poly([[.28,.03],[.42,-.24],[.12,-.12]],accent)}
+      if(id==='batman'){poly([[-.2,.01],[-.12,-.24],[-.04,-.08],[.04,-.18],[.2,.01],[.14,.12],[-.14,.12]],'#171923')}
+      if(id==='superman'){poly([[-.22,.04],[-.12,-.12],[.02,-.08],[.14,-.2],[.2,-.04],[.06,.08],[-.12,.1]],'#df3c43')}
+      if(id==='thor'||id==='aquaman'){poly([[-.25,.02],[-.4,-.18],[-.31,.15]],accent);poly([[.25,.02],[.4,-.18],[.31,.15]],accent)}
+    }else{
+      // Anime hair is deliberately sculpted rather than randomly assigned.
+      const hair=main;
+      if(/naruto|goku|vegeta|sung-jinwoo|shadow-monarch|bakugo|deku|tanjiro|zenitsu|inosuke|ichigo|saitama/.test(id)){
+        const spikes=id==='goku'||id==='vegeta'||id==='bakugo'?7:5;
+        for(let i=0;i<spikes;i++){
+          const x=-.32+i*(.64/(spikes-1)),tipY=(i%2===0?-.23:-.15);
+          poly([[x-.10,.04],[x,tipY],[x+.11,.05]],hair,shade(hair,.58));
+        }
+      }else{
+        c.beginPath();c.ellipse(0,-.015,.38,.17,0,Math.PI,0);c.closePath();FS(hair,shade(hair,.58));
+        circ(-.3,.02,.09,hair,shade(hair,.58));circ(.3,.02,.09,hair,shade(hair,.58));
+      }
+      if(/naruto|sakura|kakashi|tanjiro|zenitsu|inosuke|deku|bakugo|todoroki/.test(id)){
+        R(-.36,.055,.72,.075,accent);circ(0,.09,.035,'#fff',accent);
+      }
+      if(id==='nezuko'){poly([[-.28,.05],[-.4,-.16],[-.18,-.08]],accent);poly([[.28,.05],[.4,-.16],[.18,-.08]],accent);R(-.2,.31,.4,.09,'#8a4b46')}
+      if(id==='anya'){circ(-.3,-.06,.12,accent);circ(.3,-.06,.12,accent)}
+      if(id==='luffy'){c.beginPath();c.ellipse(0,-.02,.4,.09,0,0,Math.PI*2);FS('#d9a33b','#6b4518');R(-.32,-.08,.64,.055,'#d9a33b')}
+      if(id==='sailor-moon'){circ(-.28,-.08,.12,'#e9c64d');circ(.28,-.08,.12,'#e9c64d');poly([[-.08,-.05],[0,-.2],[.08,-.05]],'#e9c64d')}
+      if(id==='miles-morales'){poly([[-.34,.02],[-.3,-.2],[-.1,-.13],[.05,-.23],[.34,.02]],'#151820');line(-.24,-.04,.22,-.04,'#d83b42',.035)}
+      if(id==='loki'){poly([[-.27,.04],[-.39,-.25],[-.17,-.12],[-.02,-.3],[.14,-.12],[.36,-.25],[.27,.04]],'#b99b4d')}
+      if(id==='thanos'){c.beginPath();c.ellipse(0,.03,.39,.23,0,0,7);FS('#7059a5','#3a2d68')}
+      if(id==='venom'||id==='carnage'){c.beginPath();c.ellipse(.05,.12,.31,.18,0,0,7);FS('#f2f2f2');poly([[.02,.2],[.08,.2],[.05,.36]],'#e8e8e8')}
+      if(id==='green-goblin'){poly([[-.35,.14],[-.28,-.18],[-.08,-.1],[.08,-.2],[.35,.14],[.22,.3],[-.22,.3]],'#6ca65c')}
+      if(id==='doctor-doom'||id==='ultron'){c.beginPath();c.ellipse(0,.13,.33,.22,0,0,7);FS('#c7cdd2','#626b75');line(-.25,.12,.25,.12,'#d84a4a',.04)}
+      if(id==='star-lord'){c.beginPath();c.ellipse(0,.12,.36,.2,0,0,7);FS('#a9b6c2','#53616e')}
+      if(id==='groot'){for(let j=0;j<4;j++){const xx=-.25+j*.16;line(xx,.05,xx-.04,-.2,'#9b754b',.045);circ(xx-.04,-.2,.055,'#7da45d')}}
+      if(id==='rocket'){circ(-.27,.03,.1,'#b77b4d');circ(.27,.03,.1,'#b77b4d')}
+      if(id==='ghost-rider'){circ(0,.13,.24,'#f3e7d4');for(let j=0;j<5;j++)poly([[-.3+j*.13,.08],[-.24+j*.13,-.18],[-.16+j*.13,.1]],'#ff8b26')}
+      if(id==='storm'||id==='jean-grey'){poly([[-.35,.05],[-.3,-.17],[0,-.28],[.3,-.17],[.35,.05]],'#f1f3f6')}
+      if(id==='cyclops'||id==='black-manta'){R(-.35,.04,.7,.1,'#242a34');R(-.25,.055,.5,.045,'#e84b4b')}
+      if(id==='gambit'){poly([[-.32,.08],[-.2,-.2],[.2,-.2],[.32,.08]],'#8a4a85')}
+      if(id==='robin'){R(-.3,.08,.6,.08,'#2e8d58');poly([[-.2,.12],[0,.3],[.2,.12]],'#d9483d')}
+      if(id==='batgirl'){poly([[-.36,.05],[-.3,-.18],[0,-.28],[.3,-.18],[.36,.05]],'#e4c34e')}
+      if(id==='catwoman'){poly([[-.3,.08],[-.28,-.24],[-.12,-.14],[0,-.31],[.12,-.14],[.28,-.24],[.3,.08]],'#24252d')}
+      if(id==='riddler'){circ(0,.15,.17,'#d7c45e');line(.05,.02,-.04,.17,'#367d4b',.035)}
+      if(id==='bane'){R(-.3,.08,.6,.12,'#d1b78b');for(let j=0;j<4;j++)circ(-.2+j*.13,.14,.025,'#4d8b62')}
+      if(id==='poison-ivy'){for(let j=0;j<5;j++){const xx=-.3+j*.15;circ(xx,.03,.07,'#3d9858');line(xx,.05,xx+.04,-.1,'#b8d76a',.02)}}
+      if(id==='two-face'||id==='deathstroke'){poly([[-.3,.02],[0,-.18],[0,.26],[-.24,.2]],'#c9cdd0');poly([[0,-.18],[.3,.02],[.24,.2],[0,.26]],'#9d3d43')}
+      if(id==='penguin'){circ(.2,.1,.07,'#e0c56e');line(.2,.1,.28,.2,'#e0c56e',.02)}
+      if(id==='darkseid'){line(-.25,.12,.25,.12,'#d36b5a',.04);circ(.2,.13,.04,'#ff755f')}
+      if(id==='raven'){poly([[-.36,.08],[-.28,-.2],[0,-.28],[.28,-.2],[.36,.08]],'#51416f')}
+      if(id==='starfire'){circ(0,-.2,.09,'#ef9b54');poly([[-.3,.02],[-.2,-.18],[0,-.24],[.2,-.18],[.3,.02]],'#c85c42')}
+      if(id==='blue-beetle'){poly([[-.32,.04],[-.25,-.2],[0,-.28],[.25,-.2],[.32,.04]],'#1c8bb8')}
+      if(id==='rengoku'){for(let j=0;j<5;j++)poly([[-.3+j*.14,.12],[-.25+j*.14,-.18],[-.14+j*.14,.1]],'#f1b746')}
+      if(id==='shinobu'){for(let j=0;j<4;j++){const xx=-.22+j*.15;circ(xx,.02,.07,'#f1d6ee');line(xx,.02,xx+.05,-.12,'#8d6aa5',.018)}}
+      if(id==='giyu'){poly([[-.32,.04],[-.12,-.2],[0,-.08],[.12,-.2],[.32,.04],[.2,.2],[-.2,.2]],'#b84d5b')}
+      if(id==='muzan'){c.beginPath();c.ellipse(0,-.02,.37,.17,0,Math.PI,0);c.closePath();FS('#242733');R(-.38,.02,.76,.07,'#e8e9ef')}
+      if(id==='itachi'){circ(-.25,.05,.045,'#c83d4b');circ(.25,.05,.045,'#c83d4b')}
+      if(id==='madara'){poly([[-.32,.08],[-.28,-.2],[0,-.28],[.28,-.2],[.32,.08]],'#8f343d')}
+      if(id==='frieza'){circ(0,.05,.18,'#b78ac2');circ(-.22,.08,.07,'#b78ac2');circ(.22,.08,.07,'#b78ac2')}
+      if(id==='majin-buu'){circ(0,-.2,.07,'#e2a5c7');line(0,-.2,0,-.34,'#e2a5c7',.04)}
+      if(id==='dinosaur'){poly([[-.34,.1],[-.3,-.12],[-.18,-.02],[-.06,-.24],[.06,-.02],[.18,-.2],[.3,.1]],'#4b9b55')}
+      if(id==='dracula'){poly([[-.36,.08],[-.3,-.16],[-.14,-.06],[0,-.26],[.14,-.06],[.3,-.16],[.36,.08]],'#292333');poly([[-.14,.08],[-.07,.2],[0,.08],[.07,.2],[.14,.08]],'#eee7e8')}
+      if(id==='donald-trump'){c.beginPath();c.moveTo(-.34,.06);c.quadraticCurveTo(-.32,-.28,.02,-.22);c.quadraticCurveTo(.28,-.24,.36,-.03);c.quadraticCurveTo(.1,-.08,-.08,.02);c.closePath();FS('#dcae43','#a87926')}
+    }
+    c.restore();
+  }
+  c.restore();c.restore();
   // number / name tag on the belly
   const tx=x,ty=yb+s*.34;let fs=s*.17,txt=k.r.label;
   c.font='700 '+fs+'px "Noto Sans Thai",Arial,sans-serif';
@@ -327,6 +806,46 @@ function drawFaceDesign(d){
   c.restore();c.fillStyle='#111';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,tx,tagY+fs*.05);
 }
 
+
+const EMOTE_BASE_URL='https://raw.githubusercontent.com/Koftfiiz/4AM-GUILD/main/duck-race/assets/ragnarok-emotes/';
+const makeEmote=(name)=>{const img=new Image();img.decoding='async';img.src=EMOTE_BASE_URL+name+'.gif';return {name,img};};
+const RAGNAROK_EMOTES={
+  overtaken:['omg','swt','sob','bzz','hlp'].map(makeEmote),
+  overtaker:['kis','heh','gg','slur','go'].map(makeEmote)
+};
+const OVERTAKEN_EMOTES=RAGNAROK_EMOTES.overtaken;
+const OVERTAKER_EMOTES=RAGNAROK_EMOTES.overtaker;
+const LEFT_EMOTES=new Set(['bzz','gg','heh','slur','sob','swt']);
+function drawRaceEmote(k,x,y,s){
+  const layer=$('emoteLayer');
+  if(!k.emote||!S||S.t>=k.emoteUntil){if(k.emoteNode)k.emoteNode.style.display='none';return;}
+  const source=k.emote.img;
+  if(!source||!source.complete||!source.naturalWidth){if(k.emoteNode)k.emoteNode.style.display='none';return;}
+  // Use a real DOM image for each active duck so the browser plays every GIF frame.
+  // Canvas drawImage can appear frozen on some browser/compositing combinations.
+  if(!k.emoteNode||k.emoteNode.dataset.emoteName!==k.emote.name){
+    if(k.emoteNode)k.emoteNode.remove();
+    const node=new Image();node.decoding='async';node.alt='';node.draggable=false;
+    node.dataset.emoteName=k.emote.name;node.src=source.currentSrc||source.src;
+    node.style.position='absolute';node.style.pointerEvents='none';node.style.userSelect='none';node.style.objectFit='contain';
+    layer.appendChild(node);k.emoteNode=node;
+  }
+  const remaining=Math.max(0,k.emoteUntil-S.t);
+  const alpha=Math.min(1,remaining/.3);
+  const omg=RAGNAROK_EMOTES.overtaken.find(e=>e.name==='omg')?.img;
+  const refRatio=omg&&omg.complete&&omg.naturalWidth?omg.naturalWidth/omg.naturalHeight:1;
+  // Keep each emote anchored over the corresponding side of the duck's head.
+  // hlp and go are slightly larger because their artwork reads better at a larger scale.
+  const sizeBoost=(k.emote.name==='hlp'||k.emote.name==='go')?1.14:1;
+  const boxW=Math.min(s*1.18*sizeBoost,s*1.12*sizeBoost*refRatio),boxH=boxW/refRatio;
+  const left=LEFT_EMOTES.has(k.emote.name);
+  const emoteX=x+(left?-1:1)*s*.23;
+  const emoteY=y-s*.43;
+  const node=k.emoteNode;
+  node.style.width=boxW+'px';node.style.height=boxH+'px';
+  node.style.left=(emoteX-boxW/2)+'px';node.style.top=(emoteY-boxH/2)+'px';
+  node.style.opacity=String(alpha);node.style.display='block';
+}
 
 function drawWinnerCrown(x,y,s,elapsed){
   const c=cx,fall=Math.min(1,Math.max(0,elapsed/1.05));
@@ -358,7 +877,7 @@ function size(){
 }
 addEventListener('resize',size);
 const bank=()=>H*.25;
-const duckSize=()=>Math.max(26,Math.min(W*.11,W*.78/Math.sqrt(Math.max(1,ducks.length))));
+const duckSize=()=>Math.max(26,Math.min(W*.11,W*.78/Math.sqrt(Math.max(1,ducks.length))))*.8;
 function checker(wx,cam){
   const q=Math.max(14,H/26),top=bank()-q;
   cx.save();cx.translate(wx-cam+SL*bank(),0);cx.transform(1,0,-SL,1,0,0);
@@ -411,11 +930,27 @@ function scene(cam,t){
 }
 const hms=n=>{n=Math.max(0,Math.ceil(n));const p=v=>String(v).padStart(2,'0');return p(Math.floor(n/3600))+':'+p(Math.floor(n%3600/60))+':'+p(n%60)};
 const dist=(d,t)=>t+.35/d.a*(Math.cos(d.p)-Math.cos(d.a*t+d.p))+.2/d.b*(Math.cos(d.q)-Math.cos(d.b*t+d.q));
-const baseProgress=()=>RACE_SPEED*Math.min(S.t,S.T);
+// Each duck keeps its own accumulated world distance. Speed changes affect
+// only future movement; returning to base speed never erases earned distance.
+const rawProg=k=>k.distance||0;
 const prog=k=>S.fin
-  ? (k.win ? D+Math.min(W*.34,RACE_SPEED*1.05*(S.celebrateT||0)) : Math.min(D-2,baseProgress()+(k.offset||0)))
-  : Math.min(D-2,baseProgress()+(k.offset||0));
-const leader=()=>ducks.reduce((best,k)=>!best||prog(k)>prog(best)?k:best,null);
+  ? (k.win ? D+Math.min(W*.34,RACE_SPEED*1.05*(S.celebrateT||0)) : Math.min(D-2,rawProg(k)))
+  : Math.min(D-2,rawProg(k));
+// Select by true world progress, not by the visual finish-line clamp.
+const leader=()=>ducks.reduce((best,k)=>!best||rawProg(k)>rawProg(best)?k:best,null);
+
+// Comeback profile: independently rolled Boosts become stronger for ducks
+// further behind, with a late-race lift. Earned distance is never rolled back.
+function catchUpBoostProfile(k){
+  const front=leader();
+  const gap=front?Math.max(0,rawProg(front)-rawProg(k)):0;
+  const gapRatio=Math.min(1,gap/Math.max(1,D*.12));
+  const phase=Math.min(1,Math.max(0,S.t/Math.max(1,S.T)));
+  return {
+    duration:3+Math.random()*2+gapRatio*(7+phase*4),
+    multiplier:1.28+gapRatio*.26+phase*.10
+  };
+}
 
 
 /* Real-time arcade particles: effects are drawn into the water scene, never as status icons. */
@@ -501,59 +1036,148 @@ function drawFatigueEffect(k,x,y,s,t){
 function frame(now){
   const dt=Math.max(0,(now-S.last)/1000);S.last=now;
   if(S.st==='run'){
+    const previousRaceTime=S.t;
     S.t=Math.min(S.T,S.t+dt);
+    const raceDt=Math.max(0,S.t-previousRaceTime);
     const base=RACE_SPEED;
     if(!S.fin)ducks.forEach(k=>{
+      if((k.leadPressureCooldown||0)>0)k.leadPressureCooldown=Math.max(0,k.leadPressureCooldown-raceDt);
       if(!k.mode||k.mode==='normal'){
-        k.eventIn-=dt;
+        k.eventIn-=raceDt;
         if(k.eventIn<=0){
-          k.mode=Math.random()<.62?'boost':'tired';
-          k.modeLeft=k.mode==='tired'?2.0+Math.random()*2.0:1.2+Math.random()*1.4;
+          const front=leader();
+          const gap=front?Math.max(0,rawProg(front)-rawProg(k)):0;
+          const gapRatio=Math.min(1,gap/Math.max(1,D*.12));
+          const phase=Math.min(1,Math.max(0,S.t/Math.max(1,S.T)));
+          // Trailing ducks roll Boost more often, but every duck rolls independently.
+          const boostChance=Math.min(.88,.36+gapRatio*.36+phase*.12);
+          k.mode=Math.random()<boostChance?'boost':'tired';
+          if(k.mode==='boost'){
+            const boost=catchUpBoostProfile(k);
+            k.modeLeft=boost.duration;
+            k.boostMultiplier=boost.multiplier;
+            k.tiredMultiplier=.84;
+          }else{
+            k.modeLeft=3+Math.random()*2;
+            k.tiredMultiplier=.84;
+            k.boostMultiplier=1.28;
+          }
           k.fx=k.mode==='boost'?rnd(['fart','flash','sonic','fire']):'sweat';
         }
       }else{
-        k.modeLeft-=dt;
+        k.modeLeft-=raceDt;
         if(k.modeLeft<=0){
           k.mode='normal';
+          k.boostMultiplier=1.28;
+          k.tiredMultiplier=.84;
           // Each duck gets its own long, duration-scaled random recovery interval.
-          k.eventIn=Math.max(6,Math.min(70,S.T*(.10+Math.random()*.08)));
+          k.eventIn=12+Math.random()*18;
           k.fx='';
         }
       }
-      const mult=k.mode==='tired'?.42:k.mode==='boost'?1.85:1;
-      // Keep overtakes temporary: boost gains fade gradually during normal swimming,
-      // so ducks regroup instead of permanently collecting at the front.
-      const offsetLimit=Math.max(100,W*.38);
-      let nextOffset=k.offset||0;
-      if(k.mode==='normal'){
-        const recovery=base*.22*dt;
-        nextOffset=nextOffset>0?Math.max(0,nextOffset-recovery):Math.min(0,nextOffset+recovery);
-      }else{
-        nextOffset+=base*(mult-1)*dt;
-      }
-      k.offset=Math.max(-offsetLimit,Math.min(offsetLimit,nextOffset));
+      // Smoothly approach the target speed; Base Speed remains unchanged.
+      const targetMultiplier=(k.mode==='boost'?(k.boostMultiplier||1.28):k.mode==='tired'?(k.tiredMultiplier||.84):1)*(k.cruiseFactor||1);
+      const smoothing=1-Math.exp(-raceDt/.28);
+      k.currentSpeedX+=(base*targetMultiplier-k.currentSpeedX)*smoothing;
     });
+    // Sustained leaders face noticeable but probabilistic fatigue. The
+    // pressure scales with the gap and race phase; it never erases earned distance.
+    if(!S.fin&&ducks.length>1){
+      const ranked=ducks.slice().sort((a,b)=>rawProg(b)-rawProg(a));
+      const front=ranked[0],gap=rawProg(front)-rawProg(ranked[1]);
+      const gapRatio=Math.min(1,gap/Math.max(1,D*.12));
+      const phase=Math.min(1,Math.max(0,S.t/Math.max(1,S.T)));
+      const pressureHold=Math.max(4,Math.min(7,S.T*.025));
+      ducks.forEach(k=>{
+        if(k!==front||gap<duckSize()*1.2){k.leadHold=0;return;}
+        k.leadHold=(k.leadHold||0)+raceDt;
+        if(k.leadHold>=pressureHold&&(k.leadPressureCooldown||0)<=0){
+          k.leadHold=0;
+          const fatigueChance=Math.min(.92,.52+gapRatio*.28+phase*.10);
+          if(k.mode!=='tired'&&Math.random()<fatigueChance){
+            k.mode='tired';
+            k.modeLeft=5.5+Math.random()*3;
+            k.tiredMultiplier=.72+Math.random()*.06;
+            k.fx='sweat';
+            k.leadPressureCooldown=9+Math.random()*6;
+          }else{
+            k.leadPressureCooldown=3+Math.random()*3;
+          }
+        }
+      });
+    }
+    // One shared pacing factor aligns the leader's projected progress with
+    // the official finish time while preserving relative gaps between ducks.
+    if(!S.fin&&raceDt>0){
+      const targetLeadDistance=D*(S.t/S.T);
+      const predictedLeader=ducks.reduce((best,k)=>{
+        const projected=rawProg(k)+k.currentSpeedX*raceDt;
+        return !best||projected>best.projected?{duck:k,projected}:best;
+      },null);
+      const lead=predictedLeader&&predictedLeader.duck;
+      const unscaledStep=lead?lead.currentSpeedX*raceDt:0;
+      const requiredStep=lead?targetLeadDistance-rawProg(lead):0;
+      const paceFactor=unscaledStep>0?Math.max(0,requiredStep/unscaledStep):1;
+      ducks.forEach(k=>{
+        k.distance=(k.distance||0)+k.currentSpeedX*paceFactor*raceDt;
+      });
+    }
+    // Detect actual pass events between consecutive race frames. Only a duck
+    // that was in the previous Top 5 can trigger a reaction when overtaken.
+    if(!S.fin&&raceDt>0){
+      const rankedNow=ducks.slice().sort((a,b)=>rawProg(b)-rawProg(a));
+      const currentRanks=new Map(rankedNow.map((k,i)=>[k,i+1]));
+      const previous=S.rankSnapshot||new Map();
+      for(const victim of ducks){
+        const oldVictim=previous.get(victim);
+        if(!oldVictim||oldVictim.rank>5)continue;
+        for(const passer of ducks){
+          if(passer===victim)continue;
+          const oldPasser=previous.get(passer);
+          if(!oldPasser||oldPasser.distance>=oldVictim.distance)continue;
+          if(rawProg(passer)<=rawProg(victim))continue;
+          if((victim.emoteUntil||0)<=S.t){const e=rnd(OVERTAKEN_EMOTES);victim.emote={...e,side:'victim'};victim.emoteUntil=S.t+5;}
+          if((passer.emoteUntil||0)<=S.t){const e=rnd(OVERTAKER_EMOTES);passer.emote={...e,side:'passer'};passer.emoteUntil=S.t+5;}
+          break;
+        }
+      }
+      S.rankSnapshot=new Map(rankedNow.map((k,i)=>[k,{distance:rawProg(k),rank:i+1}]));
+    }
     if(!S.fin&&S.t>=S.T){S.t=S.T;onFinish(leader());}
   }else if(S.st==='celebrate'){
     S.celebrateT=(S.celebrateT||0)+dt;
   }
   const s=duckSize(),B=bank(),yMin=B+s*.4,yMax=H-s*.62,n=ducks.length;
   const X0=W*.2,rows=ducks.map(k=>{
-    const y=yMin+(k.slot+.5)/n*(yMax-yMin)+Math.sin(S.t*.9+k.ph)*s*.03;
-    return{k,y,x:X0-SL*(y-B)-s*.5+prog(k)};
+    const y=yMin+(k.slot+.5)/n*(yMax-yMin);
+    // Match the checker stripe at the duck's animated body position, not its
+    // unanimated lane anchor, so vertical bobbing cannot make it cross Start.
+    const drawTime=S.fin&&!k.win?(S.finishAnimTime||now/1000):now/1000;
+    const yVisual=y+Math.sin(drawTime*4+k.ph)*s*.03+Math.sin(drawTime*9+k.ph)*s*.045;
+    return{k,y,x:X0-SL*(yVisual-B)-s*.5+prog(k)};
   });
-  /* Track the shared forward swim from the very first frame.
-     Ducks stay in view while the world and shoreline scroll continuously behind them. */
-  S.cam=baseProgress();
+  // Keep every duck on the same starting plane. Once racing, follow the foremost
+  // duck with a forward-only camera target so changes in the leader never pan
+  // the view backwards or make it oscillate left/right.
+  if(S.st==='run'||S.st==='celebrate'){
+    const leadRow=rows.reduce((best,o)=>!best||o.x>best.x?o:best,null);
+    // Keep the leader in the right-hand portion of the frame so nearby chasers
+    // remain visible behind it; distant back markers may naturally leave view.
+    const cameraTarget=Math.max(0,(leadRow?leadRow.x:X0)-W*.68);
+    S.camTarget=Math.max(S.camTarget||0,cameraTarget);
+    const cameraSmoothing=1-Math.exp(-dt/.48);
+    S.cam+=Math.max(0,S.camTarget-S.cam)*cameraSmoothing;
+  }
   scene(S.cam,now/1000);
-  const maxSpeed=(D/Math.max(1,S.T))*2.25;
   const finishWorld=S.fin?S.finishWorld:D;
   checker(X0,S.cam);checker(X0+finishWorld,S.cam);
+  ducks.forEach(k=>{if(k.emoteNode)k.emoteNode.style.display='none';});
   rows.sort((a,b)=>a.y-b.y).forEach(o=>{
     // Bright concentric wake rings make the ducks visibly swim, not walk on top of the water
     cx.save();cx.strokeStyle='rgba(225,255,255,.48)';cx.lineWidth=1.5;const wakeClock=S.fin&&!o.k.win?(S.finishAnimTime||now/1000)*1000:now;const pulse=1+Math.sin(wakeClock/190+o.k.ph)*.25;cx.beginPath();cx.ellipse(o.x-S.cam,o.y+s*.48,s*.55*pulse,s*.10,0,0,Math.PI*2);cx.stroke();cx.restore();
     const frozenTime=S.fin&&!o.k.win?(S.finishAnimTime||now/1000):now/1000;
     drawDuck(o.k,o.x-S.cam,o.y,s,frozenTime);
+    if(!S.fin)drawRaceEmote(o.k,o.x-S.cam,o.y,s);
     if(S.fin&&o.k.win)drawWinnerCrown(o.x-S.cam,o.y-s*.68,s,S.celebrateT||0);
     if(S.st==='run'&&o.k.mode==='boost')drawBoostEffect(o.k,o.x-S.cam,o.y,s,now/1000);
     if(S.st==='run'&&o.k.mode==='tired')drawFatigueEffect(o.k,o.x-S.cam,o.y,s,now/1000);
@@ -564,17 +1188,27 @@ function frame(now){
 
 /* ---------- race control ---------- */
 function reset(){
-  // Leave a performance buffer before the finish line so the fastest duck reaches it at timer zero.
-  D=RACE_SPEED*Math.max(1,cfg.T)+Math.max(120,W*.62);
+  // Clear DOM-based GIF overlays as well as race state. The previous duck objects
+  // are replaced below, so their emote nodes must be removed explicitly here.
+  ducks.forEach(k=>{if(k.emoteNode){k.emoteNode.remove();k.emoteNode=null;}});
+  const emoteLayer=$('emoteLayer');
+  if(emoteLayer)emoteLayer.replaceChildren();
+  // The shared base distance reaches the finish line exactly when the countdown reaches zero.
+  D=RACE_SPEED*Math.max(1,cfg.T);
   const n=roster.length,slots=[...Array(n).keys()].sort(()=>Math.random()-.5);
   ducks=roster.map((r,i)=>({
-    r,slot:slots[i],ph:Math.random()*6.28,offset:0,mode:'normal',modeLeft:0,
+    r,slot:slots[i],ph:Math.random()*6.28,
+    // All ducks share the exact same horizontal start line. Each gets an
+    // independent distance counter; race events create gaps only after Start.
+    distance:0,currentSpeedX:RACE_SPEED,cruiseFactor:.985+Math.random()*.03,mode:'normal',modeLeft:0,
+    leadHold:0,leadPressureCooldown:0,boostMultiplier:1.28,tiredMultiplier:.84,
     // A few ducks can boost immediately; every duck receives an independent first trigger.
-    eventIn:Math.random()<.12?0:Math.random()*Math.min(24,Math.max(1,cfg.T*.12)),
+    eventIn:Math.random()<.18?0:Math.random()*Math.min(30,Math.max(1,cfg.T*.10)),
     fx:''
   }));
   const sceneOrder=[0,1,2,3,4].sort(()=>Math.random()-.5);
-  S={st:'idle',t:0,T:cfg.T,sc:1,cam:0,last:performance.now(),fin:false,sceneOrder,celebrateT:0,finishWorld:D,finishAnimTime:0};
+  S={st:'idle',t:0,T:cfg.T,sc:1,cam:0,camTarget:0,last:performance.now(),fin:false,sceneOrder,celebrateT:0,finishWorld:D,finishAnimTime:0};
+  S.rankSnapshot=new Map(ducks.slice().sort((a,b)=>rawProg(b)-rawProg(a)).map((k,i)=>[k,{distance:rawProg(k),rank:i+1}]));
   ducks.forEach(k=>k.fin=cfg.T);ducks.forEach(k=>k.win=false);order()[0].win=true;
   $('bGo').textContent='▶ START';$('again').classList.add('hide');$('trophy').classList.add('hide');
   $('clk').textContent=hms(S.T);stopMus();if(aud)aud.currentTime=0;
@@ -585,7 +1219,13 @@ function onFinish(winner=leader()){
   if(S.fin)return;
   S.finishWorld=D;
   S.fin=true;S.st='celebrate';S.celebrateT=0;S.finishAnimTime=performance.now()/1000;
-  ducks.forEach(k=>{k.win=k===winner;k.mode='normal';k.fx='';k.fin=k===winner?0:Math.max(1,S.T-(k.offset||0)/RACE_SPEED)});
+  ducks.forEach(k=>{
+    k.win=k===winner;k.mode='normal';k.fx='';
+    // The winner touches the finish line on the exact zero-second frame.
+    if(k===winner)k.distance=D;
+    else k.distance=Math.min(k.distance,D-2);
+    k.fin=k===winner?0:Math.max(1,S.T+(D-k.distance)/RACE_SPEED);
+  });
   $('bGo').textContent='🏆 WINNER';
   $('again').classList.remove('hide');$('trophy').classList.remove('hide');
   if(bellOn)bell();
@@ -609,6 +1249,25 @@ $('bAgain').onclick=()=>{
   reset();S.st='run';$('bGo').textContent='Ⅱ PAUSE';if(musOn)startMus();
 };
 $('trophy').onclick=()=>$('resM').classList.remove('hide');
+$('copyResults').onclick=async()=>{
+  const results=order();
+  const lines=results.map((k,i)=>{
+    const label=String(k.r.label??'').trim()||'Duck';
+    const display=mode==='num'?'เบอร์ '+label:label;
+    return (i+1)+'. "'+display+'"';
+  });
+  const text=lines.join('\n');
+  const status=$('copyStatus');
+  try{
+    if(navigator.clipboard&&window.isSecureContext)await navigator.clipboard.writeText(text);
+    else{
+      const ta=document.createElement('textarea');ta.value=text;ta.setAttribute('readonly','');
+      ta.style.position='fixed';ta.style.opacity='0';root.appendChild(ta);ta.select();
+      const copied=document.execCommand('copy');ta.remove();if(!copied)throw new Error('Copy unavailable');
+    }
+    status.textContent='คัดลอกผลการแข่งขันครบทุกอันดับแล้ว นำไปวางใน Discord ได้เลย';
+  }catch(err){status.textContent='คัดลอกอัตโนมัติไม่สำเร็จ กรุณาลองเปิดหน้าเว็บผ่าน HTTPS แล้วกดอีกครั้ง';}
+};
 $('resX').onclick=()=>$('resM').classList.add('hide');
 
 /* ---------- sound ---------- */
@@ -617,13 +1276,18 @@ function tone(f,d,type,v){if(!AC)return;const o=AC.createOscillator(),g=AC.creat
 function bell(){ac();tone(880,1.2,'sine',.3);setTimeout(()=>tone(1320,1.4,'sine',.25),180)}
 let mt=null,mi=0,aud=null;
 const ROOT=[130.8,98,110,87.3],LEAD=[[523,659,784,659,523,659,784,1047],[494,587,784,587,494,587,784,988],[440,523,659,523,440,523,659,880],[349,440,523,440,349,440,523,698]];
+let musicVolume=.05;
+function applyMusicVolume(){if(aud){aud.volume=musicVolume;aud.muted=!musOn}$('musicVolume').value=Math.round(musicVolume*100);$('musicVolumeValue').textContent=Math.round(musicVolume*100)+'%'}
 function stopMus(){clearInterval(mt);if(aud)aud.pause()}
 function startMus(){
-  if(MUSIC_URL){if(!aud){aud=new Audio(MUSIC_URL);aud.loop=true;aud.volume=.6}aud.play().catch(()=>{});return}
+  if(MUSIC_URL){if(!aud){aud=new Audio(MUSIC_URL);aud.loop=true}applyMusicVolume();if(aud.paused)aud.play().catch(()=>{});return}
   ac();if(!AC)return;
+  if(mt)clearInterval(mt);
   mt=setInterval(()=>{if(S.st!=='run')return;const bar=Math.floor(mi/8)%4,n=mi%8;
     tone(ROOT[bar]*(n%4===2?2:1),.17,'triangle',.12);tone(LEAD[bar][n],.15,'square',.035);if(n%2)tone(6000,.03,'square',.012);mi++},190)}
-$('bMus').onclick=()=>{musOn=!musOn;$('bMus').textContent=musOn?'♫ ON':'♫ OFF';if(!musOn)stopMus();};
+$('bMus').onclick=()=>{musOn=!musOn;$('bMus').textContent=musOn?'♫ ON':'♫✕';if(aud)aud.muted=!musOn;if(musOn&&S.st==='run')startMus();else if(!musOn&&MUSIC_URL){if(aud&&aud.paused&&S.st==='run')startMus()}else if(!musOn)clearInterval(mt)};
+$('bVol').onclick=()=>{$('musicVolumePanel').classList.toggle('hide')};
+$('musicVolume').oninput=e=>{musicVolume=(+e.target.value)/100;applyMusicVolume()};
 $('bBell').onclick=()=>{bellOn=!bellOn;$('bBell').textContent=bellOn?'🔔 ON':'🔔 OFF';ac();if(bellOn)tone(880,.4,'sine',.15)};
 
 /* ---------- settings ---------- */
