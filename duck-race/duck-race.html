@@ -386,12 +386,12 @@ function assignCo(list){
   list.forEach((r,i)=>{r.co=generated[i].co;r.appearanceId=generated[i].id;r.costumeId=generated[i].costumeId;r.rarity=generated[i].rarity});
 }
 
-/* ---------- duck drawing: right-facing side profile (unit coords) ---------- */
+/* ---------- duck drawing: fluffy front-facing view (unit coords) ---------- */
 const shade=(h,f)=>{const n=parseInt(h.slice(1),16),m=v=>Math.max(0,Math.min(255,Math.round(v*f)));return '#'+[n>>16,n>>8&255,n&255].map(v=>m(v).toString(16).padStart(2,'0')).join('')};
 const PI=Math.PI,PH=new Path2D(),PB=new Path2D(),PD=new Path2D();
-PH.moveTo(-.34,-.28);PH.bezierCurveTo(-.4,-.53,-.2,-.75,.08,-.73);PH.bezierCurveTo(.29,-.72,.4,-.56,.37,-.36);PH.bezierCurveTo(.36,-.19,.25,-.08,.16,-.02);PH.bezierCurveTo(.4,.02,.48,.19,.37,.39);PH.bezierCurveTo(.29,.57,-.05,.62,-.3,.48);PH.bezierCurveTo(-.43,.4,-.48,.2,-.4,.04);PH.bezierCurveTo(-.34,-.08,-.3,-.16,-.34,-.28);PH.closePath();
-PB.moveTo(-.4,.04);PB.bezierCurveTo(-.25,-.12,.03,-.14,.25,-.02);PB.bezierCurveTo(.44,.08,.47,.3,.34,.46);PB.bezierCurveTo(.18,.62,-.18,.61,-.36,.43);PB.bezierCurveTo(-.47,.31,-.49,.14,-.4,.04);PB.closePath();
-PD.moveTo(-.34,-.28);PD.bezierCurveTo(-.4,-.53,-.2,-.75,.08,-.73);PD.bezierCurveTo(.29,-.72,.4,-.56,.37,-.36);PD.bezierCurveTo(.36,-.19,.25,-.08,.16,-.02);PD.bezierCurveTo(-.02,-.05,-.25,-.12,-.34,-.28);PD.closePath();
+PH.ellipse(0,-.38,.39,.34,0,0,Math.PI*2);PH.moveTo(.36,.12);PH.ellipse(0,.12,.36,.38,0,0,Math.PI*2);
+PB.ellipse(0,.12,.36,.38,0,0,Math.PI*2);
+PD.ellipse(0,-.38,.39,.34,0,0,Math.PI*2);
 function drawDuck(k,x,y,s,t){
   const c=cx,co=k.r.co,bc=co.bc,hc=co.hc,lw=.02,ol=co.ol||(co.ol=shade(bc,.6)),INK='#2b2100';
   const FS=(col,o)=>{c.fillStyle=col;c.fill();c.lineWidth=lw;c.strokeStyle=o||INK;c.stroke()};
@@ -412,9 +412,8 @@ function drawDuck(k,x,y,s,t){
   if(co.h==='curly')for(let i=0;i<10;i++){const a=PI*.9+i*PI*.133;circ(.46*Math.cos(a),-.38+.42*Math.sin(a),.1,hc,shade(hc,.6))}
   if(co.su==='bee'){[-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.3,-.15,.1,.26,d*.5,0,7);FS('rgba(255,255,255,.85)','#7a7a7a')})}
   const fp=Math.sin(t*9+k.ph)*.075;
-  c.beginPath();c.ellipse(.12,.5+fp,.13,.055,.04,0,7);FS('#f0a020','#8a5a00');
-  [-.06,0,.06].forEach(o=>circ(.12+o,.54+fp,.028,'#f0a020','#8a5a00'));
-  c.save();c.translate(-.22,.13);c.rotate(k.mode==='tired'?.48:Math.sin(t*9+k.ph*(k.mode==='boost'?2:1))*(k.mode==='boost'?.9:.48));c.beginPath();c.ellipse(0,0,.12,.22,-.22,0,7);FS(bc,ol);c.restore();
+  [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.17,.52+fp*d,.14,.055,0,0,7);FS('#f0a020','#8a5a00');[-.07,0,.07].forEach(o=>circ(d*.17+o,.56+fp*d,.028,'#f0a020','#8a5a00'))});
+  [-1,1].forEach(d=>{c.save();c.translate(d*.34,.13);c.rotate((k.mode==='tired'?.48:Math.sin(t*9+k.ph*(k.mode==='boost'?2:1))*(k.mode==='boost'?.9:.48))*d);c.beginPath();c.ellipse(0,0,.12,.22,0,0,7);FS(bc,ol);c.restore()});
   const characterCostume=co.costumeTheme==='superhero'||co.costumeTheme==='anime';
   if(characterCostume){
     const id=co.costumeId||'',cape=co.costumeAccent||co.c;
@@ -611,10 +610,10 @@ function drawDuck(k,x,y,s,t){
     else{c.beginPath();c.ellipse(0,-.5,.39,.18,0,PI,0);c.closePath();FS(hc,hairShade);if(co.h==='sidepart')line(.05,-.68,.25,-.51,hairShade,.025)}
   }
   if(!co.h&&!co.su){poly([[-.05,-.7],[-.17,-.84],[-.1,-.68]],'#3a2a1a');poly([[.05,-.7],[.18,-.85],[.1,-.68]],'#3a2a1a')}
-  c.beginPath();c.ellipse(.19,-.43,.066,.075,.05,0,7);FS('#fff',shade(bc,.5));
-  circ(.214,-.425,.033,'#1a1a1a','#1a1a1a');
-  c.beginPath();c.moveTo(.29,-.32);c.quadraticCurveTo(.36,-.355,.43,-.31);c.quadraticCurveTo(.47,-.275,.43,-.245);c.quadraticCurveTo(.36,-.225,.3,-.25);c.closePath();FS('#ebb82a','#8a6a00');
-  line(.33,-.278,.425,-.282,'#a07a10',.012);
+  // Front-facing eyes and centered duck bill.
+  [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.2,-.4,.075,.08,0,0,7);FS('#fff',shade(bc,.5));circ(d*.19,-.39,.037,'#1a1a1a','#1a1a1a')});
+  c.beginPath();c.ellipse(0,-.29,.2,.08,0,0,7);FS('#ebb82a','#8a6a00');
+  line(-.12,-.3,.12,-.3,'#a07a10',.012);
   // Face accessories: varied facial identity details, independent from eyewear.
   const fc=co.faceColor||co.costumeAccent||'#e85d75';
   switch(co.face){
