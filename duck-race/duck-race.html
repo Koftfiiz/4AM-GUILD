@@ -169,7 +169,7 @@ function hybridRarityQuotas(count){
     const raw=count*RARITY_WEIGHTS[r],base=Math.floor(raw);
     quotas[r]=base;used+=base;remainders.push({rarity:r,fraction:raw-base});
   });
-  shufflePool(remainders.sort((a,b)=>b.fraction-a.fraction));
+  remainders.sort((a,b)=>(b.fraction-a.fraction)||(Math.random()-.5));
   for(let i=0;i<count-used;i++)quotas[remainders[i%remainders.length].rarity]++;
   // Hybrid guarantee: races with 20+ ducks always contain at least one Legendary.
   if(count>=20&&quotas.legendary===0){
