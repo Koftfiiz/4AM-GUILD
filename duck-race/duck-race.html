@@ -486,7 +486,9 @@ function drawDuck(k,x,y,s,t){
     }
     // Costume-specific waist insignia and armor plates.
     if(/iron-man|ant-man|captain-marvel/.test(id)){circ(0,.19,.085,'#d9f8ff',accent);circ(0,.19,.045,'#fff','#9ceaff')}
-    else if(/batman|black-panther|nightwing|wolverine|superman|wonder-woman|green-lantern|aquaman|shazam|supergirl/.test(id)){star(0,.18,.105,.045,accent)}
+    else if(id==='batman'){c.save();c.translate(-.035,.17);c.scale(.78,1);poly([[-.17,-.035],[-.1,-.075],[-.045,-.02],[0,-.09],[.045,-.02],[.1,-.075],[.17,-.035],[.13,.035],[.05,.02],[0,.09],[-.05,.02],[-.13,.035]],'#f0ce62','#7c6225');c.restore()}
+    else if(id==='superman'){poly([[-.14,-.07],[.14,-.07],[.12,.08],[0,.17],[-.12,.08]],'#d9363e','#7b1d24');poly([[-.09,-.025],[.09,-.025],[.055,.015],[-.07,.015],[-.09,.065],[.08,.065],[.055,.105],[-.12,.105],[-.1,.045],[-.01,.025],[.09,.025]],'#f6cf4a','#8b6920')}
+    else if(/black-panther|nightwing|wolverine|wonder-woman|green-lantern|aquaman|shazam|supergirl/.test(id)){star(-.04,.18,.105,.045,accent)}
     else if(/naruto|sasuke|sakura|kakashi|tanjiro|nezuko|zenitsu|inosuke/.test(id)){R(-.23,.14,.46,.065,accent);circ(0,.18,.045,'#f7f2d7',main)}
     else{circ(0,.19,.065,accent);circ(0,.19,.03,'#fff')}
     c.restore();
@@ -613,15 +615,18 @@ function drawDuck(k,x,y,s,t){
     if(co.costumeTheme==='superhero'){
       // Helmet/cowl shell and faceplate; keep the eyes visible for expression.
       c.beginPath();c.moveTo(-.39,.23);c.lineTo(-.36,-.02);c.quadraticCurveTo(0,-.34,.36,-.02);c.lineTo(.39,.23);c.quadraticCurveTo(0,.08,-.39,.23);c.closePath();FS(main,shade(main,.55));
-      if(/iron-man|ant-man|deadpool|black-panther|black-widow|batman|wolverine|captain-marvel|doctor-strange|black-panther/.test(id)){
+      if(/iron-man|ant-man|deadpool|black-panther|black-widow|batman|superman|wolverine|captain-marvel|doctor-strange/.test(id)){
         if(id==='iron-man'){poly([[-.34,.22],[-.24,.12],[.24,.12],[.34,.22],[.22,.43],[-.22,.43]],accent);line(-.25,.25,.25,.25,'#fff1a0',.025)}
         else if(id==='deadpool'){poly([[-.32,.15],[-.1,.12],[0,.28],[.1,.12],[.32,.15],[.24,.42],[-.24,.42]],'#171923');circ(-.17,.23,.055,'#fff');circ(.17,.23,.055,'#fff')}
-        else if(id==='batman'){poly([[-.34,.14],[-.31,-.14],[-.17,-.02],[0,-.18],[.17,-.02],[.31,-.14],[.34,.14],[.22,.4],[-.22,.4]],'#171923');line(-.23,.24,.23,.24,'#e5c75a',.025)}
+        else if(id==='batman'){poly([[-.36,.2],[-.34,-.02],[-.27,-.31],[-.12,-.13],[.02,-.24],[.2,-.12],[.34,.02],[.36,.2],[.2,.4],[-.2,.4]],'#171923');poly([[.08,.19],[.31,.17],[.29,.24],[.1,.27]],'#e5c75a');line(.08,.23,.29,.21,'#fff2b0',.018)}
+        else if(id==='superman'){poly([[-.34,.2],[-.32,-.02],[-.18,-.19],[-.02,-.1],[.12,-.2],[.31,-.02],[.35,.2],[.2,.4],[-.2,.4]],'#2c5eaa');poly([[.02,-.14],[.14,-.23],[.24,-.13],[.13,-.07],[.06,-.02]],'#1e2535');poly([[.12,-.13],[.22,-.19],[.29,-.1],[.2,-.05]],'#df3c43')}
         else{poly([[-.34,.22],[-.25,.12],[.25,.12],[.34,.22],[.22,.42],[-.22,.42]],shade(main,.72));line(-.25,.23,.25,.23,accent,.035)}
       }else{
         poly([[-.34,.22],[-.25,.13],[.25,.13],[.34,.22],[.2,.4],[-.2,.4]],accent);
       }
       if(id==='wolverine'){poly([[-.28,.03],[-.42,-.24],[-.12,-.12]],accent);poly([[.28,.03],[.42,-.24],[.12,-.12]],accent)}
+      if(id==='batman'){poly([[-.2,.01],[-.12,-.24],[-.04,-.08],[.04,-.18],[.2,.01],[.14,.12],[-.14,.12]],'#171923')}
+      if(id==='superman'){poly([[-.22,.04],[-.12,-.12],[.02,-.08],[.14,-.2],[.2,-.04],[.06,.08],[-.12,.1]],'#df3c43')}
       if(id==='thor'||id==='aquaman'){poly([[-.25,.02],[-.4,-.18],[-.31,.15]],accent);poly([[.25,.02],[.4,-.18],[.31,.15]],accent)}
     }else{
       // Anime hair is deliberately sculpted rather than randomly assigned.
