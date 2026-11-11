@@ -258,6 +258,11 @@ function hybridRarityQuotas(count){
   }
   return quotas;
 }
+const HAIR_STYLES=['short','spiky','mohawk','afro','bob','long','pigtail','curly','ponytail','braid','sidepart','fluffy','undercut','twobuns','feather','swept'];
+const HEADWEAR_STYLES=['cap','beanie','chef','hard','helmet','crown','party','cowboy','pirate','guard','straw','santa','top'];
+const FACE_STYLES=['freckles','blush','scar','eyepatch','mask','bandana','mustache','beard','whiskers','facepaint','cheek-stripes','nose-ring','tear','stitches','respirator','fangs','none'];
+const GL=['round','shades','star','heart','goggles','monocle','square','aviator','visor','pixel','oval','sport','halfmoon','tech'];
+const NK=['bow','scarf','choker','medal','chain','ribbon','tie','necklace','bandana','none'];
 function generateDucks(count){
   const n=Math.max(0,Math.floor(Number(count)||0));
   if(!n)return [];
@@ -275,7 +280,6 @@ function generateDucks(count){
     const pool=costumePools[r];
     if(!pool.length&&quotas[r])throw new Error('No costumes available for rarity: '+r);
     for(let i=0;i<quotas[r];i++){
-      // Use every costume in a rarity tier once before reusing its outfit.
       const costume=pool[i%pool.length],comboPool=appearancePools.get(costume.id);
       if(!comboPool.length)throw new Error('Appearance combinations exhausted for costume: '+costume.id);
       chosen.push(comboPool.pop());
@@ -287,14 +291,20 @@ function generateDucks(count){
     const key=item.color.id+'|'+item.pattern.id+'|'+item.costume.id;
     if(used.has(key))throw new Error('Duplicate duck appearance combination: '+key);
     used.add(key);
+    const costumeIndex=DUCK_DATA.costumes.indexOf(item.costume);
+    const hair=rnd(HAIR_STYLES),wear=Math.random()<.24?rnd(HEADWEAR_STYLES):null;
+    const face=rnd(FACE_STYLES),gl=Math.random()<.42?rnd(GL):null,nk=Math.random()<.35?rnd(NK):'none';
     const co={
       bc:item.color.value,pattern:item.pattern.id,
-      su:item.costume.head,costumeId:item.costume.id,costumeName:item.costume.name,
+      su:wear,h:hair,costumeId:item.costume.id,costumeName:item.costume.name,
       rarity:item.costume.rarity,costumeMain:item.costume.main,costumeAccent:item.costume.accent,
-      headStyle:item.costume.headStyle||0,costumeTheme:item.costume.theme||'classic',costumeEmblem:item.costume.emblem||'',
+      headStyle:costumeIndex,costumeTheme:item.costume.theme||'classic',costumeEmblem:item.costume.emblem||'',
+      outfitStyle:costumeIndex,outfitAccent:item.costume.accent,
+      face,faceColor:rnd(['#e84b58','#f4b5a6','#fff0cf','#25252d','#5d7ed0']),
+      gl,nk,nc:item.costume.accent,
       c:item.costume.accent,hc:item.costume.main,
-      gl:Math.random()<.38?rnd(GL):null,nk:Math.random()<.22?rnd(NK):null,
-      nc:item.costume.accent,sh:'solid',s1:item.costume.main,s2:item.costume.main
+      glColor:rnd(['#222','#e2bd55','#e8f6ff','#d64b69']),
+      sh:'solid',s1:item.costume.main,s2:item.costume.accent
     };
     return {id:'duck-'+(index+1),baseColor:item.color.id,pattern:item.pattern.id,costumeId:item.costume.id,rarity:item.costume.rarity,co};
   });
@@ -355,6 +365,34 @@ function drawDuck(k,x,y,s,t){
     if(co.sh==='vest'){c.fillRect(-.03,0,.06,.7);c.fillStyle='#111';c.fillRect(.08,.15,.04,.04);c.fillRect(.08,.3,.04,.04)}
     if(co.sh==='check'){c.globalAlpha=.7;for(let v=-.4;v<.5;v+=.14)c.fillRect(v,0,.04,.7);for(let v=.04;v<.6;v+=.14)c.fillRect(-.5,v,1,.04);c.globalAlpha=1}
     c.restore();c.beginPath();c.ellipse(0,.12,.36,.38,0,0,PI);c.lineWidth=lw*1.6;c.strokeStyle=ol;c.stroke()}
+  // Unique garment construction: distinct panel cuts, seams, collars, belts and trims.
+  if(co.outfitStyle!==undefined){
+    const st=co.outfitStyle,variant=Math.floor(st/12),accent=co.outfitAccent||co.c;
+    c.save();c.clip(PB);
+    switch(st%12){
+      case 0:poly([[-.25,-.02],[0,.18],[.25,-.02],[.16,.55],[-.16,.55]],accent);line(-.12,.08,0,.2,'#fff',.018);break;
+      case 1:poly([[-.3,.02],[-.12,-.03],[0,.1],[.12,-.03],[.3,.02],[.23,.58],[-.23,.58]],accent);R(-.045,.08,.09,.5,'#fff');break;
+      case 2:poly([[-.3,-.02],[0,.13],[.3,-.02],[.22,.58],[-.22,.58]],accent);line(-.25,.12,.25,.12,'#fff',.025);line(-.2,.3,.2,.3,'#fff',.02);break;
+      case 3:R(-.29,.02,.13,.24,accent);R(.16,.02,.13,.24,accent);R(-.03,.02,.06,.52,accent);circ(-.1,.34,.025,'#fff');circ(.1,.34,.025,'#fff');break;
+      case 4:for(let j=0;j<4;j++)line(-.29+j*.19,.02,-.12+j*.19,.58,accent,.055);break;
+      case 5:poly([[-.3,.02],[-.18,.02],[-.08,.58],[-.28,.58]],accent);poly([[.3,.02],[.18,.02],[.08,.58],[.28,.58]],accent);R(-.035,.02,.07,.56,'#252a35');break;
+      case 6:R(-.3,.04,.6,.08,accent);R(-.3,.24,.6,.06,accent);R(-.3,.44,.6,.06,accent);break;
+      case 7:poly([[-.3,.02],[.3,.02],[.2,.58],[-.2,.58]],accent);line(-.24,.15,.24,.4,'#fff',.035);line(-.24,.4,.24,.15,'#fff',.035);break;
+      case 8:for(let j=0;j<5;j++){poly([[-.3+j*.12,.02],[-.23+j*.12,.02],[-.17+j*.12,.2],[-.24+j*.12,.2]],accent)}break;
+      case 9:poly([[-.32,.02],[.32,.02],[.24,.58],[-.24,.58]],accent);R(-.13,.05,.26,.22,'#fff');line(-.2,.3,.2,.3,'#fff',.025);break;
+      case 10:poly([[-.3,.02],[-.12,.02],[0,.18],[.12,.02],[.3,.02],[.23,.58],[-.23,.58]],accent);line(-.28,.48,.28,.48,'#fff',.025);break;
+      case 11:for(let j=0;j<4;j++){circ(-.17+(j%2)*.34,.12+Math.floor(j/2)*.2,.035,accent);};line(-.25,.52,.25,.52,accent,.035);break;
+    }
+    // Per-costume variant marks make silhouettes distinguishable beyond the base color.
+    if(variant>0){
+      const vx=(variant%5-2)*.045;
+      line(-.24,.53,.24,.53,accent,.025);
+      if(variant%3===0)star(vx,.26,.075,.03,accent);
+      else if(variant%3===1){circ(vx,.25,.06,accent);circ(vx,.25,.027,'#fff')}
+      else{poly([[vx-.07,.18],[vx+.07,.18],[vx,.32]],accent)}
+    }
+    c.restore();
+  }
   // Costume-specific chest insignia, kept cosmetic only (never affects race stats).
   if(co.costumeId){
     const ac=co.costumeAccent||'#fff';c.save();c.translate(0,.25);
@@ -402,13 +440,44 @@ function drawDuck(k,x,y,s,t){
   if(co.nk==='bow'){poly([[0,.03],[-.14,-.05],[-.14,.1]],co.nc);poly([[0,.03],[.14,-.05],[.14,.1]],co.nc);circ(0,.03,.04,co.nc)}
   else if(co.nk==='scarf'||co.su==='snow'){const sc=co.nc||co.c;c.beginPath();c.moveTo(-.34,-.09);c.quadraticCurveTo(0,.05,.34,-.09);c.lineTo(.33,.01);c.quadraticCurveTo(0,.14,-.33,.01);c.closePath();FS(sc);poly([[.1,.06],[.24,.04],[.2,.3],[.08,.28]],sc)}
   else{circ(0,.11,.07,'#e0c060','#6a5010');line(-.05,.12,.05,.12,'#6a5010',.012);circ(0,.03,.018,'#c9a84a','#6a5010')}
-  // front hair
-  if(['afro','bob','long','pigtail','curly'].includes(co.h)){c.beginPath();c.ellipse(0,-.38,.4,.35,0,PI*1.2,PI*1.8);c.closePath();FS(hc,shade(hc,.6))}
-  if(co.h==='mohawk')poly([[-.1,-.66],[-.08,-.88],[-.03,-.74],[0,-.94],[.04,-.74],[.09,-.88],[.1,-.66]],hc,shade(hc,.6));
+  // Front hair styles: hair is independent from hats and remains inside the head silhouette.
+  const hairShade=shade(hc,.72);
+  if(['afro','curly','fluffy'].includes(co.h)){for(let i=0;i<13;i++){const a=PI*1.08+i*PI*.07;circ(.37*Math.cos(a),-.39+.31*Math.sin(a),co.h==='afro'?.105:.075,hc,hairShade)}}
+  if(['bob','long'].includes(co.h)){c.beginPath();c.ellipse(0,co.h==='long'?.0:-.34,.445,co.h==='long'?.52:.39,0,0,7);FS(hc,hairShade);if(co.h==='long'){R(-.42,-.35,.1,.62,hc);R(.32,-.35,.1,.62,hc)}}
+  if(co.h==='pigtail'){circ(-.43,-.48,.13,hc,hairShade);circ(.43,-.48,.13,hc,hairShade);circ(-.48,-.3,.1,hc,hairShade);circ(.48,-.3,.1,hc,hairShade);c.beginPath();c.ellipse(0,-.48,.39,.2,0,PI,0);c.closePath();FS(hc,hairShade)}
+  if(co.h==='twobuns'){circ(-.28,-.68,.14,hc,hairShade);circ(.28,-.68,.14,hc,hairShade);c.beginPath();c.ellipse(0,-.48,.38,.18,0,PI,0);c.closePath();FS(hc,hairShade)}
+  if(co.h==='ponytail'){circ(.39,-.47,.15,hc,hairShade);poly([[.36,-.45],[.52,-.38],[.56,-.12],[.43,-.2]],hc,hairShade);c.beginPath();c.ellipse(0,-.48,.39,.17,0,PI,0);c.closePath();FS(hc,hairShade)}
+  if(co.h==='braid'){for(let i=0;i<5;i++)circ(.34+i*.035,-.25-i*.11,.075,hc,hairShade);c.beginPath();c.ellipse(0,-.49,.39,.17,0,PI,0);c.closePath();FS(hc,hairShade)}
+  if(['short','spiky','sidepart','undercut','feather','swept'].includes(co.h)){
+    if(co.h==='spiky'||co.h==='feather')poly([[-.38,-.42],[-.31,-.7],[-.19,-.56],[-.06,-.82],[.03,-.58],[.2,-.76],[.36,-.42]],hc,hairShade);
+    else if(co.h==='undercut'){poly([[-.38,-.42],[-.3,-.7],[.2,-.72],[.37,-.42]],hc,hairShade);R(.27,-.48,.1,.17,hairShade)}
+    else if(co.h==='swept'){poly([[-.4,-.4],[-.25,-.76],[.05,-.7],[.38,-.49],[.2,-.42]],hc,hairShade)}
+    else{c.beginPath();c.ellipse(0,-.5,.39,.18,0,PI,0);c.closePath();FS(hc,hairShade);if(co.h==='sidepart')line(.05,-.68,.25,-.51,hairShade,.025)}
+  }
   if(!co.h&&!co.su){poly([[-.05,-.7],[-.17,-.84],[-.1,-.68]],'#3a2a1a');poly([[.05,-.7],[.18,-.85],[.1,-.68]],'#3a2a1a')}
   // eyes + beak
   [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.2,-.4,.075,.08,0,0,7);FS('#fff',shade(bc,.5));circ(d*.19,-.39,.037,'#1a1a1a','#1a1a1a')});
   c.beginPath();c.ellipse(0,-.29,.2,.08,0,0,7);FS('#ebb82a','#8a6a00');line(-.12,-.3,.12,-.3,'#a07a10',.012);
+  // Face accessories: varied facial identity details, independent from eyewear.
+  const fc=co.faceColor||co.costumeAccent||'#e85d75';
+  switch(co.face){
+    case 'freckles':[-1,1].forEach(d=>{for(let j=0;j<3;j++)circ(d*(.25+j*.035),-.29+(j%2)*.045,.014,fc)});break;
+    case 'blush':[-1,1].forEach(d=>circ(d*.29,-.29,.075,'rgba(244,105,130,.55)'));break;
+    case 'scar':line(-.29,-.55,.03,-.27,fc,.035);line(-.22,-.48,-.18,-.43,'#fff',.012);break;
+    case 'eyepatch':R(.07,-.49,.25,.18,'#20202a');line(.08,-.4,.28,-.4,fc,.025);line(.28,-.4,.39,-.25,'#20202a',.018);break;
+    case 'mask':poly([[-.31,-.33],[.31,-.33],[.24,-.12],[-.24,-.12]],fc);line(-.31,-.3,-.39,-.38,fc,.025);line(.31,-.3,.39,-.38,fc,.025);break;
+    case 'bandana':poly([[-.31,-.34],[.31,-.34],[.25,-.19],[-.25,-.19]],fc);for(let j=0;j<3;j++)circ(-.12+j*.12,-.27,.018,'#fff');break;
+    case 'mustache':poly([[-.02,-.27],[-.13,-.34],[-.28,-.3],[-.2,-.22],[-.08,-.23],[0,-.2],[.08,-.23],[.2,-.22],[.28,-.3],[.13,-.34]],'#3a2a1a');break;
+    case 'beard':poly([[-.2,-.26],[.2,-.26],[.16,-.08],[0,.02],[-.16,-.08]],'#4a3028');break;
+    case 'whiskers':[-1,1].forEach(d=>{line(d*.24,-.28,d*.43,-.32,fc,.018);line(d*.24,-.24,d*.45,-.23,fc,.018);line(d*.24,-.2,d*.42,-.14,fc,.018)});break;
+    case 'facepaint':line(-.36,-.5,-.12,-.32,fc,.05);line(.12,-.32,.36,-.5,fc,.05);star(0,-.22,.045,.02,'#fff');break;
+    case 'cheek-stripes':[-1,1].forEach(d=>{line(d*.28,-.32,d*.38,-.25,fc,.025);line(d*.28,-.27,d*.38,-.2,fc,.025)});break;
+    case 'nose-ring':c.beginPath();c.arc(.08,-.27,.065,0,Math.PI);c.strokeStyle='#e7c45a';c.lineWidth=.022;c.stroke();break;
+    case 'tear':circ(.25,-.27,.035,'#6dc9f4');break;
+    case 'stitches':line(-.12,-.25,.12,-.25,fc,.025);for(let j=0;j<4;j++)line(-.1+j*.065,-.29,-.07+j*.065,-.21,'#fff',.012);break;
+    case 'respirator':R(-.24,-.36,.48,.2,'#d7e0e8');circ(-.16,-.26,.055,'#7d99a9');circ(.16,-.26,.055,'#7d99a9');break;
+    case 'fangs':poly([[-.1,-.25],[-.04,-.25],[-.08,-.16]],'#fff');poly([[.04,-.25],[.1,-.25],[.08,-.16]],'#fff');break;
+  }
   // glasses
   const g2=f=>[-1,1].forEach(d=>f(d*.2));
   switch(co.gl){
@@ -418,6 +487,14 @@ function drawDuck(k,x,y,s,t){
    case 'heart':g2(a=>heart(a,-.4,.09,'#e0203a'));break;
    case 'goggles':R(-.42,-.42,.84,.04,'#333');g2(a=>circ(a,-.4,.12,'rgba(255,190,0,.6)','#333'));break;
    case 'monocle':c.beginPath();c.arc(.2,-.4,.11,0,7);c.lineWidth=lw*1.4;c.strokeStyle='#d4a000';c.stroke();line(.2,-.29,.32,.1,'#d4a000',.012);break;
+   case 'square':g2(a=>{c.beginPath();c.roundRect(a-.105,-.5,.21,.19,.025);FS('rgba(190,235,255,.38)','#252525')});line(-.09,-.4,.09,-.4,'#252525',.02);break;
+   case 'aviator':g2(a=>{c.beginPath();c.ellipse(a,-.4,.12,.09,.15,0,7);FS('rgba(255,215,100,.35)','#302b2b')});line(-.09,-.4,.09,-.4,'#302b2b',.02);break;
+   case 'visor':R(-.38,-.47,.76,.14,'rgba(80,190,230,.72)');line(-.38,-.32,.38,-.32,'#252525',.025);break;
+   case 'pixel':[-1,1].forEach(d=>R(d*.2-.09,-.48,.18,.16,'#171717'));line(-.08,-.4,.08,-.4,'#171717',.025);break;
+   case 'oval':g2(a=>{c.beginPath();c.ellipse(a,-.4,.13,.09,0,0,7);FS('rgba(255,255,255,.25)','#555')});line(-.08,-.4,.08,-.4,'#555',.02);break;
+   case 'sport':g2(a=>{c.beginPath();c.ellipse(a,-.4,.13,.1,0,0,7);FS('rgba(90,180,255,.45)','#222')});line(-.09,-.4,.09,-.4,'#222',.025);break;
+   case 'halfmoon':g2(a=>{c.beginPath();c.arc(a,-.4,.12,0,7);FS('rgba(255,255,255,.25)','#c69b35');R(a-.13,-.4,.26,.08,'#c69b35')});break;
+   case 'tech':g2(a=>{c.beginPath();c.roundRect(a-.12,-.48,.24,.16,.04);FS('rgba(70,220,255,.35)','#55d9ef');line(a-.08,-.4,a+.08,-.4,'#fff',.012)});line(-.08,-.4,.08,-.4,'#55d9ef',.02);break;
   }
   // angry brows
   line(-.32,-.53,-.13,-.46,'#3a2a1a',.045);line(.32,-.53,.13,-.46,'#3a2a1a',.045);
@@ -461,24 +538,7 @@ function drawDuck(k,x,y,s,t){
    case 'ninja':R(-.34,-.18,.68,.18,hc);R(-.34,-.04,.68,.07,co.c);break;
    case 'goldenking':poly([[-.22,.02],[-.22,-.22],[-.1,-.12],[0,-.32],[.1,-.12],[.22,-.22],[.22,.02]],hc);circ(0,-.08,.04,co.c);break;
    case 'cosmic':c.beginPath();c.arc(0,.02,.33,PI,0);c.closePath();FS(hc);R(-.35,-.01,.7,.07,co.c);for(let i=0;i<5;i++)circ(-.2+i*.1,-.15-(i%2)*.06,.025,'#fff');break;
-   default:{
-     const hs=co.headStyle||0;
-     if(hs%12===0){c.beginPath();c.arc(0,.02,.33,PI,0);c.closePath();FS(hc);R(-.36,-.01,.72,.07,co.c);circ(0,-.12,.055,co.c)}
-     else if(hs%12===1){poly([[-.34,.02],[-.27,-.2],[0,-.38],[.27,-.2],[.34,.02]],hc);R(-.36,0,.72,.06,co.c)}
-     else if(hs%12===2){R(-.3,-.12,.6,.12,hc);poly([[-.25,-.12],[-.18,-.34],[.18,-.34],[.25,-.12]],hc);R(-.34,-.02,.68,.06,co.c)}
-     else if(hs%12===3){poly([[-.34,.02],[.34,.02],[.24,-.2],[0,-.4],[-.24,-.2]],hc);R(-.36,0,.72,.06,co.c);star(0,-.19,.07,.03,co.c)}
-     else if(hs%12===4){c.beginPath();c.ellipse(0,-.08,.36,.2,0,Math.PI,0);c.closePath();FS(hc);R(-.38,-.04,.76,.07,co.c);line(-.2,-.12,.2,-.12,co.c,.025)}
-     else if(hs%12===5){poly([[-.34,.02],[-.28,-.25],[-.1,-.14],[0,-.42],[.1,-.14],[.28,-.25],[.34,.02]],hc);R(-.36,0,.72,.06,co.c)}
-     else if(hs%12===6){c.beginPath();c.arc(0,.02,.34,PI,0);c.closePath();FS(hc);R(-.36,-.02,.72,.07,co.c);R(-.08,-.28,.16,.13,co.c);circ(0,-.31,.035,'#fff')}
-     else if(hs%12===7){poly([[-.32,.02],[-.24,-.2],[0,-.35],[.24,-.2],[.32,.02]],hc);poly([[-.24,-.12],[-.42,-.34],[-.15,-.24]],co.c);poly([[.24,-.12],[.42,-.34],[.15,-.24]],co.c)}
-     else if(hs%12===8){R(-.34,-.12,.68,.14,hc);poly([[-.3,-.12],[-.2,-.36],[.2,-.36],[.3,-.12]],hc);line(-.28,-.04,.28,-.04,co.c,.045)}
-     else if(hs%12===9){c.beginPath();c.ellipse(0,-.08,.38,.16,0,Math.PI,0);c.closePath();FS(hc);R(-.4,-.03,.8,.07,co.c);circ(0,-.16,.04,'#fff')}
-     else if(hs%12===10){poly([[-.32,.02],[-.25,-.23],[0,-.45],[.25,-.23],[.32,.02]],hc);R(-.36,0,.72,.06,co.c);circ(-.2,-.14,.035,co.c);circ(.2,-.14,.035,co.c)}
-     else{c.beginPath();c.arc(0,.02,.34,PI,0);c.closePath();FS(hc);R(-.36,-.02,.72,.07,co.c);poly([[-.08,-.12],[0,-.25],[.08,-.12]],co.c)}
-     const variant=Math.floor(hs/12);
-     if(variant>0){line(-.22,-.025,.22,-.025,co.c,.025);circ((variant%3-1)*.18,-.14,.026,co.c);if(variant%2===0)star(0,-.3,.045,.02,co.c)}
-     break;
-   }
+   default:break;
   }
   c.restore();c.restore();
   // number / name tag on the belly
