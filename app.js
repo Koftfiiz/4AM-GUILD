@@ -443,6 +443,9 @@ async function loadApplication() {
 
     updateUserChip();
 
+    // Save Discord identity only after an active guild profile has passed the
+    // existing membership gate. OAuth login alone never grants app access.
+    await syncOwnDiscordOAuthIdentity();
     await loadDiscordAccount();
 
     await Promise.allSettled([
@@ -490,6 +493,41 @@ async function loadCurrentMember() {
 
   currentMember = data;
   syncManagementMenuVisibility();
+}
+
+// Read the Discord identity returned by Supabase OAuth.
+// This identifies the Discord account only; it does not prove guild membership.
+function getDiscordOAuthIdentity() {
+  const discordIdentity = (currentUser?.identities || [])
+    .find(identity => String(identity.provider || "").toLowerCase() === "discord");
+  const metadata = discordIdentity?.identity_data || currentUser?.user_metadata || {};
+  const discordId = String(
+    metadata.provider_id || metadata.sub || metadata.id || ""
+  ).trim();
+  const username = String(
+    metadata.user_name || metadata.username || metadata.preferred_username || ""
+  ).trim();
+  const globalName = String(
+    metadata.full_name || metadata.global_name || metadata.name || ""
+  ).trim();
+
+  return { discordId, username, globalName };
+}
+
+// Persist the signed-in member's own Discord OAuth identity through a
+// SECURITY DEFINER RPC. This never grants guild membership or changes roles.
+async function syncOwnDiscordOAuthIdentity() {
+  if (!currentUser || !currentMember || currentMember.active !== true) return;
+  const { discordId } = getDiscordOAuthIdentity();
+  if (!discordId) {
+    console.warn("Discord OAuth identity did not include a Discord user ID.");
+    return;
+  }
+
+  const { error } = await supabaseClient.rpc("sync_my_discord_account");
+  if (error) {
+    console.warn("Discord identity sync is not installed yet:", error.message);
+  }
 }
 
 // ==========================================
@@ -618,8 +656,11 @@ function showRegistrationScreen(errorMessage = "") {
         >
 
         <div class="registration-discord-info">
-          <strong>Discord Account :</strong>
-          <span>${escapeHTML(currentUser?.email || "Discord Connected")}</span>
+          <strong>บัญชี Discord ที่เข้าสู่ระบบ</strong>
+          <span>ชื่อแสดงผล: ${escapeHTML(getDiscordOAuthIdentity().globalName || "ไม่พบชื่อแสดงผล")}</span>
+          <span>Username: ${escapeHTML(getDiscordOAuthIdentity().username || "ไม่พบ Username")}</span>
+          <span>Discord User ID: ${escapeHTML(getDiscordOAuthIdentity().discordId || "ไม่พบ User ID")}</span>
+          <small>ข้อมูลนี้มาจาก Discord OAuth โดยตรง แต่ยังไม่ใช่การยืนยันสถานะสมาชิกกิลด์</small>
         </div>
 
         <p id="registration-message" class="message">
