@@ -268,6 +268,13 @@ function generateDucks(count){
   const quotas=hybridRarityQuotas(n),costumePools={},appearancePools=new Map();
   RARITY_ORDER.forEach(r=>{
     costumePools[r]=shufflePool(DUCK_DATA.costumes.filter(costume=>costume.rarity===r));
+    // Keep the two requested headline superhero looks visible in medium/large races.
+    if(r==='common'&&quotas.common>=2){
+      ['batman','superman'].forEach(id=>{
+        const at=costumePools[r].findIndex(costume=>costume.id===id);
+        if(at>1){const [hero]=costumePools[r].splice(at,1);costumePools[r].splice(id==='batman'?0:1,0,hero);}
+      });
+    }
     costumePools[r].forEach(costume=>{
       const combos=[];
       DUCK_DATA.colors.forEach(color=>DUCK_DATA.patterns.forEach(pattern=>combos.push({color,pattern,costume})));
@@ -331,7 +338,7 @@ function drawDuck(k,x,y,s,t){
   const heart=(a,b,z,col)=>{c.beginPath();c.moveTo(a,b+z);c.bezierCurveTo(a-z*1.4,b-z*.2,a-z*.6,b-z*1.2,a,b-z*.5);c.bezierCurveTo(a+z*.6,b-z*1.2,a+z*1.4,b-z*.2,a,b+z);FS(col)};
   const line=(a,b,d,e,col,w)=>{c.beginPath();c.moveTo(a,b);c.lineTo(d,e);c.lineWidth=w||lw;c.strokeStyle=col||INK;c.stroke()};
   const yb=y+Math.sin(t*4+k.ph)*s*.03+Math.sin(t*9+k.ph)*s*.045;
-  c.save();c.translate(x,yb);c.rotate(Math.sin(t*3+k.ph)*.035);c.scale(s,s);c.scale(.92,1);c.transform(1,0,.10,1,0,0);c.lineJoin='round';c.lineCap='round';
+  c.save();c.translate(x,yb);c.rotate(Math.sin(t*3+k.ph)*.035);c.scale(s,s);c.scale(.88,1);c.transform(1,0,.18,1,.025,0);c.lineJoin='round';c.lineCap='round';
   c.fillStyle='rgba(255,255,255,.3)';c.beginPath();c.ellipse(0,.56,.62,.12,0,0,7);c.fill();for(let z=0;z<3;z++){c.strokeStyle='rgba(230,255,255,'+(.42-z*.1)+')';c.lineWidth=.018;c.beginPath();c.ellipse(-.52-z*.15,.57,.16+z*.05,.045,0,0,7);c.stroke()}
   // wigs behind the head
   if(co.h==='afro')circ(-.02,-.52,.43,hc,shade(hc,.6));
