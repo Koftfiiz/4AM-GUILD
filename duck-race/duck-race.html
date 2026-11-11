@@ -115,6 +115,31 @@ const HEAD_DESIGNS=[{id:'head-1',name:"Wizard Spiral Hat",shape:0,palette:0},{id
 const FACE_DESIGNS=[{id:'face-1',name:"Handlebar Mustache",shape:0,palette:0},{id:'face-2',name:"Oversized Buck Teeth",shape:1,palette:1},{id:'face-3',name:"Star Cheek Stickers",shape:2,palette:2},{id:'face-4',name:"Bandage X",shape:3,palette:3},{id:'face-5',name:"Round Clown Nose",shape:4,palette:4},{id:'face-6',name:"Vampire Fangs",shape:5,palette:5},{id:'face-7',name:"Monocle Chain",shape:6,palette:6},{id:'face-8',name:"Bubblegum Bubble",shape:7,palette:7},{id:'face-9',name:"Fake Beak Guard",shape:8,palette:8},{id:'face-10',name:"Pixel Shades",shape:9,palette:9},{id:'face-11',name:"Sleepy Eye Mask",shape:10,palette:0},{id:'face-12',name:"Heart Freckles",shape:11,palette:1},{id:'face-13',name:"Lightning Face Paint",shape:12,palette:2},{id:'face-14',name:"Swirly Cheeks",shape:13,palette:3},{id:'face-15',name:"Detective Magnifier",shape:14,palette:4},{id:'face-16',name:"Robot Jaw",shape:15,palette:5},{id:'face-17',name:"Gold Grill",shape:16,palette:6},{id:'face-18',name:"Tiny Bandit Mask",shape:17,palette:7},{id:'face-19',name:"Whisker Dots",shape:18,palette:8},{id:'face-20',name:"Pirate Eyepatch",shape:19,palette:9},{id:'face-21',name:"Rainbow Tears",shape:20,palette:0},{id:'face-22',name:"Zigzag Smile",shape:21,palette:1},{id:'face-23',name:"Duck Bill Piercing",shape:22,palette:2},{id:'face-24',name:"Candy Lips",shape:23,palette:3},{id:'face-25',name:"Snorkel Mouthpiece",shape:24,palette:4},{id:'face-26',name:"Comedy Tragedy Mask",shape:25,palette:5},{id:'face-27',name:"Alien Respirator",shape:26,palette:6},{id:'face-28',name:"Kiss Marks",shape:27,palette:7},{id:'face-29',name:"Scribble Scar",shape:28,palette:8},{id:'face-30',name:"Oversized Goggles",shape:29,palette:9},{id:'face-31',name:"Three Eyes Sticker",shape:30,palette:0},{id:'face-32',name:"Bandana Teeth",shape:31,palette:1},{id:'face-33',name:"Fang Smile",shape:32,palette:2},{id:'face-34',name:"Star Sunglasses",shape:33,palette:3},{id:'face-35',name:"Nerd Tape Glasses",shape:34,palette:4},{id:'face-36',name:"Spiral Eyes",shape:35,palette:5},{id:'face-37',name:"Sleep Drool",shape:36,palette:6},{id:'face-38',name:"Mustache Curl",shape:37,palette:7},{id:'face-39',name:"Shark Teeth",shape:38,palette:8},{id:'face-40',name:"Mosaic Mask",shape:39,palette:9},{id:'face-41',name:"Clown Makeup",shape:40,palette:0},{id:'face-42',name:"Cat Nose and Whiskers",shape:41,palette:1},{id:'face-43',name:"Bone Smile",shape:42,palette:2},{id:'face-44',name:"Robot Visor",shape:43,palette:3},{id:'face-45',name:"Rainbow Cheeks",shape:44,palette:4},{id:'face-46',name:"Freckle Cluster",shape:45,palette:5},{id:'face-47',name:"One Big Tooth",shape:46,palette:6},{id:'face-48',name:"Bubble Blower",shape:47,palette:7},{id:'face-49',name:"Gold Nose Ring",shape:48,palette:8},{id:'face-50',name:"Crossed Plasters",shape:49,palette:9}];
 const DESIGN_COLORS=[['#a61f2b','#f4c542','#f6eee0'],['#176b83','#7ee0d0','#e9f7ff'],['#553b91','#c8a4ff','#fff2a8'],['#e64c83','#f9d66b','#fff4f7'],['#34465e','#7ad8ee','#f5f0d8'],['#d6d0bd','#817b72','#4a4540'],['#3d245d','#f6d84c','#f7f0e5'],['#3c8c48','#d2ed72','#f7f0c4'],['#e65b36','#fff0d1','#29252b'],['#3d526b','#d2a86c','#f5f0e8']];
 const shuffleDesign=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const COL=['#d62828','#2f6fe0','#2fcf3a','#8e44ad','#ff7a00','#f78fb3','#14a8a0','#151515','#ffffff','#f4b400','#6ec6ff','#8d5524'];
+const HATS=['chef','top','crown','hard','helmet','cap','santa','pirate','guard','party','beanie','cowboy'],WIGS=['afro','mohawk','long','curly','pigtail','bob'];
+const GL=['round','shades','star','heart','goggles','monocle'],NK=['bow','scarf'],SH=['solid','stripe','dots','sailor','vest','check'],SUITS=['straw','bee','dino','uni','snow','mask'];
+const rnd=a=>a[Math.floor(Math.random()*a.length)];
+function genCo(){return {bc:rnd(BODY)}}
+function assignCo(list){
+ const outfits=shuffleDesign(COSTUME_DESIGNS.slice()),heads=shuffleDesign(HEAD_DESIGNS.slice()),faces=shuffleDesign(FACE_DESIGNS.slice());
+ list.forEach((r,i)=>{const co=genCo();co.costumeDesign=i<50?outfits[i]:null;co.headDesign=i<50?heads[i]:null;co.faceDesign=i<50?faces[i]:null;co.costumeId=co.costumeDesign?.id||'none';if(co.costumeDesign)co.bc=DESIGN_COLORS[co.costumeDesign.palette][0];co.hc=co.headDesign?DESIGN_COLORS[co.headDesign.palette][1]:rnd(COL);r.co=co});
+}
+function assignCo(list){const used=new Set();list.forEach(r=>{let co,n=0;do{co=genCo()}while(used.has(JSON.stringify(co))&&++n<800);used.add(JSON.stringify(co));r.co=co})}
+
+/* ---------- duck drawing: fluffy front-facing duck (unit coords, width = 1) ---------- */
+const shade=(h,f)=>{const n=parseInt(h.slice(1),16),m=v=>Math.max(0,Math.min(255,Math.round(v*f)));return '#'+[n>>16,n>>8&255,n&255].map(v=>m(v).toString(16).padStart(2,'0')).join('')};
+const PI=Math.PI,PH=new Path2D(),PB=new Path2D(),PD=new Path2D();
+PH.ellipse(0,-.38,.39,.34,0,0,7);PH.moveTo(.36,.12);PH.ellipse(0,.12,.36,.38,0,0,7);
+PB.ellipse(0,.12,.36,.38,0,0,7);PD.ellipse(0,-.38,.39,.34,0,0,7);
+function drawDuck(k,x,y,s,t){
+  const c=cx,co=k.r.co,bc=co.bc,hc=co.hc,lw=.02,ol=co.ol||(co.ol=shade(bc,.6)),INK='#2b2100';
+  const FS=(col,o)=>{c.fillStyle=col;c.fill();c.lineWidth=lw;c.strokeStyle=o||INK;c.stroke()};
+  const circ=(a,b,r,col,o)=>{c.beginPath();c.arc(a,b,r,0,7);FS(col,o)};
+  const R=(a,b,w,h,col)=>{c.beginPath();c.rect(a,b,w,h);FS(col)};
+  const poly=(pts,col,o)=>{c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();FS(col,o)};
+  const star=(a,b,Ro,ri,col)=>{c.beginPath();for(let i=0;i<10;i++){const rr=i%2?ri:Ro,an=-PI/2+i*PI/5;c.lineTo(a+rr*Math.cos(an),b+rr*Math.sin(an))}c.closePath();FS(col)};
+  const heart=(a,b,z,col)=>{c.beginPath();c.moveTo(a,b+z);c.bezierCurveTo(a-z*1.4,b-z*.2,a-z*.6,b-z*1.2,a,b-z*.5);c.bezierCurveTo(a+z*.6,b-z*1.2,a+z*1.4,b-z*.2,a,b+z);FS(col)};
+  const line=(a,b,d,e,col,w)=>{c.beginPath();c.moveTo(a,b);c.lineTo(d,e);c.lineWidth=w||lw;c.strokeStyle=col||INK;c.stroke()};
 function drawCostumeDesign(d){
  const p=DESIGN_COLORS[d.palette],a=p[0],b=p[1],w=p[2],i=d.shape;
  c.save();c.clip(PB);
@@ -178,32 +203,6 @@ function drawFaceDesign(d){
  if(i%5===3)circ(0,-.23,.04,a);
  if(i%5===4)line(-.12,-.18,.12,-.18,a,.035);
 }
-
-const COL=['#d62828','#2f6fe0','#2fcf3a','#8e44ad','#ff7a00','#f78fb3','#14a8a0','#151515','#ffffff','#f4b400','#6ec6ff','#8d5524'];
-const HATS=['chef','top','crown','hard','helmet','cap','santa','pirate','guard','party','beanie','cowboy'],WIGS=['afro','mohawk','long','curly','pigtail','bob'];
-const GL=['round','shades','star','heart','goggles','monocle'],NK=['bow','scarf'],SH=['solid','stripe','dots','sailor','vest','check'],SUITS=['straw','bee','dino','uni','snow','mask'];
-const rnd=a=>a[Math.floor(Math.random()*a.length)];
-function genCo(){return {bc:rnd(BODY)}}
-function assignCo(list){
- const outfits=shuffleDesign(COSTUME_DESIGNS.slice()),heads=shuffleDesign(HEAD_DESIGNS.slice()),faces=shuffleDesign(FACE_DESIGNS.slice());
- list.forEach((r,i)=>{const co=genCo();co.costumeDesign=i<50?outfits[i]:null;co.headDesign=i<50?heads[i]:null;co.faceDesign=i<50?faces[i]:null;co.costumeId=co.costumeDesign?.id||'none';if(co.costumeDesign)co.bc=DESIGN_COLORS[co.costumeDesign.palette][0];co.hc=co.headDesign?DESIGN_COLORS[co.headDesign.palette][1]:rnd(COL);r.co=co});
-}
-function assignCo(list){const used=new Set();list.forEach(r=>{let co,n=0;do{co=genCo()}while(used.has(JSON.stringify(co))&&++n<800);used.add(JSON.stringify(co));r.co=co})}
-
-/* ---------- duck drawing: fluffy front-facing duck (unit coords, width = 1) ---------- */
-const shade=(h,f)=>{const n=parseInt(h.slice(1),16),m=v=>Math.max(0,Math.min(255,Math.round(v*f)));return '#'+[n>>16,n>>8&255,n&255].map(v=>m(v).toString(16).padStart(2,'0')).join('')};
-const PI=Math.PI,PH=new Path2D(),PB=new Path2D(),PD=new Path2D();
-PH.ellipse(0,-.38,.39,.34,0,0,7);PH.moveTo(.36,.12);PH.ellipse(0,.12,.36,.38,0,0,7);
-PB.ellipse(0,.12,.36,.38,0,0,7);PD.ellipse(0,-.38,.39,.34,0,0,7);
-function drawDuck(k,x,y,s,t){
-  const c=cx,co=k.r.co,bc=co.bc,hc=co.hc,lw=.02,ol=co.ol||(co.ol=shade(bc,.6)),INK='#2b2100';
-  const FS=(col,o)=>{c.fillStyle=col;c.fill();c.lineWidth=lw;c.strokeStyle=o||INK;c.stroke()};
-  const circ=(a,b,r,col,o)=>{c.beginPath();c.arc(a,b,r,0,7);FS(col,o)};
-  const R=(a,b,w,h,col)=>{c.beginPath();c.rect(a,b,w,h);FS(col)};
-  const poly=(pts,col,o)=>{c.beginPath();pts.forEach((p,i)=>i?c.lineTo(p[0],p[1]):c.moveTo(p[0],p[1]));c.closePath();FS(col,o)};
-  const star=(a,b,Ro,ri,col)=>{c.beginPath();for(let i=0;i<10;i++){const rr=i%2?ri:Ro,an=-PI/2+i*PI/5;c.lineTo(a+rr*Math.cos(an),b+rr*Math.sin(an))}c.closePath();FS(col)};
-  const heart=(a,b,z,col)=>{c.beginPath();c.moveTo(a,b+z);c.bezierCurveTo(a-z*1.4,b-z*.2,a-z*.6,b-z*1.2,a,b-z*.5);c.bezierCurveTo(a+z*.6,b-z*1.2,a+z*1.4,b-z*.2,a,b+z);FS(col)};
-  const line=(a,b,d,e,col,w)=>{c.beginPath();c.moveTo(a,b);c.lineTo(d,e);c.lineWidth=w||lw;c.strokeStyle=col||INK;c.stroke()};
   const yb=y+Math.sin(t*4+k.ph)*s*.03+Math.sin(t*9+k.ph)*s*.045;
   c.save();c.translate(x,yb);c.rotate(Math.sin(t*3+k.ph)*.05);c.scale(s,s);c.lineJoin='round';c.lineCap='round';
   c.fillStyle='rgba(255,255,255,.3)';c.beginPath();c.ellipse(0,.56,.62,.12,0,0,7);c.fill();for(let z=0;z<3;z++){c.strokeStyle='rgba(230,255,255,'+(.42-z*.1)+')';c.lineWidth=.018;c.beginPath();c.ellipse(-.52-z*.15,.57,.16+z*.05,.045,0,0,7);c.stroke()}
