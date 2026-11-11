@@ -411,7 +411,7 @@ function drawDuck(k,x,y,s,t){
   if(co.su==='bee'){[-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.3,-.15,.1,.26,d*.5,0,7);FS('rgba(255,255,255,.85)','#7a7a7a')})}
   const fp=Math.sin(t*9+k.ph)*.075;
   [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.17,.52+fp*d,.14,.055,0,0,7);FS('#f0a020','#8a5a00');[-.07,0,.07].forEach(o=>circ(d*.17+o,.56+fp*d,.028,'#f0a020','#8a5a00'))});
-  // Wings are drawn after the body and outfit so every costume keeps visible animated wings.
+  [-1,1].forEach(d=>{c.save();c.translate(d*.34,.13);c.rotate((k.mode==='tired'?.48:Math.sin(t*9+k.ph*(k.mode==='boost'?2:1))*(k.mode==='boost'?.9:.48))*d);c.beginPath();c.ellipse(0,0,.12,.22,0,0,7);FS(bc,ol);c.restore()});
   const characterCostume=co.costumeTheme==='superhero'||co.costumeTheme==='anime';
   if(characterCostume){
     const id=co.costumeId||'',cape=co.costumeAccent||co.c;
@@ -604,24 +604,6 @@ function drawDuck(k,x,y,s,t){
       line(d*.17-.07,.51+Math.sin(t*9+k.ph)*.075*d,d*.17+.07,.51+Math.sin(t*9+k.ph)*.075*d,'rgba(255,255,255,.7)',.018);
     });
   }
-  // Always-visible animated wings, layered above costume panels so no outfit can hide the flap.
-  const wingFlap=Math.sin(t*10+k.ph)*.72;
-  [-1,1].forEach(d=>{
-    c.save();
-    c.translate(d*.31,.13);
-    c.rotate(d*wingFlap);
-    c.scale(d,1);
-    c.beginPath();
-    c.moveTo(0,-.045);
-    c.bezierCurveTo(.13,-.22,.39,-.22,.43,-.02);
-    c.bezierCurveTo(.39,.12,.22,.2,.055,.12);
-    c.quadraticCurveTo(-.015,.055,0,-.045);
-    c.closePath();
-    FS(bc,ol);
-    line(.07,.015,.31,-.025,shade(bc,.72),.018);
-    line(.08,.075,.28,.055,shade(bc,.72),.016);
-    c.restore();
-  });
   c.beginPath();c.moveTo(-.25,-.04);c.quadraticCurveTo(-.02,.12,.28,-.06);c.lineTo(.25,.02);c.quadraticCurveTo(-.02,.19,-.29,.04);c.closePath();FS('#8a3a2a','#4a1a10');
   line(-.24,.02,-.34,.19,'#4a3020',.025);
   if(co.nk==='bow'){poly([[-.03,.04],[-.19,-.03],[-.16,.12]],co.nc);poly([[-.03,.04],[.08,-.02],[.05,.13]],co.nc);circ(-.03,.04,.035,co.nc)}
@@ -687,7 +669,6 @@ function drawDuck(k,x,y,s,t){
    case 'halfmoon':g2(a=>{c.beginPath();c.arc(a,-.4,.12,0,7);FS('rgba(255,255,255,.25)','#c69b35');R(a-.13,-.4,.26,.08,'#c69b35')});break;
    case 'tech':g2(a=>{c.beginPath();c.roundRect(a-.12,-.48,.24,.16,.04);FS('rgba(70,220,255,.35)','#55d9ef');line(a-.08,-.4,a+.08,-.4,'#fff',.012)});line(-.08,-.4,.08,-.4,'#55d9ef',.02);break;
   }
-  line(.13,-.54,.27,-.49,'#3a2a1a',.035);
   // headwear / suit top (origin on top of head)
   c.save();c.translate(0,-.64);
   switch(co.su||co.h){
