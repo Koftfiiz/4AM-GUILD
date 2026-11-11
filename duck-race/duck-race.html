@@ -109,22 +109,84 @@ let S={st:'idle',t:0,T:30,sc:1,cam:0,last:0,fin:false};
 
 /* ---------- costumes (every duck is unique) ---------- */
 const BODY=['#ffd84a','#e63946','#f78fb3','#8e44ad','#2fcf3a','#a7d129','#2f6fe0','#6ec6ff','#ff7a00','#14a8a0','#f4f4f4','#4a4a4a','#8d5524','#9aa5b1','#e0409a','#fff08a'];
+
+const COSTUME_DESIGNS=[{id:'outfit-1',name:"Iron Vanguard",shape:0,palette:0},{id:'outfit-2',name:"Deep Sea Diver",shape:1,palette:1},{id:'outfit-3',name:"Mad Scientist",shape:2,palette:2},{id:'outfit-4',name:"Royal Jester",shape:3,palette:3},{id:'outfit-5',name:"Space Tourist",shape:4,palette:4},{id:'outfit-6',name:"Mummy Wrap",shape:5,palette:5},{id:'outfit-7',name:"Disco Ball",shape:6,palette:6},{id:'outfit-8',name:"Cactus Gardener",shape:7,palette:7},{id:'outfit-9',name:"Sushi Roll",shape:8,palette:8},{id:'outfit-10',name:"Giant Waffle",shape:9,palette:9},{id:'outfit-11',name:"Racing Pit Crew",shape:10,palette:0},{id:'outfit-12',name:"Haunted Sheet",shape:11,palette:1},{id:'outfit-13',name:"Dragon Pajamas",shape:12,palette:2},{id:'outfit-14',name:"Banana Suit",shape:13,palette:3},{id:'outfit-15',name:"Toilet Paper Hero",shape:14,palette:4},{id:'outfit-16',name:"Wizard Robes",shape:15,palette:5},{id:'outfit-17',name:"Bee Keeper",shape:16,palette:6},{id:'outfit-18',name:"Lava Armor",shape:17,palette:7},{id:'outfit-19',name:"Cloud Pajamas",shape:18,palette:8},{id:'outfit-20',name:"Popcorn Seller",shape:19,palette:9},{id:'outfit-21',name:"Ramen Bowl",shape:20,palette:0},{id:'outfit-22',name:"Tropical Lifeguard",shape:21,palette:1},{id:'outfit-23',name:"Steampunk Pilot",shape:22,palette:2},{id:'outfit-24',name:"Frog Raincoat",shape:23,palette:3},{id:'outfit-25',name:"Cardboard Robot",shape:24,palette:4},{id:'outfit-26',name:"Royal Knight",shape:25,palette:5},{id:'outfit-27',name:"Circus Strongduck",shape:26,palette:6},{id:'outfit-28',name:"Detective Trenchcoat",shape:27,palette:7},{id:'outfit-29',name:"Alien Tourist",shape:28,palette:8},{id:'outfit-30',name:"Volcano Monster",shape:29,palette:9},{id:'outfit-31',name:"Bubble Tea Suit",shape:30,palette:0},{id:'outfit-32',name:"Cereal Mascot",shape:31,palette:1},{id:'outfit-33',name:"Gardening Overalls",shape:32,palette:2},{id:'outfit-34',name:"Deep Forest Ranger",shape:33,palette:3},{id:'outfit-35',name:"Pirate Captain",shape:34,palette:4},{id:'outfit-36',name:"Arctic Explorer",shape:35,palette:5},{id:'outfit-37',name:"Disco Elvis",shape:36,palette:6},{id:'outfit-38',name:"Mushroom Forager",shape:37,palette:7},{id:'outfit-39',name:"Vampire Formal",shape:38,palette:8},{id:'outfit-40',name:"Dinosaur Onesie",shape:39,palette:9},{id:'outfit-41',name:"Arcade Champion",shape:40,palette:0},{id:'outfit-42',name:"Soda Can Suit",shape:41,palette:1},{id:'outfit-43',name:"Moon Astronaut",shape:42,palette:2},{id:'outfit-44',name:"Beach Cabana",shape:43,palette:3},{id:'outfit-45',name:"Construction Mech",shape:44,palette:4},{id:'outfit-46',name:"Pancake Stack",shape:45,palette:5},{id:'outfit-47',name:"Ghost Bride",shape:46,palette:6},{id:'outfit-48',name:"Cyborg Mechanic",shape:47,palette:7},{id:'outfit-49',name:"Trophy Champion",shape:48,palette:8},{id:'outfit-50',name:"Rubber Duck Lifeguard",shape:49,palette:9}];
+const HEAD_DESIGNS=[{id:'head-1',name:"Wizard Spiral Hat",shape:0,palette:0},{id:'head-2',name:"Shark Fin Helmet",shape:1,palette:1},{id:'head-3',name:"Twin Cherry Clips",shape:2,palette:2},{id:'head-4',name:"Satellite Dish",shape:3,palette:3},{id:'head-5',name:"Cactus Bloom",shape:4,palette:4},{id:'head-6',name:"Tiny Castle",shape:5,palette:5},{id:'head-7',name:"Octopus Crown",shape:6,palette:6},{id:'head-8',name:"Traffic Cone",shape:7,palette:7},{id:'head-9',name:"Birthday Cake",shape:8,palette:8},{id:'head-10',name:"Viking Horns",shape:9,palette:9},{id:'head-11',name:"UFO Saucer",shape:10,palette:0},{id:'head-12',name:"Pineapple Crown",shape:11,palette:1},{id:'head-13',name:"Bunny Ears",shape:12,palette:2},{id:'head-14',name:"Ram Horns",shape:13,palette:3},{id:'head-15',name:"Diving Helmet",shape:14,palette:4},{id:'head-16',name:"Flower Pot",shape:15,palette:5},{id:'head-17',name:"Mini Windmill",shape:16,palette:6},{id:'head-18',name:"Crown of Fries",shape:17,palette:7},{id:'head-19',name:"Mushroom Cap",shape:18,palette:8},{id:'head-20',name:"Meteor Mohawk",shape:19,palette:9},{id:'head-21',name:"Royal Turban",shape:20,palette:0},{id:'head-22',name:"Propeller Beanie",shape:21,palette:1},{id:'head-23',name:"Crocodile Snout Hat",shape:22,palette:2},{id:'head-24',name:"Antler Branches",shape:23,palette:3},{id:'head-25',name:"Unicorn Horn",shape:24,palette:4},{id:'head-26',name:"Jellyfish Hood",shape:25,palette:5},{id:'head-27',name:"Chef Pancake Stack",shape:26,palette:6},{id:'head-28',name:"Cowboy Cactus Hat",shape:27,palette:7},{id:'head-29',name:"Knight Plume",shape:28,palette:8},{id:'head-30',name:"Banana Peel Hat",shape:29,palette:9},{id:'head-31',name:"Fish Bowl Helmet",shape:30,palette:0},{id:'head-32',name:"Mini Volcano",shape:31,palette:1},{id:'head-33',name:"Cloud Halo",shape:32,palette:2},{id:'head-34',name:"Bee Antennae",shape:33,palette:3},{id:'head-35',name:"Lighthouse Hat",shape:34,palette:4},{id:'head-36',name:"Candy Cane Hat",shape:35,palette:5},{id:'head-37',name:"Dragon Spines",shape:36,palette:6},{id:'head-38',name:"Turtle Shell Cap",shape:37,palette:7},{id:'head-39',name:"Dumpling Hat",shape:38,palette:8},{id:'head-40',name:"Broken Robot Antenna",shape:39,palette:9},{id:'head-41',name:"Feather Fan",shape:40,palette:0},{id:'head-42',name:"Paper Boat Hat",shape:41,palette:1},{id:'head-43',name:"Hotdog Hat",shape:42,palette:2},{id:'head-44',name:"Crown of Leaves",shape:43,palette:3},{id:'head-45',name:"Snow Globe Hood",shape:44,palette:4},{id:'head-46',name:"Bat Wing Hood",shape:45,palette:5},{id:'head-47',name:"Sailor Anchor Cap",shape:46,palette:6},{id:'head-48',name:"Giant Bow",shape:47,palette:7},{id:'head-49',name:"Meteor Ring",shape:48,palette:8},{id:'head-50',name:"Tiny UFO Abduction",shape:49,palette:9}];
+const FACE_DESIGNS=[{id:'face-1',name:"Handlebar Mustache",shape:0,palette:0},{id:'face-2',name:"Oversized Buck Teeth",shape:1,palette:1},{id:'face-3',name:"Star Cheek Stickers",shape:2,palette:2},{id:'face-4',name:"Bandage X",shape:3,palette:3},{id:'face-5',name:"Round Clown Nose",shape:4,palette:4},{id:'face-6',name:"Vampire Fangs",shape:5,palette:5},{id:'face-7',name:"Monocle Chain",shape:6,palette:6},{id:'face-8',name:"Bubblegum Bubble",shape:7,palette:7},{id:'face-9',name:"Fake Beak Guard",shape:8,palette:8},{id:'face-10',name:"Pixel Shades",shape:9,palette:9},{id:'face-11',name:"Sleepy Eye Mask",shape:10,palette:0},{id:'face-12',name:"Heart Freckles",shape:11,palette:1},{id:'face-13',name:"Lightning Face Paint",shape:12,palette:2},{id:'face-14',name:"Swirly Cheeks",shape:13,palette:3},{id:'face-15',name:"Detective Magnifier",shape:14,palette:4},{id:'face-16',name:"Robot Jaw",shape:15,palette:5},{id:'face-17',name:"Gold Grill",shape:16,palette:6},{id:'face-18',name:"Tiny Bandit Mask",shape:17,palette:7},{id:'face-19',name:"Whisker Dots",shape:18,palette:8},{id:'face-20',name:"Pirate Eyepatch",shape:19,palette:9},{id:'face-21',name:"Rainbow Tears",shape:20,palette:0},{id:'face-22',name:"Zigzag Smile",shape:21,palette:1},{id:'face-23',name:"Duck Bill Piercing",shape:22,palette:2},{id:'face-24',name:"Candy Lips",shape:23,palette:3},{id:'face-25',name:"Snorkel Mouthpiece",shape:24,palette:4},{id:'face-26',name:"Comedy Tragedy Mask",shape:25,palette:5},{id:'face-27',name:"Alien Respirator",shape:26,palette:6},{id:'face-28',name:"Kiss Marks",shape:27,palette:7},{id:'face-29',name:"Scribble Scar",shape:28,palette:8},{id:'face-30',name:"Oversized Goggles",shape:29,palette:9},{id:'face-31',name:"Three Eyes Sticker",shape:30,palette:0},{id:'face-32',name:"Bandana Teeth",shape:31,palette:1},{id:'face-33',name:"Fang Smile",shape:32,palette:2},{id:'face-34',name:"Star Sunglasses",shape:33,palette:3},{id:'face-35',name:"Nerd Tape Glasses",shape:34,palette:4},{id:'face-36',name:"Spiral Eyes",shape:35,palette:5},{id:'face-37',name:"Sleep Drool",shape:36,palette:6},{id:'face-38',name:"Mustache Curl",shape:37,palette:7},{id:'face-39',name:"Shark Teeth",shape:38,palette:8},{id:'face-40',name:"Mosaic Mask",shape:39,palette:9},{id:'face-41',name:"Clown Makeup",shape:40,palette:0},{id:'face-42',name:"Cat Nose and Whiskers",shape:41,palette:1},{id:'face-43',name:"Bone Smile",shape:42,palette:2},{id:'face-44',name:"Robot Visor",shape:43,palette:3},{id:'face-45',name:"Rainbow Cheeks",shape:44,palette:4},{id:'face-46',name:"Freckle Cluster",shape:45,palette:5},{id:'face-47',name:"One Big Tooth",shape:46,palette:6},{id:'face-48',name:"Bubble Blower",shape:47,palette:7},{id:'face-49',name:"Gold Nose Ring",shape:48,palette:8},{id:'face-50',name:"Crossed Plasters",shape:49,palette:9}];
+const DESIGN_COLORS=[['#a61f2b','#f4c542','#f6eee0'],['#176b83','#7ee0d0','#e9f7ff'],['#553b91','#c8a4ff','#fff2a8'],['#e64c83','#f9d66b','#fff4f7'],['#34465e','#7ad8ee','#f5f0d8'],['#d6d0bd','#817b72','#4a4540'],['#3d245d','#f6d84c','#f7f0e5'],['#3c8c48','#d2ed72','#f7f0c4'],['#e65b36','#fff0d1','#29252b'],['#3d526b','#d2a86c','#f5f0e8']];
+const shuffleDesign=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+function drawCostumeDesign(d){
+ const p=DESIGN_COLORS[d.palette],a=p[0],b=p[1],w=p[2],i=d.shape;
+ c.save();c.clip(PB);
+ switch(i%10){
+ case 0:poly([[-.34,-.08],[-.2,-.22],[0,-.12],[.2,-.22],[.34,-.08],[.25,.5],[-.25,.5]],a);poly([[-.13,-.12],[0,.03],[.13,-.12],[.09,.48],[-.09,.48]],b);R(-.34,.38,.68,.09,shade(a,.7));break;
+ case 1:c.beginPath();c.ellipse(0,.16,.43,.4,0,0,7);FS(a);R(-.27,-.04,.54,.48,b);R(-.08,-.12,.16,.6,w);break;
+ case 2:poly([[-.35,-.12],[-.16,-.02],[-.1,.5],[.1,.5],[.16,-.02],[.35,-.12],[.28,.52],[-.28,.52]],a);poly([[-.1,-.02],[0,.16],[.1,-.02],[.05,.5],[-.05,.5]],w);break;
+ case 3:poly([[-.36,-.1],[-.18,-.22],[0,-.04],[.18,-.22],[.36,-.1],[.29,.52],[-.29,.52]],a);R(-.29,.29,.58,.12,b);break;
+ case 4:c.beginPath();c.ellipse(0,.15,.38,.43,0,0,7);FS(a);poly([[-.2,-.1],[0,.13],[.2,-.1],[.12,.5],[-.12,.5]],b);break;
+ case 5:poly([[-.32,-.16],[-.18,-.26],[0,-.1],[.18,-.26],[.32,-.16],[.24,.5],[-.24,.5]],a);for(let z=0;z<4;z++)line(-.28+z*.18,-.08,-.2+z*.18,.45,b,.045);break;
+ case 6:c.beginPath();c.ellipse(0,.16,.4,.43,0,0,7);FS(a);for(let z=0;z<3;z++)circ(-.2+z*.2,.05,.055,b);R(-.3,.35,.6,.08,w);break;
+ case 7:poly([[-.36,-.05],[-.22,-.22],[0,-.06],[.22,-.22],[.36,-.05],[.3,.5],[-.3,.5]],a);poly([[-.28,.02],[0,.2],[.28,.02],[.22,.5],[-.22,.5]],b);break;
+ case 8:R(-.36,-.05,.72,.57,a);poly([[-.22,-.05],[0,.18],[.22,-.05],[.14,.52],[-.14,.52]],b);line(-.32,.05,.32,.05,w,.045);break;
+ default:poly([[-.38,-.12],[-.24,-.25],[0,-.05],[.24,-.25],[.38,-.12],[.22,.52],[-.22,.52]],a);poly([[-.12,-.12],[0,.1],[.12,-.12],[.2,.52],[-.2,.52]],b);break;
+ }
+ const em=['✦','⚙','☂','♜','☯','♟','♫','☘','✿','★'];c.restore();
+ c.save();c.font='bold .19px sans-serif';c.textAlign='center';c.textBaseline='middle';c.fillStyle=b;c.fillText(em[i%10],0,.2);c.restore();
+ if(i%5===0){line(-.31,.05,-.39,.28,b,.035);line(.31,.05,.39,.28,b,.035)}
+ if(i%5===1){circ(-.24,.35,.045,w);circ(.24,.35,.045,w)}
+ if(i%5===2){R(-.3,.31,.6,.045,b);for(let z=0;z<3;z++)circ(-.18+z*.18,.39,.025,w)}
+ if(i%5===3){poly([[-.1,-.04],[0,.12],[.1,-.04],[.07,.3],[-.07,.3]],w)}
+ if(i%5===4){line(-.25,.42,.25,.42,w,.035);circ(0,.42,.05,b)}
+}
+function drawHeadDesign(d){
+ const p=DESIGN_COLORS[d.palette],a=p[0],b=p[1],i=d.shape;c.save();c.translate(0,-.64);
+ switch(i%10){
+ case 0:poly([[-.28,.02],[-.18,-.28],[0,-.5],[.18,-.28],[.28,.02]],a);line(-.18,-.2,.18,-.2,b,.045);circ(0,-.36,.055,b);break;
+ case 1:poly([[-.22,.02],[-.2,-.32],[0,-.48],[.2,-.32],[.22,.02]],a);poly([[-.12,-.24],[0,-.38],[.12,-.24]],b);break;
+ case 2:for(let d of [-1,1]){circ(d*.22,-.14,.14,a);star(d*.22,-.14,.11,.045,b)}break;
+ case 3:c.beginPath();c.ellipse(0,-.12,.38,.1,0,0,7);FS(a);R(-.06,-.43,.12,.32,b);circ(0,-.45,.08,a);break;
+ case 4:for(let z=0;z<3;z++){circ(-.18+z*.18,-.18,.12,a);circ(-.18+z*.18,-.18,.045,b)}break;
+ case 5:poly([[-.3,.02],[-.26,-.22],[-.1,-.35],[0,-.2],[.1,-.35],[.26,-.22],[.3,.02]],a);R(-.3,-.02,.6,.06,b);break;
+ case 6:for(let z=0;z<4;z++){const ang=z*Math.PI/2;line(0,-.08,Math.cos(ang)*.32,-.2+Math.sin(ang)*.22,a,.07);circ(Math.cos(ang)*.32,-.2+Math.sin(ang)*.22,.07,b)}break;
+ case 7:poly([[-.24,.02],[-.12,-.48],[.12,-.48],[.24,.02]],a);R(-.2,-.12,.4,.07,b);break;
+ case 8:c.beginPath();c.ellipse(0,-.12,.33,.27,0,Math.PI,0);c.closePath();FS(a);for(let z=0;z<3;z++)circ(-.18+z*.18,-.22,.035,b);break;
+ default:poly([[-.32,.02],[-.18,-.2],[0,-.42],[.18,-.2],[.32,.02]],a);circ(0,-.28,.09,b);line(-.28,-.02,.28,-.02,b,.04);break;
+ }
+ if(i%5===0){line(-.25,-.12,.25,-.12,b,.025);circ(0,-.12,.045,a)}
+ if(i%5===1)poly([[-.08,-.04],[0,-.22],[.08,-.04]],b);
+ if(i%5===2){circ(-.28,-.08,.05,b);circ(.28,-.08,.05,b)}
+ if(i%5===3){line(0,-.42,0,-.08,b,.035);circ(0,-.42,.045,b)}
+ if(i%5===4)star(0,-.18,.1,.04,b);c.restore();
+}
+function drawFaceDesign(d){
+ const p=DESIGN_COLORS[d.palette],a=p[0],b=p[1],i=d.shape;
+ switch(i%10){
+ case 0:poly([[-.3,-.28],[-.18,-.38],[-.08,-.3],[0,-.36],[.08,-.3],[.18,-.38],[.3,-.28],[.2,-.22],[0,-.25],[-.2,-.22]],a);break;
+ case 1:for(let z of [-1,1])poly([[z*.12,-.25],[z*.22,-.18],[z*.34,-.25],[z*.24,-.34]],b);break;
+ case 2:for(let z of [-1,1])star(z*.29,-.29,.09,.035,a);break;
+ case 3:for(let z of [-1,1]){line(z*.3,-.48,z*.16,-.3,b,.045);line(z*.3,-.3,z*.16,-.48,b,.045)}break;
+ case 4:circ(0,-.29,.11,a);circ(0,-.29,.045,b);break;
+ case 5:for(let z of [-1,1])poly([[z*.12,-.22],[z*.2,-.12],[z*.28,-.24]],'#fff');break;
+ case 6:c.beginPath();c.arc(.2,-.4,.13,0,7);c.lineWidth=.025;c.strokeStyle=a;c.stroke();line(.27,-.28,.35,-.12,b,.025);break;
+ case 7:circ(0,-.24,.13,'rgba(255,255,255,.7)',a);circ(.04,-.27,.04,b);break;
+ case 8:R(-.34,-.39,.68,.18,a);for(let z=0;z<4;z++)line(-.28+z*.18,-.36,-.22+z*.18,-.24,b,.02);break;
+ default:for(let z of [-1,1]){c.beginPath();c.ellipse(z*.2,-.4,.13,.1,0,0,7);c.lineWidth=.025;c.strokeStyle=a;c.stroke();circ(z*.2,-.4,.045,b)}break;
+ }
+ if(i%5===0){circ(-.32,-.22,.035,b);circ(.32,-.22,.035,b)}
+ if(i%5===1)line(-.28,-.18,.28,-.18,b,.025);
+ if(i%5===2)star(0,-.23,.055,.022,b);
+ if(i%5===3)circ(0,-.23,.04,a);
+ if(i%5===4)line(-.12,-.18,.12,-.18,a,.035);
+}
+
 const COL=['#d62828','#2f6fe0','#2fcf3a','#8e44ad','#ff7a00','#f78fb3','#14a8a0','#151515','#ffffff','#f4b400','#6ec6ff','#8d5524'];
 const HATS=['chef','top','crown','hard','helmet','cap','santa','pirate','guard','party','beanie','cowboy'],WIGS=['afro','mohawk','long','curly','pigtail','bob'];
 const GL=['round','shades','star','heart','goggles','monocle'],NK=['bow','scarf'],SH=['solid','stripe','dots','sailor','vest','check'],SUITS=['straw','bee','dino','uni','snow','mask'];
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
-function genCo(){
-  const co={};
-  if(Math.random()<.28){co.su=rnd(SUITS);co.c=rnd(COL);
-    co.bc={straw:'#d62828',bee:'#ffd84a',dino:co.c,uni:rnd(['#ffffff','#f78fb3','#c7a6ff','#a8e6ff']),snow:'#eaf8ff',mask:rnd(BODY)}[co.su]}
-  else{co.bc=rnd(BODY);if(Math.random()<.2)co.st='dots';
-    const noH=Math.random()<.12;
-    if(!noH){co.h=rnd(HATS.concat(WIGS,WIGS));co.hc=rnd(COL)}
-    if(noH||Math.random()<.75){co.sh=rnd(SH);co.s1=rnd(COL.filter(x=>x!==co.bc));co.s2=rnd(COL.filter(x=>x!==co.s1));
-      if(co.sh==='sailor')co.s1='#ffffff';if(co.sh==='solid')delete co.s2}}
-  if(Math.random()<.6||(!co.h&&!co.su))co.gl=rnd(GL);
-  if(Math.random()<.4){co.nk=rnd(NK);co.nc=rnd(COL)}
-  return co;
+function genCo(){return {bc:rnd(BODY)}}
+function assignCo(list){
+ const outfits=shuffleDesign(COSTUME_DESIGNS.slice()),heads=shuffleDesign(HEAD_DESIGNS.slice()),faces=shuffleDesign(FACE_DESIGNS.slice());
+ list.forEach((r,i)=>{const co=genCo();co.costumeDesign=i<50?outfits[i]:null;co.headDesign=i<50?heads[i]:null;co.faceDesign=i<50?faces[i]:null;co.costumeId=co.costumeDesign?.id||'none';if(co.costumeDesign)co.bc=DESIGN_COLORS[co.costumeDesign.palette][0];co.hc=co.headDesign?DESIGN_COLORS[co.headDesign.palette][1]:rnd(COL);r.co=co});
 }
 function assignCo(list){const used=new Set();list.forEach(r=>{let co,n=0;do{co=genCo()}while(used.has(JSON.stringify(co))&&++n<800);used.add(JSON.stringify(co));r.co=co})}
 
@@ -155,8 +217,9 @@ function drawDuck(k,x,y,s,t){
   // feet
   const fp=Math.sin(t*9+k.ph)*.075;
   [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.17,.52+fp*d,.14,.055,0,0,7);FS('#f0a020','#8a5a00');[-.07,0,.07].forEach(o=>circ(d*.17+o,.56+fp*d,.03,'#f0a020','#8a5a00'))});
-  // wings
-  [-1,1].forEach(d=>{c.save();c.translate(d*.43,.12);c.rotate(k.mode==='tired'?d*.55:Math.sin(t*9+k.ph*(k.mode==='boost'?2:1))*(k.mode==='boost'?.9:.48)*d);c.beginPath();c.ellipse(0,0,.12,.22,0,0,7);FS(bc,ol);c.restore()});
+  // Reuse the original left/right wings and flap them from their shoulder pivots.
+  const flap=Math.sin(t*9+k.ph*(k.mode==='boost'?2:1))*(k.mode==='boost'?.72:.42);
+  [-1,1].forEach(d=>{c.save();c.translate(d*.31,.12);c.rotate(d*(k.mode==='tired'?.22:flap));c.beginPath();c.moveTo(0,-.055);c.bezierCurveTo(d*.12,-.23,d*.37,-.24,d*.43,-.04);c.bezierCurveTo(d*.39,.13,d*.18,.19,d*.035,.105);c.quadraticCurveTo(-.025,.04,0,-.055);c.closePath();FS(bc,ol);line(d*.08,.015,d*.31,-.035,shade(bc,.72),.018);line(d*.09,.075,d*.28,.055,shade(bc,.72),.016);c.restore()});
   // body + head
   c.lineWidth=lw*2;c.strokeStyle=ol;c.stroke(PH);c.fillStyle=bc;c.fill(PH);
   c.fillStyle='rgba(255,255,255,.2)';c.beginPath();c.ellipse(-.12,-.56,.2,.09,-.3,0,7);c.fill();
@@ -174,6 +237,7 @@ function drawDuck(k,x,y,s,t){
     if(co.sh==='vest'){c.fillRect(-.03,0,.06,.7);c.fillStyle='#111';c.fillRect(.08,.15,.04,.04);c.fillRect(.08,.3,.04,.04)}
     if(co.sh==='check'){c.globalAlpha=.7;for(let v=-.4;v<.5;v+=.14)c.fillRect(v,0,.04,.7);for(let v=.04;v<.6;v+=.14)c.fillRect(-.5,v,1,.04);c.globalAlpha=1}
     c.restore();c.beginPath();c.ellipse(0,.12,.36,.38,0,0,PI);c.lineWidth=lw*1.6;c.strokeStyle=ol;c.stroke()}
+  if(co.costumeDesign)drawCostumeDesign(co.costumeDesign);
   // collar, straps, bell
   c.beginPath();c.moveTo(-.34,-.08);c.quadraticCurveTo(0,.06,.34,-.08);c.lineTo(.33,-.03);c.quadraticCurveTo(0,.11,-.33,-.03);c.closePath();FS('#8a3a2a','#4a1a10');
   line(-.33,-.01,-.41,.17,'#4a3020',.025);line(.33,-.01,.41,.17,'#4a3020',.025);
@@ -184,9 +248,19 @@ function drawDuck(k,x,y,s,t){
   if(['afro','bob','long','pigtail','curly'].includes(co.h)){c.beginPath();c.ellipse(0,-.38,.4,.35,0,PI*1.2,PI*1.8);c.closePath();FS(hc,shade(hc,.6))}
   if(co.h==='mohawk')poly([[-.1,-.66],[-.08,-.88],[-.03,-.74],[0,-.94],[.04,-.74],[.09,-.88],[.1,-.66]],hc,shade(hc,.6));
   if(!co.h&&!co.su){poly([[-.05,-.7],[-.17,-.84],[-.1,-.68]],'#3a2a1a');poly([[.05,-.7],[.18,-.85],[.1,-.68]],'#3a2a1a')}
-  // eyes + beak
-  [-1,1].forEach(d=>{c.beginPath();c.ellipse(d*.2,-.4,.075,.08,0,0,7);FS('#fff',shade(bc,.5));circ(d*.19,-.39,.037,'#1a1a1a','#1a1a1a')});
+  // Multiple eye poses; each duck keeps its own randomly assigned expression.
+  const eyeStyle=co.eyeStyle??(co.eyeStyle=Math.floor(Math.random()*12));
+  [-1,1].forEach(d=>{const ex=d*.2,ey=-.4;
+   c.beginPath();c.ellipse(ex,ey,.075,eyeStyle===1?.045:eyeStyle===2?.105:.08,eyeStyle===3?d*.18:0,0,7);FS('#fff',shade(bc,.5));
+   if(eyeStyle===4){line(ex-.06,ey+.02,ex+.06,ey+.02,'#171717',.035);return}
+   const px=eyeStyle===3?ex-d*.025:eyeStyle===6?ex+d*.025:ex;
+   const py=eyeStyle===5||eyeStyle===8?ey-.02:eyeStyle===6?ey+.025:ey;
+   circ(px,py,eyeStyle===2?.043:eyeStyle===7?.036:.037,'#1a1a1a','#1a1a1a');
+   if(eyeStyle===2||eyeStyle===7){circ(px-.012,py-.015,.014,'#fff','#fff')}
+   if(eyeStyle===1||eyeStyle===5||eyeStyle===8)line(ex-.07,ey-.08,ex+.07,ey-.08,INK,.02);
+  });
   c.beginPath();c.ellipse(0,-.29,.2,.08,0,0,7);FS('#ebb82a','#8a6a00');line(-.12,-.3,.12,-.3,'#a07a10',.012);
+  if(co.faceDesign)drawFaceDesign(co.faceDesign);
   // glasses
   const g2=f=>[-1,1].forEach(d=>f(d*.2));
   switch(co.gl){
@@ -197,8 +271,7 @@ function drawDuck(k,x,y,s,t){
    case 'goggles':R(-.42,-.42,.84,.04,'#333');g2(a=>circ(a,-.4,.12,'rgba(255,190,0,.6)','#333'));break;
    case 'monocle':c.beginPath();c.arc(.2,-.4,.11,0,7);c.lineWidth=lw*1.4;c.strokeStyle='#d4a000';c.stroke();line(.2,-.29,.32,.1,'#d4a000',.012);break;
   }
-  // angry brows
-  line(-.32,-.53,-.13,-.46,'#3a2a1a',.045);line(.32,-.53,.13,-.46,'#3a2a1a',.045);
+  // Removed legacy angry eyebrows; eye expression is carried by the eye shapes.
   // headwear / suit top (origin on top of head)
   c.save();c.translate(0,-.64);
   switch(co.su||co.h){
@@ -220,6 +293,7 @@ function drawDuck(k,x,y,s,t){
    case 'uni':poly([[-.06,-.02],[.06,-.02],[0,-.4]],'#ffd95a');[-1,1].forEach(d=>{circ(d*.4,.15,.1,co.c);circ(d*.44,.3,.1,'#3b82f6');circ(d*.42,.45,.1,'#2fcf3a')});break;
    case 'snow':R(-.16,-.4,.32,.42,co.c);R(-.28,-.04,.56,.06,co.c);R(-.16,-.1,.32,.05,'#fff');break;
   }
+  if(co.headDesign)drawHeadDesign(co.headDesign);
   c.restore();c.restore();
   // number / name tag on the belly
   const tx=x,ty=yb+s*.34;let fs=s*.17,txt=k.r.label;
