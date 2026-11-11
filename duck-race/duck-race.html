@@ -332,6 +332,18 @@ const prog=k=>S.fin
 // Select by true world progress, not by the visual finish-line clamp.
 const leader=()=>ducks.reduce((best,k)=>!best||rawProg(k)>rawProg(best)?k:best,null);
 
+// Back markers receive a longer Boost when they roll one. The gap is
+// recalculated at the moment of the roll, so a duck that catches up naturally
+// receives a shorter Boost next time. Keep short races from being dominated
+// by one oversized Boost while allowing a meaningful catch-up window in long races.
+function catchUpBoostDuration(k){
+  const front=leader();
+  const gap=front?Math.max(0,rawProg(front)-rawProg(k)):0;
+  const gapRatio=Math.min(1,gap/Math.max(1,D*.12));
+  const maxExtra=Math.min(7,Math.max(1,S.T*.08));
+  return 3+Math.random()*2+gapRatio*maxExtra;
+}
+
 
 /* Real-time arcade particles: effects are drawn into the water scene, never as status icons. */
 function drawBoostEffect(k,x,y,s,t){
@@ -426,8 +438,9 @@ function frame(now){
         k.eventIn-=raceDt;
         if(k.eventIn<=0){
           k.mode=Math.random()<.5?'boost':'tired';
-          // Each duck independently rolls a 3–5 second Boost or Tired duration.
-          k.modeLeft=3+Math.random()*2;
+          // Boost duration scales with the duck's live gap to the leader.
+          // The race timer and shared finish-line pacing remain untouched.
+          k.modeLeft=k.mode==='boost'?catchUpBoostDuration(k):3+Math.random()*2;
           k.fx=k.mode==='boost'?rnd(['fart','flash','sonic','fire']):'sweat';
         }
       }else{
