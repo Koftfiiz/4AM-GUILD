@@ -329,56 +329,54 @@ const NK=['bow','scarf','choker','medal','chain','ribbon','tie','necklace','band
 function generateDucks(count){
   const n=Math.max(0,Math.floor(Number(count)||0));
   if(!n)return [];
-  const quotas=hybridRarityQuotas(n),costumePools={},appearancePools=new Map();
+  if(n>DUCK_DATA.costumes.length)throw new Error('Not enough unique costumes for '+n+' ducks');
+  const quotas=hybridRarityQuotas(n),usedCostumes=new Set(),chosenCostumes=[];
+  const takeById=id=>{
+    const costume=DUCK_DATA.costumes.find(item=>item.id===id);
+    if(costume&&!usedCostumes.has(id)){usedCostumes.add(id);chosenCostumes.push(costume);}
+  };
+  if(n>=20)['doctor','nurse','firefighter','thai-student','businessman'].forEach(takeById);
+  if(n>=20&&quotas.common>=2){takeById('batman');takeById('superman');}
+  let shortage=0;
   RARITY_ORDER.forEach(r=>{
-    costumePools[r]=shufflePool(DUCK_DATA.costumes.filter(costume=>costume.rarity===r));
-    // Keep the two requested headline superhero looks visible in medium/large races.
-    if(r==='common'&&quotas.common>=2){
-      ['batman','superman'].forEach(id=>{
-        const at=costumePools[r].findIndex(costume=>costume.id===id);
-        if(at>1){const [hero]=costumePools[r].splice(at,1);costumePools[r].splice(id==='batman'?0:1,0,hero);}
-      });
-    }
-    costumePools[r].forEach(costume=>{
-      const combos=[];
-      DUCK_DATA.colors.forEach(color=>DUCK_DATA.patterns.forEach(pattern=>combos.push({color,pattern,costume})));
-      appearancePools.set(costume.id,shufflePool(combos));
-    });
+    const already=chosenCostumes.filter(costume=>costume.rarity===r).length;
+    const needed=Math.max(0,quotas[r]-already);
+    const pool=shufflePool(DUCK_DATA.costumes.filter(costume=>costume.rarity===r&&!usedCostumes.has(costume.id)));
+    const take=Math.min(needed,pool.length);
+    for(let i=0;i<take;i++){usedCostumes.add(pool[i].id);chosenCostumes.push(pool[i]);}
+    shortage+=needed-take;
   });
-  const chosen=[];
-  RARITY_ORDER.forEach(r=>{
-    const pool=costumePools[r];
-    if(!pool.length&&quotas[r])throw new Error('No costumes available for rarity: '+r);
-    for(let i=0;i<quotas[r];i++){
-      const costume=pool[i%pool.length],comboPool=appearancePools.get(costume.id);
-      if(!comboPool.length)throw new Error('Appearance combinations exhausted for costume: '+costume.id);
-      chosen.push(comboPool.pop());
-    }
-  });
-  shufflePool(chosen);
-  const used=new Set();
-  return chosen.map((item,index)=>{
-    const key=item.color.id+'|'+item.pattern.id+'|'+item.costume.id;
-    if(used.has(key))throw new Error('Duplicate duck appearance combination: '+key);
-    used.add(key);
-    const costumeIndex=DUCK_DATA.costumes.indexOf(item.costume);
-    const characterCostume=item.costume.theme==='superhero'||item.costume.theme==='anime';
-    // Character costumes use their own head-to-toe design; no random hair, hats or face accessories.
-    const hair=characterCostume?'none':rnd(HAIR_STYLES),wear=characterCostume?null:(Math.random()<.24?rnd(HEADWEAR_STYLES):null);
+  if(shortage>0){
+    const reserve=shufflePool(DUCK_DATA.costumes.filter(costume=>!usedCostumes.has(costume.id)));
+    if(reserve.length<shortage)throw new Error('Unique costume pool exhausted');
+    for(let i=0;i<shortage;i++){usedCostumes.add(reserve[i].id);chosenCostumes.push(reserve[i]);}
+  }
+  shufflePool(chosenCostumes);
+  const usedCombos=new Set();
+  return chosenCostumes.map((costume,index)=>{
+    const color=rnd(DUCK_DATA.colors),pattern=rnd(DUCK_DATA.patterns);
+    const key=color.id+'|'+pattern.id+'|'+costume.id;
+    if(usedCombos.has(key))throw new Error('Duplicate duck appearance combination: '+key);
+    usedCombos.add(key);
+    const costumeIndex=DUCK_DATA.costumes.indexOf(costume);
+    const characterCostume=costume.theme==='superhero'||costume.theme==='anime';
+    const occupation=costume.theme==='occupation';
+    const occupationHair={'thai-student':'short',nurse:'short',businessman:'sidepart',doctor:'short',firefighter:'short'};
+    const occupationHeadwear={doctor:'doctor',nurse:'nurse-cap',firefighter:'firefighter'};
+    const hair=characterCostume?'none':(occupationHair[costume.id]||rnd(HAIR_STYLES));
+    const wear=characterCostume?null:(Object.prototype.hasOwnProperty.call(occupationHeadwear,costume.id)?occupationHeadwear[costume.id]:(occupation?null:(Math.random()<.24?rnd(HEADWEAR_STYLES):null)));
     const face=characterCostume?'none':rnd(FACE_STYLES),gl=characterCostume?null:(Math.random()<.42?rnd(GL):null),nk=characterCostume?'none':(Math.random()<.35?rnd(NK):'none');
+    const main=costume.id==='thai-student'?'#f8f8f4':costume.main;
+    const accent=costume.id==='thai-student'?'#243f86':costume.accent;
     const co={
-      bc:item.color.value,pattern:item.pattern.id,
-      su:wear,h:hair,costumeId:item.costume.id,costumeName:item.costume.name,
-      rarity:item.costume.rarity,costumeMain:item.costume.main,costumeAccent:item.costume.accent,
-      headStyle:costumeIndex,costumeTheme:item.costume.theme||'classic',costumeEmblem:item.costume.emblem||'',characterCostume,
-      outfitStyle:costumeIndex,outfitAccent:item.costume.accent,
-      face,faceColor:rnd(['#e84b58','#f4b5a6','#fff0cf','#25252d','#5d7ed0']),
-      gl,nk,nc:item.costume.accent,
-      c:item.costume.accent,hc:item.costume.main,
-      glColor:rnd(['#222','#e2bd55','#e8f6ff','#d64b69']),
-      sh:'solid',s1:item.costume.main,s2:item.costume.accent
+      bc:color.value,pattern:pattern.id,su:wear,h:hair,costumeId:costume.id,costumeName:costume.name,
+      rarity:costume.rarity,costumeMain:main,costumeAccent:accent,headStyle:costumeIndex,
+      costumeTheme:costume.theme||'classic',costumeEmblem:costume.emblem||'',characterCostume,
+      outfitStyle:costumeIndex,outfitAccent:accent,face,faceColor:rnd(['#e84b58','#f4b5a6','#fff0cf','#25252d','#5d7ed0']),
+      gl,nk,nc:accent,c:accent,hc:main,glColor:rnd(['#222','#e2bd55','#e8f6ff','#d64b69']),
+      sh:'solid',s1:main,s2:accent
     };
-    return {id:'duck-'+(index+1),baseColor:item.color.id,pattern:item.pattern.id,costumeId:item.costume.id,rarity:item.costume.rarity,co};
+    return {id:'duck-'+(index+1),baseColor:color.id,pattern:pattern.id,costumeId:costume.id,rarity:costume.rarity,co};
   });
 }
 function assignCo(list){
@@ -496,7 +494,23 @@ function drawDuck(k,x,y,s,t){
       case 'detective':c.beginPath();c.arc(0,0,.12,0,7);c.strokeStyle=ac;c.lineWidth=.035;c.stroke();line(.09,.09,.2,.2,ac,.035);break;
       case 'firefighter':poly([[-.13,.1],[-.04,-.13],[0,-.03],[.06,-.16],[.14,.1]],ac);break;
       case 'police':star(0,0,.15,.07,ac);break;
-      case 'doctor':R(-.045,-.16,.09,.32,ac);R(-.16,-.045,.32,.09,ac);break;
+      case 'doctor':
+        R(-.045,-.16,.09,.32,ac);R(-.16,-.045,.32,.09,ac);
+        c.strokeStyle='#303b49';c.lineWidth=.025;c.beginPath();c.moveTo(-.2,-.12);c.lineTo(-.2,.08);c.quadraticCurveTo(-.2,.2,0,.2);c.quadraticCurveTo(.2,.2,.2,.08);c.stroke();circ(.2,.08,.045,'#303b49');break;
+      case 'nurse':
+        R(-.04,-.16,.08,.3,'#e75b86');R(-.15,-.05,.3,.08,'#e75b86');
+        poly([[-.22,-.12],[-.08,-.02],[0,.1],[-.14,.08]],'#fff');poly([[.22,-.12],[.08,-.02],[0,.1],[.14,.08]],'#fff');break;
+      case 'firefighter':
+        R(-.28,-.12,.56,.055,'#ffd447');R(-.27,.09,.54,.055,'#ffd447');
+        poly([[-.11,-.14],[.11,-.14],[.09,.04],[0,.12],[-.09,.04]],'#f4c542');circ(0,-.03,.035,'#c83232');break;
+      case 'thai-student':
+        poly([[-.25,-.13],[-.1,-.04],[0,.07],[-.13,.03]],'#243f86');
+        poly([[.25,-.13],[.1,-.04],[0,.07],[.13,.03]],'#243f86');
+        poly([[-.045,.02],[.045,.02],[.075,.2],[0,.27],[-.075,.2]],'#243f86');circ(0,-.01,.045,'#243f86');break;
+      case 'businessman':
+        poly([[-.28,-.14],[-.12,-.04],[0,.08],[.12,-.04],[.28,-.14],[.2,.2],[-.2,.2]],'#f3f4f6');
+        poly([[-.055,-.12],[.055,-.12],[.075,.12],[0,.2],[-.075,.12]],'#b83b45');
+        poly([[.15,-.1],[.26,-.1],[.24,-.02],[.15,-.02]],'#f5f5f5');break;
       case 'racer':line(-.16,-.08,.16,.08,ac,.045);line(-.16,.08,.16,-.08,ac,.045);break;
       case 'ninja':poly([[0,-.16],[.14,0],[0,.16],[-.14,0]],ac);break;
       case 'wizard':star(0,0,.16,.07,ac);break;
@@ -710,6 +724,7 @@ function drawDuck(k,x,y,s,t){
    case 'firefighter':c.beginPath();c.arc(0,.02,.33,PI,0);c.closePath();FS(hc);R(-.38,-.01,.76,.07,co.c);R(-.04,-.28,.08,.24,co.c);break;
    case 'police':R(-.22,-.12,.44,.14,hc);c.beginPath();c.arc(0,-.1,.25,PI,0);c.closePath();FS(hc);star(0,-.06,.07,.03,co.c);break;
    case 'doctor':c.beginPath();c.arc(0,.02,.28,PI,0);c.closePath();FS(hc);line(0,-.28,0,-.42,co.c,.035);circ(0,-.44,.07,co.c);break;
+   case 'nurse-cap':R(-.25,-.08,.5,.12,'#fff');R(-.17,-.2,.34,.14,'#fff');R(-.035,-.19,.07,.18,'#e75b86');R(-.09,-.13,.18,.06,'#e75b86');break;
    case 'racer':c.beginPath();c.arc(0,.02,.34,PI,0);c.closePath();FS(hc);R(-.35,-.01,.7,.07,co.c);R(-.22,-.13,.44,.07,'rgba(255,255,255,.75)');break;
    case 'ninja':R(-.34,-.18,.68,.18,hc);R(-.34,-.04,.68,.07,co.c);break;
    case 'goldenking':poly([[-.22,.02],[-.22,-.22],[-.1,-.12],[0,-.32],[.1,-.12],[.22,-.22],[.22,.02]],hc);circ(0,-.08,.04,co.c);break;
