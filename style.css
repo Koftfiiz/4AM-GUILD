@@ -5957,3 +5957,16 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
     font-size: 14px;
   }
 }
+
+/* Member directory: nickname and Discord text match the character UID value size. */
+.members-list .member-directory-card .member-secondary-name {
+  font-size: 13px !important;
+  line-height: 1.45;
+}
+
+@media (max-width: 850px) {
+  .members-list .member-directory-card .member-secondary-name {
+    font-size: 12px !important;
+  }
+}
+
