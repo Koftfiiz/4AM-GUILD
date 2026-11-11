@@ -674,13 +674,17 @@ function drawRaceEmote(k,x,y,s){
   if(!img||!img.complete||!img.naturalWidth)return;
   const remaining=Math.max(0,k.emoteUntil-S.t);
   const alpha=Math.min(1,remaining/.28);
-  const lift=(1-Math.min(1,remaining/1.8))*s*.18;
-  const maxW=s*.88,maxH=s*.88;
+  const lift=(1-Math.min(1,remaining/1.8))*s*.08;
+  // Place the original GIF immediately to the right of the duck's head.
+  // Its width is deliberately larger than the name/rank tag above the duck.
+  const maxW=s*1.18,maxH=s*1.12;
   const ratio=img.naturalWidth/img.naturalHeight;
   const w=Math.min(maxW,maxH*ratio),h=w/ratio;
+  const emoteX=x+s*.86;
+  const emoteY=y-s*.34-lift;
   cx.save();
   cx.globalAlpha=alpha;
-  cx.drawImage(img,x-w/2,y-s*1.62-h-lift,w,h);
+  cx.drawImage(img,emoteX-w/2,emoteY-h/2,w,h);
   cx.restore();
 }
 
