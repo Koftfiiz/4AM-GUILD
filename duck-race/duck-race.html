@@ -453,7 +453,7 @@ function frame(now){
   const s=duckSize(),B=bank(),yMin=B+s*.4,yMax=H-s*.62,n=ducks.length;
   const X0=W*.2,rows=ducks.map(k=>{
     const y=yMin+(k.slot+.5)/n*(yMax-yMin)+Math.sin(S.t*.9+k.ph)*s*.03;
-    return{k,y,x:X0-s*.5+prog(k)};
+    return{k,y,x:X0-SL*(y-B)-s*.5+prog(k)};
   });
   // Keep every duck on the same starting plane. Once racing, follow the foremost
   // duck with a forward-only camera target so changes in the leader never pan
