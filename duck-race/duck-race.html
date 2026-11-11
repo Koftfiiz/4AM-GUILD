@@ -162,6 +162,12 @@ function drawCostumeDesign(d){
  if(i%5===2){R(-.3,.31,.6,.045,b);for(let z=0;z<3;z++)circ(-.18+z*.18,.39,.025,w)}
  if(i%5===3){poly([[-.1,-.04],[0,.12],[.1,-.04],[.07,.3],[-.07,.3]],w)}
  if(i%5===4){line(-.25,.42,.25,.42,w,.035);circ(0,.42,.05,b)}
+ const group=Math.floor(i/10);
+ if(group===0){poly([[-.34,-.1],[-.24,-.23],[-.08,-.14],[-.12,.04],[-.3,.08]],b);poly([[.34,-.1],[.24,-.23],[.08,-.14],[.12,.04],[.3,.08]],b)}
+ if(group===1){poly([[-.28,-.16],[-.12,-.2],[.28,.45],[.12,.48]],w);line(-.25,-.1,.22,.45,b,.025)}
+ if(group===2){R(-.2,.18,.4,.22,w);R(-.14,.22,.28,.035,b);circ(0,.34,.035,a)}
+ if(group===3){for(let z=0;z<3;z++)line(-.3+z*.3,.02,-.26+z*.3,.48,w,.025);R(-.32,.46,.64,.06,b)}
+ if(group===4){for(let z=0;z<5;z++)circ(-.28+z*.14,-.08,.035,w);line(-.32,.48,.32,.48,b,.04)}
 }
 function drawHeadDesign(d){
  const p=DESIGN_COLORS[d.palette],a=p[0],b=p[1],i=d.shape;c.save();c.translate(0,-.64);
@@ -181,7 +187,14 @@ function drawHeadDesign(d){
  if(i%5===1)poly([[-.08,-.04],[0,-.22],[.08,-.04]],b);
  if(i%5===2){circ(-.28,-.08,.05,b);circ(.28,-.08,.05,b)}
  if(i%5===3){line(0,-.42,0,-.08,b,.035);circ(0,-.42,.045,b)}
- if(i%5===4)star(0,-.18,.1,.04,b);c.restore();
+ if(i%5===4)star(0,-.18,.1,.04,b);
+ const group=Math.floor(i/10);
+ if(group===0){for(let z=0;z<3;z++)poly([[-.22+z*.22,-.08],[-.16+z*.22,-.28],[-.1+z*.22,-.08]],b)}
+ if(group===1){poly([[.18,-.08],[.4,-.02],[.32,.08]],b);line(.25,-.12,.4,-.25,a,.035)}
+ if(group===2){for(let z=0;z<3;z++)circ(-.18+z*.18,-.35,.035,b)}
+ if(group===3){poly([[-.32,-.02],[-.48,-.18],[-.34,-.28],[-.2,-.08]],a);poly([[.32,-.02],[.48,-.18],[.34,-.28],[.2,-.08]],a)}
+ if(group===4){c.beginPath();c.ellipse(0,-.32,.4,.055,0,0,7);c.lineWidth=.035;c.strokeStyle=b;c.stroke()}
+ c.restore();
 }
 function drawFaceDesign(d){
  const p=DESIGN_COLORS[d.palette],a=p[0],b=p[1],i=d.shape;
@@ -202,6 +215,12 @@ function drawFaceDesign(d){
  if(i%5===2)star(0,-.23,.055,.022,b);
  if(i%5===3)circ(0,-.23,.04,a);
  if(i%5===4)line(-.12,-.18,.12,-.18,a,.035);
+ const group=Math.floor(i/10);
+ if(group===0){for(let z=0;z<4;z++)line(-.22+z*.14,-.16,-.3+z*.14,-.08,b,.018)}
+ if(group===1){for(let z of [-1,1]){circ(z*.34,-.22,.045,a);circ(z*.28,-.15,.025,b)}}
+ if(group===2){R(-.18,-.19,.36,.06,a);for(let z=0;z<4;z++)line(-.12+z*.08,-.19,-.12+z*.08,-.13,b,.014)}
+ if(group===3){for(let z of [-1,1])line(z*.12,-.5,z*.3,-.54,b,.028)}
+ if(group===4){star(0,-.54,.08,.03,a);circ(-.3,-.32,.04,b);circ(.3,-.32,.04,b)}
 }
   const yb=y+Math.sin(t*4+k.ph)*s*.03+Math.sin(t*9+k.ph)*s*.045;
   c.save();c.translate(x,yb);c.rotate(Math.sin(t*3+k.ph)*.05);c.scale(s,s);c.lineJoin='round';c.lineCap='round';
@@ -292,8 +311,9 @@ function drawFaceDesign(d){
    case 'uni':poly([[-.06,-.02],[.06,-.02],[0,-.4]],'#ffd95a');[-1,1].forEach(d=>{circ(d*.4,.15,.1,co.c);circ(d*.44,.3,.1,'#3b82f6');circ(d*.42,.45,.1,'#2fcf3a')});break;
    case 'snow':R(-.16,-.4,.32,.42,co.c);R(-.28,-.04,.56,.06,co.c);R(-.16,-.1,.32,.05,'#fff');break;
   }
+  c.restore();
   if(co.headDesign)drawHeadDesign(co.headDesign);
-  c.restore();c.restore();
+  c.restore();
   // number / name tag on the belly
   const tx=x,ty=yb+s*.34;let fs=s*.17,txt=k.r.label;
   c.font='700 '+fs+'px "Noto Sans Thai",Arial,sans-serif';
