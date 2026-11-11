@@ -434,7 +434,7 @@ function frame(now){
         }
       }
       // Smoothly approach the target speed; Base Speed remains unchanged.
-      const targetMultiplier=k.mode==='boost'?1.55:k.mode==='tired'?.72:1;
+      const targetMultiplier=(k.mode==='boost'?1.55:k.mode==='tired'?.72:1)*(k.cruiseFactor||1);
       const smoothing=1-Math.exp(-raceDt/.28);
       k.currentSpeedX+=(base*targetMultiplier-k.currentSpeedX)*smoothing;
       // Accumulate this duck's actual travelled distance. Do not decay or
@@ -489,7 +489,7 @@ function reset(){
     r,slot:slots[i],ph:Math.random()*6.28,
     // All ducks share the exact same horizontal start line. Each gets an
     // independent distance counter; race events create gaps only after Start.
-    distance:0,currentSpeedX:RACE_SPEED,mode:'normal',modeLeft:0,
+    distance:0,currentSpeedX:RACE_SPEED,cruiseFactor:.98+Math.random()*.04,mode:'normal',modeLeft:0,
     // A few ducks can boost immediately; every duck receives an independent first trigger.
     eventIn:Math.random()<.12?0:Math.random()*Math.min(24,Math.max(1,cfg.T*.12)),
     fx:''
