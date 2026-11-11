@@ -235,8 +235,6 @@ const DUCK_DATA={
 };
 const RARITY_ORDER=['common','uncommon','rare','epic','legendary'];
 const RARITY_WEIGHTS={common:.50,uncommon:.25,rare:.15,epic:.08,legendary:.02};
-const GL=['round','shades','star','heart','goggles','monocle'];
-const NK=['bow','scarf'];
 const rnd=a=>a[Math.floor(Math.random()*a.length)];
 function shufflePool(pool){
   for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
