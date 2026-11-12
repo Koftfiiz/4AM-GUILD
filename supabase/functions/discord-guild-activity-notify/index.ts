@@ -87,7 +87,6 @@ Deno.serve(async (request) => {
       if (error || !data) return json({ success: false, message: "War Signup Event not found" }, 404);
       record = data;
       if (!isManager) return json({ success: false, message: "Management permission required" }, 403);
-      if (record.discord_message_id) return json({ success: true, already_notified: true });
     } else if (kind === "activity") {
       table = "guild_activities";
       const { data, error } = await admin.from(table)
@@ -131,7 +130,7 @@ Deno.serve(async (request) => {
         { name: "เปิดรับสมัคร", value: record.signup_opens_at ? new Date(record.signup_opens_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) : "-", inline: true },
         { name: "ปิดรับสมัคร", value: record.signup_closes_at ? new Date(record.signup_closes_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) : "-", inline: true },
         { name: "จำนวนที่รับ", value: "สูงสุด 80 คน · ตัวจริง 60 คน · สำรอง 20 คน", inline: false },
-        { name: "รายละเอียด", value: plainText(record.description) || "ไม่มีรายละเอียดเพิ่มเติม", inline: false }
+        { name: "รายละเอียด", value: plainText(String(record.description || "").replace(/\\?\[\[WAR_CONFIG:[\\s\\S]*?\\]\]/g, "")) || "ไม่มีรายละเอียดเพิ่มเติม", inline: false }
       ],
       footer: { text: "4AM GUILD · War Registration" },
       timestamp: new Date().toISOString()
@@ -159,15 +158,17 @@ Deno.serve(async (request) => {
       timestamp: record.created_at
     };
 
-    const discordResponse = await fetch("https://discord.com/api/v10/channels/" + channelId + "/messages", {
-      method: "POST",
+    const isWarUpdate = kind === "war_signup" && Boolean(record.discord_message_id);
+    const discordMessageUrl = "https://discord.com/api/v10/channels/" + channelId + "/messages";
+    const discordResponse = await fetch(isWarUpdate ? discordMessageUrl + "/" + record.discord_message_id : discordMessageUrl, {
+      method: isWarUpdate ? "PATCH" : "POST",
       headers: { "Authorization": "Bot " + botToken, "Content-Type": "application/json" },
       body: JSON.stringify({ embeds: [embed], allowed_mentions: { parse: [] } })
     });
     if (!discordResponse.ok) {
       const details = await discordResponse.text();
       await admin.from(table).update(kind === "war_signup" ? { discord_send_error: details.slice(0, 1000) } : { discord_notification_error: details.slice(0, 1000) }).eq("id", recordId);
-      return json({ success: false, message: "Discord API rejected the message", details: details.slice(0, 500) }, 502);
+      return json({ success: false, message: isWarUpdate ? "Discord could not update the existing message" : "Discord API rejected the message", details: details.slice(0, 500) }, 502);
     }
 
     const discordMessage = await discordResponse.json();
@@ -175,8 +176,8 @@ Deno.serve(async (request) => {
       ? { discord_message_id: String(discordMessage.id), discord_sent_at: new Date().toISOString(), discord_send_error: null }
       : { discord_notified_at: new Date().toISOString(), discord_notification_error: null };
     const { error: updateError } = await admin.from(table).update(updatePayload).eq("id", recordId);
-    if (updateError) return json({ success: false, message: "Discord sent, but notification state could not be saved" }, 500);
-    return json({ success: true });
+    if (updateError) return json({ success: false, message: isWarUpdate ? "Discord updated, but notification state could not be saved" : "Discord sent, but notification state could not be saved", updated: isWarUpdate }, 500);
+    return json({ success: true, updated: isWarUpdate });
   } catch (error) {
     console.error("discord-guild-activity-notify:", error);
     return json({ success: false, message: error instanceof Error ? error.message : "Unexpected error" }, 500);
