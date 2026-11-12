@@ -97,9 +97,10 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 </div>
 
 <div class="modal hide" id="resM">
-  <div class="mc"><h2 id="winT"></h2><div class="list" id="list"></div><button class="go" id="copyResults" style="margin:0 0 8px">📋 Copy Results for Discord</button><div class="hint" id="copyStatus" aria-live="polite"></div><button class="go" id="resX" style="margin:8px 0 0">ปิด</button></div>
+  <div class="mc"><h2 id="winT"></h2><div class="list" id="list"></div><button class="go" id="sendResultsDiscord" style="margin:0 0 8px;background:linear-gradient(135deg,#5865F2,#3543c8)">📨 SEND TO DISCORD</button><div class="hint" id="discordSendStatus" aria-live="polite"></div><button class="go" id="copyResults" style="margin:8px 0">📋 คัดลอกผลการแข่งขัน</button><div class="hint" id="copyStatus" aria-live="polite"></div><button class="go" id="resX" style="margin:8px 0 0">ปิด</button></div>
 </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
 
@@ -1249,6 +1250,40 @@ $('bAgain').onclick=()=>{
   reset();S.st='run';$('bGo').textContent='Ⅱ PAUSE';if(musOn)startMus();
 };
 $('trophy').onclick=()=>$('resM').classList.remove('hide');
+const DUCK_RACE_SUPABASE_URL="https://qbjixpcbzklrkcneluej.supabase.co";
+const DUCK_RACE_SUPABASE_KEY="sb_publishable_4nOj0RDz_BuIt-lIWNvGAg_NmABI3a0";
+const duckRaceSupabase=window.supabase?.createClient(DUCK_RACE_SUPABASE_URL,DUCK_RACE_SUPABASE_KEY,{
+  auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
+});
+$('sendResultsDiscord').onclick=async()=>{
+  const status=$('discordSendStatus');
+  const button=$('sendResultsDiscord');
+  if(!S.fin){status.textContent='ต้องจบการแข่งขันก่อนจึงจะส่งผลได้';return;}
+  if(!duckRaceSupabase){status.textContent='ไม่สามารถโหลดระบบเชื่อมต่อได้ กรุณารีเฟรชหน้าเกม';return;}
+  if(!confirm('ส่งผลการแข่งขัน Duck Race ไปยัง Discord ตามโหมดที่ตั้งค่าไว้หรือไม่?'))return;
+  button.disabled=true;button.textContent='กำลังส่งผลไป Discord...';status.textContent='กำลังตรวจสอบสิทธิ์และส่งผลการแข่งขัน';
+  try{
+    const {data:{session},error:sessionError}=await duckRaceSupabase.auth.getSession();
+    if(sessionError)throw sessionError;
+    if(!session?.access_token)throw new Error('กรุณาเข้าสู่ระบบเว็บไซต์กิลด์ก่อนส่งผลการแข่งขัน');
+    const results=order().map((k,i)=>({rank:i+1,label:String(k.r.label??'Duck').trim().slice(0,48)}));
+    const {data,error}=await duckRaceSupabase.functions.invoke('duck-race-results-notify',{
+      body:{mode:mode==='num'?'num':'name',results}
+    });
+    if(error){
+      let message=error.message;
+      try{if(error.context&&typeof error.context.json==='function'){const body=await error.context.json();message=body.message||message;}}catch(_){}
+      throw new Error(message);
+    }
+    if(!data?.success)throw new Error(data?.message||'ส่งผลการแข่งขันไม่สำเร็จ');
+    status.textContent='ส่งผลการแข่งขันไปยัง Discord สำเร็จแล้ว'+(data.mode==='test'?' (TEST MODE · #ทดสอบบอท)':'');
+    button.textContent='ส่งผลแล้ว ✓';
+  }catch(error){
+    console.error('Duck Race Discord results:',error);
+    status.textContent='ส่งไม่สำเร็จ: '+(error.message||'กรุณาลองใหม่');
+    button.disabled=false;button.textContent='📨 SEND TO DISCORD';
+  }
+};
 $('copyResults').onclick=async()=>{
   const results=order();
   const lines=results.map((k,i)=>{
