@@ -5321,6 +5321,12 @@ function registerAppEventListeners() {
   document.querySelectorAll("[data-go-page]").forEach((button) => {
     button.addEventListener("click", () => {
       openGuildPage(button.dataset.goPage);
+      const scrollTarget = button.dataset.scrollTarget;
+      if (scrollTarget) {
+        window.requestAnimationFrame(() => {
+          $(scrollTarget)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
     });
   });
 
