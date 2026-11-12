@@ -100,6 +100,7 @@ Deno.serve(async (request) => {
       const sessionId = body.session_id;
       const prizeCount = Number(body.prize_count);
       const revealMode = body.reveal_mode === "sequential" ? "sequential" : body.reveal_mode === "all" ? "all" : "";
+      const selectionMode = body.selection_mode === "manual" ? "manual" : "random";
       if (!isUuid(sessionId) || !Number.isInteger(prizeCount) || prizeCount < 1 || prizeCount > 120 || !revealMode) {
         return json({ success: false, message: "ตั้งค่าการจับรางวัลไม่ถูกต้อง" }, 400);
       }
@@ -116,15 +117,35 @@ Deno.serve(async (request) => {
       if (prizeCount > entries.length) {
         return json({ success: false, message: "จำนวนรางวัลต้องไม่เกินจำนวนผู้เข้าแข่งขัน" }, 400);
       }
-      const shuffled = secureShuffle(entries);
-      const selected = shuffled.slice(0, prizeCount);
+
+      let selected: any[] = [];
+      if (selectionMode === "manual") {
+        const ranks = body.selected_ranks;
+        if (
+          !Array.isArray(ranks) ||
+          ranks.length !== prizeCount ||
+          ranks.some((rank: unknown) => !Number.isInteger(rank) || Number(rank) < 1 || Number(rank) > entries.length) ||
+          new Set(ranks).size !== ranks.length
+        ) {
+          return json({ success: false, message: "อันดับที่เลือกไม่ถูกต้อง ห้ามเลือกอันดับซ้ำ และต้องเลือกให้ครบตามจำนวนรางวัล" }, 400);
+        }
+        selected = ranks.map((rank: number) => {
+          const entry = entries.find((item: any) => Number(item.rank) === rank);
+          if (!entry) throw new Error("ไม่พบอันดับการแข่งขันที่เลือก");
+          return entry;
+        });
+      } else {
+        selected = secureShuffle(entries).slice(0, prizeCount);
+      }
+
       const { data: draw, error: drawError } = await admin.from("duck_race_lucky_draws").insert({
         race_session_id: sessionId,
         created_by: authData.user.id,
         prize_count: prizeCount,
         reveal_mode: revealMode,
+        selection_mode: selectionMode,
         eligible_count: entries.length
-      }).select("id,race_session_id,prize_count,reveal_mode,eligible_count,created_at").single();
+      }).select("id,race_session_id,prize_count,reveal_mode,selection_mode,eligible_count,created_at").single();
       if (drawError || !draw) throw drawError || new Error("Could not create Lucky Draw session");
       const winners = selected.map((item: any, index: number) => ({
         lucky_draw_id: draw.id,
@@ -146,7 +167,7 @@ Deno.serve(async (request) => {
       const drawId = body.draw_id;
       if (!isUuid(drawId)) return json({ success: false, message: "รหัส Lucky Draw ไม่ถูกต้อง" }, 400);
       const { data: draw, error: drawError } = await admin.from("duck_race_lucky_draws")
-        .select("id,race_session_id,prize_count,reveal_mode,eligible_count,created_by,created_at")
+        .select("id,race_session_id,prize_count,reveal_mode,selection_mode,eligible_count,created_by,created_at")
         .eq("id", drawId).maybeSingle();
       if (drawError || !draw) return json({ success: false, message: "ไม่พบผล Lucky Draw นี้" }, 404);
       if (draw.created_by !== authData.user.id && !["developer", "leader"].includes(role)) {
@@ -175,11 +196,12 @@ Deno.serve(async (request) => {
       const embeds = chunks.map((description, index) => ({
         title: chunks.length > 1 ? "✦ 4AM GUILD · LUCKY DRAW (" + (index + 1) + "/" + chunks.length + ")" : "✦ 4AM GUILD · LUCKY DRAW",
         description: description.slice(0, 4000),
-        color: 0xD6A64D,
+        color: 0xE32636,
         fields: index === 0 ? [
           { name: "ผู้มีสิทธิ์", value: String(draw.eligible_count) + " คน", inline: true },
           { name: "จำนวนรางวัล", value: String(draw.prize_count) + " รางวัล", inline: true },
-          { name: "รูปแบบ", value: draw.reveal_mode === "all" ? "สุ่มทีเดียวทั้งหมด" : "สุ่มทีละคน", inline: true }
+          { name: "วิธีเลือกผู้ชนะ", value: draw.selection_mode === "manual" ? "เลือกอันดับเอง" : "สุ่มผู้ชนะ", inline: true },
+          { name: "รูปแบบเปิดเผย", value: draw.reveal_mode === "all" ? "เปิดเผยทั้งหมด" : "เปิดเผยทีละคน", inline: true }
         ] : [],
         footer: { text: "4AM GUILD · LUCKY DRAW" },
         timestamp: new Date(draw.created_at).toISOString()
@@ -230,7 +252,7 @@ Deno.serve(async (request) => {
         return json({ success: false, message: "ไม่มีสิทธิ์ดูประวัติรอบนี้" }, 403);
       }
       const { data, error } = await admin.from("duck_race_lucky_draws")
-        .select("id,prize_count,reveal_mode,eligible_count,created_at,duck_race_lucky_draw_winners(prize_number,race_rank,duck_label)")
+        .select("id,prize_count,reveal_mode,selection_mode,eligible_count,created_at,duck_race_lucky_draw_winners(prize_number,race_rank,duck_label)")
         .eq("race_session_id", sessionId).order("created_at", { ascending: false });
       if (error) throw error;
       return json({ success: true, history: data || [] });
