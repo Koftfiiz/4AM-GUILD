@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=type-min-14px-20261112-r2">
+  <link rel="stylesheet" href="style.css?v=discord-integration-20261112-r1">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=type-min-14px-20261112-r2";
+          app.src = "app.js?v=discord-integration-20261112-r1";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -252,6 +252,10 @@
         <button class="nav-item developer-only is-role-hidden" data-page="system-management" data-developer-only aria-hidden="true">
           <svg class="icon"><use href="#i-gear"/></svg>
           <span>System Management</span>
+        </button>
+        <button class="nav-item developer-only is-role-hidden" data-page="discord-integration" data-developer-only aria-hidden="true">
+          <svg class="icon"><use href="#i-discord"/></svg>
+          <span>Discord Integration Settings</span>
         </button>
       </nav>
 
@@ -990,6 +994,66 @@
           <div id="system-role-list" class="system-role-list" aria-live="polite">
             <p class="muted">กำลังโหลดข้อมูลสมาชิก...</p>
           </div>
+        </section>
+      </section>
+
+
+      <!-- ============ DISCORD INTEGRATION SETTINGS (DEVELOPER ONLY) ============ -->
+      <section id="page-discord-integration" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">DEVELOPER CONTROL CENTER</span>
+          <h1>Discord Integration Settings</h1>
+          <p>กำหนดโหมดการทำงานและปลายทางการแจ้งเตือนของ 4AM GUILD Bot</p>
+        </div>
+
+        <section class="panel discord-integration-security">
+          <div class="discord-integration-security-icon"><svg class="icon"><use href="#i-shield"/></svg></div>
+          <div>
+            <strong>DEVELOPER ACCESS ONLY</strong>
+            <p>หน้านี้อนุญาตเฉพาะบัญชี Developer ที่ Active เท่านั้น ระบบตรวจสอบสิทธิ์ซ้ำที่ Supabase RLS และ Edge Function</p>
+          </div>
+        </section>
+
+        <section class="panel discord-integration-panel">
+          <div class="panel-heading">
+            <div><span class="panel-kicker">BOT ENVIRONMENT</span><h3>สถานะการเชื่อมต่อและโหมดการทำงาน</h3></div>
+            <span id="discord-integration-current-mode" class="discord-integration-mode-badge">TEST MODE</span>
+          </div>
+          <p id="discord-integration-load-status" class="muted">กำลังโหลดการตั้งค่า...</p>
+          <form id="discord-integration-form">
+            <div class="discord-integration-grid">
+              <label class="discord-integration-field">
+                <span>โหมดการทำงาน</span>
+                <select id="discord-integration-mode">
+                  <option value="test">TEST MODE — ห้องทดสอบเท่านั้น</option>
+                  <option value="production">PRODUCTION MODE — ห้องใช้งานจริง</option>
+                </select>
+              </label>
+              <label class="discord-integration-field">
+                <span>Test Channel ID</span>
+                <input id="discord-integration-test-channel" type="text" inputmode="numeric" maxlength="20" placeholder="กรอก Discord Channel ID ของห้องทดสอบบอท">
+              </label>
+            </div>
+            <p id="discord-integration-mode-help" class="discord-integration-help">TEST MODE: การแจ้งเตือนทุกประเภทจะถูกส่งไปยังห้องทดสอบบอทเท่านั้น</p>
+            <label class="discord-production-approval">
+              <input id="discord-integration-production-enabled" type="checkbox">
+              <span><strong>อนุมัติให้เปิด Production</strong><small>เปิดเมื่อสร้างห้องจริง กำหนด Channel ID และทดสอบครบถ้วนแล้วเท่านั้น</small></span>
+            </label>
+
+            <div class="discord-integration-routes-heading">
+              <div><span class="panel-kicker">NOTIFICATION ROUTING</span><h3>กำหนดห้องแจ้งเตือนตามเหตุการณ์</h3></div>
+              <span class="discord-integration-future-label">เตรียมตั้งค่าหลังสร้างห้อง Discord</span>
+            </div>
+            <p class="discord-integration-help">ขณะอยู่ใน TEST MODE ทุกเหตุการณ์จะไปห้องทดสอบก่อน ส่วน Channel ID ด้านล่างใช้เมื่อเปิด Production เท่านั้น ยังไม่จำเป็นต้องกรอกในขั้นตอนนี้</p>
+            <div id="discord-integration-routes" class="discord-integration-routes">
+              <p class="muted">กำลังโหลดรายการเหตุการณ์...</p>
+            </div>
+            <div class="discord-integration-actions">
+              <button id="discord-integration-save" class="btn btn-primary" type="submit">บันทึกการตั้งค่า</button>
+              <button id="discord-integration-test" class="btn btn-outline" type="button">ส่งข้อความทดสอบ</button>
+            </div>
+            <p id="discord-integration-message" class="message" aria-live="polite"></p>
+          </form>
         </section>
       </section>
 
