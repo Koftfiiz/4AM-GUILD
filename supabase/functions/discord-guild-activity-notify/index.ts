@@ -130,7 +130,7 @@ Deno.serve(async (request) => {
         { name: "เปิดรับสมัคร", value: record.signup_opens_at ? new Date(record.signup_opens_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) : "-", inline: true },
         { name: "ปิดรับสมัคร", value: record.signup_closes_at ? new Date(record.signup_closes_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) : "-", inline: true },
         { name: "จำนวนที่รับ", value: "สูงสุด 80 คน · ตัวจริง 60 คน · สำรอง 20 คน", inline: false },
-        { name: "รายละเอียด", value: plainText(String(record.description || "").replace(/\\?\[\[WAR_CONFIG:[\\s\\S]*?\\]\]/g, "")) || "ไม่มีรายละเอียดเพิ่มเติม", inline: false }
+        { name: "รายละเอียด", value: plainText(String(record.description || "").replace(/\[\[WAR_CONFIG:[\s\S]*?\]\]/g, "")) || "ไม่มีรายละเอียดเพิ่มเติม", inline: false }
       ],
       footer: { text: "4AM GUILD · War Registration" },
       timestamp: new Date().toISOString()
