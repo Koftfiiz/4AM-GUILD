@@ -88,3 +88,10 @@ commit;
 -- 2) SELECT event_key, event_label, enabled, channel_id FROM public.guild_discord_event_routes ORDER BY event_key;
 -- 3) SELECT public.is_active_4am_developer();
 -- Run checks 1-2 while signed in as Developer; non-Developer accounts should receive no rows / permission denied by RLS.
+
+
+-- War Signup Event -> Discord announcement delivery state (idempotent).
+alter table public.war_events
+  add column if not exists discord_message_id text,
+  add column if not exists discord_sent_at timestamptz,
+  add column if not exists discord_send_error text;
