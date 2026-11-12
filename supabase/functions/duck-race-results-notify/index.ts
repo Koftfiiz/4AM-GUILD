@@ -20,7 +20,7 @@ Deno.serve(async (request) => {
   if (request.method !== "POST") return json({ success: false, message: "Method not allowed" }, 405);
 
   try {
-    const token = (request.headers.get("Authorization") || "").replace(/^Bearer\\s+/i, "").trim();
+    const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
     if (!token) return json({ success: false, message: "กรุณาเข้าสู่ระบบก่อนส่งผลการแข่งขัน" }, 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -54,7 +54,7 @@ Deno.serve(async (request) => {
     }
     const results = body.results.map((item: any, index: number) => ({
       rank: index + 1,
-      label: String(item?.label ?? "").replace(/[\\r\\n\\t]/g, " ").trim().slice(0, 48) || "Duck"
+      label: String(item?.label ?? "").replace(/[\r\n\t]/g, " ").trim().slice(0, 48) || "Duck"
     }));
 
     const { data: settings, error: settingsError } = await admin.from("guild_discord_integration_settings")
