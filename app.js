@@ -911,6 +911,48 @@ async function loadDashboard() {
   renderDashboardProfile();
 }
 
+async function loadDashboardAnnouncement() {
+  const container = $("dashboard-announcement-content");
+  if (!container) return;
+
+  container.innerHTML = '<p class="muted">กำลังโหลดข่าวสารล่าสุด...</p>';
+
+  const { data, error } = await supabaseClient
+    .from("guild_activities")
+    .select("id,title,content_html,starts_at,ends_at,created_at")
+    .is("starts_at", null)
+    .is("ends_at", null)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Dashboard guild announcement error:", error);
+    container.innerHTML = '<span class="badge-important">ข่าวสารจากกิลด์</span><h4>โหลดข่าวสารไม่สำเร็จ</h4><p>กรุณาลองใหม่อีกครั้ง</p>';
+    return;
+  }
+
+  if (!data) {
+    container.innerHTML = '<span class="badge-important">ข่าวสารจากกิลด์</span><h4>ยังไม่มีข่าวสารที่เผยแพร่</h4><p>เมื่อฝ่ายบริหารเผยแพร่ข่าวสาร ข่าวล่าสุดจะแสดงที่บริเวณนี้</p>';
+    return;
+  }
+
+  const contentPreview = document.createElement("div");
+  contentPreview.innerHTML = sanitizeGuildActivityHTML(data.content_html || "");
+  const plainText = (contentPreview.textContent || "").replace(/\\s+/g, " ").trim();
+  const excerpt = plainText.length > 190 ? plainText.slice(0, 190).trimEnd() + "…" : plainText;
+
+  container.innerHTML = `
+    <span class="badge-important">ข่าวสารล่าสุด</span>
+    <h4>${escapeHTML(data.title || "ข่าวสารจากกิลด์")}</h4>
+    <p>${escapeHTML(excerpt || "กดเพื่ออ่านรายละเอียดข่าวสารจากกิลด์")}</p>
+    <div class="announcement-date">
+      <svg class="icon"><use href="#i-clock"/></svg>
+      เผยแพร่เมื่อ ${escapeHTML(activityDateLabel(data.created_at) || "-")}
+    </div>
+  `;
+}
+
 async function renderDashboardProfile() {
   const container = $("dashboard-profile");
   if (!container) return;
@@ -4309,7 +4351,10 @@ function subscribeToGuildActivityRealtime(){
  if(guildActivityRealtimeChannel){supabaseClient.removeChannel(guildActivityRealtimeChannel);guildActivityRealtimeChannel=null;}
  if(!currentUser)return;
  guildActivityRealtimeChannel=supabaseClient.channel("guild-activities-live-"+currentUser.id)
-  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activities"},()=>{if(!$("page-community")?.classList.contains("hidden"))loadGuildActivities();})
+  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activities"},()=>{
+   if(!$("page-community")?.classList.contains("hidden"))loadGuildActivities();
+   if(!$("page-dashboard")?.classList.contains("hidden"))loadDashboardAnnouncement();
+  })
   .on("postgres_changes",{event:"*",schema:"public",table:"guild_activity_comments"},()=>{if(!$("page-community")?.classList.contains("hidden"))loadGuildActivityComments();})
   .subscribe();
 }
@@ -5067,6 +5112,10 @@ function openGuildPage(pageName) {
   memberParent?.classList.toggle("active", memberPages.includes(pageName));
   if (memberPages.includes(pageName) && memberSubmenu) memberSubmenu.classList.add("is-open");
 
+  if (pageName === "dashboard") {
+    loadDashboardAnnouncement();
+    subscribeToGuildActivityRealtime();
+  }
   if (pageName === "settings") {
     renderAccountDetails();
     loadDiscordAccount();
@@ -5328,6 +5377,12 @@ function registerAppEventListeners() {
         });
       }
     });
+  });
+
+  $("dashboard-announcement")?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    openGuildPage("guild-news");
   });
 
   $("user-chip")?.addEventListener("click", (event) => {
