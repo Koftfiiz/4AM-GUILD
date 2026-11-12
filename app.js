@@ -5528,7 +5528,7 @@ async function saveDiscordIntegrationSettings() {
 
     const { error: routesError } = await supabaseClient
       .from("guild_discord_event_routes")
-      .upsert(routes.map(route => ({ ...route, updated_at: new Date().toISOString() })), { onConflict: "event_key" });
+      .upsert(routes.map(route => ({ ...route, event_label: DISCORD_EVENT_ROUTE_DEFINITIONS.find(([key]) => key === route.event_key)?.[1] || route.event_key, updated_at: new Date().toISOString() })), { onConflict: "event_key" });
     if (routesError) throw routesError;
 
     showMessage("discord-integration-message", "บันทึกการตั้งค่า Discord Integration สำเร็จ", "success");
