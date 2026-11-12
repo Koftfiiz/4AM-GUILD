@@ -547,7 +547,8 @@
       <!-- ============ GUILD WAR ============ -->
       <section id="page-war" class="page page-padded hidden">
         <div class="page-intro"><span class="section-kicker">BATTLE MANAGEMENT</span><h1>จัดตี้วอร์</h1><p>สร้างตี้วอร์ จัดสมาชิกเข้าปาร์ตี้ และเผยแพร่รายชื่อตี้วอร์ให้สมาชิกกิลด์</p></div>
-        <div class="war-create-toolbar"><div><span class="panel-kicker">WAR MANAGEMENT</span><h2>รายการ Guild War</h2><p>เลือกวอร์ที่มีอยู่เพื่อจัดการ หรือสร้างตี้วอร์ใหม่</p></div><div class="war-toolbar-actions"><button id="war-skill-library-toggle" class="btn btn-outline" type="button">คลัง Skill</button><button id="war-create-open" class="btn btn-primary" type="button"><span aria-hidden="true">＋</span> สร้างตี้วอร์</button></div></div>
+        <div class="war-create-toolbar"><div><span class="panel-kicker">WAR MANAGEMENT</span><h2>รายการ Guild War</h2><p>เลือกวอร์ที่มีอยู่เพื่อจัดการ หรือสร้างตี้วอร์ใหม่</p></div><div class="war-toolbar-actions"><button id="war-skill-library-toggle" class="btn btn-outline" type="button">คลัง Skill</button></div></div>
+        <button id="war-create-open" class="guild-add-entry-card" type="button" aria-expanded="false"><span class="guild-add-entry-icon" aria-hidden="true">+</span><span class="guild-add-entry-copy"><strong>CREATE WAR EVENT</strong><small>สร้างกิจกรรม Guild War ใหม่ เพื่อจัด Raid และแบ่งสมาชิกเข้าปาร์ตี้</small></span><span class="guild-add-entry-arrow" aria-hidden="true">↗</span></button>
         <div id="war-events" class="war-event-list"></div>
         <section id="war-skill-management" class="panel war-skill-management hidden">
           <div class="war-skill-gallery-heading"><div><span class="panel-kicker">SKILL LIBRARY</span><h3>คลัง Skill</h3><p>แตะไอคอนเพื่อแก้ไข · ใช้โหมดจัดการเพื่อลบ Skill</p></div><div class="war-skill-gallery-actions"><button id="war-skill-add-toggle" class="btn btn-primary btn-sm" type="button" aria-expanded="false">จัดการสกิล</button><button id="war-skill-delete-mode" class="btn btn-outline btn-sm" type="button" aria-pressed="false">ลบสกิล</button><button id="war-skill-library-close" class="btn btn-ghost btn-sm" type="button" aria-label="ปิดคลัง Skill">×</button></div></div>
@@ -576,7 +577,8 @@
 <section id="page-war-signup" class="page page-padded hidden">
   <div class="page-intro"><span class="section-kicker">WAR REGISTRATION</span><h1>ลงชื่อวอร์</h1><p>ลงทะเบียนเข้าร่วมกิจกรรม Guild War ที่กำลังจะมาถึง</p></div>
   <section id="war-signup-management" class="panel war-signup-management hidden">
-    <div class="panel-heading"><div><span class="panel-kicker">MANAGEMENT CONTROL</span><h3>จัดการ Event ลงชื่อวอร์</h3></div><button id="war-signup-add" class="btn btn-primary" type="button">＋ เพิ่ม Event ลงชื่อวอร์</button></div>
+    <div class="panel-heading"><div><span class="panel-kicker">MANAGEMENT CONTROL</span><h3>จัดการ Event ลงชื่อวอร์</h3></div></div>
+    <button id="war-signup-add" class="guild-add-entry-card" type="button" aria-expanded="false"><span class="guild-add-entry-icon" aria-hidden="true">+</span><span class="guild-add-entry-copy"><strong>CREATE SIGNUP EVENT</strong><small>เปิดกิจกรรมให้สมาชิกลงทะเบียนเข้าร่วม Guild War ล่วงหน้า</small></span><span class="guild-add-entry-arrow" aria-hidden="true">↗</span></button>
     <form id="war-signup-create-form" class="war-signup-create-form hidden">
       <div class="war-signup-form-grid">
         <div class="form-group war-signup-field-wide"><label for="war-signup-event-name">ชื่อ Event</label><input id="war-signup-event-name" maxlength="120" placeholder="เช่น Guild War รอบประจำสัปดาห์" required></div>
@@ -658,10 +660,8 @@
               <h3>Portfolio Gallery</h3>
               <p>แฟ้มผลงานจะแยกตามตัวละครและบัญชีสมาชิก</p>
             </div>
-            <button type="button" id="portfolio-add-button" class="btn btn-primary" aria-expanded="false">
-              + เพิ่มแฟ้มผลงาน
-            </button>
           </div>
+          <button type="button" id="portfolio-add-button" class="guild-add-entry-card" aria-expanded="false"><span class="guild-add-entry-icon" aria-hidden="true">+</span><span class="guild-add-entry-copy"><strong>ADD NEW PORTFOLIO</strong><small>เพิ่มแฟ้มผลงานตัวละคร แชร์ Build ค่าสถานะ อุปกรณ์ และแนวทางการเล่น</small></span><span class="guild-add-entry-arrow" aria-hidden="true">↗</span></button>
 
           <div id="portfolio-create-panel" class="portfolio-create-panel hidden">
             <form id="portfolio-create-form" class="portfolio-form">
