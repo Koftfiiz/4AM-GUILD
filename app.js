@@ -190,8 +190,8 @@ function registerRolePreviewEvents() {
   // Preview is deliberately read-only: block page actions before page handlers run.
   document.addEventListener("click", (event) => {
     if (!isRolePreviewActive()) return;
-    const page = event.target.closest?.(".page");
-    if (!page || event.target.closest("[data-role-preview-control],[data-preview-safe]")) return;
+    const protectedSurface = event.target.closest?.(".page,.topbar");
+    if (!protectedSurface || event.target.closest("[data-role-preview-control],[data-preview-safe],[data-page],[data-go-page],[data-toggle-submenu]")) return;
     if (event.target.closest("button,a,[role='button']")) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -201,13 +201,13 @@ function registerRolePreviewEvents() {
   }, true);
 
   document.addEventListener("submit", (event) => {
-    if (!isRolePreviewActive() || !event.target.closest(".page")) return;
+    if (!isRolePreviewActive() || !event.target.closest(".page,.topbar")) return;
     event.preventDefault();
     event.stopImmediatePropagation();
   }, true);
 
   document.addEventListener("change", (event) => {
-    if (!isRolePreviewActive() || !event.target.closest(".page")) return;
+    if (!isRolePreviewActive() || !event.target.closest(".page,.topbar")) return;
     if (event.target.closest("[data-role-preview-control],[data-preview-safe]")) return;
     if (event.target.matches("select,input[type='file'],input[type='checkbox'],input[type='radio']")) {
       event.preventDefault();
