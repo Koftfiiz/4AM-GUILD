@@ -1540,7 +1540,7 @@ $('luckyNext').onclick=()=>{
 };
 $('luckyBack').onclick=()=>{
   const hasCurrentResult=!!luckyDrawRecord?.id;
-  if(hasCurrentResult&&!confirm('กลับไปหน้าตั้งค่า Lucky Draw หรือไม่?\\nผลสุ่มรอบนี้จะยังคงอยู่ในประวัติ หากกดเริ่มสุ่มอีกครั้งจะสร้างรายการจับรางวัลใหม่'))return;
+  if(hasCurrentResult&&!confirm('กลับไปหน้าตั้งค่า Lucky Draw หรือไม่?\nผลสุ่มรอบนี้จะยังคงอยู่ในประวัติ หากกดเริ่มสุ่มอีกครั้งจะสร้างรายการจับรางวัลใหม่'))return;
   $('luckyReveal').classList.add('hide');
   $('luckySetup').classList.remove('hide');
   $('luckyStatus').textContent=hasCurrentResult?'ผลสุ่มรอบก่อนหน้ายังคงอยู่ในประวัติ · ปรับค่าเพื่อเริ่มรอบใหม่ได้':'กลับไปหน้าตั้งค่า Lucky Draw แล้ว';
