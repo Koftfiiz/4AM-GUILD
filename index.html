@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=member-card-contrast-20261112-2">
+  <link rel="stylesheet" href="style.css?v=manual-member-modal-20261112">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=member-card-font-20261112";
+          app.src = "app.js?v=manual-member-modal-20261112";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -503,27 +503,40 @@
           <div class="member-admin-note"><strong>ข้อมูลสมาชิก Manual</strong><span>รายชื่อในส่วนนี้จะแสดงในหน้ารายชื่อสมาชิก แต่ยังไม่สามารถ Login หรือเข้าร่วมระบบวอร์จนกว่าจะเชื่อมบัญชีผู้ใช้</span></div>
         </section>
 
-        <section class="panel manual-member-form-panel">
-          <div class="panel-heading">
-            <div><span class="panel-kicker">MEMBER PROFILE</span><h3 id="manual-member-form-title">เพิ่มสมาชิกใหม่</h3><p>กรอกข้อมูลสมาชิกและกำหนดตำแหน่งกิลด์</p></div>
-          </div>
-          <form id="manual-member-form" class="manual-member-form">
-            <input type="hidden" id="manual-member-id" name="id"><input type="hidden" id="manual-member-type" name="record_type" value="manual"><input type="hidden" id="manual-member-user-id" name="user_id">
-            <label class="manual-member-field"><span>ชื่อตัวละคร <i>*</i></span><input name="character_name" type="text" maxlength="40" placeholder="กรอกชื่อตัวละคร" required></label>
-            <label class="manual-member-field"><span>Class อาชีพ <i>*</i></span><select name="game_class" required><option value="">เลือก Class อาชีพ</option></select></label>
-            <label class="manual-member-field"><span>ชื่อเล่น</span><input name="nickname" type="text" maxlength="40" placeholder="กรอกชื่อเล่น"></label>
-            <label class="manual-member-field"><span>Discord Username</span><input name="discord_name" type="text" maxlength="100" placeholder="ชื่อผู้ใช้ Discord (ถ้ามี)"></label>
-            <label class="manual-member-field"><span>อายุ</span><input name="age" type="number" min="1" max="120" placeholder="อายุ"></label>
-            <label class="manual-member-field"><span>ตำแหน่งกิลด์</span><select name="guild_position"><option value="">เลือกตำแหน่งกิลด์</option></select></label>
-            <label class="manual-member-field manual-member-field-wide"><span>หมายเหตุ</span><textarea name="notes" rows="3" maxlength="500" placeholder="รายละเอียดเพิ่มเติม (ไม่บังคับ)"></textarea></label>
-            <label class="manual-member-active-toggle"><input id="manual-member-active" type="checkbox" checked><span>สมาชิก Active — แสดงในหน้ารายชื่อสมาชิก</span></label>
-            <p id="manual-member-form-status" class="manual-member-form-status" role="status" aria-live="polite"></p>
-            <div class="manual-member-form-actions">
-              <button type="button" id="manual-member-cancel" class="btn btn-outline hidden">ยกเลิกการแก้ไข</button>
-              <button type="submit" id="manual-member-submit" class="btn btn-primary">＋ บันทึกสมาชิก</button>
+        <button type="button" id="manual-member-add-trigger" class="manual-member-add-card">
+          <span class="manual-member-add-icon" aria-hidden="true">+</span>
+          <span class="manual-member-add-copy"><strong>ADD NEW MEMBER</strong><small>เพิ่มสมาชิกใหม่เข้าสู่ 4AM GUILD</small></span>
+          <span class="manual-member-add-arrow" aria-hidden="true">↗</span>
+        </button>
+
+        <div id="manual-member-modal" class="manual-member-modal hidden" role="dialog" aria-modal="true" aria-labelledby="manual-member-form-title">
+          <button type="button" class="manual-member-modal-backdrop" data-manual-modal-close aria-label="ปิดหน้าต่าง"></button>
+          <section class="panel manual-member-form-panel manual-member-modal-panel">
+            <div class="manual-member-modal-topline">
+              <span>4AM GUILD <i>·</i> MEMBER PROFILE</span>
+              <button type="button" class="manual-member-modal-close" data-manual-modal-close aria-label="ปิดหน้าต่าง">×</button>
             </div>
-          </form>
-        </section>
+            <div class="panel-heading">
+              <div><span class="panel-kicker">MEMBER PROFILE</span><h3 id="manual-member-form-title">เพิ่มสมาชิกใหม่</h3><p>กรอกข้อมูลสมาชิกและกำหนดตำแหน่งกิลด์</p></div>
+            </div>
+            <form id="manual-member-form" class="manual-member-form">
+              <input type="hidden" id="manual-member-id" name="id"><input type="hidden" id="manual-member-type" name="record_type" value="manual"><input type="hidden" id="manual-member-user-id" name="user_id">
+              <label class="manual-member-field"><span>ชื่อตัวละคร <i>*</i></span><input name="character_name" type="text" maxlength="40" placeholder="กรอกชื่อตัวละคร" required></label>
+              <label class="manual-member-field"><span>Class อาชีพ <i>*</i></span><select name="game_class" required><option value="">เลือก Class อาชีพ</option></select></label>
+              <label class="manual-member-field"><span>ชื่อเล่น</span><input name="nickname" type="text" maxlength="40" placeholder="กรอกชื่อเล่น"></label>
+              <label class="manual-member-field"><span>Discord Username</span><input name="discord_name" type="text" maxlength="100" placeholder="ชื่อผู้ใช้ Discord (ถ้ามี)"></label>
+              <label class="manual-member-field"><span>อายุ</span><input name="age" type="number" min="1" max="120" placeholder="อายุ"></label>
+              <label class="manual-member-field"><span>ตำแหน่งกิลด์</span><select name="guild_position"><option value="">เลือกตำแหน่งกิลด์</option></select></label>
+              <label class="manual-member-field manual-member-field-wide"><span>หมายเหตุ</span><textarea name="notes" rows="3" maxlength="500" placeholder="รายละเอียดเพิ่มเติม (ไม่บังคับ)"></textarea></label>
+              <label class="manual-member-active-toggle"><input id="manual-member-active" type="checkbox" checked><span>สมาชิก Active — แสดงในหน้ารายชื่อสมาชิก</span></label>
+              <p id="manual-member-form-status" class="manual-member-form-status" role="status" aria-live="polite"></p>
+              <div class="manual-member-form-actions">
+                <button type="button" id="manual-member-cancel" class="btn btn-outline hidden">ยกเลิกการแก้ไข</button>
+                <button type="submit" id="manual-member-submit" class="btn btn-primary">＋ บันทึกสมาชิก</button>
+              </div>
+            </form>
+          </section>
+        </div>
 
         <section class="panel manual-member-list-panel">
           <div class="panel-heading"><div><span class="panel-kicker">MEMBER RECORDS</span><h3>จัดการสมาชิกแบบ Manual</h3><p>แก้ไขข้อมูล เปลี่ยนสถานะ หรือเอารายชื่อออกจาก Directory</p></div></div>
