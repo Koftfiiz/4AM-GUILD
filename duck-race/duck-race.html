@@ -1448,6 +1448,9 @@ $('openLuckyDraw').onclick=async()=>{
   if(!S.fin)return;
   $('luckyM').classList.remove('hide');
   $('luckySetup').classList.remove('hide');$('luckyReveal').classList.add('hide');
+  luckyDrawRecord=null;luckyDrawWinners=[];luckyDrawRevealed=0;
+  $('luckySendDiscord').disabled=true;$('luckySendDiscord').textContent='SEND TO DISCORD';
+  $('luckyResults').innerHTML='';$('luckySpotlight').innerHTML='<div><div class="prize">LUCKY WINNER</div><div class="name">พร้อมประกาศผล</div><div class="rank">ผลสุ่มถูกบันทึกแล้ว</div></div>';
   $('luckyStatus').textContent='กำลังตรวจสอบผลการแข่งขัน...';
   try{
     if(currentRaceSavePromise)await currentRaceSavePromise;
