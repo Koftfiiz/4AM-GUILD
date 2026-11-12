@@ -64,7 +64,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 <div id="duck-race-root" class="is-setup">
 <div class="stage" id="stage">
   <canvas id="cv"></canvas><div class="emote-layer" id="emoteLayer" aria-hidden="true"></div>
-  <div class="ic"><button id="bSet" title="ตั้งค่า">⚙</button><button id="bMus" title="เปิด/ปิดเพลง">♫✕</button><button id="bVol" title="ปรับระดับเสียงเพลง">🔊</button><button id="bBell" title="เสียงระฆัง">🔔✕</button></div><div class="music-volume hide" id="musicVolumePanel"><label for="musicVolume" style="margin:0;color:#fff">♫ Volume</label><input id="musicVolume" type="range" min="0" max="100" value="5"><output id="musicVolumeValue">5%</output></div>
+  <div class="ic"><button id="bSet" title="ตั้งค่า">⚙</button><button id="bMus" title="เปิด/ปิดเพลง">♫ ON</button><button id="bVol" title="ปรับระดับเสียงเพลง">🔊</button><button id="bBell" title="เสียงระฆัง">🔔✕</button></div><div class="music-volume hide" id="musicVolumePanel"><label for="musicVolume" style="margin:0;color:#fff">♫ Volume</label><input id="musicVolume" type="range" min="0" max="100" value="5"><output id="musicVolumeValue">5%</output></div>
   <button id="bShuf">🔀 Shuffle Characters</button>
   <div class="ctl"><button id="bGo">▶ START</button><button id="bClr">↺ CLEAR</button><button id="bSkip" class="sm">ข้ามไปจบ</button></div>
   <div class="clock" id="clk">00:00:30</div>
@@ -109,7 +109,7 @@ const $=id=>root.querySelector('#'+id);
 const MUSIC_URL='/duck-race/audio/duck-race-music.mp3';/* Custom Duck Race background music */
 const cv=$('cv'),cx=cv.getContext('2d');
 const MAXN=120,SL=.42,NEED=20;
-let W=1000,H=566,DPR=1,D=2000,mode='num',roster=[],ducks=[],rmWin=false,musOn=false,bellOn=false;
+let W=1000,H=566,DPR=1,D=2000,mode='num',roster=[],ducks=[],rmWin=false,musOn=true,bellOn=false;
 let S={st:'idle',t:0,T:30,sc:1,cam:0,last:0,fin:false};
 
 /* ---------- data-driven costumes + hybrid rarity + unique combination pool ---------- */
