@@ -1112,6 +1112,19 @@ function renderGuildPositionOptions(selected = "") {
   ).join("");
 }
 
+function openManualMemberModal() {
+  const modal = $("manual-member-modal");
+  if (!modal) return;
+  modal.classList.remove("hidden");
+  document.body.classList.add("manual-member-modal-open");
+  window.setTimeout(() => modal.querySelector('input[name="character_name"]')?.focus(), 80);
+}
+
+function closeManualMemberModal() {
+  $("manual-member-modal")?.classList.add("hidden");
+  document.body.classList.remove("manual-member-modal-open");
+}
+
 function resetManualMemberForm() {
   const form = $("manual-member-form");
   if (!form) return;
@@ -1123,6 +1136,7 @@ function resetManualMemberForm() {
   $("manual-member-submit").textContent = "บันทึกสมาชิก";
   $("manual-member-cancel").classList.add("hidden");
   $("manual-member-active").checked = true;
+  closeManualMemberModal();
 }
 
 async function loadManualMemberManagement() {
@@ -1315,7 +1329,7 @@ function fillManualMemberForm(member, type = "manual") {
   $("manual-member-form-title").textContent = type === "account" ? "แก้ไขข้อมูลสมาชิกที่เชื่อมบัญชีแล้ว" : "แก้ไขข้อมูลสมาชิก Manual";
   $("manual-member-submit").textContent = "บันทึกการแก้ไข";
   $("manual-member-cancel").classList.remove("hidden");
-  form.scrollIntoView({ behavior: "smooth", block: "center" });
+  openManualMemberModal();
 }
 
 function editManualGuildMember(id) {
@@ -5236,8 +5250,20 @@ function registerAppEventListeners() {
   $("logout-btn")?.addEventListener("click", logout);
 
   $("member-search")?.addEventListener("input", filterMembers);
+  $("manual-member-add-trigger")?.addEventListener("click", () => {
+    resetManualMemberForm();
+    openManualMemberModal();
+  });
   $("manual-member-form")?.addEventListener("submit", event => { event.preventDefault(); saveManualGuildMember(event.currentTarget); });
   $("manual-member-cancel")?.addEventListener("click", resetManualMemberForm);
+  $("manual-member-modal")?.addEventListener("click", event => {
+    if (event.target.closest("[data-manual-modal-close]")) resetManualMemberForm();
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !$("manual-member-modal")?.classList.contains("hidden")) {
+      resetManualMemberForm();
+    }
+  });
   $("manual-member-list")?.addEventListener("click", event => {
     const edit = event.target.closest("[data-manual-edit]");
     const toggle = event.target.closest("[data-manual-toggle]");
