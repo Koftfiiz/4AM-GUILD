@@ -1001,7 +1001,7 @@ async function loadDashboardAnnouncement() {
   }
 
   if (!data) {
-    container.innerHTML = '<span class="badge-important">ข่าวสารจากกิลด์</span><h4>ยังไม่มีข่าวสารที่เผยแพร่</h4><p>เมื่อฝ่ายบริหารเผยแพร่ข่าวสาร ข่าวล่าสุดจะแสดงที่บริเวณนี้</p>';
+    container.innerHTML = '<span class="badge-important">ข่าวสารจากกิลด์</span><h4>ยังไม่มีข่าวสารที่เผยแพร่</h4><p>เมื่อสร้างประกาศกิลด์ ข่าวสารล่าสุดจะแสดงที่นี่</p>';
     return;
   }
 
