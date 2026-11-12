@@ -3426,7 +3426,7 @@ async function loadWarSignups(){
     }
     const rosterHtml=renderWarSignupRoster(rows,rosterMembers,leaveRows,attendanceRows);
     const summary=renderWarSignupSummary(rows,rosterMembers);
-    const discordAction=event.discord_message_id?'<button class="btn btn-outline btn-sm" type="button" disabled title="ส่งประกาศไป Discord แล้ว">SENT TO DISCORD</button>':'<button class="btn btn-primary btn-sm" type="button" data-war-signup-discord="'+escapeHTML(event.id)+'">'+(event.discord_send_error?"ส่ง Discord อีกครั้ง":"SEND TO DISCORD")+(event.discord_send_error?"":"")+"</button>";
+    const discordAction='<button class="btn '+(event.discord_message_id?"btn-outline":"btn-primary")+' btn-sm" type="button" data-war-signup-discord="'+escapeHTML(event.id)+'">'+(event.discord_message_id?"UPDATE TO DISCORD":event.discord_send_error?"ส่ง Discord อีกครั้ง":"SEND TO DISCORD")+"</button>";
     const managementActions=isManagement()?'<div class="war-signup-management-actions">'+discordAction+'<button class="btn btn-outline btn-sm" type="button" data-war-signup-edit="'+escapeHTML(event.id)+'">แก้ไข Event</button><button class="btn btn-danger btn-sm" type="button" data-war-signup-delete="'+escapeHTML(event.id)+'">ลบ Event</button></div>'+(event.discord_send_error?'<small class="war-signup-discord-error">'+escapeHTML(event.discord_send_error)+'</small>':""):"";
     return '<article class="war-signup-card"><div class="war-signup-card-top"><div class="war-signup-card-heading"><h3>'+escapeHTML(event.event_name)+'</h3><p>'+formatDate(event.event_date)+' · เริ่มวอร์ '+formatTime(event.start_time)+'</p></div><div class="war-signup-badges"><span class="war-signup-state '+stateClass+'">'+stateLabel+'</span><span class="war-signup-type">'+typeLabel+'</span></div></div>'+managementActions+
       '<div class="war-signup-event-meta"><span>เริ่มลงชื่อ: '+warSignupDateTime(event.signup_opens_at)+'</span><span>ปิดรับ: '+warSignupDateTime(event.signup_closes_at)+'</span><span>ผู้ลงชื่อ: '+capacity+'</span></div>'+
@@ -3437,9 +3437,13 @@ async function loadWarSignups(){
 
 async function sendWarSignupEventToDiscord(eventId,button){
   if(!isManagement())return;
-  if(!confirm("ส่งประกาศ War Signup Event นี้ไปยัง Discord ตามโหมดที่ตั้งค่าไว้หรือไม่?"))return;
-  const original=button?.textContent||"SEND TO DISCORD";
-  if(button){button.disabled=true;button.textContent="กำลังส่งไป Discord...";}
+  const isUpdate=String(button?.textContent||"").includes("UPDATE TO DISCORD");
+  const confirmText=isUpdate
+    ?"อัปเดตประกาศ War Signup Event ใน Discord โดยแก้ไขข้อความเดิมหรือไม่?"
+    :"ส่งประกาศ War Signup Event นี้ไปยัง Discord ตามโหมดที่ตั้งค่าไว้หรือไม่?";
+  if(!confirm(confirmText))return;
+  const original=button?.textContent||(isUpdate?"UPDATE TO DISCORD":"SEND TO DISCORD");
+  if(button){button.disabled=true;button.textContent=isUpdate?"กำลังอัปเดต Discord...":"กำลังส่งไป Discord...";}
   try{
     const {data,error}=await supabaseClient.functions.invoke("discord-guild-activity-notify",{body:{kind:"war_signup",event_id:eventId}});
     if(error){
@@ -3447,12 +3451,12 @@ async function sendWarSignupEventToDiscord(eventId,button){
       try{if(error.context&&typeof error.context.json==="function"){const body=await error.context.json();message=body.message||message;}}catch(_){}
       throw new Error(message);
     }
-    if(!data?.success)throw new Error(data?.message||"ส่งประกาศไป Discord ไม่สำเร็จ");
-    alert(data.already_notified?"Event นี้ถูกส่งไป Discord แล้ว":"ส่งประกาศ War Signup Event ไป Discord สำเร็จ");
+    if(!data?.success)throw new Error(data?.message||"ดำเนินการกับ Discord ไม่สำเร็จ");
+    alert(data.updated?"อัปเดตประกาศเดิมบน Discord สำเร็จ":data.already_notified?"Event นี้มีประกาศบน Discord แล้ว":"ส่งประกาศ War Signup Event ไป Discord สำเร็จ");
     await loadWarSignups();
   }catch(error){
-    console.error("War signup Discord send:",error);
-    alert("ส่ง Discord ไม่สำเร็จ: "+(error.message||"กรุณาตรวจสอบการตั้งค่าและลองใหม่"));
+    console.error("War signup Discord send/update:",error);
+    alert((isUpdate?"อัปเดต Discord ไม่สำเร็จ: ":"ส่ง Discord ไม่สำเร็จ: ")+(error.message||"กรุณาตรวจสอบการตั้งค่าและลองใหม่"));
     if(button){button.disabled=false;button.textContent=original;}
     await loadWarSignups();
   }
