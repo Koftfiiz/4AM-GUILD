@@ -3366,7 +3366,7 @@ async function loadWarSignups(){
   $("war-signup-add")?.classList.toggle("hidden",!isManagement());
   box.innerHTML='<p class="muted">กำลังโหลดกิจกรรมวอร์...</p>';
   const {data:events,error}=await supabaseClient.from("war_events")
-    .select("id,event_name,event_date,start_time,registration_type,signup_opens_at,signup_closes_at,description")
+    .select("id,event_name,event_date,start_time,registration_type,signup_opens_at,signup_closes_at,description,discord_message_id,discord_sent_at,discord_send_error")
     .not("signup_opens_at","is",null).not("signup_closes_at","is",null)
     .order("signup_opens_at",{ascending:false});
   if(error){
@@ -3426,12 +3426,36 @@ async function loadWarSignups(){
     }
     const rosterHtml=renderWarSignupRoster(rows,rosterMembers,leaveRows,attendanceRows);
     const summary=renderWarSignupSummary(rows,rosterMembers);
-    const managementActions=isManagement()?'<div class="war-signup-management-actions"><button class="btn btn-outline btn-sm" type="button" data-war-signup-edit="'+escapeHTML(event.id)+'">แก้ไข Event</button><button class="btn btn-danger btn-sm" type="button" data-war-signup-delete="'+escapeHTML(event.id)+'">ลบ Event</button></div>':"";
+    const discordAction=event.discord_message_id?'<button class="btn btn-outline btn-sm" type="button" disabled title="ส่งประกาศไป Discord แล้ว">SENT TO DISCORD</button>':'<button class="btn btn-primary btn-sm" type="button" data-war-signup-discord="'+escapeHTML(event.id)+'">'+(event.discord_send_error?"ส่ง Discord อีกครั้ง":"SEND TO DISCORD")+(event.discord_send_error?"":"")+"</button>";
+    const managementActions=isManagement()?'<div class="war-signup-management-actions">'+discordAction+'<button class="btn btn-outline btn-sm" type="button" data-war-signup-edit="'+escapeHTML(event.id)+'">แก้ไข Event</button><button class="btn btn-danger btn-sm" type="button" data-war-signup-delete="'+escapeHTML(event.id)+'">ลบ Event</button></div>'+(event.discord_send_error?'<small class="war-signup-discord-error">'+escapeHTML(event.discord_send_error)+'</small>':""):"";
     return '<article class="war-signup-card"><div class="war-signup-card-top"><div class="war-signup-card-heading"><h3>'+escapeHTML(event.event_name)+'</h3><p>'+formatDate(event.event_date)+' · เริ่มวอร์ '+formatTime(event.start_time)+'</p></div><div class="war-signup-badges"><span class="war-signup-state '+stateClass+'">'+stateLabel+'</span><span class="war-signup-type">'+typeLabel+'</span></div></div>'+managementActions+
       '<div class="war-signup-event-meta"><span>เริ่มลงชื่อ: '+warSignupDateTime(event.signup_opens_at)+'</span><span>ปิดรับ: '+warSignupDateTime(event.signup_closes_at)+'</span><span>ผู้ลงชื่อ: '+capacity+'</span></div>'+
       (event.description?'<p class="war-signup-description">'+escapeHTML(String(event.description).replace(/\[\[WAR_CONFIG:[\s\S]*?\]\]/,"").trim())+'</p>':"")+
       '<div class="war-signup-card-bottom"><div class="war-signup-action">'+action+'</div>'+(state==="closed"?'<button class="btn btn-outline btn-sm war-signup-evidence-btn" type="button" data-war-signup-evidence="'+escapeHTML(event.id)+'">บันทึกไฟล์รูปภาพ</button>':"")+'</div>'+rosterHtml+(leaveRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดรายชื่อผู้แจ้งลาไม่ได้ กรุณาตรวจสอบ SQL ระบบแจ้งลาวอร์</p>':"")+(attendanceRpcUnavailable?'<p class="war-leave-roster-warning">ยังโหลดสถานะขาดวอร์ไม่ได้ กรุณาติดตั้ง SQL ระบบสรุปการเข้า war</p>':"")+summary+'</article>';
   }).join("");
+}
+
+async function sendWarSignupEventToDiscord(eventId,button){
+  if(!isManagement())return;
+  if(!confirm("ส่งประกาศ War Signup Event นี้ไปยัง Discord ตามโหมดที่ตั้งค่าไว้หรือไม่?"))return;
+  const original=button?.textContent||"SEND TO DISCORD";
+  if(button){button.disabled=true;button.textContent="กำลังส่งไป Discord...";}
+  try{
+    const {data,error}=await supabaseClient.functions.invoke("discord-guild-activity-notify",{body:{kind:"war_signup",event_id:eventId}});
+    if(error){
+      let message=error.message;
+      try{if(error.context&&typeof error.context.json==="function"){const body=await error.context.json();message=body.message||message;}}catch(_){}
+      throw new Error(message);
+    }
+    if(!data?.success)throw new Error(data?.message||"ส่งประกาศไป Discord ไม่สำเร็จ");
+    alert(data.already_notified?"Event นี้ถูกส่งไป Discord แล้ว":"ส่งประกาศ War Signup Event ไป Discord สำเร็จ");
+    await loadWarSignups();
+  }catch(error){
+    console.error("War signup Discord send:",error);
+    alert("ส่ง Discord ไม่สำเร็จ: "+(error.message||"กรุณาตรวจสอบการตั้งค่าและลองใหม่"));
+    if(button){button.disabled=false;button.textContent=original;}
+    await loadWarSignups();
+  }
 }
 
 async function exportWarSignupEvidence(eventId,button){
@@ -3815,8 +3839,9 @@ function registerWarRecordAndAttendanceEvents(){
   });
   $("war-signup-create-form")?.addEventListener("submit",async e=>{e.preventDefault();await createWarSignupEvent(e.currentTarget);});
   $("war-signup-content")?.addEventListener("click",e=>{
-    const join=e.target.closest("[data-war-signup-join]"),edit=e.target.closest("[data-war-signup-edit]"),del=e.target.closest("[data-war-signup-delete]"),evidence=e.target.closest("[data-war-signup-evidence]");
+    const join=e.target.closest("[data-war-signup-join]"),edit=e.target.closest("[data-war-signup-edit]"),del=e.target.closest("[data-war-signup-delete]"),evidence=e.target.closest("[data-war-signup-evidence]"),discord=e.target.closest("[data-war-signup-discord]");
     if(join)joinWarSignup(join.dataset.warSignupJoin,join);
+    if(discord)sendWarSignupEventToDiscord(discord.dataset.warSignupDiscord,discord);
     if(edit)startEditWarSignupEvent(edit.dataset.warSignupEdit);
     if(del)deleteWarSignupEvent(del.dataset.warSignupDelete,del);
     if(evidence)exportWarSignupEvidence(evidence.dataset.warSignupEvidence,evidence);
