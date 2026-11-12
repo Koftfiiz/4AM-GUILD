@@ -1378,7 +1378,7 @@ function frame(now){
 /* ---------- race control ---------- */
 function reset(){
   if(typeof currentRaceSessionId!=='undefined'&&S.fin){currentRaceSessionId=null;currentRaceSavePromise=null;currentRaceSaved=false;}
-  if(typeof luckyPreRaceConfig!=='undefined'&&S.fin){luckyPreRaceConfig=null;if($('openLuckySetupBeforeRace')){$('openLuckySetupBeforeRace').textContent='✦ ตั้งค่า Lucky Draw ก่อนแข่ง';$('openLuckySetupBeforeRace').style.display='block';}}
+  if(typeof luckyPreRaceConfig!=='undefined'&&S.fin){luckyPreRaceConfig=null;try{localStorage.removeItem(LUCKY_CONFIG_STORAGE_KEY);}catch(_){}if($('openLuckySetupBeforeRace')){$('openLuckySetupBeforeRace').textContent='✦ ตั้งค่า Lucky Draw ก่อนแข่ง';$('openLuckySetupBeforeRace').style.display='block';}}
   // Clear DOM-based GIF overlays as well as race state. The previous duck objects
   // are replaced below, so their emote nodes must be removed explicitly here.
   ducks.forEach(k=>{if(k.emoteNode){k.emoteNode.remove();k.emoteNode=null;}});
@@ -1459,6 +1459,8 @@ let luckyDrawRecord=null;
 let luckySelectionMode='random';
 let luckySelectedRanks=[];
 let luckyPreRaceConfig=null;
+const LUCKY_CONFIG_STORAGE_KEY='4am-duck-race-lucky-config';
+try{const savedLuckyConfig=localStorage.getItem(LUCKY_CONFIG_STORAGE_KEY);if(savedLuckyConfig)luckyPreRaceConfig=JSON.parse(savedLuckyConfig);}catch(_){luckyPreRaceConfig=null;}
 
 async function luckyInvoke(payload){
   if(!duckRaceSupabase)throw new Error('ไม่สามารถเชื่อมต่อ Supabase ได้');
@@ -1709,6 +1711,7 @@ $('luckyStart').onclick=async()=>{
   const button=$('luckyStart');
   if(!S.fin){
     luckyPreRaceConfig={prize_count:prizeCount,selection_mode:luckySelectionMode,selected_ranks:luckySelectionMode==='manual'?[...luckySelectedRanks]:[],reveal_mode:luckyDrawMode};
+    try{localStorage.setItem(LUCKY_CONFIG_STORAGE_KEY,JSON.stringify(luckyPreRaceConfig));}catch(_){}
     button.disabled=true;button.textContent='บันทึกแล้ว';
     $('luckyStatus').textContent='บันทึกการตั้งค่า Lucky Draw แล้ว · ระบบจะจับรางวัลหลังการแข่งขันจบ';
     $('openLuckySetupBeforeRace').textContent='✦ แก้ไขการตั้งค่า Lucky Draw';
