@@ -3761,7 +3761,7 @@ async function startEditWarSignupEvent(id){
   $("war-signup-start-time").value=formatTime(data.start_time)==="-"?"":formatTime(data.start_time).slice(0,5);
   $("war-signup-start-time-display").value=$("war-signup-start-time").value;
   $("war-signup-opens-at").value=formatDisplayDateTime(data.signup_opens_at);$("war-signup-closes-at").value=formatDisplayDateTime(data.signup_closes_at);
-  $("war-signup-description").value=data.description||"";
+  $("war-signup-description").value=String(data.description||"").replace(/\[\[WAR_CONFIG:\s*\{[\s\S]*?\}\s*\]\]/g,"").trim();
   updateWarSignupDateControls(eventDate,false);
   $("war-signup-create-confirm").textContent="บันทึกการแก้ไข Event";$("war-signup-create-form").classList.remove("hidden");$("war-signup-create-form").classList.add("is-editing");
   updateWarSignupTimeForDate();
@@ -3803,7 +3803,13 @@ async function createWarSignupEvent(form){
   button.disabled=true;button.textContent=editId?"กำลังบันทึกการแก้ไข...":"กำลังสร้าง Event...";
   try{
     let result;
-    if(editId)result=await supabaseClient.from("war_events").update({event_name:name,registration_type:type,event_date:date,start_time:startTime,signup_opens_at:openDate.toISOString(),signup_closes_at:closeDate.toISOString(),description:description||null}).eq("id",editId).select("id").single();
+    if(editId){
+      const {data:existingEvent,error:existingError}=await supabaseClient.from("war_events").select("description").eq("id",editId).single();
+      if(existingError)throw existingError;
+      const existingConfig=String(existingEvent?.description||"").match(/\[\[WAR_CONFIG:\s*\{[\s\S]*?\}\s*\]\]/);
+      const savedDescription=[description,existingConfig?.[0]||""].filter(Boolean).join("\\n\\n")||null;
+      result=await supabaseClient.from("war_events").update({event_name:name,registration_type:type,event_date:date,start_time:startTime,signup_opens_at:openDate.toISOString(),signup_closes_at:closeDate.toISOString(),description:savedDescription}).eq("id",editId).select("id").single();
+    }
     else result=await supabaseClient.rpc("create_war_signup_event",{p_event_name:name,p_registration_type:type,p_event_date:date,p_start_time:startTime,p_signup_opens_at:openDate.toISOString(),p_signup_closes_at:closeDate.toISOString(),p_description:description||null});
     if(result.error)throw result.error;
     resetWarSignupForm();form.classList.add("hidden");message.classList.add("hidden");
