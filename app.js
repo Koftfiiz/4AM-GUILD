@@ -91,6 +91,7 @@ const PAGE_TITLES = {
   "war-attendance-stats": "สถิติการเข้าร่วมวอร์",
   rules: "กฎกิลด์",
   portfolio: "แฟ้มผลงาน",
+  guides: "ไกด์เกม",
   "community-board": "Community Board",
   "duck-race": "4AM Duck Race",
   "guild-news": "Guild News",
@@ -4943,6 +4944,248 @@ function registerFeedbackEvents() {
   $("feedback-filter-search")?.addEventListener("input", renderGuildFeedback);
 }
 
+// GAME GUIDES
+const GUILD_GUIDE_BUCKET = "guild-activity-images";
+let guildGuidesCache = [];
+
+function sanitizeGuildGuideHTML(html) {
+  const parsed = new DOMParser().parseFromString(String(html || ""), "text/html");
+  const allowed = new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","H2","H3","H4","BLOCKQUOTE","SPAN","IMG","S","STRIKE","TABLE","THEAD","TBODY","TR","TD","TH","HR","A","IFRAME"]);
+  const imagePrefix = SUPABASE_URL + "/storage/v1/object/public/" + GUILD_GUIDE_BUCKET + "/";
+  const clean = node => {
+    if (node.nodeType === Node.TEXT_NODE) return document.createTextNode(node.textContent || "");
+    if (node.nodeType !== Node.ELEMENT_NODE) return document.createDocumentFragment();
+    const tag = node.tagName;
+    if (!allowed.has(tag)) {
+      const fragment = document.createDocumentFragment();
+      [...node.childNodes].forEach(child => fragment.appendChild(clean(child)));
+      return fragment;
+    }
+    const element = parsed.createElement(tag.toLowerCase());
+    if (tag === "IMG") {
+      const src = node.getAttribute("src") || "";
+      if (!src.startsWith(imagePrefix)) return document.createTextNode("");
+      element.src = src; element.alt = (node.alt || "Guide image").slice(0,120);
+      element.loading = "lazy"; element.className = "guild-guide-image"; return element;
+    }
+    if (tag === "A") {
+      const href = node.getAttribute("href") || "";
+      if (!/^https?:\/\//i.test(href)) {
+        [...node.childNodes].forEach(child => element.appendChild(clean(child)));
+        return element;
+      }
+      element.href = href; element.target = "_blank"; element.rel = "noopener noreferrer";
+    }
+    if (tag === "IFRAME") {
+      const src = node.getAttribute("src") || "";
+      if (!/^https:\/\/(www\.)?youtube-nocookie\.com\/embed\/[\w-]{6,20}/i.test(src)) return document.createDocumentFragment();
+      element.src = src; element.title = "YouTube video"; element.loading = "lazy";
+      element.setAttribute("allowfullscreen",""); element.setAttribute("referrerpolicy","strict-origin-when-cross-origin");
+      element.className = "guild-guide-video"; return element;
+    }
+    if (tag === "TABLE") element.className = "guild-rich-table";
+    [...node.childNodes].forEach(child => element.appendChild(clean(child)));
+    return element;
+  };
+  const output = document.createElement("div");
+  [...parsed.body.childNodes].forEach(node => output.appendChild(clean(node)));
+  return output.innerHTML;
+}
+
+function getGuideAuthorLabel(userId) {
+  const member = allMembers.find(item => item.user_id === userId);
+  return member ? getMemberName(member) : "สมาชิก 4AM";
+}
+
+function renderGuildGuides() {
+  const list = $("guild-guides-list");
+  if (!list) return;
+  const search = String($("guide-search-input")?.value || "").trim().toLocaleLowerCase();
+  const category = $("guide-category-filter")?.value || "all";
+  let rows = [...guildGuidesCache];
+  if (category !== "all") rows = rows.filter(row => row.category === category);
+  if (search) rows = rows.filter(row =>
+    String(row.title || "").toLocaleLowerCase().includes(search) ||
+    String(row.category || "").toLocaleLowerCase().includes(search) ||
+    String(row.content_html || "").replace(/<[^>]*>/g," ").toLocaleLowerCase().includes(search)
+  );
+  if (!rows.length) {
+    showEmpty(list, "ยังไม่มีไกด์ที่ตรงกับการค้นหา", "เริ่มแบ่งปันความรู้ให้สมาชิกกิลด์ด้วยการสร้างไกด์เกมฉบับแรก");
+    return;
+  }
+  list.innerHTML = rows.map(row => {
+    const mine = row.user_id === currentUser?.id;
+    const canEdit = mine || isManagement();
+    const actions = canEdit
+      ? '<div class="guide-card-actions"><button type="button" class="btn btn-outline btn-sm" data-guide-edit="' + escapeHTML(row.id) + '">แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-guide-delete="' + escapeHTML(row.id) + '">ลบ</button></div>' : "";
+    return '<article class="guild-guide-card" data-guide-card="' + escapeHTML(row.id) + '">' +
+      '<div class="guide-card-topline"><span class="guide-category-badge">' + escapeHTML(row.category || "ทั่วไป") + '</span>' +
+      '<span class="guide-updated">' + (row.updated_at && row.updated_at !== row.created_at ? "แก้ไข " + escapeHTML(formatDate(row.updated_at)) : "เผยแพร่ " + escapeHTML(formatDate(row.created_at))) + '</span></div>' +
+      '<h3>' + escapeHTML(row.title) + '</h3>' +
+      '<div class="guide-card-content guide-content">' + sanitizeGuildGuideHTML(row.content_html) + '</div>' +
+      '<div class="guide-card-footer"><span>โดย <strong>' + escapeHTML(getGuideAuthorLabel(row.user_id)) + '</strong></span>' + actions + '</div></article>';
+  }).join("");
+}
+
+function refreshGuideCategoryFilter() {
+  const select = $("guide-category-filter");
+  if (!select) return;
+  const current = select.value || "all";
+  const categories = [...new Set(guildGuidesCache.map(row => row.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"th"));
+  select.innerHTML = '<option value="all">ทุกหมวดหมู่</option>' + categories.map(value => '<option value="' + escapeHTML(value) + '">' + escapeHTML(value) + '</option>').join("");
+  select.value = categories.includes(current) ? current : "all";
+}
+
+async function loadGuildGuides() {
+  const list = $("guild-guides-list");
+  if (list) list.innerHTML = '<div class="empty-state"><span>◷</span><h3>กำลังโหลดไกด์เกม</h3><p>กรุณารอสักครู่</p></div>';
+  const { data, error } = await supabaseClient.from("guild_guides").select("*").order("updated_at", { ascending: false });
+  if (error) {
+    console.error("Load guild guides:", error);
+    showEmpty(list, "โหลดไกด์เกมไม่สำเร็จ", error.message || "กรุณาตรวจสอบการตั้งค่า Supabase");
+    return;
+  }
+  guildGuidesCache = data || [];
+  refreshGuideCategoryFilter();
+  renderGuildGuides();
+}
+
+function openGuildGuideEditor(id = null) {
+  const panel = $("guide-editor-panel");
+  const item = id ? guildGuidesCache.find(row => row.id === id) : null;
+  if (id && (!item || !(item.user_id === currentUser?.id || isManagement()))) return;
+  panel.dataset.editingId = item?.id || "";
+  $("guide-editor-title").textContent = item ? "แก้ไขไกด์เกม" : "สร้างไกด์ใหม่";
+  $("guide-title-input").value = item?.title || "";
+  $("guide-category-input").value = item?.category || "ทั่วไป";
+  $("guide-editor-body").innerHTML = sanitizeGuildGuideHTML(item?.content_html || "");
+  $("guide-preview-panel").classList.add("hidden");
+  $("guide-editor-message").textContent = "";
+  $("guide-editor-message").className = "message";
+  $("guide-save-button").textContent = item ? "บันทึกการแก้ไข" : "เผยแพร่ไกด์";
+  panel.classList.remove("hidden");
+  panel.scrollIntoView({behavior:"smooth",block:"start"});
+  $("guide-title-input").focus();
+}
+
+function closeGuildGuideEditor() {
+  const panel = $("guide-editor-panel");
+  panel.classList.add("hidden");
+  panel.dataset.editingId = "";
+  $("guide-title-input").value = "";
+  $("guide-category-input").value = "ทั่วไป";
+  $("guide-editor-body").innerHTML = "";
+  $("guide-preview-panel").classList.add("hidden");
+  $("guide-editor-message").textContent = "";
+}
+
+async function uploadGuildGuideImage(file) {
+  if (!currentUser || !currentMember || currentMember.active !== true) throw new Error("ไม่มีสิทธิ์อัปโหลดรูป");
+  if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) throw new Error("รองรับ PNG, JPG, WEBP และ GIF");
+  if (file.size > 8*1024*1024) throw new Error("รูปต้องมีขนาดไม่เกิน 8 MB");
+  const ext = {"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"}[file.type];
+  const path = currentUser.id + "/guides/" + crypto.randomUUID() + "." + ext;
+  const { error } = await supabaseClient.storage.from(GUILD_GUIDE_BUCKET).upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});
+  if (error) throw error;
+  return supabaseClient.storage.from(GUILD_GUIDE_BUCKET).getPublicUrl(path).data.publicUrl;
+}
+
+function registerGuildGuideEvents() {
+  const page = $("page-guides");
+  if (!page || page.dataset.eventsReady === "true") return;
+  page.dataset.eventsReady = "true";
+  $("guide-create-button")?.addEventListener("click", () => openGuildGuideEditor());
+  $("guide-cancel-button")?.addEventListener("click", closeGuildGuideEditor);
+  $("guide-refresh-button")?.addEventListener("click", loadGuildGuides);
+  $("guide-search-input")?.addEventListener("input", renderGuildGuides);
+  $("guide-category-filter")?.addEventListener("change", renderGuildGuides);
+  $("guide-preview-button")?.addEventListener("click", () => {
+    const panel = $("guide-preview-panel");
+    $("guide-preview-content").innerHTML = sanitizeGuildGuideHTML($("guide-editor-body").innerHTML);
+    panel.classList.toggle("hidden");
+    $("guide-preview-button").textContent = panel.classList.contains("hidden") ? "ดูตัวอย่าง" : "ซ่อนตัวอย่าง";
+  });
+  $("guide-link-button")?.addEventListener("click", () => {
+    const url = window.prompt("วาง URL ของเว็บไซต์หรือแหล่งข้อมูล (https://...)");
+    if (!url || !/^https?:\/\//i.test(url.trim())) return;
+    const label = window.prompt("ข้อความที่ต้องการให้แสดงบนลิงก์", url.trim()) || url.trim();
+    const body = $("guide-editor-body"); body.focus();
+    document.execCommand("insertHTML", false, '<a href="' + escapeHTML(url.trim()) + '">' + escapeHTML(label) + '</a>');
+  });
+  $("guide-video-button")?.addEventListener("click", () => {
+    const url = window.prompt("วางลิงก์วิดีโอ YouTube");
+    if (!url) return;
+    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,20})/i);
+    if (!match) { alert("ลิงก์ YouTube ไม่ถูกต้อง"); return; }
+    $("guide-editor-body").focus();
+    document.execCommand("insertHTML", false, '<p><iframe src="https://www.youtube-nocookie.com/embed/' + match[1] + '" title="YouTube video" allowfullscreen></iframe></p>');
+  });
+  $("guide-table-button")?.addEventListener("click", () => {
+    $("guide-editor-body").focus();
+    document.execCommand("insertHTML", false, '<table><tbody><tr><th>หัวข้อ</th><th>รายละเอียด</th></tr><tr><td>ข้อมูล</td><td>รายละเอียด</td></tr></tbody></table><p></p>');
+  });
+  page.addEventListener("click", async event => {
+    const command = event.target.closest("[data-guide-command]");
+    if (command) { $("guide-editor-body").focus(); document.execCommand(command.dataset.guideCommand,false,null); return; }
+    if (event.target.closest("#guide-image-button")) { $("guide-image-input").click(); return; }
+    const edit = event.target.closest("[data-guide-edit]");
+    if (edit) { openGuildGuideEditor(edit.dataset.guideEdit); return; }
+    const remove = event.target.closest("[data-guide-delete]");
+    if (remove) {
+      const item = guildGuidesCache.find(row => row.id === remove.dataset.guideDelete);
+      if (!item || !(item.user_id === currentUser?.id || isManagement())) return;
+      if (!window.confirm('ต้องการลบไกด์ "' + item.title + '" ใช่หรือไม่?')) return;
+      remove.disabled = true;
+      const { error } = await supabaseClient.from("guild_guides").delete().eq("id",item.id);
+      if (error) { alert("ลบไกด์ไม่สำเร็จ: " + error.message); remove.disabled = false; return; }
+      guildGuidesCache = guildGuidesCache.filter(row => row.id !== item.id);
+      renderGuildGuides();
+    }
+  });
+  page.addEventListener("change", async event => {
+    const input = event.target.closest("#guide-image-input");
+    if (!input?.files?.length) return;
+    const button = $("guide-image-button");
+    try {
+      button.disabled = true; button.textContent = "กำลังอัปโหลด...";
+      const url = await uploadGuildGuideImage(input.files[0]);
+      $("guide-editor-body").focus();
+      document.execCommand("insertHTML",false,'<p><img src="' + escapeHTML(url) + '" alt="Guide image"></p>');
+    } catch (error) { alert(error.message || "อัปโหลดรูปไม่สำเร็จ"); }
+    finally { input.value = ""; button.disabled = false; button.textContent = "▧ รูปภาพ"; }
+  });
+  $("guide-save-button")?.addEventListener("click", async () => {
+    const button = $("guide-save-button"), title = $("guide-title-input").value.trim();
+    const category = $("guide-category-input").value;
+    const contentHTML = sanitizeGuildGuideHTML($("guide-editor-body").innerHTML);
+    const textContent = $("guide-editor-body").innerText.trim();
+    const editingId = $("guide-editor-panel").dataset.editingId || "";
+    if (!title || !textContent) { showMessage("guide-editor-message","กรุณากรอกชื่อไกด์และเนื้อหาให้ครบถ้วน"); return; }
+    if (title.length > 160 || contentHTML.length > 50000) { showMessage("guide-editor-message","ชื่อหรือเนื้อหาไกด์ยาวเกินกำหนด"); return; }
+    button.disabled = true; button.textContent = "กำลังบันทึก...";
+    try {
+      let query;
+      if (editingId) {
+        const item = guildGuidesCache.find(row => row.id === editingId);
+        if (!item || !(item.user_id === currentUser?.id || isManagement())) throw new Error("คุณไม่มีสิทธิ์แก้ไขไกด์นี้");
+        query = supabaseClient.from("guild_guides").update({title,category,content_html:contentHTML,updated_at:new Date().toISOString()}).eq("id",editingId);
+      } else {
+        query = supabaseClient.from("guild_guides").insert({user_id:currentUser.id,title,category,content_html:contentHTML});
+      }
+      const { error } = await query;
+      if (error) throw error;
+      closeGuildGuideEditor();
+      await loadGuildGuides();
+      showMessage("guide-editor-message", "บันทึกไกด์เรียบร้อยแล้ว", "success");
+    } catch (error) {
+      showMessage("guide-editor-message","บันทึกไกด์ไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด"));
+    } finally {
+      button.disabled = false; button.textContent = editingId ? "บันทึกการแก้ไข" : "เผยแพร่ไกด์";
+    }
+  });
+}
+registerGuildGuideEvents();
+
 // GUILD RULES
 const GUILD_RULE_KEYS=["regulations","war","discord"];
 const GUILD_RULE_BUCKET="guild-rule-images";
@@ -5244,6 +5487,7 @@ function openGuildPage(pageName) {
     loadGuildActivities();
   }
   if (pageName === "feedback") loadGuildFeedback();
+  if (pageName === "guides") loadGuildGuides();
 }
 
 async function copyGameUID(button) {
@@ -5837,6 +6081,7 @@ function registerAppEventListeners() {
   initializeGuildRichTextEnhancements();
   registerGuildRuleEvents();
   registerFeedbackEvents();
+  registerGuildGuideEvents();
 
   $("account-details")?.addEventListener("click", (event) => {
     if (event.target.closest("#account-edit-toggle")) {
