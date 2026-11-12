@@ -130,6 +130,64 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 #duck-race-root .lucky-history-delete:disabled{opacity:.45;cursor:wait}
 @media(max-width:560px){#duck-race-root .lucky-history-row{grid-template-columns:26px minmax(0,1fr) 32px}#duck-race-root .lucky-history-row .race-rank{grid-column:2}#duck-race-root .lucky-history-delete{grid-column:3;grid-row:1 / span 2}}
 
+
+/* 4AM GUILD Lucky Draw refresh: black/red theme, spacing and manual rank picker */
+#duck-race-root .lucky-modal{background:rgba(0,0,0,.9);backdrop-filter:blur(14px)}
+#duck-race-root .lucky-card{width:min(820px,calc(100% - 24px));max-height:92vh;overflow-y:auto;border:1px solid #8f202b;border-radius:20px;background:linear-gradient(150deg,#171719 0%,#0b0b0d 65%,#16090c 100%);color:#f5f5f5;box-shadow:0 24px 80px #000d,0 0 28px #e3263620}
+#duck-race-root .lucky-head{background:radial-gradient(ellipse at 85% 0%,#e3263638,transparent 58%),linear-gradient(120deg,#260b10,#111113 72%);border-bottom:1px solid #8f202b;padding:24px 26px}
+#duck-race-root .lucky-kicker{color:#ff6672}
+#duck-race-root .lucky-title{color:#fff}
+#duck-race-root .lucky-sub,#duck-race-root .lucky-stat span{color:#c5bfc1}
+#duck-race-root .lucky-body{padding:24px 26px;gap:22px}
+#duck-race-root .lucky-stat{background:#171719;border:1px solid #3a292c}
+#duck-race-root .lucky-stat b{color:#ff5968}
+#duck-race-root .lucky-label{color:#f1dfe1;margin:0 0 10px;line-height:1.5}
+#duck-race-root .lucky-input{background:#09090b;border:1px solid #653039;color:#fff;min-height:46px;box-sizing:border-box}
+#duck-race-root .lucky-input:focus{outline:2px solid #ed3448;outline-offset:2px}
+#duck-race-root .lucky-mode{min-height:82px;padding:15px;background:#171719;border:1px solid #453034;border-radius:13px;color:#f5f5f5;line-height:1.5}
+#duck-race-root .lucky-mode span{display:block;margin-top:5px;color:#bdb3b5;font-size:14px!important}
+#duck-race-root .lucky-mode.active{border-color:#ed3448;background:linear-gradient(135deg,#63151f66,#211114);box-shadow:inset 0 0 0 1px #ed344855,0 0 16px #ed34481a}
+#duck-race-root .lucky-primary{background:linear-gradient(110deg,#ff4054,#a90e25);color:#fff;border:1px solid #ff6474;border-radius:13px;min-height:48px;box-shadow:0 6px 18px #e326362b}
+#duck-race-root .lucky-primary:hover{filter:brightness(1.12)}
+#duck-race-root .lucky-back{position:static;justify-self:start;background:#1a1517;border:1px solid #9e2938;color:#fff;min-height:42px;white-space:normal}
+#duck-race-root .lucky-back:hover{border-color:#ff5364;background:#351016;transform:translateY(-1px)}
+#duck-race-root .lucky-reveal-toolbar{display:flex;flex-direction:column;align-items:flex-start;gap:14px;margin:0 0 8px}
+#duck-race-root .lucky-reveal-heading{font-size:20px;font-weight:900;color:#fff;padding-left:2px}
+#duck-race-root .lucky-winner-stage{border:1px solid #a92b3b;background:radial-gradient(ellipse at center,#a51b3038,transparent 70%),#111113;border-radius:16px;margin:0;padding:24px 18px}
+#duck-race-root .lucky-winner-stage .prize{color:#ff6474}
+#duck-race-root .lucky-winner-stage .rank{color:#d0c3c5}
+#duck-race-root .lucky-progress{background:#382025;margin:2px 0}
+#duck-race-root .lucky-progress>i{background:linear-gradient(90deg,#a90e25,#ff5968)}
+#duck-race-root .lucky-result{background:#171719;border:1px solid #38272b;border-radius:12px;padding:12px 14px}
+#duck-race-root .lucky-result .num{color:#ff5968}
+#duck-race-root .lucky-result .race-rank{color:#c5bfc1}
+#duck-race-root .lucky-secondary{background:#1b1517;border:1px solid #6b3039;color:#fff;min-height:42px}
+#duck-race-root .lucky-secondary:disabled{opacity:.4}
+#duck-race-root .lucky-status{color:#d0c3c5}
+#duck-race-root .lucky-manual-summary{background:#211316;border:1px solid #8e2938;border-radius:10px;padding:12px 14px;color:#ff9aa4;font-weight:800;margin-bottom:12px}
+#duck-race-root .lucky-rank-grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;max-height:260px;overflow-y:auto;padding:4px;margin-bottom:12px}
+#duck-race-root .lucky-rank-button{min-width:0;min-height:48px;border:1px solid #493037;border-radius:10px;background:#171719;color:#eee;font:800 14px inherit;cursor:pointer;padding:5px}
+#duck-race-root .lucky-rank-button:hover{border-color:#ff5968;background:#2a151a}
+#duck-race-root .lucky-rank-button.selected{background:linear-gradient(145deg,#f04457,#a80e24);border-color:#ff7783;color:#fff;box-shadow:0 0 12px #e3263635}
+#duck-race-root .lucky-rank-button small{display:block;font-size:14px;font-weight:600;color:inherit;opacity:.85;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#duck-race-root .lucky-rank-button:focus-visible{outline:2px solid #ff6978;outline-offset:3px}
+#duck-race-root .lucky-footer{gap:10px}
+#duck-race-root .lucky-history-row{background:#171719;border-color:#38272b}
+#duck-race-root .lucky-history-delete{background:#d9273d}
+#duck-race-root .lucky-card,#duck-race-root .lucky-card *{font-size:14px}
+#duck-race-root .lucky-title{font-size:clamp(24px,4vw,34px)}
+#duck-race-root .lucky-winner-stage .name{font-size:clamp(22px,5vw,34px)}
+#duck-race-root .lucky-stat b{font-size:22px}
+@media(max-width:560px){
+ #duck-race-root .lucky-card{width:calc(100% - 16px);max-height:94vh;border-radius:15px}
+ #duck-race-root .lucky-head{padding:18px}
+ #duck-race-root .lucky-body{padding:16px;gap:18px}
+ #duck-race-root .lucky-rank-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:6px}
+ #duck-race-root .lucky-rank-button{min-height:44px}
+ #duck-race-root .lucky-reveal-toolbar{gap:12px}
+ #duck-race-root .lucky-footer{display:grid;grid-template-columns:1fr}
+}
+
 </style>
 <div id="duck-race-root" class="is-setup">
 <div class="stage" id="stage">
@@ -185,6 +243,17 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
       <div id="luckySetup">
         <div class="lucky-label">จำนวนรางวัลที่ต้องการสุ่ม</div>
         <input class="lucky-input" type="number" id="luckyPrizeInput" min="1" max="120" value="20">
+        <div class="lucky-label">วิธีเลือกผู้ได้รับรางวัล</div>
+        <div class="lucky-modes">
+          <button type="button" class="lucky-mode active" id="luckySelectRandom"><b>✦ สุ่มผู้ชนะ</b><span>ระบบสุ่มอันดับจากผู้เข้าแข่งขันทั้งหมด</span></button>
+          <button type="button" class="lucky-mode" id="luckySelectManual"><b>☷ เลือกอันดับเอง</b><span>กำหนดอันดับผู้ได้รับรางวัลด้วยตัวเอง</span></button>
+        </div>
+        <div id="luckyManualPicker" class="hide">
+          <div class="lucky-label">เลือกอันดับการแข่งขันที่จะได้รับรางวัล</div>
+          <div class="lucky-manual-summary" id="luckyManualSummary">เลือกแล้ว 0 อันดับ</div>
+          <div class="lucky-rank-grid" id="luckyRankGrid"></div>
+          <button type="button" class="lucky-secondary" id="luckyClearRanks">ล้างอันดับที่เลือก</button>
+        </div>
         <div class="lucky-label" style="margin-top:15px">รูปแบบการเปิดเผยผล</div>
         <div class="lucky-modes">
           <button type="button" class="lucky-mode active" id="luckyModeAll"><b>▦ สุ่มทีเดียวทั้งหมด</b><span>สุ่มและแสดงผู้ชนะครบทุกคนพร้อมกัน</span></button>
@@ -193,7 +262,10 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
         <button type="button" class="lucky-primary" id="luckyStart" style="width:100%;margin-top:16px">เริ่มสุ่มรางวัล</button>
       </div>
       <div id="luckyReveal" class="hide">
-        <button type="button" class="lucky-back" id="luckyBack">← กลับไปตั้งค่า Lucky Draw</button>
+        <div class="lucky-reveal-toolbar">
+          <button type="button" class="lucky-back" id="luckyBack">← กลับไปตั้งค่า Lucky Draw</button>
+          <div class="lucky-reveal-heading">ผลการจับรางวัล</div>
+        </div>
         <div class="lucky-winner-stage" id="luckySpotlight">
           <div><div class="prize">LUCKY WINNER</div><div class="name">พร้อมประกาศผล</div><div class="rank">ผลสุ่มถูกบันทึกแล้ว</div></div>
         </div>
@@ -1381,6 +1453,8 @@ let luckyDrawMode='all';
 let luckyDrawWinners=[];
 let luckyDrawRevealed=0;
 let luckyDrawRecord=null;
+let luckySelectionMode='random';
+let luckySelectedRanks=[];
 
 async function luckyInvoke(payload){
   if(!duckRaceSupabase)throw new Error('ไม่สามารถเชื่อมต่อ Supabase ได้');
@@ -1435,6 +1509,48 @@ function setLuckyMode(next){
   $('luckyModeAll').classList.toggle('active',next==='all');
   $('luckyModeSeq').classList.toggle('active',next==='sequential');
 }
+function setLuckySelectionMode(next){
+  luckySelectionMode=next;
+  $('luckySelectRandom').classList.toggle('active',next==='random');
+  $('luckySelectManual').classList.toggle('active',next==='manual');
+  $('luckyManualPicker').classList.toggle('hide',next!=='manual');
+  $('luckyStart').textContent=next==='manual'?'ยืนยันอันดับและแสดงผลรางวัล':'เริ่มสุ่มรางวัล';
+  renderLuckyRankGrid();
+}
+function renderLuckyRankGrid(){
+  const grid=$('luckyRankGrid');
+  if(!grid)return;
+  grid.innerHTML='';
+  const entries=order();
+  const prizeCount=Number($('luckyPrizeInput').value)||0;
+  $('luckyManualSummary').textContent='เลือกแล้ว '+luckySelectedRanks.length+'/'+prizeCount+' อันดับ · คลิกตัวเลขเพื่อเลือกหรือยกเลิก';
+  entries.forEach((entry,index)=>{
+    const rank=index+1;
+    const button=document.createElement('button');
+    button.type='button';
+    button.className='lucky-rank-button';
+    button.classList.toggle('selected',luckySelectedRanks.includes(rank));
+    const number=document.createElement('span');
+    number.textContent='#'+rank;
+    const name=document.createElement('small');
+    name.textContent=String(entry.r.label??'Duck');
+    button.append(number,name);
+    button.onclick=()=>{
+      if(luckySelectedRanks.includes(rank)){
+        luckySelectedRanks=luckySelectedRanks.filter(value=>value!==rank);
+      }else{
+        if(luckySelectedRanks.length>=prizeCount){
+          $('luckyStatus').textContent='เลือกครบจำนวนรางวัลแล้ว หากต้องการเปลี่ยนให้ยกเลิกอันดับเดิมก่อน';
+          return;
+        }
+        luckySelectedRanks.push(rank);
+      }
+      renderLuckyRankGrid();
+      $('luckyStatus').textContent='เลือกอันดับแล้ว '+luckySelectedRanks.length+'/'+prizeCount;
+    };
+    grid.appendChild(button);
+  });
+}
 function renderLuckyResults(){
   const list=$('luckyResults');
   list.innerHTML='';
@@ -1472,7 +1588,7 @@ async function loadLuckyHistory(){
     data.history.forEach(draw=>{
       const box=document.createElement('div');box.className='lucky-result lucky-history-row';
       const label=document.createElement('div');label.className='num';label.textContent='✦';
-      const detail=document.createElement('div');detail.className='duck';detail.textContent=draw.prize_count+' รางวัล · '+(draw.reveal_mode==='all'?'สุ่มทีเดียวทั้งหมด':'สุ่มทีละคน');
+      const detail=document.createElement('div');detail.className='duck';detail.textContent=draw.prize_count+' รางวัล · '+(draw.selection_mode==='manual'?'เลือกอันดับเอง':'สุ่มผู้ชนะ')+' · '+(draw.reveal_mode==='all'?'เปิดเผยทั้งหมด':'เปิดเผยทีละคน');
       const date=document.createElement('div');date.className='race-rank';date.textContent=new Date(draw.created_at).toLocaleString('th-TH');
       const remove=document.createElement('button');remove.type='button';remove.className='lucky-history-delete';remove.textContent='−';remove.title='ลบประวัติรายการนี้';remove.setAttribute('aria-label','ลบประวัติรายการนี้');
       remove.onclick=async()=>{
@@ -1503,7 +1619,10 @@ $('openLuckyDraw').onclick=async()=>{
   $('luckySetup').classList.remove('hide');$('luckyReveal').classList.add('hide');
   luckyDrawRecord=null;luckyDrawWinners=[];luckyDrawRevealed=0;
   $('luckySendDiscord').disabled=true;$('luckySendDiscord').textContent='SEND TO DISCORD';$('luckyCopy').disabled=true;
-  $('luckyResults').innerHTML='';$('luckySpotlight').innerHTML='<div><div class="prize">LUCKY WINNER</div><div class="name">พร้อมประกาศผล</div><div class="rank">ผลสุ่มถูกบันทึกแล้ว</div></div>';
+  $('luckyResults').innerHTML='';$('luckySpotlight').innerHTML='<div><div class="prize">LUCKY WINNER</div><div class="name">พร้อมประกาศผล</div><div class="rank">ผลการจับรางวัลถูกบันทึกแล้ว</div></div>';
+  luckySelectionMode='random';luckySelectedRanks=[];
+  $('luckySelectRandom').classList.add('active');$('luckySelectManual').classList.remove('active');
+  $('luckyManualPicker').classList.add('hide');$('luckyStart').textContent='เริ่มสุ่มรางวัล';
   $('luckyStatus').textContent='กำลังตรวจสอบผลการแข่งขัน...';
   try{
     if(currentRaceSavePromise)await currentRaceSavePromise;
@@ -1519,21 +1638,59 @@ $('openLuckyDraw').onclick=async()=>{
     await loadLuckyHistory();
   }catch(error){$('luckyStatus').textContent=error.message||'ไม่สามารถเปิด Lucky Draw ได้';}
 };
-$('luckyPrizeInput').oninput=()=>{$('luckyPrizeCount').textContent=$('luckyPrizeInput').value||'0';};
+$('luckyPrizeInput').oninput=()=>{
+  $('luckyPrizeCount').textContent=$('luckyPrizeInput').value||'0';
+  const max=Number($('luckyPrizeInput').value)||0;
+  if(luckySelectedRanks.length>max)luckySelectedRanks=luckySelectedRanks.slice(0,max);
+  renderLuckyRankGrid();
+};
+$('luckySelectRandom').onclick=()=>setLuckySelectionMode('random');
+$('luckySelectManual').onclick=()=>setLuckySelectionMode('manual');
+$('luckyClearRanks').onclick=()=>{
+  luckySelectedRanks=[];
+  renderLuckyRankGrid();
+  $('luckyStatus').textContent='ล้างอันดับที่เลือกแล้ว';
+};
 $('luckyModeAll').onclick=()=>setLuckyMode('all');
 $('luckyModeSeq').onclick=()=>setLuckyMode('sequential');
 $('luckyStart').onclick=async()=>{
   const prizeCount=Number($('luckyPrizeInput').value);
-  if(!Number.isInteger(prizeCount)||prizeCount<1||prizeCount>order().length){$('luckyStatus').textContent='จำนวนรางวัลต้องอยู่ระหว่าง 1 ถึง '+order().length;return;}
-  const button=$('luckyStart');button.disabled=true;button.textContent='กำลังสุ่มและบันทึกผล...';
+  const eligibleCount=order().length;
+  if(!Number.isInteger(prizeCount)||prizeCount<1||prizeCount>eligibleCount){
+    $('luckyStatus').textContent='จำนวนรางวัลต้องอยู่ระหว่าง 1 ถึง '+eligibleCount;
+    return;
+  }
+  if(luckySelectionMode==='manual'&&luckySelectedRanks.length!==prizeCount){
+    $('luckyStatus').textContent='กรุณาเลือกอันดับให้ครบ '+prizeCount+' อันดับก่อนดำเนินการ';
+    return;
+  }
+  const button=$('luckyStart');
+  button.disabled=true;
+  button.textContent='กำลังบันทึกผล...';
   try{
-    const data=await luckyInvoke({action:'create_lucky_draw',session_id:currentRaceSessionId,prize_count:prizeCount,reveal_mode:luckyDrawMode});
-    luckyDrawRecord=data.draw;luckyDrawWinners=data.winners||[];luckyDrawRevealed=luckyDrawMode==='all'?luckyDrawWinners.length:0;
-    $('luckySetup').classList.add('hide');$('luckyReveal').classList.remove('hide');
-    $('luckyStatus').textContent='สุ่มและบันทึกผลเรียบร้อยแล้ว · '+luckyDrawWinners.length+' ผู้ชนะ · ไม่มีผู้ชนะซ้ำ';
-    renderLuckyResults();await loadLuckyHistory();
-  }catch(error){$('luckyStatus').textContent='สุ่มไม่สำเร็จ: '+(error.message||'กรุณาลองใหม่');}
-  finally{button.disabled=false;button.textContent='เริ่มสุ่มรางวัล';}
+    const payload={
+      action:'create_lucky_draw',
+      session_id:currentRaceSessionId,
+      prize_count:prizeCount,
+      reveal_mode:luckyDrawMode,
+      selection_mode:luckySelectionMode
+    };
+    if(luckySelectionMode==='manual')payload.selected_ranks=[...luckySelectedRanks];
+    const data=await luckyInvoke(payload);
+    luckyDrawRecord=data.draw;
+    luckyDrawWinners=data.winners||[];
+    luckyDrawRevealed=luckyDrawMode==='all'?luckyDrawWinners.length:0;
+    $('luckySetup').classList.add('hide');
+    $('luckyReveal').classList.remove('hide');
+    $('luckyStatus').textContent=(luckySelectionMode==='manual'?'เลือกอันดับและบันทึกผลเรียบร้อยแล้ว':'สุ่มและบันทึกผลเรียบร้อยแล้ว')+' · '+luckyDrawWinners.length+' ผู้ชนะ · ไม่มีผู้ชนะซ้ำ';
+    renderLuckyResults();
+    await loadLuckyHistory();
+  }catch(error){
+    $('luckyStatus').textContent='ดำเนินการไม่สำเร็จ: '+(error.message||'กรุณาลองใหม่');
+  }finally{
+    button.disabled=false;
+    button.textContent=luckySelectionMode==='manual'?'ยืนยันอันดับและแสดงผลรางวัล':'เริ่มสุ่มรางวัล';
+  }
 };
 $('luckyNext').onclick=()=>{
   if(luckyDrawRevealed<luckyDrawWinners.length){luckyDrawRevealed++;renderLuckyResults();}
