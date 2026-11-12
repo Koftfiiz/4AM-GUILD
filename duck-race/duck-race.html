@@ -67,15 +67,15 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 #duck-race-root .lucky-modal{z-index:30;background:rgba(3,8,16,.84);backdrop-filter:blur(12px)}
 #duck-race-root .lucky-card{width:min(760px,100%);padding:0;overflow:hidden;border:1px solid #b58b45;background:linear-gradient(145deg,#111827,#090d16 72%);color:#f8fafc;box-shadow:0 24px 80px #000b}
 #duck-race-root .lucky-head{padding:22px 24px;background:radial-gradient(ellipse at 80% 0%,#7c4b1d66,transparent 55%),linear-gradient(120deg,#25180d,#111827);border-bottom:1px solid #ffffff18}
-#duck-race-root .lucky-kicker{font-size:11px;letter-spacing:2px;color:#e6bd68;font-weight:800}
+#duck-race-root .lucky-kicker{font-size:14px;letter-spacing:1px;color:#e6bd68;font-weight:800}
 #duck-race-root .lucky-title{font-size:clamp(24px,4vw,34px);font-weight:900;letter-spacing:.5px;margin:3px 0}
-#duck-race-root .lucky-sub{font-size:13px;color:#aeb9c9}
+#duck-race-root .lucky-sub{font-size:14px;color:#aeb9c9}
 #duck-race-root .lucky-body{padding:20px 24px;display:grid;gap:16px}
 #duck-race-root .lucky-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
 #duck-race-root .lucky-stat{padding:12px;border:1px solid #ffffff18;border-radius:13px;background:#ffffff08}
 #duck-race-root .lucky-stat b{display:block;font-size:22px;color:#f3cc72;font-variant-numeric:tabular-nums}
-#duck-race-root .lucky-stat span{font-size:11px;color:#9eacbf}
-#duck-race-root .lucky-label{font-size:12px;color:#cbd5e1;font-weight:800;margin-bottom:7px}
+#duck-race-root .lucky-stat span{font-size:14px;color:#9eacbf}
+#duck-race-root .lucky-label{font-size:14px;color:#cbd5e1;font-weight:800;margin-bottom:7px}
 #duck-race-root .lucky-input{width:100%;background:#0b1220;color:#fff;border:1px solid #465268;border-radius:11px;padding:12px;font:700 18px inherit}
 #duck-race-root .lucky-modes{display:grid;grid-template-columns:1fr 1fr;gap:9px}
 #duck-race-root .lucky-mode{padding:13px;text-align:left;border:1px solid #39465a;border-radius:12px;background:#ffffff08;color:#e5e7eb;font:inherit;cursor:pointer}
@@ -83,7 +83,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 #duck-race-root .lucky-mode span{font-size:11px;color:#9eacbf}
 #duck-race-root .lucky-mode.active{border-color:#d8ad54;background:linear-gradient(135deg,#8a5a1e55,#ffffff08);box-shadow:inset 0 0 0 1px #d8ad5440}
 #duck-race-root .lucky-primary{border:0;border-radius:12px;padding:14px;background:linear-gradient(110deg,#e0ad48,#a96a20);color:#211506;font:900 15px inherit;cursor:pointer}
-#duck-race-root .lucky-secondary{border:1px solid #475569;border-radius:11px;padding:11px;background:#ffffff0b;color:#e2e8f0;font:700 13px inherit;cursor:pointer}
+#duck-race-root .lucky-secondary{border:1px solid #475569;border-radius:11px;padding:11px;background:#ffffff0b;color:#e2e8f0;font:700 14px inherit;cursor:pointer}
 #duck-race-root .lucky-winner-stage{min-height:150px;border:1px solid #a47a36;border-radius:15px;padding:18px;display:grid;place-items:center;text-align:center;background:radial-gradient(ellipse at center,#8a5a1e55,transparent 68%),#0b1220}
 #duck-race-root .lucky-winner-stage .prize{font-size:11px;letter-spacing:2px;color:#e7c779}
 #duck-race-root .lucky-winner-stage .name{font-size:clamp(22px,5vw,34px);font-weight:900;overflow-wrap:anywhere}
@@ -98,6 +98,27 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 #duck-race-root .lucky-footer{display:flex;flex-wrap:wrap;gap:8px}
 #duck-race-root .lucky-status{min-height:18px;color:#aeb9c9;font-size:12px}
 @media(max-width:560px){#duck-race-root .lucky-head{padding:17px}#duck-race-root .lucky-body{padding:15px}#duck-race-root .lucky-stats{gap:6px}#duck-race-root .lucky-stat{padding:9px}#duck-race-root .lucky-stat b{font-size:18px}#duck-race-root .lucky-modes{grid-template-columns:1fr}#duck-race-root .lucky-result{grid-template-columns:32px 1fr}#duck-race-root .lucky-result .race-rank{grid-column:2}}
+
+
+/* Lucky Draw readability: 14px is the minimum text size across this panel. */
+#duck-race-root .lucky-card{font-size:14px}
+#duck-race-root .lucky-kicker,
+#duck-race-root .lucky-sub,
+#duck-race-root .lucky-stat span,
+#duck-race-root .lucky-label,
+#duck-race-root .lucky-mode span,
+#duck-race-root .lucky-result .race-rank,
+#duck-race-root .lucky-status,
+#duck-race-root .lucky-winner-stage .prize,
+#duck-race-root .lucky-winner-stage .rank{font-size:14px!important}
+#duck-race-root .lucky-secondary,
+#duck-race-root .lucky-mode,
+#duck-race-root .lucky-primary{font-size:14px}
+#duck-race-root .lucky-history-row{grid-template-columns:30px minmax(0,1fr) auto 32px}
+#duck-race-root .lucky-history-delete{width:28px;height:28px;padding:0;border:0;border-radius:50%;background:#e5484d;color:#fff;font:800 22px/1 Arial,sans-serif;display:grid;place-items:center;cursor:pointer;box-shadow:0 2px 8px #e5484d44;transition:transform .16s,filter .16s}
+#duck-race-root .lucky-history-delete:hover{transform:scale(1.08);filter:brightness(1.12)}
+#duck-race-root .lucky-history-delete:disabled{opacity:.45;cursor:wait}
+@media(max-width:560px){#duck-race-root .lucky-history-row{grid-template-columns:26px minmax(0,1fr) 32px}#duck-race-root .lucky-history-row .race-rank{grid-column:2}#duck-race-root .lucky-history-delete{grid-column:3;grid-row:1 / span 2}}
 
 </style>
 <div id="duck-race-root" class="is-setup">
@@ -143,7 +164,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
     <div class="lucky-head">
       <div class="lucky-kicker">4AM GUILD · POST-RACE REWARD</div>
       <div class="lucky-title">✦ LUCKY DRAW</div>
-      <div class="lucky-sub">สุ่มผู้โชคดีจากผลการแข่งขัน Duck Race รอบนี้โดยตรง</div>
+      <div class="lucky-sub">สุ่มผู้โชคดีจากรายชื่อผู้เข้าแข่งขันรอบนี้โดยตรง</div>
     </div>
     <div class="lucky-body">
       <div class="lucky-stats">
@@ -156,8 +177,8 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
         <input class="lucky-input" type="number" id="luckyPrizeInput" min="1" max="120" value="20">
         <div class="lucky-label" style="margin-top:15px">รูปแบบการเปิดเผยผล</div>
         <div class="lucky-modes">
-          <button type="button" class="lucky-mode active" id="luckyModeAll"><b>▦ เปิดเผยทั้งหมด</b><span>สุ่มและแสดงผู้ชนะครบทุกคนพร้อมกัน</span></button>
-          <button type="button" class="lucky-mode" id="luckyModeSeq"><b>✦ เปิดเผยทีละคน</b><span>ลุ้นเปิดผลทีละรางวัล ควบคุมจังหวะได้เอง</span></button>
+          <button type="button" class="lucky-mode active" id="luckyModeAll"><b>▦ สุ่มทีเดียวทั้งหมด</b><span>สุ่มและแสดงผู้ชนะครบทุกคนพร้อมกัน</span></button>
+          <button type="button" class="lucky-mode" id="luckyModeSeq"><b>✦ สุ่มทีละคน</b><span>ลุ้นเปิดผลทีละรางวัล ควบคุมจังหวะได้เอง</span></button>
         </div>
         <button type="button" class="lucky-primary" id="luckyStart" style="width:100%;margin-top:16px">เริ่มสุ่มรางวัล</button>
       </div>
@@ -1413,7 +1434,7 @@ function renderLuckyResults(){
     const row=document.createElement('div');row.className='lucky-result';
     const number=document.createElement('div');number.className='num';number.textContent='#'+w.prize_number;
     const name=document.createElement('div');name.className='duck';name.textContent=w.duck_label;
-    const rank=document.createElement('div');rank.className='race-rank';rank.textContent='อันดับ Duck Race '+w.race_rank;
+    const rank=document.createElement('div');rank.className='race-rank';rank.textContent='อันดับการแข่งขัน '+w.race_rank;
     row.append(number,name,rank);list.appendChild(row);
   });
   $('luckyRevealed').textContent=count+'/'+luckyDrawWinners.length;
@@ -1426,7 +1447,7 @@ function renderLuckyResults(){
     const wrap=document.createElement('div');
     const prize=document.createElement('div');prize.className='prize';prize.textContent='PRIZE #'+w.prize_number;
     const name=document.createElement('div');name.className='name';name.textContent=w.duck_label;
-    const rank=document.createElement('div');rank.className='rank';rank.textContent='อันดับ Duck Race '+w.race_rank;
+    const rank=document.createElement('div');rank.className='rank';rank.textContent='อันดับการแข่งขัน '+w.race_rank;
     wrap.append(prize,name,rank);$('luckySpotlight').appendChild(wrap);
   }
 }
@@ -1437,11 +1458,25 @@ async function loadLuckyHistory(){
     target.innerHTML='';
     if(!data.history.length){target.innerHTML='<div class="lucky-status">ยังไม่มีประวัติการจับรางวัลของการแข่งขันนี้</div>';return;}
     data.history.forEach(draw=>{
-      const box=document.createElement('div');box.className='lucky-result';
+      const box=document.createElement('div');box.className='lucky-result lucky-history-row';
       const label=document.createElement('div');label.className='num';label.textContent='✦';
-      const detail=document.createElement('div');detail.className='duck';detail.textContent=draw.prize_count+' รางวัล · '+(draw.reveal_mode==='all'?'เปิดพร้อมกัน':'เปิดทีละคน');
+      const detail=document.createElement('div');detail.className='duck';detail.textContent=draw.prize_count+' รางวัล · '+(draw.reveal_mode==='all'?'สุ่มทีเดียวทั้งหมด':'สุ่มทีละคน');
       const date=document.createElement('div');date.className='race-rank';date.textContent=new Date(draw.created_at).toLocaleString('th-TH');
-      box.append(label,detail,date);target.appendChild(box);
+      const remove=document.createElement('button');remove.type='button';remove.className='lucky-history-delete';remove.textContent='−';remove.title='ลบประวัติรายการนี้';remove.setAttribute('aria-label','ลบประวัติรายการนี้');
+      remove.onclick=async()=>{
+        if(!confirm('ลบประวัติการจับรางวัลรายการนี้ออกจากเว็บไซต์หรือไม่?\\nข้อมูลผู้ชนะของรายการนี้จะถูกลบด้วย\\nข้อความที่ส่งไป Discord ก่อนหน้านี้จะไม่ถูกลบ'))return;
+        remove.disabled=true;
+        try{
+          await luckyInvoke({action:'delete_lucky_draw',draw_id:draw.id});
+          if(luckyDrawRecord?.id===draw.id)luckyDrawRecord=null;
+          await loadLuckyHistory();
+          $('luckyStatus').textContent='ลบประวัติการจับรางวัลแล้ว';
+        }catch(error){
+          remove.disabled=false;
+          $('luckyStatus').textContent='ลบประวัติไม่สำเร็จ: '+(error.message||'กรุณาลองใหม่');
+        }
+      };
+      box.append(label,detail,date,remove);target.appendChild(box);
     });
   }catch(error){target.innerHTML='<div class="lucky-status">'+(error.message||'โหลดประวัติไม่สำเร็จ')+'</div>';}
 }
@@ -1489,7 +1524,7 @@ $('luckyNext').onclick=()=>{
 $('luckyCopy').onclick=async()=>{
   const visibleWinners=luckyDrawMode==='all'?luckyDrawWinners:luckyDrawWinners.slice(0,luckyDrawRevealed);
   if(!visibleWinners.length){$('luckyStatus').textContent='ยังไม่มีผลที่เปิดเผยให้คัดลอก';return;}
-  const lines=['4AM GUILD · LUCKY DRAW','ผู้เข้าร่วม: '+$('luckyEligible').textContent+' คน','จำนวนรางวัลที่เปิดเผย: '+visibleWinners.length,'',...visibleWinners.map(w=>'Prize #'+w.prize_number+' — '+w.duck_label+' (อันดับ Duck Race '+w.race_rank+')')];
+  const lines=['4AM GUILD · LUCKY DRAW','ผู้เข้าร่วม: '+$('luckyEligible').textContent+' คน','จำนวนรางวัลที่เปิดเผย: '+visibleWinners.length,'',...visibleWinners.map(w=>'Prize #'+w.prize_number+' — '+w.duck_label+' (อันดับการแข่งขัน '+w.race_rank+')')];
   try{
     await navigator.clipboard.writeText(lines.join('\n'));
     $('luckyStatus').textContent='คัดลอกผล Lucky Draw แล้ว';
