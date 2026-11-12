@@ -1,2 +1,5 @@
 [functions.reward-discord-interactions]
 verify_jwt = false
+
+[functions.discord-integration-test]
+verify_jwt = false
