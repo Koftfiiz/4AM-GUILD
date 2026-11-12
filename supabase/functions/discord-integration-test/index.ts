@@ -16,7 +16,7 @@ Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
   if (request.method !== "POST") return json({ success: false, message: "Method not allowed" }, 405);
   try {
-    const token = (request.headers.get("Authorization") || "").replace(/^Bearer\\s+/i, "").trim();
+    const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
     if (!token) return json({ success: false, message: "Missing access token" }, 401);
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
@@ -42,7 +42,7 @@ Deno.serve(async (request) => {
       return json({ success: false, message: "กรุณาบันทึก Test Channel ID ก่อนทดสอบ" }, 400);
     }
     const channelId = String(settings.test_channel_id);
-    if (!/^\\d{17,20}$/.test(channelId)) return json({ success: false, message: "Invalid Discord test channel ID" }, 400);
+    if (!/^\d{17,20}$/.test(channelId)) return json({ success: false, message: "Invalid Discord test channel ID" }, 400);
 
     const discordResponse = await fetch("https://discord.com/api/v10/channels/" + channelId + "/messages", {
       method: "POST",
