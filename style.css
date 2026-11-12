@@ -3575,7 +3575,7 @@ body #registration-screen.login-card::after {
   --type-card-title: 17px;
   --type-body: 15px;
   --type-secondary: 14px;
-  --type-label: 13px;
+  --type-label: 14px;
 }
 body { font-size: var(--type-body); }
 
@@ -3633,7 +3633,7 @@ body { font-size: var(--type-body); }
     --type-page-title: 25px;
     --type-section-title: 18px;
     --type-body: 14px;
-    --type-secondary: 13px;
+    --type-secondary: 14px;
   }
   .nav-item { font-size: 16px; }
   .nav-subitem { font-size: 14px; }
