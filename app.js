@@ -939,7 +939,7 @@ async function loadDashboardAnnouncement() {
 
   const contentPreview = document.createElement("div");
   contentPreview.innerHTML = sanitizeGuildActivityHTML(data.content_html || "");
-  const plainText = (contentPreview.textContent || "").replace(/\\s+/g, " ").trim();
+  const plainText = (contentPreview.textContent || "").replace(/\s+/g, " ").trim();
   const excerpt = plainText.length > 190 ? plainText.slice(0, 190).trimEnd() + "…" : plainText;
 
   container.innerHTML = `
