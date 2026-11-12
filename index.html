@@ -221,6 +221,11 @@
           </div>
         </div>
 
+        <button class="nav-item" data-page="guides">
+          <svg class="icon"><use href="#i-book-open"/></svg>
+          <span>ไกด์เกม</span>
+        </button>
+
         <button class="nav-item" data-page="portfolio">
           <svg class="icon"><use href="#i-folder-image"/></svg>
           <span>แฟ้มผลงาน</span>
@@ -799,6 +804,64 @@
         </section>
       </section>
 
+
+      <!-- ============ GAME GUIDES ============ -->
+      <section id="page-guides" class="page page-padded hidden">
+        <div class="page-intro">
+          <span class="section-kicker">4AM KNOWLEDGE BASE</span>
+          <h1>ไกด์เกม</h1>
+          <p>คลังความรู้ของ 4AM GUILD แบ่งปันเทคนิคและแนวทางการเล่นให้สมาชิกทุกคน</p>
+        </div>
+
+        <section class="panel guide-library-panel">
+          <div class="guide-library-toolbar">
+            <div class="guide-library-heading">
+              <span class="panel-kicker">COMMUNITY KNOWLEDGE</span>
+              <h3>คลังไกด์เกม</h3>
+              <p class="muted">สมาชิกทุกคนสามารถสร้างไกด์และแก้ไขเนื้อหาของตัวเองได้</p>
+            </div>
+            <button type="button" class="btn btn-primary" id="guide-create-button">＋ สร้างไกด์ใหม่</button>
+          </div>
+          <div class="guide-filters">
+            <label class="guide-search"><span>ค้นหาไกด์</span><input id="guide-search-input" type="search" placeholder="ค้นหาชื่อไกด์หรือเนื้อหา..."></label>
+            <label><span>หมวดหมู่</span><select id="guide-category-filter"><option value="all">ทุกหมวดหมู่</option></select></label>
+            <button type="button" class="btn btn-outline btn-sm" id="guide-refresh-button">↻ รีเฟรช</button>
+          </div>
+          <div id="guide-editor-panel" class="guide-editor-panel hidden">
+            <div class="guide-editor-heading"><div><span class="panel-kicker">GUIDE EDITOR</span><h3 id="guide-editor-title">สร้างไกด์ใหม่</h3></div></div>
+            <div class="guide-editor-fields">
+              <label>ชื่อไกด์<input id="guide-title-input" type="text" maxlength="160" placeholder="เช่น แนวทางการเล่นคลาส..." required></label>
+              <label>หมวดหมู่<select id="guide-category-input">
+                <option>ทั่วไป</option><option>อาชีพและคลาส</option><option>อุปกรณ์และค่าสถานะ</option><option>ระบบต่อสู้</option><option>Guild War และ PvP</option><option>เควสต์และกิจกรรม</option><option>เทคนิคอื่น ๆ</option>
+              </select></label>
+            </div>
+            <div class="rule-editor-toolbar guide-editor-toolbar">
+              <button type="button" data-guide-command="bold" title="ตัวหนา"><b>B</b></button>
+              <button type="button" data-guide-command="italic" title="ตัวเอียง"><i>I</i></button>
+              <button type="button" data-guide-command="underline" title="ขีดเส้นใต้"><u>U</u></button>
+              <button type="button" data-guide-command="insertUnorderedList" title="รายการ">☷ รายการ</button>
+              <button type="button" data-guide-command="insertOrderedList" title="ลำดับ">1.2.3</button>
+              <button type="button" id="guide-link-button" title="แทรกลิงก์">↗ ลิงก์</button>
+              <button type="button" id="guide-image-button" title="อัปโหลดรูปภาพ">▧ รูปภาพ</button>
+              <input type="file" id="guide-image-input" class="hidden" accept="image/png,image/jpeg,image/webp,image/gif">
+              <button type="button" id="guide-video-button" title="แทรกวิดีโอ YouTube">▶ วิดีโอ</button>
+              <button type="button" id="guide-table-button" title="แทรกตาราง">▦ ตาราง</button>
+            </div>
+            <div id="guide-editor-body" class="rule-editor-body guide-editor-body" contenteditable="true" role="textbox" aria-multiline="true" data-placeholder="เริ่มเขียนไกด์เกมของคุณที่นี่..."></div>
+            <small class="guide-editor-hint">รองรับการจัดรูปแบบข้อความ รายการ รูปภาพ GIF ตาราง ลิงก์ และวิดีโอ YouTube · รูปภาพไม่เกิน 8 MB</small>
+            <div id="guide-preview-panel" class="guide-preview-panel hidden"><span class="panel-kicker">PREVIEW</span><div id="guide-preview-content" class="guide-content"></div></div>
+            <p id="guide-editor-message" class="message" role="status" aria-live="polite"></p>
+            <div class="guide-editor-actions">
+              <button type="button" class="btn btn-outline" id="guide-cancel-button">ยกเลิก</button>
+              <button type="button" class="btn btn-outline" id="guide-preview-button">ดูตัวอย่าง</button>
+              <button type="button" class="btn btn-primary" id="guide-save-button">เผยแพร่ไกด์</button>
+            </div>
+          </div>
+          <div id="guild-guides-list" class="guild-guides-grid" aria-live="polite">
+            <div class="empty-state"><span>◷</span><h3>กำลังโหลดไกด์เกม</h3><p>กรุณารอสักครู่</p></div>
+          </div>
+        </section>
+      </section>
 
       <!-- ============ GUILD ACTIVITIES ============ -->
       <section id="page-community" class="page page-padded hidden">
