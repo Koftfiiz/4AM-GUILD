@@ -9,3 +9,6 @@ verify_jwt = false
 
 [functions.duck-race-results-notify]
 verify_jwt = false
+
+[functions.duck-race-lucky-draw]
+verify_jwt = false
