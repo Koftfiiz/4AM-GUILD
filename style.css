@@ -5996,3 +5996,72 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 }
 
 /* Keep Edit / Suspend / Delete button sizing unchanged. */
+
+
+/* 4AM GUILD — Black / red add-member entry card and focused modal form */
+.manual-member-add-card{
+  position:relative;display:flex;align-items:center;gap:18px;width:100%;min-height:116px;
+  margin:18px 0 22px;padding:22px 26px;text-align:left;cursor:pointer;
+  border:1px dashed rgba(218,83,96,.62);border-radius:15px;
+  color:#fff;background:linear-gradient(115deg,rgba(89,17,28,.22),rgba(12,9,11,.88) 58%,rgba(34,12,17,.72));
+  box-shadow:inset 0 1px rgba(255,255,255,.025),0 12px 34px rgba(0,0,0,.18);
+  transition:border-color .2s ease,background .2s ease,transform .2s ease,box-shadow .2s ease
+}
+.manual-member-add-card:hover,.manual-member-add-card:focus-visible{
+  border-color:#e45a68;background:linear-gradient(115deg,rgba(123,27,42,.34),rgba(15,9,12,.94) 58%,rgba(48,13,21,.82));
+  box-shadow:0 0 0 3px rgba(190,45,63,.12),0 15px 38px rgba(0,0,0,.28);transform:translateY(-2px);outline:none
+}
+.manual-member-add-icon{
+  display:grid;place-items:center;flex:0 0 58px;width:58px;height:58px;border:1px solid rgba(232,91,105,.72);
+  border-radius:13px;color:#ff8992;background:rgba(151,34,51,.18);font-size:37px;font-weight:300;line-height:1;
+  box-shadow:inset 0 0 22px rgba(197,46,64,.12),0 0 22px rgba(190,45,63,.1)
+}
+.manual-member-add-copy{display:grid;gap:6px}
+.manual-member-add-copy strong{color:#fff;font-size:17px;font-weight:900;letter-spacing:1.5px}
+.manual-member-add-copy small{color:#c9b8b8;font-size:13px;line-height:1.5}
+.manual-member-add-arrow{margin-left:auto;color:#e56a75;font-size:24px;transition:transform .2s ease}
+.manual-member-add-card:hover .manual-member-add-arrow{transform:translate(3px,-3px)}
+.manual-member-modal{position:fixed;z-index:1200;inset:0;display:grid;place-items:center;padding:24px}
+.manual-member-modal.hidden{display:none!important}
+.manual-member-modal-backdrop{position:absolute;inset:0;width:100%;height:100%;border:0;background:rgba(0,0,0,.78);backdrop-filter:blur(7px);cursor:default}
+.manual-member-modal-panel{
+  position:relative;z-index:1;width:min(850px,100%);max-height:min(90vh,900px);overflow-y:auto;
+  margin:0;padding:26px 30px 25px;border:1px solid rgba(196,62,76,.48);border-radius:17px;
+  background:linear-gradient(150deg,#211216 0%,#160d10 52%,#0d090b 100%);
+  box-shadow:0 28px 100px rgba(0,0,0,.78),inset 0 1px rgba(255,220,220,.04)
+}
+.manual-member-modal-topline{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:16px;padding-bottom:13px;border-bottom:1px solid rgba(205,76,88,.2)}
+.manual-member-modal-topline>span{color:#d99b9e;font-size:11px;font-weight:850;letter-spacing:1.4px}
+.manual-member-modal-topline>span i{color:#e45b69;font-style:normal}
+.manual-member-modal-close{display:grid;place-items:center;width:34px;height:34px;border:1px solid rgba(220,110,120,.25);border-radius:9px;color:#f4dfe0;background:rgba(111,30,42,.24);font-size:25px;line-height:1;cursor:pointer}
+.manual-member-modal-close:hover{border-color:#e45b69;background:rgba(151,34,51,.34)}
+.manual-member-modal-panel .panel-heading{margin-bottom:4px}
+.manual-member-modal-panel .panel-heading h3{color:#fff1ef;font-size:22px}
+.manual-member-modal-panel .panel-heading p{color:#c2acad;font-size:13px}
+.manual-member-modal-panel .manual-member-form{grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 20px;margin-top:22px}
+.manual-member-modal-panel .manual-member-field{gap:8px}
+.manual-member-modal-panel .manual-member-field>span{color:#f0dada;font-size:14px;font-weight:800}
+.manual-member-modal-panel .manual-member-field input,.manual-member-modal-panel .manual-member-field select,.manual-member-modal-panel .manual-member-field textarea{
+  min-height:47px;padding:11px 13px;border:1px solid rgba(205,105,113,.3);border-radius:9px;background:rgba(5,4,6,.58);color:#fff;font-size:14px
+}
+.manual-member-modal-panel .manual-member-field textarea{min-height:88px}
+.manual-member-modal-panel .manual-member-field input:focus,.manual-member-modal-panel .manual-member-field select:focus,.manual-member-modal-panel .manual-member-field textarea:focus{
+  border-color:#e36a75;box-shadow:0 0 0 3px rgba(196,48,65,.17)
+}
+.manual-member-modal-panel .manual-member-field input::placeholder,.manual-member-modal-panel .manual-member-field textarea::placeholder{color:#9f8c90}
+.manual-member-modal-panel .manual-member-active-toggle{color:#e4d3d3;font-size:13px}
+.manual-member-modal-panel .manual-member-form-status{font-size:13px}
+.manual-member-modal-panel .manual-member-form-actions{padding-top:6px}
+body.manual-member-modal-open{overflow:hidden}
+@media(max-width:680px){
+  .manual-member-add-card{min-height:100px;padding:17px;gap:13px}
+  .manual-member-add-icon{width:49px;height:49px;flex-basis:49px;font-size:31px}
+  .manual-member-add-copy strong{font-size:14px;letter-spacing:1px}
+  .manual-member-add-copy small{font-size:12px}
+  .manual-member-modal{padding:10px}
+  .manual-member-modal-panel{max-height:calc(100dvh - 20px);padding:20px 16px 18px;border-radius:13px}
+  .manual-member-modal-panel .manual-member-form{grid-template-columns:minmax(0,1fr);gap:15px}
+  .manual-member-modal-panel .manual-member-field-wide,.manual-member-modal-panel .manual-member-active-toggle,.manual-member-modal-panel .manual-member-form-status,.manual-member-modal-panel .manual-member-form-actions{grid-column:1}
+  .manual-member-modal-panel .manual-member-form-actions{flex-direction:column-reverse}
+  .manual-member-modal-panel .manual-member-form-actions .btn{width:100%}
+}
