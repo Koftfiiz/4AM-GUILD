@@ -168,7 +168,7 @@ Deno.serve(async (request) => {
       }
       const lines = winners.map((winner: any) =>
         "**Prize #" + winner.prize_number + "** — " + String(winner.duck_label).slice(0, 80) +
-        " (อันดับ Duck Race: " + winner.race_rank + ")"
+        " (อันดับการแข่งขัน: " + winner.race_rank + ")"
       );
       const chunks: string[] = [];
       for (let i = 0; i < lines.length; i += 35) chunks.push(lines.slice(i, i + 35).join("\n"));
@@ -179,9 +179,9 @@ Deno.serve(async (request) => {
         fields: index === 0 ? [
           { name: "ผู้มีสิทธิ์", value: String(draw.eligible_count) + " คน", inline: true },
           { name: "จำนวนรางวัล", value: String(draw.prize_count) + " รางวัล", inline: true },
-          { name: "รูปแบบ", value: draw.reveal_mode === "all" ? "เปิดเผยทั้งหมด" : "เปิดเผยทีละคน", inline: true }
+          { name: "รูปแบบ", value: draw.reveal_mode === "all" ? "สุ่มทีเดียวทั้งหมด" : "สุ่มทีละคน", inline: true }
         ] : [],
-        footer: { text: "4AM GUILD · Duck Race Lucky Draw" },
+        footer: { text: "4AM GUILD · LUCKY DRAW" },
         timestamp: new Date(draw.created_at).toISOString()
       }));
       const sentIds: string[] = [];
