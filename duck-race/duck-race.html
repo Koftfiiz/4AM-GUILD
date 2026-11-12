@@ -174,6 +174,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
         <div class="lucky-results" id="luckyHistory"><div class="lucky-status">ยังไม่ได้โหลดประวัติ</div></div>
       </div>
       <div class="lucky-footer">
+        <button type="button" class="lucky-secondary" id="luckySendDiscord">SEND TO DISCORD</button>
         <button type="button" class="lucky-secondary" id="luckyCopy">คัดลอกผล Lucky Draw</button>
         <button type="button" class="lucky-secondary" id="luckyClose">ปิด</button>
       </div>
@@ -1481,6 +1482,18 @@ $('luckyCopy').onclick=async()=>{
     await navigator.clipboard.writeText(lines.join('\n'));
     $('luckyStatus').textContent='คัดลอกผล Lucky Draw แล้ว';
   }catch(_){$('luckyStatus').textContent='คัดลอกไม่สำเร็จ กรุณาเปิดหน้าเว็บผ่าน HTTPS';}
+};
+$('luckySendDiscord').onclick=async()=>{
+  if(!luckyDrawRecord?.id){$('luckyStatus').textContent='ยังไม่มีผล Lucky Draw ให้ส่ง';return;}
+  const button=$('luckySendDiscord');button.disabled=true;button.textContent='กำลังส่งไป Discord...';
+  try{
+    const data=await luckyInvoke({action:'send_lucky_draw_to_discord',draw_id:luckyDrawRecord.id});
+    $('luckyStatus').textContent='ส่งผล Lucky Draw ไป Discord สำเร็จแล้ว'+(data.mode==='test'?' (TEST MODE · #ทดสอบบอท)':'');
+    button.textContent='ส่งผลแล้ว ✓';
+  }catch(error){
+    $('luckyStatus').textContent='ส่ง Discord ไม่สำเร็จ: '+(error.message||'กรุณาลองใหม่');
+    button.disabled=false;button.textContent='SEND TO DISCORD';
+  }
 };
 $('luckyClose').onclick=()=>$('luckyM').classList.add('hide');
 
