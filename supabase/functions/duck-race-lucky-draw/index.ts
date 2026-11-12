@@ -206,6 +206,21 @@ Deno.serve(async (request) => {
       return json({ success: true, mode: "test", message_count: sentIds.length });
     }
 
+    if (action === "delete_lucky_draw") {
+      const drawId = body.draw_id;
+      if (!isUuid(drawId)) return json({ success: false, message: "รหัสประวัติการจับรางวัลไม่ถูกต้อง" }, 400);
+      const { data: draw, error: drawError } = await admin.from("duck_race_lucky_draws")
+        .select("id,race_session_id,created_by").eq("id", drawId).maybeSingle();
+      if (drawError) throw drawError;
+      if (!draw) return json({ success: false, message: "ไม่พบประวัติการจับรางวัลนี้ หรืออาจถูกลบไปแล้ว" }, 404);
+      if (draw.created_by !== authData.user.id && !["developer", "leader"].includes(role)) {
+        return json({ success: false, message: "ไม่มีสิทธิ์ลบประวัติการจับรางวัลนี้" }, 403);
+      }
+      const { error: deleteError } = await admin.from("duck_race_lucky_draws").delete().eq("id", drawId);
+      if (deleteError) throw deleteError;
+      return json({ success: true, deleted_id: drawId });
+    }
+
     if (action === "get_draw_history") {
       const sessionId = body.session_id;
       if (!isUuid(sessionId)) return json({ success: false, message: "รหัสการแข่งขันไม่ถูกต้อง" }, 400);
