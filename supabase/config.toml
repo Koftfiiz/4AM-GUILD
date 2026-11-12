@@ -1,2 +1,5 @@
 [functions.reward-discord-interactions]
 verify_jwt = false
+
+[functions.duck-race-results-notify]
+verify_jwt = false
