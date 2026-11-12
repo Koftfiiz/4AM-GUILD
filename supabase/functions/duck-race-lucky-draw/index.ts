@@ -36,7 +36,7 @@ Deno.serve(async (request) => {
   if (request.method !== "POST") return json({ success: false, message: "Method not allowed" }, 405);
 
   try {
-    const token = (request.headers.get("Authorization") || "").replace(/^Bearer\\s+/i, "").trim();
+    const token = (request.headers.get("Authorization") || "").replace(/^Bearer\s+/i, "").trim();
     if (!token) return json({ success: false, message: "กรุณาเข้าสู่ระบบก่อนใช้งาน Lucky Draw" }, 401);
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
@@ -74,7 +74,7 @@ Deno.serve(async (request) => {
       }
       const results = body.results.map((item: any, index: number) => ({
         rank: index + 1,
-        label: String(item?.label ?? "").replace(/[\\r\\n\\t]/g, " ").trim().slice(0, 48) || "Duck"
+        label: String(item?.label ?? "").replace(/[\r\n\t]/g, " ").trim().slice(0, 48) || "Duck"
       }));
       const { data: existing, error: existingError } = await admin.from("duck_race_sessions")
         .select("id,created_by,participant_count").eq("id", sessionId).maybeSingle();
