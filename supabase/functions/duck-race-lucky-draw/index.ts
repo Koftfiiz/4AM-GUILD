@@ -171,7 +171,7 @@ Deno.serve(async (request) => {
         " (อันดับ Duck Race: " + winner.race_rank + ")"
       );
       const chunks: string[] = [];
-      for (let i = 0; i < lines.length; i += 35) chunks.push(lines.slice(i, i + 35).join("\\n"));
+      for (let i = 0; i < lines.length; i += 35) chunks.push(lines.slice(i, i + 35).join("\n"));
       const embeds = chunks.map((description, index) => ({
         title: chunks.length > 1 ? "✦ 4AM GUILD · LUCKY DRAW (" + (index + 1) + "/" + chunks.length + ")" : "✦ 4AM GUILD · LUCKY DRAW",
         description: description.slice(0, 4000),
