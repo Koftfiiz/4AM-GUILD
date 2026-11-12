@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=manual-member-modal-20261112">
+  <link rel="stylesheet" href="style.css?v=guild-add-entry-cards-20261112">
 
   <script>
     (function loadGuildApp() {
@@ -811,7 +811,7 @@
               <h3 id="community-feed-title">โพสต์จากชุมชนกิลด์</h3>
               <p class="muted" id="community-feed-description">สมาชิกสามารถอ่านและแสดงความคิดเห็นในแต่ละโพสต์ได้</p>
             </div>
-            <button type="button" class="btn btn-primary management-only is-role-hidden" data-management-only aria-hidden="true" id="activity-add-button">＋ เพิ่มกิจกรรม</button>
+            <button type="button" class="btn btn-primary management-only is-role-hidden guild-add-entry-card" data-management-only aria-hidden="true" id="activity-add-button"><span class="guild-add-entry-icon" aria-hidden="true">＋</span><span class="guild-add-entry-copy"><strong>CREATE NEW POST</strong><small>สร้างข่าวสาร กิจกรรม หรือโพสต์ใหม่ให้สมาชิกกิลด์</small></span><span class="guild-add-entry-arrow" aria-hidden="true">↗</span></button>
           </div>
 
           <section id="activity-editor" class="activity-editor hidden" aria-label="ตัวแก้ไขกิจกรรม">
@@ -880,7 +880,7 @@
 <section class="panel rule-card" data-rule-card="regulations">
 <div class="panel-heading"><div><span class="panel-kicker">GUILD REGULATIONS</span><h3>กฎระเบียบกิลด์</h3></div><div class="rule-card-actions"><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden management-only" data-management-only aria-hidden="true" data-rule-edit="regulations" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button><button type="button" class="btn btn-outline btn-sm rule-delete-btn hidden management-only" data-management-only aria-hidden="true" data-rule-delete="regulations" title="ลบรายละเอียดกฎ">ลบ</button></div></div>
 <div class="rule-content" id="rule-content-regulations"><div class="empty-state"><span>◈</span><h3>ยังไม่มีรายละเอียด</h3><p>รายละเอียดของหัวข้อนี้จะแสดงที่นี่</p></div></div>
-<button type="button" class="btn btn-primary rule-add-btn management-only is-role-hidden" data-management-only aria-hidden="true" data-rule-add="regulations">＋ เพิ่มรายละเอียด</button>
+<button type="button" class="btn btn-primary rule-add-btn management-only is-role-hidden guild-add-entry-card" data-management-only aria-hidden="true" data-rule-add="regulations"><span class="guild-add-entry-icon" aria-hidden="true">＋</span><span class="guild-add-entry-copy"><strong>ADD RULE DETAILS</strong><small>เพิ่มรายละเอียดในหัวข้อกฎระเบียบกิลด์</small></span><span class="guild-add-entry-arrow" aria-hidden="true">↗</span></button>
 <div class="rule-editor hidden" id="rule-editor-regulations">
 <div class="rule-editor-toolbar"><button type="button" data-rule-command="bold" title="ตัวหนา"><b>B</b></button><button type="button" data-rule-command="italic" title="ตัวเอียง"><i>I</i></button><button type="button" data-rule-command="underline" title="ขีดเส้นใต้"><u>U</u></button><button type="button" data-rule-emoji title="แทรก Emoji">😊 Emoji</button><button type="button" data-rule-image title="อัปโหลดรูปภาพ">▧ รูปภาพ</button><input type="file" class="hidden" data-rule-image-input accept="image/png,image/jpeg,image/webp,image/gif"></div>
 <div class="rule-editor-body" contenteditable="true" data-rule-editor="regulations" role="textbox" aria-multiline="true" data-placeholder="พิมพ์รายละเอียดกฎที่นี่..."></div>
@@ -890,7 +890,7 @@
 <section class="panel rule-card" data-rule-card="war">
 <div class="panel-heading"><div><span class="panel-kicker">EVENT &amp; GUILD WAR RULES</span><h3>กฎกิจกรรมและกิลด์วอร์</h3></div><div class="rule-card-actions"><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden management-only" data-management-only aria-hidden="true" data-rule-edit="war" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button><button type="button" class="btn btn-outline btn-sm rule-delete-btn hidden management-only" data-management-only aria-hidden="true" data-rule-delete="war" title="ลบรายละเอียดกฎ">ลบ</button></div></div>
 <div class="rule-content" id="rule-content-war"><div class="empty-state"><span>◈</span><h3>ยังไม่มีรายละเอียด</h3><p>รายละเอียดของหัวข้อนี้จะแสดงที่นี่</p></div></div>
-<button type="button" class="btn btn-primary rule-add-btn" data-rule-add="war">＋ เพิ่มรายละเอียด</button>
+<button type="button" class="btn btn-primary rule-add-btn guild-add-entry-card" data-rule-add="war"><span class="guild-add-entry-icon" aria-hidden="true">＋</span><span class="guild-add-entry-copy"><strong>ADD RULE DETAILS</strong><small>เพิ่มรายละเอียดกฎกิจกรรมและกิลด์วอร์</small></span><span class="guild-add-entry-arrow" aria-hidden="true">↗</span></button>
 <div class="rule-editor hidden" id="rule-editor-war">
 <div class="rule-editor-toolbar"><button type="button" data-rule-command="bold" title="ตัวหนา"><b>B</b></button><button type="button" data-rule-command="italic" title="ตัวเอียง"><i>I</i></button><button type="button" data-rule-command="underline" title="ขีดเส้นใต้"><u>U</u></button><button type="button" data-rule-emoji title="แทรก Emoji">😊 Emoji</button><button type="button" data-rule-image title="อัปโหลดรูปภาพ">▧ รูปภาพ</button><input type="file" class="hidden" data-rule-image-input accept="image/png,image/jpeg,image/webp,image/gif"></div>
 <div class="rule-editor-body" contenteditable="true" data-rule-editor="war" role="textbox" aria-multiline="true" data-placeholder="พิมพ์รายละเอียดกฎที่นี่..."></div>
@@ -900,7 +900,7 @@
 <section class="panel rule-card" data-rule-card="discord">
 <div class="panel-heading"><div><span class="panel-kicker">DISCORD RULES</span><h3>กฎ Discord กิลด์</h3></div><div class="rule-card-actions"><button type="button" class="btn btn-outline btn-sm rule-edit-btn hidden management-only" data-management-only aria-hidden="true" data-rule-edit="discord" title="แก้ไขกฎ"><svg class="icon"><use href="#i-edit"/></svg> แก้ไข</button><button type="button" class="btn btn-outline btn-sm rule-delete-btn hidden management-only" data-management-only aria-hidden="true" data-rule-delete="discord" title="ลบรายละเอียดกฎ">ลบ</button></div></div>
 <div class="rule-content" id="rule-content-discord"><div class="empty-state"><span>◈</span><h3>ยังไม่มีรายละเอียด</h3><p>รายละเอียดของหัวข้อนี้จะแสดงที่นี่</p></div></div>
-<button type="button" class="btn btn-primary rule-add-btn" data-rule-add="discord">＋ เพิ่มรายละเอียด</button>
+<button type="button" class="btn btn-primary rule-add-btn guild-add-entry-card" data-rule-add="discord"><span class="guild-add-entry-icon" aria-hidden="true">＋</span><span class="guild-add-entry-copy"><strong>ADD RULE DETAILS</strong><small>เพิ่มรายละเอียดกฎการใช้งาน Discord</small></span><span class="guild-add-entry-arrow" aria-hidden="true">↗</span></button>
 <div class="rule-editor hidden" id="rule-editor-discord">
 <div class="rule-editor-toolbar"><button type="button" data-rule-command="bold" title="ตัวหนา"><b>B</b></button><button type="button" data-rule-command="italic" title="ตัวเอียง"><i>I</i></button><button type="button" data-rule-command="underline" title="ขีดเส้นใต้"><u>U</u></button><button type="button" data-rule-emoji title="แทรก Emoji">😊 Emoji</button><button type="button" data-rule-image title="อัปโหลดรูปภาพ">▧ รูปภาพ</button><input type="file" class="hidden" data-rule-image-input accept="image/png,image/jpeg,image/webp,image/gif"></div>
 <div class="rule-editor-body" contenteditable="true" data-rule-editor="discord" role="textbox" aria-multiline="true" data-placeholder="พิมพ์รายละเอียดกฎที่นี่..."></div>
