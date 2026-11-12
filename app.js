@@ -23,6 +23,7 @@ const supabaseClient = window.supabase.createClient(
 
 let currentUser = null;
 let currentMember = null;
+let rolePreviewRole = null;
 let allMembers = [];
 let manualGuildMembers = [];
 let directoryMembers = [];
@@ -131,22 +132,88 @@ function roleLabel(role) {
   return roles[String(role || "").toLowerCase()] || "Member";
 }
 
-// ตรวจสอบ Developer
+// ตรวจสอบ Developer จากสิทธิ์จริงเสมอ ไม่ใช้ Role ที่กำลัง Preview
 function isDeveloper() {
   return String(currentMember?.role || "").toLowerCase() === "developer";
 }
 
-// ตรวจสอบสิทธิ์จัดการระบบกิลด์
-// Developer, Leader และ Management มีสิทธิ์จัดการระบบกิลด์
-// Admin เป็น Role แยกและไม่มีสิทธิ์ระดับ Management
-function isManagement() {
-  const role = String(currentMember?.role || "").toLowerCase();
+function isRolePreviewActive() {
+  return Boolean(rolePreviewRole);
+}
 
-  return [
-    "developer",
-    "leader",
-    "management"
-  ].includes(role);
+function getEffectiveSystemRole() {
+  return rolePreviewRole || String(currentMember?.role || "member").toLowerCase();
+}
+
+// สิทธิ์สำหรับแสดงผล UI ใช้ Role จำลองได้ แต่การทำรายการจริงถูกบล็อกใน Preview
+function isManagement() {
+  return ["developer", "leader", "management"].includes(getEffectiveSystemRole());
+}
+
+function applyRolePreviewState() {
+  const active = isRolePreviewActive();
+  const labels = { member: "Member", admin: "HR", management: "Management", leader: "Leader", developer: "Developer" };
+  document.body.classList.toggle("role-preview-active", active);
+  const banner = $("role-preview-banner");
+  if (banner) banner.classList.toggle("hidden", !active);
+  const bannerText = $("role-preview-banner-text");
+  if (bannerText) bannerText.textContent = active ? "กำลังจำลองมุมมอง: " + (labels[rolePreviewRole] || rolePreviewRole) : "";
+  const select = $("role-preview-select");
+  if (select && active) select.value = rolePreviewRole;
+  syncManagementMenuVisibility();
+}
+
+function startRolePreview() {
+  if (!isDeveloper()) {
+    alert("เฉพาะ Developer เท่านั้นที่ใช้ Role Preview ได้");
+    return;
+  }
+  const selectedRole = String($("role-preview-select")?.value || "").toLowerCase();
+  const allowedRoles = ["member", "admin", "management", "leader", "developer"];
+  if (!allowedRoles.includes(selectedRole)) return;
+  rolePreviewRole = selectedRole;
+  applyRolePreviewState();
+  openGuildPage("dashboard");
+}
+
+function stopRolePreview() {
+  if (!isDeveloper()) return;
+  rolePreviewRole = null;
+  applyRolePreviewState();
+  openGuildPage("system-management");
+}
+
+function registerRolePreviewEvents() {
+  $("role-preview-start")?.addEventListener("click", startRolePreview);
+  $("role-preview-exit")?.addEventListener("click", stopRolePreview);
+
+  // Preview is deliberately read-only: block page actions before page handlers run.
+  document.addEventListener("click", (event) => {
+    if (!isRolePreviewActive()) return;
+    const page = event.target.closest?.(".page");
+    if (!page || event.target.closest("[data-role-preview-control],[data-preview-safe]")) return;
+    if (event.target.closest("button,a,[role='button']")) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      const bannerText = $("role-preview-banner-text");
+      if (bannerText) bannerText.textContent = "โหมด " + rolePreviewRole + " · Preview เท่านั้น ไม่สามารถดำเนินการหรือบันทึกข้อมูลได้";
+    }
+  }, true);
+
+  document.addEventListener("submit", (event) => {
+    if (!isRolePreviewActive() || !event.target.closest(".page")) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, true);
+
+  document.addEventListener("change", (event) => {
+    if (!isRolePreviewActive() || !event.target.closest(".page")) return;
+    if (event.target.closest("[data-role-preview-control],[data-preview-safe]")) return;
+    if (event.target.matches("select,input[type='file'],input[type='checkbox'],input[type='radio']")) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+    }
+  }, true);
 }
 
 // ตรวจสอบสิทธิ์ Admin (ระดับรองจาก Management)
@@ -5028,7 +5095,7 @@ function syncManagementMenuVisibility() {
     item.setAttribute("aria-hidden", String(!allowed));
   });
   const devMenuItems = document.querySelectorAll("[data-developer-only]");
-  const developerAllowed = isDeveloper();
+  const developerAllowed = isDeveloper() && (!isRolePreviewActive() || rolePreviewRole === "developer");
   devMenuItems.forEach((item) => {
     item.classList.toggle("is-role-hidden", !developerAllowed);
     item.setAttribute("aria-hidden", String(!developerAllowed));
@@ -5494,6 +5561,7 @@ function registerAppEventListeners() {
     }
   });
 
+  registerRolePreviewEvents();
   registerPortfolioEvents();
   registerSystemRoleEvents();
   initializeGlobalDateTimePickers();
@@ -5587,5 +5655,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     currentUser = null;
     currentMember = null;
     discordAccount = null;
+    rolePreviewRole = null;
+    applyRolePreviewState();
   }
 });
