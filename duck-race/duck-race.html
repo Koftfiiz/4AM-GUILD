@@ -1407,7 +1407,7 @@ function renderLuckyResults(){
   list.innerHTML='';
   const count=luckyDrawMode==='all'?luckyDrawWinners.length:luckyDrawRevealed;
   $('luckySendDiscord').disabled=count<luckyDrawWinners.length;
-  $('luckyCopy').disabled=count===0;
+  $('luckyCopy').disabled=count<luckyDrawWinners.length;
   $('luckySendDiscord').textContent=count<luckyDrawWinners.length?'เปิดเผยผลครบก่อนส่ง Discord':'SEND TO DISCORD';
   luckyDrawWinners.slice(0,count).forEach(w=>{
     const row=document.createElement('div');row.className='lucky-result';
