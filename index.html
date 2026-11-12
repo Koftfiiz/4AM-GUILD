@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=guild-add-entry-cards-20261112">
+  <link rel="stylesheet" href="style.css?v=role-preview-20261112">
 
   <script>
     (function loadGuildApp() {
@@ -38,7 +38,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=manual-member-modal-20261112";
+          app.src = "app.js?v=role-preview-20261112";
           app.onerror = () => {
             const message = document.getElementById("login-message");
             if (message) {
@@ -277,6 +277,15 @@
 
     <!-- MAIN CONTENT -->
     <main class="main-area">
+
+      <div id="role-preview-banner" class="role-preview-banner hidden" role="status" aria-live="polite">
+        <div class="role-preview-banner-copy">
+          <strong>ROLE PREVIEW MODE</strong>
+          <span id="role-preview-banner-text">กำลังจำลองมุมมองสมาชิก</span>
+          <small>โหมดดูตัวอย่างเท่านั้น · การแก้ไขและบันทึกข้อมูลถูกปิดใช้งาน</small>
+        </div>
+        <button id="role-preview-exit" class="btn btn-outline" type="button" data-role-preview-control>ออกจาก Preview</button>
+      </div>
 
       <!-- TOPBAR (ลอยอยู่เหนือ Hero) -->
       <header class="topbar">
@@ -904,6 +913,30 @@
           <h1>System Management</h1>
           <p>จัดการ System Role ของสมาชิกและบัญชีที่สมัครเข้ามาใน 4AM GUILD</p>
         </div>
+
+        <section class="panel role-preview-panel" aria-labelledby="role-preview-title">
+          <div class="role-preview-panel-heading">
+            <div>
+              <span class="panel-kicker">DEVELOPER TOOL</span>
+              <h3 id="role-preview-title">Role Preview</h3>
+              <p>ตรวจสอบหน้าเว็บในมุมมองของแต่ละ System Role โดยไม่ต้องใช้บัญชีสมาชิกจริง</p>
+            </div>
+            <span class="role-preview-lock">READ-ONLY PREVIEW</span>
+          </div>
+          <div class="role-preview-controls">
+            <label for="role-preview-select">เลือก Role ที่ต้องการจำลอง
+              <select id="role-preview-select" data-role-preview-control>
+                <option value="member">Member</option>
+                <option value="admin">HR</option>
+                <option value="management">Management</option>
+                <option value="leader">Leader</option>
+                <option value="developer">Developer</option>
+              </select>
+            </label>
+            <button id="role-preview-start" class="btn btn-primary" type="button" data-role-preview-control>เริ่ม Preview</button>
+          </div>
+          <p class="role-preview-help">หมายเหตุ: Preview จำลองเฉพาะหน้าตา เมนู และการมองเห็นตาม Role เท่านั้น ปุ่มดำเนินการและการบันทึกข้อมูลจะถูกระงับ และไม่มีการเปลี่ยนสิทธิ์จริงในฐานข้อมูล</p>
+        </section>
 
         <div class="system-role-summary">
           <article class="system-role-stat">
