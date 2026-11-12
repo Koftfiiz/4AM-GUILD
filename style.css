@@ -6299,3 +6299,11 @@ body select:disabled {
   cursor: not-allowed;
 }
 
+
+
+/* GUILD WAR PARTY SLOT — compact class icon to preserve member-name space beside skill icons */
+#page-war .party-slot.war-member-slot .war-slot-class-icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;
+}
