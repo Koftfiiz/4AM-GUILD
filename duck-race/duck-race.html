@@ -83,6 +83,16 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 #duck-race-root .lucky-mode span{font-size:11px;color:#9eacbf}
 #duck-race-root .lucky-mode.active{border-color:#d8ad54;background:linear-gradient(135deg,#8a5a1e55,#ffffff08);box-shadow:inset 0 0 0 1px #d8ad5440}
 #duck-race-root .lucky-primary{border:0;border-radius:12px;padding:14px;background:linear-gradient(110deg,#e0ad48,#a96a20);color:#211506;font:900 15px inherit;cursor:pointer}
+
+#duck-race-root .lucky-back{justify-self:start;display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border:1px solid #52647a;border-radius:10px;background:linear-gradient(135deg,#243449,#142235);color:#eaf2fb;font:800 14px inherit;cursor:pointer;transition:transform .16s,border-color .16s,background .16s}
+#duck-race-root .lucky-back:hover{transform:translateX(-2px);border-color:#d8ad54;background:linear-gradient(135deg,#34465c,#1b2b40)}
+#duck-race-root .lucky-card{color-scheme:dark}
+#duck-race-root .lucky-input:focus{outline:2px solid #d8ad54;outline-offset:2px}
+#duck-race-root .lucky-mode:focus-visible,
+#duck-race-root .lucky-primary:focus-visible,
+#duck-race-root .lucky-secondary:focus-visible,
+#duck-race-root .lucky-back:focus-visible{outline:2px solid #f3d58b;outline-offset:3px}
+
 #duck-race-root .lucky-secondary{border:1px solid #475569;border-radius:11px;padding:11px;background:#ffffff0b;color:#e2e8f0;font:700 14px inherit;cursor:pointer}
 #duck-race-root .lucky-winner-stage{min-height:150px;border:1px solid #a47a36;border-radius:15px;padding:18px;display:grid;place-items:center;text-align:center;background:radial-gradient(ellipse at center,#8a5a1e55,transparent 68%),#0b1220}
 #duck-race-root .lucky-winner-stage .prize{font-size:11px;letter-spacing:2px;color:#e7c779}
@@ -183,6 +193,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
         <button type="button" class="lucky-primary" id="luckyStart" style="width:100%;margin-top:16px">เริ่มสุ่มรางวัล</button>
       </div>
       <div id="luckyReveal" class="hide">
+        <button type="button" class="lucky-back" id="luckyBack">← กลับไปตั้งค่า Lucky Draw</button>
         <div class="lucky-winner-stage" id="luckySpotlight">
           <div><div class="prize">LUCKY WINNER</div><div class="name">พร้อมประกาศผล</div><div class="rank">ผลสุ่มถูกบันทึกแล้ว</div></div>
         </div>
@@ -1325,6 +1336,7 @@ function onFinish(winner=leader()){
   if(S.fin)return;
   S.finishWorld=D;
   S.fin=true;S.st='celebrate';S.celebrateT=0;S.finishAnimTime=performance.now()/1000;
+  stopMus(); // Stop background music immediately when the race is complete.
   ducks.forEach(k=>{
     k.win=k===winner;k.mode='normal';k.fx='';
     // The winner touches the finish line on the exact zero-second frame.
@@ -1525,6 +1537,13 @@ $('luckyStart').onclick=async()=>{
 };
 $('luckyNext').onclick=()=>{
   if(luckyDrawRevealed<luckyDrawWinners.length){luckyDrawRevealed++;renderLuckyResults();}
+};
+$('luckyBack').onclick=()=>{
+  const hasCurrentResult=!!luckyDrawRecord?.id;
+  if(hasCurrentResult&&!confirm('กลับไปหน้าตั้งค่า Lucky Draw หรือไม่?\\nผลสุ่มรอบนี้จะยังคงอยู่ในประวัติ หากกดเริ่มสุ่มอีกครั้งจะสร้างรายการจับรางวัลใหม่'))return;
+  $('luckyReveal').classList.add('hide');
+  $('luckySetup').classList.remove('hide');
+  $('luckyStatus').textContent=hasCurrentResult?'ผลสุ่มรอบก่อนหน้ายังคงอยู่ในประวัติ · ปรับค่าเพื่อเริ่มรอบใหม่ได้':'กลับไปหน้าตั้งค่า Lucky Draw แล้ว';
 };
 $('luckyCopy').onclick=async()=>{
   const visibleWinners=luckyDrawMode==='all'?luckyDrawWinners:luckyDrawWinners.slice(0,luckyDrawRevealed);
