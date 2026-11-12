@@ -5141,11 +5141,13 @@ function openGuildPage(pageName) {
   if (isCommunityView) {
     window.activeGuildCommunityView = pageName;
     const copy = {
-      "community-board": ["COMMUNITY BOARD", "Community Board", "พื้นที่พูดคุย แสดงความคิดเห็น และติดตามเรื่องราวของสมาชิกกิลด์", "COMMUNITY BOARD", "โพสต์จากชุมชนกิลด์", "สมาชิกสามารถอ่านและแสดงความคิดเห็นในแต่ละโพสต์ได้"],
-      "guild-news": ["GUILD NEWS", "Guild News", "ประกาศ ข่าวสาร และข้อมูลสำคัญจากฝ่ายบริหาร", "GUILD NEWS", "ข่าวสารจากกิลด์", "แสดงโพสต์ข่าวสารที่ไม่มีการกำหนดวันจัดกิจกรรม"],
-      "guild-activities": ["GUILD ACTIVITIES", "Guild Activities", "ติดตามกิจกรรมและกำหนดการของ 4AM GUILD", "GUILD ACTIVITIES", "กิจกรรมและกำหนดการ", "แสดงโพสต์ที่มีกำหนดวันหรือเวลาเริ่มต้นและสิ้นสุด"]
+      "community-board": ["COMMUNITY BOARD", "Community Board", "พื้นที่พูดคุย แสดงความคิดเห็น ของกิลด์ 4AM", "COMMUNITY BOARD", "โพสต์จากชุมชนกิลด์", "สมาชิกสามารถสร้างโพสต์และแสดงความคิดเห็นได้", "สร้างโพสต์ใหม่"],
+      "guild-news": ["GUILD NEWS", "Guild News", "ประกาศข่าวสารของกิลด์ 4AM", "GUILD NEWS", "ข่าวสารจากกิลด์", "แสดงโพสต์ข่าวสารกิลด์", "สร้างข่าวสารใหม่"],
+      "guild-activities": ["GUILD ACTIVITIES", "Guild Activities", "ติดตามกิจกรรมของกิลด์ 4AM", "GUILD ACTIVITIES", "กิจกรรมกิลด์", "แสดงโพสต์ที่มีกำหนดวันหรือเวลาเริ่มต้นและสิ้นสุด", "สร้างกิจกรรมใหม่"]
     }[pageName];
     ["community-page-kicker","community-page-title","community-page-description","community-feed-kicker","community-feed-title","community-feed-description"].forEach((id,index)=>{const node=$(id);if(node)node.textContent=copy[index];});
+    const addDescription=$("activity-add-button")?.querySelector(".guild-add-entry-copy small");
+    if(addDescription)addDescription.textContent=copy[6];
   }
 
   document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
