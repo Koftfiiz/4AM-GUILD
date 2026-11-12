@@ -142,6 +142,70 @@ Deno.serve(async (request) => {
       })) });
     }
 
+    if (action === "send_lucky_draw_to_discord") {
+      const drawId = body.draw_id;
+      if (!isUuid(drawId)) return json({ success: false, message: "รหัส Lucky Draw ไม่ถูกต้อง" }, 400);
+      const { data: draw, error: drawError } = await admin.from("duck_race_lucky_draws")
+        .select("id,race_session_id,prize_count,reveal_mode,eligible_count,created_by,created_at")
+        .eq("id", drawId).maybeSingle();
+      if (drawError || !draw) return json({ success: false, message: "ไม่พบผล Lucky Draw นี้" }, 404);
+      if (draw.created_by !== authData.user.id && !["developer", "leader"].includes(role)) {
+        return json({ success: false, message: "ไม่มีสิทธิ์ส่งผล Lucky Draw รอบนี้" }, 403);
+      }
+      const { data: integration, error: integrationError } = await admin.from("guild_discord_integration_settings")
+        .select("mode,test_channel_id").eq("id", 1).maybeSingle();
+      if (integrationError || !integration) return json({ success: false, message: "ยังไม่ได้ตั้งค่า Discord Integration" }, 503);
+      if (integration.mode !== "test") {
+        return json({ success: false, message: "Lucky Draw ยังล็อกการส่งไว้ที่ TEST MODE จนกว่าจะได้รับอนุมัติ Production" }, 403);
+      }
+      const channelId = String(integration.test_channel_id || "");
+      const botToken = Deno.env.get("DISCORD_BOT_TOKEN") || "";
+      if (!channelId || !botToken) return json({ success: false, message: "ไม่พบห้องทดสอบหรือ DISCORD_BOT_TOKEN" }, 503);
+      const { data: winners, error: winnersError } = await admin.from("duck_race_lucky_draw_winners")
+        .select("prize_number,race_rank,duck_label").eq("lucky_draw_id", drawId).order("prize_number");
+      if (winnersError || !winners || winners.length !== draw.prize_count) {
+        return json({ success: false, message: "ข้อมูลผู้ชนะไม่ครบถ้วน จึงยังส่ง Discord ไม่ได้" }, 409);
+      }
+      const lines = winners.map((winner: any) =>
+        "**Prize #" + winner.prize_number + "** — " + String(winner.duck_label).slice(0, 80) +
+        " (อันดับ Duck Race: " + winner.race_rank + ")"
+      );
+      const chunks: string[] = [];
+      for (let i = 0; i < lines.length; i += 35) chunks.push(lines.slice(i, i + 35).join("\\n"));
+      const embeds = chunks.map((description, index) => ({
+        title: chunks.length > 1 ? "✦ 4AM GUILD · LUCKY DRAW (" + (index + 1) + "/" + chunks.length + ")" : "✦ 4AM GUILD · LUCKY DRAW",
+        description: description.slice(0, 4000),
+        color: 0xD6A64D,
+        fields: index === 0 ? [
+          { name: "ผู้มีสิทธิ์", value: String(draw.eligible_count) + " คน", inline: true },
+          { name: "จำนวนรางวัล", value: String(draw.prize_count) + " รางวัล", inline: true },
+          { name: "รูปแบบ", value: draw.reveal_mode === "all" ? "เปิดเผยทั้งหมด" : "เปิดเผยทีละคน", inline: true }
+        ] : [],
+        footer: { text: "4AM GUILD · Duck Race Lucky Draw" },
+        timestamp: new Date(draw.created_at).toISOString()
+      }));
+      const sentIds: string[] = [];
+      for (const embed of embeds) {
+        const response = await fetch("https://discord.com/api/v10/channels/" + channelId + "/messages", {
+          method: "POST",
+          headers: { "Authorization": "Bot " + botToken, "Content-Type": "application/json" },
+          body: JSON.stringify({ embeds: [embed], allowed_mentions: { parse: [] } })
+        });
+        if (!response.ok) {
+          const details = await response.text();
+          console.error("Lucky Draw Discord API error:", details);
+          return json({ success: false, message: "Discord ปฏิเสธการส่งผล Lucky Draw", details: details.slice(0, 400) }, 502);
+        }
+        const message = await response.json();
+        sentIds.push(String(message.id));
+      }
+      await admin.from("duck_race_lucky_draws").update({
+        discord_message_ids: sentIds,
+        discord_sent_at: new Date().toISOString()
+      }).eq("id", drawId);
+      return json({ success: true, mode: "test", message_count: sentIds.length });
+    }
+
     if (action === "get_draw_history") {
       const sessionId = body.session_id;
       if (!isUuid(sessionId)) return json({ success: false, message: "รหัสการแข่งขันไม่ถูกต้อง" }, 400);
