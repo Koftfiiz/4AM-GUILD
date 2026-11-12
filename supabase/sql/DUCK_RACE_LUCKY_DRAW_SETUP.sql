@@ -50,3 +50,8 @@ alter table public.duck_race_lucky_draw_winners enable row level security;
 
 -- No client-side table policies are added. Reads/writes go through the
 -- authenticated Edge Function using the service-role key held server-side.
+
+-- Discord publishing audit fields (TEST MODE only until explicitly approved).
+alter table public.duck_race_lucky_draws
+  add column if not exists discord_message_ids text[] not null default '{}',
+  add column if not exists discord_sent_at timestamptz;
