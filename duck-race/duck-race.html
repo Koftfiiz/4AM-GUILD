@@ -174,8 +174,8 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
         <div class="lucky-results" id="luckyHistory"><div class="lucky-status">ยังไม่ได้โหลดประวัติ</div></div>
       </div>
       <div class="lucky-footer">
-        <button type="button" class="lucky-secondary" id="luckySendDiscord">SEND TO DISCORD</button>
-        <button type="button" class="lucky-secondary" id="luckyCopy">คัดลอกผล Lucky Draw</button>
+        <button type="button" class="lucky-secondary" id="luckySendDiscord" disabled>SEND TO DISCORD</button>
+        <button type="button" class="lucky-secondary" id="luckyCopy" disabled>คัดลอกผลการแข่งขัน</button>
         <button type="button" class="lucky-secondary" id="luckyClose">ปิด</button>
       </div>
       <div class="lucky-status" id="luckyStatus" aria-live="polite"></div>
@@ -1407,6 +1407,7 @@ function renderLuckyResults(){
   list.innerHTML='';
   const count=luckyDrawMode==='all'?luckyDrawWinners.length:luckyDrawRevealed;
   $('luckySendDiscord').disabled=count<luckyDrawWinners.length;
+  $('luckyCopy').disabled=count===0;
   $('luckySendDiscord').textContent=count<luckyDrawWinners.length?'เปิดเผยผลครบก่อนส่ง Discord':'SEND TO DISCORD';
   luckyDrawWinners.slice(0,count).forEach(w=>{
     const row=document.createElement('div');row.className='lucky-result';
@@ -1449,7 +1450,7 @@ $('openLuckyDraw').onclick=async()=>{
   $('luckyM').classList.remove('hide');
   $('luckySetup').classList.remove('hide');$('luckyReveal').classList.add('hide');
   luckyDrawRecord=null;luckyDrawWinners=[];luckyDrawRevealed=0;
-  $('luckySendDiscord').disabled=true;$('luckySendDiscord').textContent='SEND TO DISCORD';
+  $('luckySendDiscord').disabled=true;$('luckySendDiscord').textContent='SEND TO DISCORD';$('luckyCopy').disabled=true;
   $('luckyResults').innerHTML='';$('luckySpotlight').innerHTML='<div><div class="prize">LUCKY WINNER</div><div class="name">พร้อมประกาศผล</div><div class="rank">ผลสุ่มถูกบันทึกแล้ว</div></div>';
   $('luckyStatus').textContent='กำลังตรวจสอบผลการแข่งขัน...';
   try{
