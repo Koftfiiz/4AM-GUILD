@@ -195,6 +195,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
   <div class="ic"><button id="bSet" title="ตั้งค่า">⚙</button><button id="bMus" title="เปิด/ปิดเพลง">♫ ON</button><button id="bVol" title="ปรับระดับเสียงเพลง">🔊</button><button id="bBell" title="เสียงระฆัง">🔔✕</button></div><div class="music-volume hide" id="musicVolumePanel"><label for="musicVolume" style="margin:0;color:#fff">♫ Volume</label><input id="musicVolume" type="range" min="0" max="100" value="5"><output id="musicVolumeValue">5%</output></div>
   <button id="bShuf">🔀 Shuffle Characters</button>
   <div class="ctl"><button id="bGo">▶ START</button><button id="bClr">↺ CLEAR</button><button id="bSkip" class="sm">ข้ามไปจบ</button></div>
+  <button type="button" id="openLuckySetupBeforeRace" class="lucky-draw-trigger" style="margin:10px auto 0;display:block">✦ ตั้งค่า Lucky Draw ก่อนแข่ง</button>
   <div class="clock" id="clk">00:00:30</div>
   <div class="again hide" id="again"><div class="rm"><span>Remove winner from next race?</span><button id="rm" title="ตัดผู้ชนะออกจากรอบถัดไป">✕</button></div><button id="bAgain">Race Again?</button></div>
   <button id="trophy" class="hide" title="ผลการแข่ง">🏆</button>
@@ -230,9 +231,9 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 <div class="modal lucky-modal hide" id="luckyM">
   <div class="mc lucky-card">
     <div class="lucky-head">
-      <div class="lucky-kicker">4AM GUILD · POST-RACE REWARD</div>
+      <div class="lucky-kicker">4AM GUILD · PRE-RACE SETUP / POST-RACE REVEAL</div>
       <div class="lucky-title">✦ LUCKY DRAW</div>
-      <div class="lucky-sub">สุ่มผู้โชคดีจากรายชื่อผู้เข้าแข่งขันรอบนี้โดยตรง</div>
+      <div class="lucky-sub">ตั้งค่ารางวัลไว้ก่อนเริ่มแข่ง แล้วค่อยจับและเปิดเผยผลเมื่อการแข่งขันจบ</div>
     </div>
     <div class="lucky-body">
       <div class="lucky-stats">
@@ -1377,6 +1378,7 @@ function frame(now){
 /* ---------- race control ---------- */
 function reset(){
   if(typeof currentRaceSessionId!=='undefined'&&S.fin){currentRaceSessionId=null;currentRaceSavePromise=null;currentRaceSaved=false;}
+  if(typeof luckyPreRaceConfig!=='undefined'&&S.fin){luckyPreRaceConfig=null;if($('openLuckySetupBeforeRace'))$('openLuckySetupBeforeRace').textContent='✦ ตั้งค่า Lucky Draw ก่อนแข่ง';}
   // Clear DOM-based GIF overlays as well as race state. The previous duck objects
   // are replaced below, so their emote nodes must be removed explicitly here.
   ducks.forEach(k=>{if(k.emoteNode){k.emoteNode.remove();k.emoteNode=null;}});
@@ -1455,6 +1457,7 @@ let luckyDrawRevealed=0;
 let luckyDrawRecord=null;
 let luckySelectionMode='random';
 let luckySelectedRanks=[];
+let luckyPreRaceConfig=null;
 
 async function luckyInvoke(payload){
   if(!duckRaceSupabase)throw new Error('ไม่สามารถเชื่อมต่อ Supabase ได้');
@@ -1514,14 +1517,14 @@ function setLuckySelectionMode(next){
   $('luckySelectRandom').classList.toggle('active',next==='random');
   $('luckySelectManual').classList.toggle('active',next==='manual');
   $('luckyManualPicker').classList.toggle('hide',next!=='manual');
-  $('luckyStart').textContent=next==='manual'?'ยืนยันอันดับและแสดงผลรางวัล':'เริ่มสุ่มรางวัล';
+  $('luckyStart').textContent=S.fin?(next==='manual'?'ยืนยันอันดับและแสดงผลรางวัล':'เริ่มจับรางวัลจากผลการแข่งขัน'):'บันทึกการตั้งค่า Lucky Draw';
   renderLuckyRankGrid();
 }
 function renderLuckyRankGrid(){
   const grid=$('luckyRankGrid');
   if(!grid)return;
   grid.innerHTML='';
-  const entries=order();
+  const entries=S.fin?order():ducks.slice();
   const prizeCount=Number($('luckyPrizeInput').value)||0;
   $('luckyManualSummary').textContent='เลือกแล้ว '+luckySelectedRanks.length+'/'+prizeCount+' อันดับ · คลิกตัวเลขเพื่อเลือกหรือยกเลิก';
   entries.forEach((entry,index)=>{
@@ -1613,30 +1616,68 @@ async function loadLuckyHistory(){
     });
   }catch(error){target.innerHTML='<div class="lucky-status">'+(error.message||'โหลดประวัติไม่สำเร็จ')+'</div>';}
 }
-$('openLuckyDraw').onclick=async()=>{
-  if(!S.fin)return;
+async function openLuckySetup(isPreRace){
   $('luckyM').classList.remove('hide');
   $('luckySetup').classList.remove('hide');$('luckyReveal').classList.add('hide');
-  luckyDrawRecord=null;luckyDrawWinners=[];luckyDrawRevealed=0;
   $('luckySendDiscord').disabled=true;$('luckySendDiscord').textContent='SEND TO DISCORD';$('luckyCopy').disabled=true;
-  $('luckyResults').innerHTML='';$('luckySpotlight').innerHTML='<div><div class="prize">LUCKY WINNER</div><div class="name">พร้อมประกาศผล</div><div class="rank">ผลการจับรางวัลถูกบันทึกแล้ว</div></div>';
-  luckySelectionMode='random';luckySelectedRanks=[];
-  $('luckySelectRandom').classList.add('active');$('luckySelectManual').classList.remove('active');
-  $('luckyManualPicker').classList.add('hide');$('luckyStart').textContent='เริ่มสุ่มรางวัล';
-  $('luckyStatus').textContent='กำลังตรวจสอบผลการแข่งขัน...';
+  $('luckyResults').innerHTML='';
+  $('luckySpotlight').innerHTML='<div><div class="prize">LUCKY WINNER</div><div class="name">รอผลการแข่งขัน</div><div class="rank">ระบบจะจับรางวัลหลังการแข่งขันจบเท่านั้น</div></div>';
+  const count=roster.length;
+  $('luckyEligible').textContent=count;
+  $('luckyPrizeInput').max=count;
+  if(luckyPreRaceConfig){
+    $('luckyPrizeInput').value=Math.min(luckyPreRaceConfig.prize_count,count);
+    luckyDrawMode=luckyPreRaceConfig.reveal_mode;
+    luckySelectionMode=luckyPreRaceConfig.selection_mode;
+    luckySelectedRanks=[...luckyPreRaceConfig.selected_ranks];
+  }else{
+    $('luckyPrizeInput').value=Math.min(20,count);
+    luckyDrawMode='all';luckySelectionMode='random';luckySelectedRanks=[];
+  }
+  $('luckyPrizeCount').textContent=$('luckyPrizeInput').value;
+  setLuckyMode(luckyDrawMode);setLuckySelectionMode(luckySelectionMode);
+  $('luckyStart').textContent=isPreRace?'บันทึกการตั้งค่า Lucky Draw':'เริ่มจับรางวัลจากผลการแข่งขัน';
+  $('luckySubTitle').textContent=isPreRace
+    ?'กำหนดจำนวนรางวัลและอันดับล่วงหน้า ระบบจะยังไม่จับผู้ชนะจนกว่าการแข่งขันจะจบ'
+    :'ตรวจสอบค่าที่ตั้งไว้ แล้วเริ่มจับรางวัลจากอันดับการแข่งขันที่บันทึกแล้ว';
+  $('luckyStatus').textContent=isPreRace
+    ?'ตั้งค่าได้ก่อนเริ่มแข่ง · ผู้ชนะจะถูกกำหนดหลังจบการแข่งขัน'
+    :'กำลังตรวจสอบผลการแข่งขัน...';
+  if(isPreRace){
+    $('luckyHistory').innerHTML='<div class="lucky-status">ประวัติจะปรากฏหลังจากจับรางวัลแล้ว</div>';
+    renderLuckyRankGrid();
+    return;
+  }
   try{
     if(currentRaceSavePromise)await currentRaceSavePromise;
     if(!currentRaceSaved)await saveCompletedRace();
     if(!currentRaceSessionId)throw new Error('ไม่พบรหัสผลการแข่งขัน กรุณาจบการแข่งขันรอบนี้ใหม่');
-    const {data:{session}}=await duckRaceSupabase.auth.getSession();
-    const count=order().length;
-    $('luckyEligible').textContent=count;
-    $('luckyPrizeInput').max=count;
-    $('luckyPrizeInput').value=Math.min(20,count);
+    const resultCount=order().length;
+    $('luckyEligible').textContent=resultCount;
+    $('luckyPrizeInput').max=resultCount;
+    $('luckyPrizeInput').value=Math.min(Number($('luckyPrizeInput').value)||20,resultCount);
     $('luckyPrizeCount').textContent=$('luckyPrizeInput').value;
-    $('luckyStatus').textContent='ใช้ผู้เข้าแข่งขัน '+count+' คนจากผลการแข่งขันรอบนี้ · ทุกอันดับมีสิทธิ์เท่ากัน';
+    if(luckyPreRaceConfig){
+      luckyDrawMode=luckyPreRaceConfig.reveal_mode;
+      luckySelectionMode=luckyPreRaceConfig.selection_mode;
+      luckySelectedRanks=[...luckyPreRaceConfig.selected_ranks];
+      setLuckyMode(luckyDrawMode);setLuckySelectionMode(luckySelectionMode);
+    }
+    $('luckyStatus').textContent='ใช้ผลการแข่งขันที่บันทึกแล้ว '+resultCount+' คน · พร้อมจับรางวัล';
+    renderLuckyRankGrid();
     await loadLuckyHistory();
   }catch(error){$('luckyStatus').textContent=error.message||'ไม่สามารถเปิด Lucky Draw ได้';}
+}
+$('openLuckySetupBeforeRace').onclick=()=>{
+  if(S.fin||S.st==='run'||S.st==='paused'||S.st==='celebrate'){
+    $('luckyStatus').textContent='ไม่สามารถแก้การตั้งค่าได้ระหว่างการแข่งขัน';
+    return;
+  }
+  openLuckySetup(true);
+};
+$('openLuckyDraw').onclick=()=>{
+  if(!S.fin)return;
+  openLuckySetup(false);
 };
 $('luckyPrizeInput').oninput=()=>{
   $('luckyPrizeCount').textContent=$('luckyPrizeInput').value||'0';
@@ -1655,7 +1696,7 @@ $('luckyModeAll').onclick=()=>setLuckyMode('all');
 $('luckyModeSeq').onclick=()=>setLuckyMode('sequential');
 $('luckyStart').onclick=async()=>{
   const prizeCount=Number($('luckyPrizeInput').value);
-  const eligibleCount=order().length;
+  const eligibleCount=S.fin?order().length:roster.length;
   if(!Number.isInteger(prizeCount)||prizeCount<1||prizeCount>eligibleCount){
     $('luckyStatus').textContent='จำนวนรางวัลต้องอยู่ระหว่าง 1 ถึง '+eligibleCount;
     return;
@@ -1665,6 +1706,14 @@ $('luckyStart').onclick=async()=>{
     return;
   }
   const button=$('luckyStart');
+  if(!S.fin){
+    luckyPreRaceConfig={prize_count:prizeCount,selection_mode:luckySelectionMode,selected_ranks:luckySelectionMode==='manual'?[...luckySelectedRanks]:[],reveal_mode:luckyDrawMode};
+    button.disabled=true;button.textContent='บันทึกแล้ว';
+    $('luckyStatus').textContent='บันทึกการตั้งค่า Lucky Draw แล้ว · ระบบจะจับรางวัลหลังการแข่งขันจบ';
+    $('openLuckySetupBeforeRace').textContent='✦ แก้ไขการตั้งค่า Lucky Draw';
+    setTimeout(()=>{$('luckyM').classList.add('hide');button.disabled=false;button.textContent='บันทึกการตั้งค่า Lucky Draw';},450);
+    return;
+  }
   button.disabled=true;
   button.textContent='กำลังบันทึกผล...';
   try{
