@@ -692,6 +692,16 @@ a { color: inherit; text-decoration: none; }
 
 /* ---- announcement ---- */
 
+.announcement-body[data-go-page] { cursor: pointer; }
+.announcement-body[data-go-page]:focus-visible {
+  outline: 2px solid var(--gold, #d8b45a);
+  outline-offset: 3px;
+}
+.announcement-body[data-go-page]:hover .announcement-text h4 {
+  color: var(--gold-light, #f0d58a);
+  transition: color .2s ease;
+}
+
 .announcement-body {
   position: relative;
   min-height: 206px;
