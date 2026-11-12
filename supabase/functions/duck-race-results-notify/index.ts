@@ -54,7 +54,7 @@ Deno.serve(async (request) => {
     }
     const results = body.results.map((item: any, index: number) => ({
       rank: index + 1,
-      label: String(item?.label ?? "").replace(/[\r\n\t]/g, " ").trim().slice(0, 48) || "Duck"
+      label: String(item?.label ?? "").replace(/[\r\n\t]/g, " ").trim().slice(0, 32) || "Duck"
     }));
 
     const { data: settings, error: settingsError } = await admin.from("guild_discord_integration_settings")
@@ -62,21 +62,13 @@ Deno.serve(async (request) => {
     if (settingsError || !settings) return json({ success: false, message: "ยังไม่ได้ตั้งค่า Discord Integration" }, 503);
 
     let channelId = "";
-    let deliveryMode = "";
-    if (settings.mode === "test") {
-      channelId = String(settings.test_channel_id || "");
-      deliveryMode = "test";
-    } else if (settings.mode === "production" && settings.production_enabled === true) {
-      const { data: route, error: routeError } = await admin.from("guild_discord_event_routes")
-        .select("enabled,channel_id").eq("event_key", "duck_race_results").maybeSingle();
-      if (routeError) return json({ success: false, message: "อ่านการตั้งค่าห้อง Discord สำหรับ Duck Race ไม่สำเร็จ" }, 503);
-      if (route?.enabled === true) channelId = String(route.channel_id || "");
-      deliveryMode = "production";
+    const deliveryMode = String(settings.mode || "");
+    if (deliveryMode !== "test") {
+      return json({ success: false, message: "Duck Race ยังล็อกการส่งไว้ที่ TEST MODE จนกว่าจะทดสอบผ่านและได้รับอนุมัติให้เปิด Production" }, 403);
     }
+    channelId = String(settings.test_channel_id || "");
     if (!channelId) {
-      return json({ success: false, message: deliveryMode === "production"
-        ? "ยังไม่ได้เปิดใช้งานหรือกำหนดห้องปลายทาง Duck Race ใน Production"
-        : "ยังไม่ได้กำหนดห้อง #ทดสอบบอท ใน TEST MODE" }, 503);
+      return json({ success: false, message: "ยังไม่ได้กำหนดห้อง #ทดสอบบอท ใน TEST MODE" }, 503);
     }
 
     const heading = mode === "num" ? "ผลการแข่งขัน Duck Race · โหมดหมายเลข" : "ผลการแข่งขัน Duck Race · โหมดรายชื่อ";
