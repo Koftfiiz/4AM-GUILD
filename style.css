@@ -6307,3 +6307,44 @@ body select:disabled {
   height: 40px;
   flex: 0 0 40px;
 }
+
+
+/* GAME GUIDES */
+.guide-library-panel{padding:22px}
+.guide-library-toolbar{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:20px}
+.guide-library-heading h3{margin:5px 0;color:var(--cream);font-size:22px}
+.guide-library-heading p{margin:4px 0 0}
+.guide-filters{display:grid;grid-template-columns:minmax(220px,1.5fr) minmax(170px,.8fr) auto;align-items:end;gap:12px;margin-bottom:20px}
+.guide-filters label,.guide-editor-fields label{display:grid;gap:7px;color:var(--muted);font-size:14px;font-weight:600}
+.guide-filters input,.guide-filters select,.guide-editor-fields input,.guide-editor-fields select{width:100%;min-height:44px;padding:9px 12px;color:#fff;background:#10090c;border:1px solid rgba(190,45,60,.5);border-radius:6px;color-scheme:dark;font:inherit}
+.guide-editor-panel{margin:18px 0 24px;padding:20px;border:1px solid rgba(205,160,90,.35);border-radius:10px;background:linear-gradient(145deg,rgba(29,17,20,.95),rgba(9,7,8,.98))}
+.guide-editor-heading h3{margin:5px 0 16px;color:var(--cream);font-size:21px}
+.guide-editor-fields{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,.8fr);gap:14px;margin-bottom:14px}
+.guide-editor-body{min-height:300px;padding:16px;line-height:1.8}
+.guide-editor-hint{display:block;margin-top:8px;color:var(--muted);font-size:13px}
+.guide-editor-toolbar{flex-wrap:wrap}
+.guide-editor-toolbar button{min-height:36px}
+.guide-editor-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:14px}
+.guide-editor-panel>.message{min-height:20px;margin:8px 0}
+.guide-preview-panel{margin-top:18px;padding:16px;border:1px dashed rgba(205,160,90,.4);border-radius:8px}
+.guide-preview-panel>.panel-kicker{display:block;margin-bottom:10px}
+.guild-guides-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.guild-guide-card{min-width:0;padding:18px;border:1px solid rgba(190,45,60,.3);border-radius:10px;background:linear-gradient(145deg,rgba(27,13,17,.92),rgba(8,7,8,.94))}
+.guide-card-topline{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.guide-category-badge{display:inline-flex;padding:5px 10px;border-radius:30px;border:1px solid rgba(205,160,90,.35);background:rgba(190,145,65,.1);color:#e9c98f;font-size:13px;font-weight:700}
+.guide-updated{color:var(--muted);font-size:12px}
+.guild-guide-card h3{margin:13px 0 10px;color:var(--cream);font-size:20px;overflow-wrap:anywhere}
+.guide-content{min-width:0;color:var(--text);font-size:14px;line-height:1.8;overflow-wrap:anywhere}
+.guide-content p{margin:0 0 10px}
+.guide-content img{display:block;max-width:100%;height:auto;margin:10px auto;border-radius:8px}
+.guide-content a{color:#e9c98f;text-decoration:underline;overflow-wrap:anywhere}
+.guide-content ul,.guide-content ol{padding-left:25px}
+.guide-content table{width:100%;border-collapse:collapse;margin:12px 0}
+.guide-content th,.guide-content td{padding:8px;border:1px solid rgba(205,160,120,.3);text-align:left}
+.guild-guide-image{max-width:100%;height:auto}
+.guild-guide-video{width:100%;aspect-ratio:16/9;border:0;border-radius:8px}
+.guide-card-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:15px;padding-top:12px;border-top:1px solid rgba(205,160,120,.14);color:var(--muted);font-size:13px}
+.guide-card-footer strong{color:#e5c37d}
+.guide-card-actions{display:flex;gap:8px;flex-wrap:wrap}
+@media(max-width:850px){.guild-guides-grid{grid-template-columns:1fr}}
+@media(max-width:650px){.guide-library-panel{padding:14px}.guide-library-toolbar{align-items:stretch;flex-direction:column}.guide-library-toolbar>.btn{width:100%}.guide-filters,.guide-editor-fields{grid-template-columns:1fr}.guide-filters>.btn{width:100%}.guide-editor-panel{padding:13px}.guide-editor-actions{display:grid;grid-template-columns:1fr 1fr}.guide-editor-actions .btn:last-child{grid-column:1/-1}.guide-card-footer{align-items:stretch;flex-direction:column}.guide-card-actions .btn{flex:1}}
