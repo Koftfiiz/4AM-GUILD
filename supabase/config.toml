@@ -6,3 +6,6 @@ verify_jwt = false
 
 [functions.discord-guild-activity-notify]
 verify_jwt = false
+
+[functions.duck-race-results-notify]
+verify_jwt = false
