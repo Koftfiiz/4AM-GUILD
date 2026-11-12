@@ -3,3 +3,6 @@ verify_jwt = false
 
 [functions.discord-integration-test]
 verify_jwt = false
+
+[functions.discord-guild-activity-notify]
+verify_jwt = false
