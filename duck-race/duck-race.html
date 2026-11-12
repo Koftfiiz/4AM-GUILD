@@ -62,7 +62,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 #duck-race-root canvas{width:100%;}
 
 /* Lucky Draw: modern post-race panel */
-#duck-race-root .lucky-draw-trigger{width:100%;margin:10px 0;padding:13px 15px;border:1px solid #e6bd58;border-radius:13px;background:linear-gradient(120deg,#38230b,#8a5414 55%,#3a2108);color:#fff4cf;font:800 1rem inherit;cursor:pointer;box-shadow:0 8px 24px #9b681b24}
+#duck-race-root .lucky-draw-trigger{width:100%;margin:10px 0;padding:13px 15px;border:1px solid #e6bd58;border-radius:13px;background:linear-gradient(120deg,#38230b,#8a5414 55%,#3a2108);color:#fff4cf;font-family:inherit;font-weight:800;font-size:1rem;cursor:pointer;box-shadow:0 8px 24px #9b681b24}
 #duck-race-root .lucky-draw-trigger:disabled{opacity:.45;cursor:not-allowed}
 #duck-race-root .lucky-modal{z-index:30;background:rgba(3,8,16,.84);backdrop-filter:blur(12px)}
 #duck-race-root .lucky-card{width:min(760px,100%);padding:0;overflow:hidden;border:1px solid #b58b45;background:linear-gradient(145deg,#111827,#090d16 72%);color:#f8fafc;box-shadow:0 24px 80px #000b}
@@ -1272,7 +1272,7 @@ function frame(now){
 
 /* ---------- race control ---------- */
 function reset(){
-  if(typeof currentRaceSessionId!=='undefined'){currentRaceSessionId=null;currentRaceSavePromise=null;}
+  if(typeof currentRaceSessionId!=='undefined'&&S.fin){currentRaceSessionId=null;currentRaceSavePromise=null;currentRaceSaved=false;}
   // Clear DOM-based GIF overlays as well as race state. The previous duck objects
   // are replaced below, so their emote nodes must be removed explicitly here.
   ducks.forEach(k=>{if(k.emoteNode){k.emoteNode.remove();k.emoteNode=null;}});
@@ -1343,6 +1343,7 @@ const duckRaceSupabase=window.supabase?.createClient(DUCK_RACE_SUPABASE_URL,DUCK
 
 let currentRaceSessionId=null;
 let currentRaceSavePromise=null;
+let currentRaceSaved=false;
 let luckyDrawMode='all';
 let luckyDrawWinners=[];
 let luckyDrawRevealed=0;
@@ -1367,7 +1368,7 @@ async function saveCompletedRace(){
   const status=$('raceSaveStatus');
   const trigger=$('openLuckyDraw');
   if(currentRaceSavePromise)return currentRaceSavePromise;
-  currentRaceSessionId=crypto.randomUUID();
+  if(!currentRaceSessionId)currentRaceSessionId=crypto.randomUUID();
   const results=order().map((k,i)=>({rank:i+1,label:String(k.r.label??'Duck').trim().slice(0,48)}));
   status.textContent='กำลังบันทึกผลการแข่งขัน '+results.length+' คน เพื่อเตรียม Lucky Draw...';
   currentRaceSavePromise=(async()=>{
@@ -1379,11 +1380,14 @@ async function saveCompletedRace(){
         duration_seconds:cfg.T,
         results
       });
+      currentRaceSaved=true;
       status.textContent='บันทึกผลการแข่งขันแล้ว · '+data.participant_count+' คน · พร้อมจับรางวัล';
       trigger.disabled=false;
       return data;
     }catch(error){
       console.error('Duck Race save result:',error);
+      currentRaceSaved=false;
+      currentRaceSavePromise=null;
       status.textContent='บันทึกผลไม่สำเร็จ: '+(error.message||'กรุณาเข้าสู่ระบบหรือให้ผู้ดูแลตรวจสอบ');
       trigger.disabled=true;
       throw error;
@@ -1402,6 +1406,8 @@ function renderLuckyResults(){
   const list=$('luckyResults');
   list.innerHTML='';
   const count=luckyDrawMode==='all'?luckyDrawWinners.length:luckyDrawRevealed;
+  $('luckySendDiscord').disabled=count<luckyDrawWinners.length;
+  $('luckySendDiscord').textContent=count<luckyDrawWinners.length?'เปิดเผยผลครบก่อนส่ง Discord':'SEND TO DISCORD';
   luckyDrawWinners.slice(0,count).forEach(w=>{
     const row=document.createElement('div');row.className='lucky-result';
     const number=document.createElement('div');number.className='num';number.textContent='#'+w.prize_number;
@@ -1445,6 +1451,7 @@ $('openLuckyDraw').onclick=async()=>{
   $('luckyStatus').textContent='กำลังตรวจสอบผลการแข่งขัน...';
   try{
     if(currentRaceSavePromise)await currentRaceSavePromise;
+    if(!currentRaceSaved)await saveCompletedRace();
     if(!currentRaceSessionId)throw new Error('ไม่พบรหัสผลการแข่งขัน กรุณาจบการแข่งขันรอบนี้ใหม่');
     const {data:{session}}=await duckRaceSupabase.auth.getSession();
     const count=order().length;
@@ -1476,8 +1483,9 @@ $('luckyNext').onclick=()=>{
   if(luckyDrawRevealed<luckyDrawWinners.length){luckyDrawRevealed++;renderLuckyResults();}
 };
 $('luckyCopy').onclick=async()=>{
-  if(!luckyDrawWinners.length){$('luckyStatus').textContent='ยังไม่มีผล Lucky Draw ให้คัดลอก';return;}
-  const lines=['4AM GUILD · LUCKY DRAW','ผู้เข้าร่วม: '+order().length+' คน','จำนวนรางวัล: '+luckyDrawWinners.length,'',...luckyDrawWinners.map(w=>'Prize #'+w.prize_number+' — '+w.duck_label+' (อันดับ Duck Race '+w.race_rank+')')];
+  const visibleWinners=luckyDrawMode==='all'?luckyDrawWinners:luckyDrawWinners.slice(0,luckyDrawRevealed);
+  if(!visibleWinners.length){$('luckyStatus').textContent='ยังไม่มีผลที่เปิดเผยให้คัดลอก';return;}
+  const lines=['4AM GUILD · LUCKY DRAW','ผู้เข้าร่วม: '+$('luckyEligible').textContent+' คน','จำนวนรางวัลที่เปิดเผย: '+visibleWinners.length,'',...visibleWinners.map(w=>'Prize #'+w.prize_number+' — '+w.duck_label+' (อันดับ Duck Race '+w.race_rank+')')];
   try{
     await navigator.clipboard.writeText(lines.join('\n'));
     $('luckyStatus').textContent='คัดลอกผล Lucky Draw แล้ว';
