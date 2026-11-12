@@ -1464,11 +1464,16 @@ async function loadLuckyHistory(){
       const date=document.createElement('div');date.className='race-rank';date.textContent=new Date(draw.created_at).toLocaleString('th-TH');
       const remove=document.createElement('button');remove.type='button';remove.className='lucky-history-delete';remove.textContent='−';remove.title='ลบประวัติรายการนี้';remove.setAttribute('aria-label','ลบประวัติรายการนี้');
       remove.onclick=async()=>{
-        if(!confirm('ลบประวัติการจับรางวัลรายการนี้ออกจากเว็บไซต์หรือไม่?\\nข้อมูลผู้ชนะของรายการนี้จะถูกลบด้วย\\nข้อความที่ส่งไป Discord ก่อนหน้านี้จะไม่ถูกลบ'))return;
+        if(!confirm('ลบประวัติการจับรางวัลรายการนี้ออกจากเว็บไซต์หรือไม่?\nข้อมูลผู้ชนะของรายการนี้จะถูกลบด้วย\nข้อความที่ส่งไป Discord ก่อนหน้านี้จะไม่ถูกลบ'))return;
         remove.disabled=true;
         try{
           await luckyInvoke({action:'delete_lucky_draw',draw_id:draw.id});
-          if(luckyDrawRecord?.id===draw.id)luckyDrawRecord=null;
+          if(luckyDrawRecord?.id===draw.id){
+            luckyDrawRecord=null;luckyDrawWinners=[];luckyDrawRevealed=0;
+            $('luckyReveal').classList.add('hide');$('luckySetup').classList.remove('hide');
+            $('luckySendDiscord').disabled=true;$('luckyCopy').disabled=true;
+            $('luckyResults').innerHTML='';
+          }
           await loadLuckyHistory();
           $('luckyStatus').textContent='ลบประวัติการจับรางวัลแล้ว';
         }catch(error){
