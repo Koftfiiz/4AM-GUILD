@@ -98,6 +98,7 @@ const PAGE_TITLES = {
   feedback: "แจ้งปัญหา / Feedback",
   settings: "ตั้งค่าบัญชี",
   "system-management": "System Management",
+  "discord-integration": "Discord Integration Settings",
   appearance: "Appearance"
 };
 
@@ -5122,6 +5123,9 @@ function openGuildPage(pageName) {
   if (pageName === "system-management" && !isDeveloper()) {
     pageName = "dashboard";
   }
+  if (pageName === "discord-integration" && (!isDeveloper() || isRolePreviewActive())) {
+    pageName = "dashboard";
+  }
 
   // Remember the current section so a hard refresh returns to the same page.
   try {
@@ -5174,6 +5178,7 @@ function openGuildPage(pageName) {
   if (pageName === "members") loadMembers();
   if (pageName === "member-management" && isManagement()) loadManualMemberManagement();
   if (pageName === "system-management") loadSystemRoleMembers();
+  if (pageName === "discord-integration") loadDiscordIntegrationSettings();
 
   const memberPages = ["members", "member-management"];
   const memberParent = document.querySelector('[data-toggle-submenu="members-submenu"]');
@@ -5360,6 +5365,229 @@ function renderAccountDetails() {
   `;
 }
 
+
+// ==========================================
+// DISCORD INTEGRATION SETTINGS (DEVELOPER ONLY)
+// ==========================================
+
+const DISCORD_EVENT_ROUTE_DEFINITIONS = [
+  ["guild_activity_published", "ประกาศข่าวสาร / กิจกรรมกิลด์"],
+  ["guild_activity_comment", "ความคิดเห็นในกิจกรรมกิลด์"],
+  ["feedback_submitted", "แจ้งปัญหา / Feedback"],
+  ["duck_race_results", "ผลการแข่งขัน Duck Race"],
+  ["member_joined", "สมาชิกใหม่ / เพิ่มสมาชิก"],
+  ["war_signup_submitted", "ลงชื่อเข้าร่วม Guild War"],
+  ["war_leave_submitted", "แจ้งลาวอร์"],
+  ["portfolio_published", "โพสต์แฟ้มผลงาน"]
+];
+
+function canManageDiscordIntegration() {
+  return isDeveloper() && !isRolePreviewActive() && currentMember?.active === true;
+}
+
+function renderDiscordIntegrationRoutes(routes = []) {
+  const container = $("discord-integration-routes");
+  if (!container) return;
+  const routeMap = new Map((routes || []).map(route => [route.event_key, route]));
+  container.innerHTML = DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key, label]) => {
+    const route = routeMap.get(key) || {};
+    return `
+      <div class="discord-route-row" data-discord-route="${escapeHTML(key)}">
+        <div class="discord-route-copy">
+          <strong>${escapeHTML(label)}</strong>
+          <small>${escapeHTML(key)}</small>
+        </div>
+        <label class="discord-route-enabled">
+          <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
+          <span>เปิดใช้</span>
+        </label>
+        <input type="text" inputmode="numeric" autocomplete="off" maxlength="20"
+          placeholder="Discord Channel ID"
+          aria-label="Discord Channel ID สำหรับ ${escapeHTML(label)}"
+          data-discord-route-channel value="${escapeHTML(route.channel_id || "")}">
+      </div>`;
+  }).join("");
+}
+
+async function loadDiscordIntegrationSettings() {
+  if (!canManageDiscordIntegration()) {
+    alert("Discord Integration Settings อนุญาตเฉพาะ Developer เท่านั้น และไม่สามารถแก้ไขใน Role Preview ได้");
+    openGuildPage("dashboard");
+    return;
+  }
+
+  const status = $("discord-integration-load-status");
+  if (status) status.textContent = "กำลังโหลดการตั้งค่า...";
+  const { data: settings, error: settingsError } = await supabaseClient
+    .from("guild_discord_integration_settings")
+    .select("*")
+    .eq("id", 1)
+    .maybeSingle();
+
+  if (settingsError) {
+    console.error("Discord integration settings load:", settingsError);
+    if (status) status.textContent = "ยังโหลดไม่ได้ กรุณารัน SQL: 4AM Discord Integration Settings";
+    return;
+  }
+
+  const { data: routes, error: routesError } = await supabaseClient
+    .from("guild_discord_event_routes")
+    .select("*")
+    .order("event_key", { ascending: true });
+
+  if (routesError) {
+    console.error("Discord integration routes load:", routesError);
+    if (status) status.textContent = "โหลดรายการเส้นทางแจ้งเตือนไม่สำเร็จ";
+    return;
+  }
+
+  $("discord-integration-mode").value = settings?.mode || "test";
+  $("discord-integration-test-channel").value = settings?.test_channel_id || "";
+  $("discord-integration-production-enabled").checked = settings?.production_enabled === true;
+  $("discord-integration-current-mode").textContent =
+    settings?.mode === "production" && settings?.production_enabled ? "PRODUCTION MODE" : "TEST MODE";
+  $("discord-integration-current-mode").classList.toggle("is-production", settings?.mode === "production" && settings?.production_enabled);
+  renderDiscordIntegrationRoutes(routes || []);
+  if (status) status.textContent = "โหลดการตั้งค่าเรียบร้อย";
+  updateDiscordIntegrationModeHelp();
+}
+
+function updateDiscordIntegrationModeHelp() {
+  const mode = $("discord-integration-mode")?.value || "test";
+  const productionEnabled = $("discord-integration-production-enabled")?.checked === true;
+  const help = $("discord-integration-mode-help");
+  if (!help) return;
+  if (mode === "test") {
+    help.textContent = "TEST MODE: การแจ้งเตือนทุกประเภทจะถูกส่งไปยังห้องทดสอบบอทเท่านั้น ไม่ใช้ Channel ID ของ Production";
+  } else if (!productionEnabled) {
+    help.textContent = "PRODUCTION ยังไม่เปิดใช้งาน ต้องเปิดสวิตช์อนุมัติ Production ก่อน ระบบจะยังไม่ส่งข้อความไปห้องจริง";
+  } else {
+    help.textContent = "PRODUCTION MODE: แต่ละเหตุการณ์จะส่งไปยัง Channel ID ที่กำหนดไว้ด้านล่าง เฉพาะรายการที่เปิดใช้งานเท่านั้น";
+  }
+}
+
+async function saveDiscordIntegrationSettings() {
+  if (!canManageDiscordIntegration()) {
+    alert("ไม่มีสิทธิ์แก้ไข Discord Integration Settings");
+    return;
+  }
+  const form = $("discord-integration-form");
+  if (!form) return;
+  const mode = $("discord-integration-mode").value === "production" ? "production" : "test";
+  const testChannelId = String($("discord-integration-test-channel").value || "").trim();
+  const productionEnabled = $("discord-integration-production-enabled").checked;
+  const channelPattern = /^\d{17,20}$/;
+  if (testChannelId && !channelPattern.test(testChannelId)) {
+    showMessage("discord-integration-message", "Test Channel ID ต้องเป็นตัวเลข Discord ID ความยาว 17–20 หลัก");
+    return;
+  }
+
+  const routeRows = [...document.querySelectorAll("[data-discord-route]")];
+  const routes = routeRows.map(row => ({
+    event_key: row.dataset.discordRoute,
+    enabled: row.querySelector("[data-discord-route-enabled]")?.checked === true,
+    channel_id: String(row.querySelector("[data-discord-route-channel]")?.value || "").trim() || null,
+    updated_by: currentUser.id
+  }));
+  for (const route of routes) {
+    if (route.channel_id && !channelPattern.test(route.channel_id)) {
+      showMessage("discord-integration-message", "Channel ID ของ " + route.event_key + " ไม่ถูกต้อง ต้องเป็นตัวเลข 17–20 หลัก");
+      return;
+    }
+  }
+  if (mode === "production") {
+    if (!productionEnabled) {
+      showMessage("discord-integration-message", "ยังไม่สามารถเลือก Production Mode ได้จนกว่าจะเปิดอนุมัติ Production");
+      return;
+    }
+    const incomplete = routes.find(route => route.enabled && !route.channel_id);
+    if (incomplete) {
+      showMessage("discord-integration-message", "กรุณากำหนด Channel ID ให้ครบทุกเหตุการณ์ที่เปิดใช้ ก่อนเปิด Production");
+      return;
+    }
+    if (!routes.some(route => route.enabled)) {
+      showMessage("discord-integration-message", "กรุณาเปิดใช้งานอย่างน้อยหนึ่งประเภทการแจ้งเตือน");
+      return;
+    }
+  }
+
+  const saveButton = $("discord-integration-save");
+  if (saveButton) { saveButton.disabled = true; saveButton.textContent = "กำลังบันทึก..."; }
+  try {
+    const { error: settingsError } = await supabaseClient
+      .from("guild_discord_integration_settings")
+      .upsert({
+        id: 1,
+        mode,
+        test_channel_id: testChannelId || null,
+        production_enabled: productionEnabled,
+        updated_by: currentUser.id,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "id" });
+    if (settingsError) throw settingsError;
+
+    const { error: routesError } = await supabaseClient
+      .from("guild_discord_event_routes")
+      .upsert(routes.map(route => ({ ...route, updated_at: new Date().toISOString() })), { onConflict: "event_key" });
+    if (routesError) throw routesError;
+
+    showMessage("discord-integration-message", "บันทึกการตั้งค่า Discord Integration สำเร็จ", "success");
+    await loadDiscordIntegrationSettings();
+  } catch (error) {
+    console.error("Discord integration save:", error);
+    showMessage("discord-integration-message", "บันทึกไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด"));
+  } finally {
+    if (saveButton) { saveButton.disabled = false; saveButton.textContent = "บันทึกการตั้งค่า"; }
+  }
+}
+
+async function sendDiscordIntegrationTest() {
+  if (!canManageDiscordIntegration()) {
+    alert("เฉพาะ Developer เท่านั้นที่ทดสอบบอทได้");
+    return;
+  }
+  const channelId = String($("discord-integration-test-channel")?.value || "").trim();
+  if (!/^\d{17,20}$/.test(channelId)) {
+    showMessage("discord-integration-message", "กรุณากรอก Test Channel ID ให้ถูกต้อง และบันทึกการตั้งค่าก่อนทดสอบ");
+    return;
+  }
+  const button = $("discord-integration-test");
+  if (button) { button.disabled = true; button.textContent = "กำลังส่งข้อความทดสอบ..."; }
+  try {
+    const { error: saveError } = await supabaseClient
+      .from("guild_discord_integration_settings")
+      .upsert({
+        id: 1,
+        mode: $("discord-integration-mode").value === "production" ? "production" : "test",
+        test_channel_id: channelId,
+        production_enabled: $("discord-integration-production-enabled").checked,
+        updated_by: currentUser.id,
+        updated_at: new Date().toISOString()
+      }, { onConflict: "id" });
+    if (saveError) throw saveError;
+
+    const { data, error } = await supabaseClient.functions.invoke("discord-integration-test", { body: {} });
+    if (error) throw error;
+    if (!data?.success) throw new Error(data?.message || "ส่งข้อความทดสอบไม่สำเร็จ");
+    showMessage("discord-integration-message", "ส่งข้อความทดสอบไปยังห้องทดสอบบอทสำเร็จ", "success");
+  } catch (error) {
+    console.error("Discord integration test:", error);
+    showMessage("discord-integration-message", "ทดสอบไม่สำเร็จ: " + (error.message || "ตรวจสอบ Edge Function และ Bot Token"));
+  } finally {
+    if (button) { button.disabled = false; button.textContent = "ส่งข้อความทดสอบ"; }
+  }
+}
+
+function registerDiscordIntegrationEvents() {
+  $("discord-integration-form")?.addEventListener("submit", event => {
+    event.preventDefault();
+    void saveDiscordIntegrationSettings();
+  });
+  $("discord-integration-mode")?.addEventListener("change", updateDiscordIntegrationModeHelp);
+  $("discord-integration-production-enabled")?.addEventListener("change", updateDiscordIntegrationModeHelp);
+  $("discord-integration-test")?.addEventListener("click", () => void sendDiscordIntegrationTest());
+}
+
 // ==========================================
 // EVENT LISTENERS
 // ==========================================
@@ -5397,6 +5625,7 @@ function registerAppEventListeners() {
   $("refresh-members")?.addEventListener("click", loadMembers);
   $("connect-discord")?.addEventListener("click", connectDiscord);
   registerAppearanceEvents();
+  registerDiscordIntegrationEvents();
 
   document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
     button.addEventListener("click", () => {
