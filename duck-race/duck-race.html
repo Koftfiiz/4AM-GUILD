@@ -1378,7 +1378,7 @@ function frame(now){
 /* ---------- race control ---------- */
 function reset(){
   if(typeof currentRaceSessionId!=='undefined'&&S.fin){currentRaceSessionId=null;currentRaceSavePromise=null;currentRaceSaved=false;}
-  if(typeof luckyPreRaceConfig!=='undefined'&&S.fin){luckyPreRaceConfig=null;if($('openLuckySetupBeforeRace'))$('openLuckySetupBeforeRace').textContent='✦ ตั้งค่า Lucky Draw ก่อนแข่ง';}
+  if(typeof luckyPreRaceConfig!=='undefined'&&S.fin){luckyPreRaceConfig=null;if($('openLuckySetupBeforeRace')){$('openLuckySetupBeforeRace').textContent='✦ ตั้งค่า Lucky Draw ก่อนแข่ง';$('openLuckySetupBeforeRace').style.display='block';}}
   // Clear DOM-based GIF overlays as well as race state. The previous duck objects
   // are replaced below, so their emote nodes must be removed explicitly here.
   ducks.forEach(k=>{if(k.emoteNode){k.emoteNode.remove();k.emoteNode=null;}});
@@ -1408,6 +1408,7 @@ function reset(){
 const order=()=>ducks.slice().sort((a,b)=>a.fin-b.fin);
 function onFinish(winner=leader()){
   if(S.fin)return;
+  $('openLuckySetupBeforeRace').style.display='none';
   S.finishWorld=D;
   S.fin=true;S.st='celebrate';S.celebrateT=0;S.finishAnimTime=performance.now()/1000;
   stopMus(); // Stop background music immediately when the race is complete.
@@ -1536,7 +1537,7 @@ function renderLuckyRankGrid(){
     const number=document.createElement('span');
     number.textContent='#'+rank;
     const name=document.createElement('small');
-    name.textContent=String(entry.r.label??'Duck');
+    name.textContent=S.fin?String(entry.r.label??'Duck'):'รอผลการแข่งขัน';
     button.append(number,name);
     button.onclick=()=>{
       if(luckySelectedRanks.includes(rank)){
