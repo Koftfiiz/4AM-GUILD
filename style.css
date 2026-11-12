@@ -5962,3 +5962,37 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
     font-size: 14px !important;
   }
 }
+
+/* Manual member directory — readable table typography (management page only). */
+#page-member-management .manual-member-list-panel .manual-member-table th {
+  color: #f0d59e !important;
+  font-size: 19px !important;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+#page-member-management .manual-member-list-panel .manual-member-table td {
+  color: #f4ece6;
+  font-size: 16px !important;
+  line-height: 1.55;
+}
+
+#page-member-management .manual-member-list-panel .manual-member-table td:first-child strong {
+  color: #ffffff;
+  font-size: 17px !important;
+  line-height: 1.5;
+}
+
+#page-member-management .manual-member-list-panel .manual-member-table td:first-child small {
+  color: #d8c8bd !important;
+  font-size: 14px !important;
+  line-height: 1.5;
+}
+
+#page-member-management .manual-member-list-panel .manual-member-status {
+  font-size: 14px !important;
+  line-height: 1.4;
+}
+
+/* Keep Edit / Suspend / Delete button sizing unchanged. */
