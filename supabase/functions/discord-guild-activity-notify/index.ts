@@ -1,5 +1,5 @@
 // Supabase Edge Function: discord-guild-activity-notify
-// Reuses DISCORD_BOT_TOKEN and DISCORD_MANAGEMENT_CHANNEL_ID secrets.
+// Uses the Developer-managed guild_discord_integration_settings and event routes. TEST MODE is the safe default.
 // Verify JWT (legacy) must be OFF; this function validates the access token.
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -36,8 +36,7 @@ Deno.serve(async (request) => {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
     const botToken = Deno.env.get("DISCORD_BOT_TOKEN") || "";
-    const channelId = Deno.env.get("DISCORD_MANAGEMENT_CHANNEL_ID") || "";
-    if (!supabaseUrl || !anonKey || !serviceRoleKey || !botToken || !channelId) {
+    if (!supabaseUrl || !anonKey || !serviceRoleKey || !botToken) {
       return json({ success: false, message: "Missing Supabase or Discord function secrets" }, 500);
     }
 
@@ -60,6 +59,19 @@ Deno.serve(async (request) => {
       return json({ success: false, message: "Active guild member required" }, 403);
     }
     const role = String(requester.role || "").toLowerCase();
+    const eventKey = kind === "activity" ? "guild_activity_published" : "guild_activity_comment";
+    const { data: integrationSettings, error: integrationError } = await admin.from("guild_discord_integration_settings")
+      .select("mode,test_channel_id,production_enabled").eq("id", 1).maybeSingle();
+    if (integrationError || !integrationSettings) return json({ success: false, message: "Discord integration settings are not configured" }, 503);
+    let channelId = "";
+    if (integrationSettings.mode === "test") {
+      channelId = String(integrationSettings.test_channel_id || "");
+    } else if (integrationSettings.mode === "production" && integrationSettings.production_enabled === true) {
+      const { data: route } = await admin.from("guild_discord_event_routes")
+        .select("enabled,channel_id").eq("event_key", eventKey).maybeSingle();
+      if (route?.enabled === true) channelId = String(route.channel_id || "");
+    }
+    if (!channelId) return json({ success: false, message: "No destination configured for this Discord event; notification was not sent" }, 503);
     const isManager = ["developer", "leader", "management"].includes(role);
     const requesterName = requester.character_name || requester.nickname || requester.discord_name || "สมาชิก 4AM";
 
