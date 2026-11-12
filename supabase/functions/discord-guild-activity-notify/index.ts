@@ -46,8 +46,8 @@ Deno.serve(async (request) => {
 
     const body = await request.json().catch(() => ({}));
     const kind = String(body.kind || "");
-    const recordId = String(kind === "activity" ? body.activity_id || "" : body.comment_id || "");
-    if (!["activity", "comment"].includes(kind) || !/^[0-9a-f-]{36}$/i.test(recordId)) {
+    const recordId = String(kind === "activity" ? body.activity_id || "" : kind === "comment" ? body.comment_id || "" : body.event_id || "");
+    if (!["activity", "comment", "war_signup"].includes(kind) || !/^[0-9a-f-]{36}$/i.test(recordId)) {
       return json({ success: false, message: "Invalid notification request" }, 400);
     }
 
@@ -59,7 +59,7 @@ Deno.serve(async (request) => {
       return json({ success: false, message: "Active guild member required" }, 403);
     }
     const role = String(requester.role || "").toLowerCase();
-    const eventKey = kind === "activity" ? "guild_activity_published" : "guild_activity_comment";
+    const eventKey = kind === "activity" ? "guild_activity_published" : kind === "comment" ? "guild_activity_comment" : "war_signup_submitted";
     const { data: integrationSettings, error: integrationError } = await admin.from("guild_discord_integration_settings")
       .select("mode,test_channel_id,production_enabled").eq("id", 1).maybeSingle();
     if (integrationError || !integrationSettings) return json({ success: false, message: "Discord integration settings are not configured" }, 503);
@@ -79,7 +79,16 @@ Deno.serve(async (request) => {
     let activity: any = null;
     let author: any = null;
     let table = "";
-    if (kind === "activity") {
+    if (kind === "war_signup") {
+      table = "war_events";
+      const { data, error } = await admin.from(table)
+        .select("id,event_name,event_date,start_time,registration_type,signup_opens_at,signup_closes_at,description,discord_message_id,discord_sent_at")
+        .eq("id", recordId).maybeSingle();
+      if (error || !data) return json({ success: false, message: "War Signup Event not found" }, 404);
+      record = data;
+      if (!isManager) return json({ success: false, message: "Management permission required" }, 403);
+      if (record.discord_message_id) return json({ success: true, already_notified: true });
+    } else if (kind === "activity") {
       table = "guild_activities";
       const { data, error } = await admin.from(table)
         .select("id,title,content_html,starts_at,ends_at,created_by,created_at,discord_notified_at")
@@ -110,7 +119,23 @@ Deno.serve(async (request) => {
     }
 
     const authorName = author?.character_name || author?.nickname || author?.discord_name || requesterName;
-    const embed = kind === "activity" ? {
+    const embed = kind === "war_signup" ? {
+      title: "⚔️ 4AM GUILD · เปิดลงชื่อ Guild War",
+      description: "มีการสร้างกิจกรรมลงชื่อวอร์ใหม่ สมาชิกสามารถตรวจสอบกำหนดการและติดตามรายชื่อได้จากเว็บไซต์กิลด์",
+      color: 0xC52B3B,
+      fields: [
+        { name: "กิจกรรม", value: String(record.event_name || "-").slice(0, 250), inline: false },
+        { name: "ประเภท", value: record.registration_type === "practice" ? "ซ้อมวอร์" : "วอร์จริง", inline: true },
+        { name: "วันที่วอร์", value: record.event_date ? new Date(record.event_date + "T00:00:00+07:00").toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "long" }) : "-", inline: true },
+        { name: "เวลาเริ่มวอร์", value: String(record.start_time || "-").slice(0, 5) + " น.", inline: true },
+        { name: "เปิดรับสมัคร", value: record.signup_opens_at ? new Date(record.signup_opens_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) : "-", inline: true },
+        { name: "ปิดรับสมัคร", value: record.signup_closes_at ? new Date(record.signup_closes_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) : "-", inline: true },
+        { name: "จำนวนที่รับ", value: "สูงสุด 80 คน · ตัวจริง 60 คน · สำรอง 20 คน", inline: false },
+        { name: "รายละเอียด", value: plainText(record.description) || "ไม่มีรายละเอียดเพิ่มเติม", inline: false }
+      ],
+      footer: { text: "4AM GUILD · War Registration" },
+      timestamp: new Date().toISOString()
+    } : kind === "activity" ? {
       title: "มีกิจกรรมใหม่จาก 4AM GUILD",
       color: 0xC52B3B,
       fields: [
@@ -141,13 +166,15 @@ Deno.serve(async (request) => {
     });
     if (!discordResponse.ok) {
       const details = await discordResponse.text();
-      await admin.from(table).update({ discord_notification_error: details.slice(0, 1000) }).eq("id", recordId);
+      await admin.from(table).update(kind === "war_signup" ? { discord_send_error: details.slice(0, 1000) } : { discord_notification_error: details.slice(0, 1000) }).eq("id", recordId);
       return json({ success: false, message: "Discord API rejected the message", details: details.slice(0, 500) }, 502);
     }
 
-    const { error: updateError } = await admin.from(table)
-      .update({ discord_notified_at: new Date().toISOString(), discord_notification_error: null })
-      .eq("id", recordId);
+    const discordMessage = await discordResponse.json();
+    const updatePayload = kind === "war_signup"
+      ? { discord_message_id: String(discordMessage.id), discord_sent_at: new Date().toISOString(), discord_send_error: null }
+      : { discord_notified_at: new Date().toISOString(), discord_notification_error: null };
+    const { error: updateError } = await admin.from(table).update(updatePayload).eq("id", recordId);
     if (updateError) return json({ success: false, message: "Discord sent, but notification state could not be saved" }, 500);
     return json({ success: true });
   } catch (error) {
