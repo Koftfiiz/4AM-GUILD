@@ -21,9 +21,8 @@
 #duck-race-root .ctl button{min-width:94px;padding:10px 17px;border-radius:11px;border:1px solid rgba(255,255,255,.22);font-size:14px;font-weight:900;letter-spacing:.3px;background:linear-gradient(135deg,#263c50,#172a3c);box-shadow:0 4px 12px #0005;transition:transform .16s,filter .16s}
 #duck-race-root .ctl button:hover{transform:translateY(-2px);filter:brightness(1.18)}
 #duck-race-root #bGo{background:linear-gradient(135deg,#ff4c58,#bd1735);border-color:#ff9aa2;color:#fff}
-#duck-race-root #openLuckySetupBeforeRace{position:absolute!important;right:12px;bottom:14px;z-index:8;margin:0!important;display:block;padding:11px 16px;border:1px solid #ff7b89;border-radius:12px;background:linear-gradient(135deg,#a81732,#5d1020);color:#fff;font:800 14px/1.3 "Noto Sans Thai",sans-serif;box-shadow:0 6px 20px #0009;cursor:pointer;max-width:calc(100% - 24px)}
-#duck-race-root #openLuckySetupBeforeRace:hover{filter:brightness(1.2);transform:translateY(-2px)}
-@media(max-width:600px){#duck-race-root #openLuckySetupBeforeRace{right:8px;bottom:82px;padding:9px 11px;font-size:12px}}
+#duck-race-root #openLuckySetupBeforeRace{display:block;width:100%;margin:12px 0 4px;padding:13px 16px;border:1px solid #ff7b89;border-radius:12px;background:linear-gradient(135deg,#a81732,#5d1020);color:#fff;font:800 14px/1.5 "Noto Sans Thai",sans-serif;box-shadow:0 6px 20px #0005;cursor:pointer;position:relative;z-index:5}
+#duck-race-root #openLuckySetupBeforeRace:hover{filter:brightness(1.15);transform:translateY(-1px)}
 #duck-race-root #bClr{background:linear-gradient(135deg,#64748b,#334155);color:#fff}
 #duck-race-root .ctl #bSkip{min-width:auto;font-size:11px;padding:9px 11px;color:#dbeafe}
 #duck-race-root .clock{left:50%;top:12px;transform:translateX(-50%);width:auto;min-width:190px;padding:8px 22px;border:1px solid rgba(255,255,255,.4);border-radius:16px;background:linear-gradient(135deg,rgba(9,24,42,.88),rgba(17,45,65,.78));color:#fff;font:800 clamp(22px,4.4cqw,48px)/1.15 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:2px;box-shadow:0 8px 24px #0018,inset 0 1px 0 #ffffff35;backdrop-filter:blur(14px);text-shadow:0 0 18px #67d9ff75;z-index:4}
@@ -198,7 +197,6 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
   <div class="ic"><button id="bSet" title="ตั้งค่า">⚙</button><button id="bMus" title="เปิด/ปิดเพลง">♫ ON</button><button id="bVol" title="ปรับระดับเสียงเพลง">🔊</button><button id="bBell" title="เสียงระฆัง">🔔✕</button></div><div class="music-volume hide" id="musicVolumePanel"><label for="musicVolume" style="margin:0;color:#fff">♫ Volume</label><input id="musicVolume" type="range" min="0" max="100" value="5"><output id="musicVolumeValue">5%</output></div>
   <button id="bShuf">🔀 Shuffle Characters</button>
   <div class="ctl"><button id="bGo">▶ START</button><button id="bClr">↺ CLEAR</button><button id="bSkip" class="sm">ข้ามไปจบ</button></div>
-  <button type="button" id="openLuckySetupBeforeRace" class="lucky-draw-trigger" style="margin:10px auto 0;display:block">✦ ตั้งค่า Lucky Draw ก่อนแข่ง</button>
   <div class="clock" id="clk">00:00:30</div>
   <div class="again hide" id="again"><div class="rm"><span>Remove winner from next race?</span><button id="rm" title="ตัดผู้ชนะออกจากรอบถัดไป">✕</button></div><button id="bAgain">Race Again?</button></div>
   <button id="trophy" class="hide" title="ผลการแข่ง">🏆</button>
@@ -224,6 +222,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
       <textarea id="names" placeholder="สมชาย&#10;สมหญิง&#10;มานี&#10;..."></textarea>
       <div class="hint" id="nh">0 รายชื่อ</div>
     </div>
+    <button type="button" id="openLuckySetupBeforeRace">✦ ตั้งค่า Lucky Draw ก่อนแข่ง</button>
     <button class="go" id="save">บันทึกและเข้าเกม</button>
   </div>
 </div>
@@ -1462,6 +1461,7 @@ let luckyDrawRecord=null;
 let luckySelectionMode='random';
 let luckySelectedRanks=[];
 let luckyPreRaceConfig=null;
+let luckyIsPreRaceSetup=false;
 const LUCKY_CONFIG_STORAGE_KEY='4am-duck-race-lucky-config';
 try{const savedLuckyConfig=localStorage.getItem(LUCKY_CONFIG_STORAGE_KEY);if(savedLuckyConfig)luckyPreRaceConfig=JSON.parse(savedLuckyConfig);}catch(_){luckyPreRaceConfig=null;}
 
@@ -1530,7 +1530,7 @@ function renderLuckyRankGrid(){
   const grid=$('luckyRankGrid');
   if(!grid)return;
   grid.innerHTML='';
-  const entries=S.fin?order():ducks.slice();
+  const entries=S.fin?order():(luckyIsPreRaceSetup?Array.from({length:getPendingRosterCount()},(_,i)=>({r:{label:String(i+1)}})):ducks.slice());
   const prizeCount=Number($('luckyPrizeInput').value)||0;
   $('luckyManualSummary').textContent='เลือกแล้ว '+luckySelectedRanks.length+'/'+prizeCount+' อันดับ · คลิกตัวเลขเพื่อเลือกหรือยกเลิก';
   entries.forEach((entry,index)=>{
@@ -1623,12 +1623,13 @@ async function loadLuckyHistory(){
   }catch(error){target.innerHTML='<div class="lucky-status">'+(error.message||'โหลดประวัติไม่สำเร็จ')+'</div>';}
 }
 async function openLuckySetup(isPreRace){
+  luckyIsPreRaceSetup=!!isPreRace;
   $('luckyM').classList.remove('hide');
   $('luckySetup').classList.remove('hide');$('luckyReveal').classList.add('hide');
   $('luckySendDiscord').disabled=true;$('luckySendDiscord').textContent='SEND TO DISCORD';$('luckyCopy').disabled=true;
   $('luckyResults').innerHTML='';
   $('luckySpotlight').innerHTML='<div><div class="prize">LUCKY WINNER</div><div class="name">รอผลการแข่งขัน</div><div class="rank">ระบบจะจับรางวัลหลังการแข่งขันจบเท่านั้น</div></div>';
-  const count=roster.length;
+  const count=isPreRace?getPendingRosterCount():roster.length;
   $('luckyEligible').textContent=count;
   $('luckyPrizeInput').max=count;
   if(luckyPreRaceConfig){
@@ -1673,6 +1674,10 @@ async function openLuckySetup(isPreRace){
     renderLuckyRankGrid();
     await loadLuckyHistory();
   }catch(error){$('luckyStatus').textContent=error.message||'ไม่สามารถเปิด Lucky Draw ได้';}
+}
+function getPendingRosterCount(){
+  if(mode==='num')return clampN($('cnt').value);
+  return Math.min(MAXN,getNames().length);
 }
 $('openLuckySetupBeforeRace').onclick=()=>{
   if(S.fin||S.st==='run'||S.st==='paused'||S.st==='celebrate'){
