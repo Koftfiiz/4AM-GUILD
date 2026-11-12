@@ -1541,9 +1541,7 @@ function renderLuckyRankGrid(){
     button.classList.toggle('selected',luckySelectedRanks.includes(rank));
     const number=document.createElement('span');
     number.textContent='#'+rank;
-    const name=document.createElement('small');
-    name.textContent=S.fin?String(entry.r.label??'Duck'):'รอผลการแข่งขัน';
-    button.append(number,name);
+    button.append(number);
     button.onclick=()=>{
       if(luckySelectedRanks.includes(rank)){
         luckySelectedRanks=luckySelectedRanks.filter(value=>value!==rank);
