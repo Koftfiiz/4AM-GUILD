@@ -6560,3 +6560,7 @@ body select:disabled {
 .portfolio-member-open{position:relative;z-index:1}
 .portfolio-member-cover-edit{z-index:20;pointer-events:auto}
 .bond-profile-modal{z-index:20000;pointer-events:auto}
+
+
+/* Date/time picker escapes scrollable panels and anchors to the clicked field. */
+.global-date-time-popover{position:fixed!important;z-index:10000!important;max-height:min(78vh,560px);overflow-y:auto;overscroll-behavior:contain}
