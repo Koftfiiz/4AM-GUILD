@@ -2039,6 +2039,21 @@ async function openPortfolioMemberCoverCrop(file) {
   image.onload=()=>{
     portfolioCropper=new Cropper(image,{aspectRatio:16/9,viewMode:1,dragMode:"move",autoCropArea:.92,responsive:true,restore:false,background:false,guides:true,center:true,cropBoxMovable:true,cropBoxResizable:true,toggleDragModeOnDblclick:false,ready(){$("portfolio-crop-zoom").value="1";$("portfolio-crop-zoom-value").textContent="100%";}});
   };
+  image.onload=()=>{
+    portfolioCropper=new Cropper(image,{
+      aspectRatio:16/9,viewMode:1,dragMode:"move",autoCropArea:.92,responsive:true,
+      restore:false,background:false,guides:true,center:true,cropBoxMovable:true,cropBoxResizable:true,
+      toggleDragModeOnDblclick:false,
+      ready(){
+        const zoom=$("portfolio-crop-zoom");
+        if(zoom)zoom.value="1";
+        const zoomValue=$("portfolio-crop-zoom-value");
+        if(zoomValue)zoomValue.textContent="100%";
+      }
+    });
+  };
+  // The crop dialog is a global overlay outside the portfolio page; explicitly reveal it.
+  $("portfolio-crop-modal")?.classList.remove("hidden");
   image.src=portfolioCropSourceUrl;
 }
 
