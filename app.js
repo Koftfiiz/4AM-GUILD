@@ -201,6 +201,9 @@ function registerRolePreviewEvents() {
       event.stopImmediatePropagation();
       const bannerText = $("role-preview-banner-text");
       if (bannerText) bannerText.textContent = "โหมด " + rolePreviewRole + " · Preview เท่านั้น ไม่สามารถดำเนินการหรือบันทึกข้อมูลได้";
+      if (event.target.closest("[data-war-delete],[data-war-signup-delete]")) {
+        alert("ขณะนี้กำลังใช้งาน Role Preview จึงไม่สามารถลบข้อมูลจริงได้ กรุณากดออกจาก Preview แล้วลองอีกครั้ง");
+      }
     }
   }, true);
 
@@ -3334,9 +3337,19 @@ async function confirmWarDraft(){
   finally{if(button){button.disabled=false;button.textContent="ยืนยันการสร้างตี้วอร์";}}
 }
 async function deleteWarEvent(eventId,button){
-  if(!isManagement())return;
+  if(isRolePreviewActive()){
+    alert("ขณะนี้กำลังใช้งาน Role Preview จึงไม่สามารถลบข้อมูลจริงได้ กรุณากดออกจาก Preview แล้วลองอีกครั้ง");
+    return;
+  }
+  if(!isManagement()){
+    alert("บัญชีนี้ไม่มีสิทธิ์ลบ War Event");
+    return;
+  }
   const event=allWarEvents.find(item=>item.id===eventId);
-  if(!event)return;
+  if(!event){
+    alert("ไม่พบ War Event นี้ในรายการปัจจุบัน กรุณารีเฟรชหน้าแล้วลองอีกครั้ง");
+    return;
+  }
   if(!window.confirm(`ยืนยันลบวอร์ "${event.event_name}" (${getWarEventStage(event).toUpperCase()}) ใช่หรือไม่?\\n\\nการลบนี้จะลบรายการวอร์ ปาร์ตี้ และรายชื่อสมาชิกที่ผูกกับวอร์นี้ทั้งหมด ไม่สามารถกู้คืนได้`))return;
   if(button){button.disabled=true;button.textContent="กำลังลบ...";}
   try{
@@ -4066,7 +4079,15 @@ async function startEditWarSignupEvent(id){
   $("war-signup-create-form").scrollIntoView({behavior:"smooth",block:"center"});
 }
 async function deleteWarSignupEvent(id,button){
-  if(!isManagement()||!window.confirm("ยืนยันลบ Event ลงชื่อวอร์นี้?"))return;
+  if(isRolePreviewActive()){
+    alert("ขณะนี้กำลังใช้งาน Role Preview จึงไม่สามารถลบข้อมูลจริงได้ กรุณากดออกจาก Preview แล้วลองอีกครั้ง");
+    return;
+  }
+  if(!isManagement()){
+    alert("บัญชีนี้ไม่มีสิทธิ์ลบ Event ลงชื่อวอร์");
+    return;
+  }
+  if(!window.confirm("ยืนยันลบ Event ลงชื่อวอร์นี้?"))return;
   if(button){button.disabled=true;button.textContent="กำลังลบ...";}
   try{
     const {error}=await supabaseClient.from("war_events").delete().eq("id",id);
@@ -4156,7 +4177,6 @@ function registerWarRecordAndAttendanceEvents(){
     if(join)joinWarSignup(join.dataset.warSignupJoin,join);
     if(discord)sendWarSignupEventToDiscord(discord.dataset.warSignupDiscord,discord);
     if(edit)startEditWarSignupEvent(edit.dataset.warSignupEdit);
-    if(del)deleteWarSignupEvent(del.dataset.warSignupDelete,del);
     if(evidence)exportWarSignupEvidence(evidence.dataset.warSignupEvidence,evidence);
   });
   $("war-record-cancel-edit")?.addEventListener("click",resetWarRecordEditor);
@@ -4203,8 +4223,6 @@ function registerWarCreationEvents(){
  document.body.addEventListener("click",e=>{if(e.target.closest("[data-war-modal-close]")){closeWarAssignmentModal();return;}const tab=e.target.closest("[data-war-modal-tab]");if(tab){const modal=$("war-assignment-modal"),skillsPanel=$("war-modal-skills-panel"),membersPanel=$("war-modal-members-panel"),active=tab.dataset.warModalTab;if(modal)modal.dataset.activeTab=active;modal?.querySelectorAll("[data-war-modal-tab]").forEach(b=>{const selected=b===tab;b.classList.toggle("is-active",selected);b.setAttribute("aria-selected",String(selected));});if(skillsPanel)skillsPanel.hidden=active!=="skills";if(membersPanel)membersPanel.hidden=active!=="members";if(active==="members")renderWarAssignmentModalMembers();return;}const uploadToggle=e.target.closest("[data-war-skill-upload-toggle]");if(uploadToggle){const form=$("war-member-skill-create-form");if(form)form.hidden=!form.hidden;return;}const add=e.target.closest("[data-war-modal-assign]"),remove=e.target.closest("[data-war-modal-remove]"),saveSkills=e.target.closest("[data-war-save-member-skills]"),cls=e.target.closest("[data-war-modal-class]"),reserveTab=e.target.closest("[data-war-modal-reserve]");if(reserveTab){const modal=$("war-assignment-modal");if(modal){modal.dataset.reserveOnly=modal.dataset.reserveOnly==="true"?"false":"true";reserveTab.classList.toggle("is-active",modal.dataset.reserveOnly==="true");modal.querySelector("[data-war-modal-class=\"all\"]")?.classList.toggle("is-active",modal.dataset.reserveOnly!=="true");renderWarAssignmentModalMembers();}return;}if(saveSkills){saveWarMemberSkills(saveSkills.dataset.warSaveMemberSkills,saveSkills);return;}if(add){assignWarMemberToSlot(add.dataset.warModalAssign);return;}if(remove&&warAssignmentModalSlot?.assignmentId){removeWarPartyMember(warAssignmentModalSlot.assignmentId,remove);return;}if(cls){const modal=$("war-assignment-modal");if(modal)modal.dataset.classFilter=cls.dataset.warModalClass||"all";modal?.querySelectorAll("[data-war-modal-class]").forEach(b=>b.classList.toggle("is-active",b===cls));renderWarAssignmentModalMembers();}});
  document.body.addEventListener("input",e=>{if(e.target.id==="war-modal-member-search")renderWarAssignmentModalMembers();});
   $("war-events")?.addEventListener("click",event=>{
-    const deleteButton=event.target.closest("[data-war-delete]");
-    if(deleteButton){deleteWarEvent(deleteButton.dataset.warDelete,deleteButton);return;}
     const button=event.target.closest("[data-war-open]");
     if(!button||!isManagement())return;
     renderWarLayout(button.dataset.warOpen);
@@ -6391,6 +6409,23 @@ function registerAppEventListeners() {
   });
 
   registerRolePreviewEvents();
+
+  // Stable delegated handlers for destructive War Event actions.
+  // These remain active even when the event cards are re-rendered.
+  document.body.addEventListener("click", event => {
+    const warDelete = event.target.closest("[data-war-delete]");
+    if (warDelete) {
+      event.preventDefault();
+      void deleteWarEvent(warDelete.dataset.warDelete, warDelete);
+      return;
+    }
+    const signupDelete = event.target.closest("[data-war-signup-delete]");
+    if (signupDelete) {
+      event.preventDefault();
+      void deleteWarSignupEvent(signupDelete.dataset.warSignupDelete, signupDelete);
+    }
+  });
+
   registerPortfolioEvents();
   registerSystemRoleEvents();
   initializeGlobalDateTimePickers();
