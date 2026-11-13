@@ -1833,14 +1833,14 @@ async function uploadMemberAvatar(file) {
 async function loadPortfolios() {
   const extended = `
     id, member_id, title, description, game_class, created_at, updated_at,
-    portfolio_images ( id, image_url, cover_image_url, crop_settings, image_type, caption, created_at, sort_order ),
+    portfolio_images ( id, image_url, cover_image_url, crop_settings, image_type, section_key, caption, created_at, sort_order ),
     portfolio_reviews ( status, reason, reviewer_user_id, reviewed_at )
   `;
   let { data, error } = await supabaseClient.from("portfolios").select(extended).order("created_at", { ascending: false });
   if (error && /cover_image_url|crop_settings|column/i.test(error.message || "")) {
     ({ data, error } = await supabaseClient.from("portfolios").select(`
       id, member_id, title, description, game_class, created_at, updated_at,
-      portfolio_images ( id, image_url, image_type, caption, created_at, sort_order ),
+      portfolio_images ( id, image_url, image_type, section_key, caption, created_at, sort_order ),
       portfolio_reviews ( status, reason, reviewer_user_id, reviewed_at )
     `).order("created_at", { ascending: false }));
   }
@@ -1900,7 +1900,7 @@ function renderPortfolioSelectedFiles() {
   const zones = [{key:"stats",label:"Stats ตัวละคร",hint:"ค่าสถานะและรายละเอียดตัวละคร"},{key:"inner_power",label:"กำลังภายใน",hint:"ภาพข้อมูลกำลังภายใน"},{key:"affixes",label:"ออฟสร้าง",hint:"ภาพออฟและการสร้างตัวละคร"}];
   container.innerHTML = zones.map(zone => {
     const items = files.map((item,index)=>({item,index})).filter(x=>(x.item.sectionKey||"stats")===zone.key);
-    const cards = items.map(({item,index}) => '<article class="portfolio-preview-item" draggable="true" data-index="' + index + '" data-section-key="' + zone.key + '"><img src="' + escapeHTML(item.preview) + '" alt="Preview ' + (index+1) + '"><div class="portfolio-preview-actions"><button type="button" class="portfolio-cover-button ' + (index===0?"is-cover":"") + '" data-cover-index="' + index + '">' + (index===0?"ภาพหน้าปก":"ตั้งเป็นหน้าปก") + '</button>' + (index===0?'<button type="button" class="portfolio-crop-open" data-crop-index="0">ปรับหน้าปก</button>':"") + '<button type="button" class="portfolio-remove-image" data-remove-index="' + index + '" aria-label="ลบรูป">×</button></div><small>ลากเพื่อจัดลำดับ · ' + (index+1) + '</small></article>').join("");
+    const cards = items.map(({item,index}) => '<article class="portfolio-preview-item" draggable="true" data-index="' + index + '" data-section-key="' + zone.key + '"><img src="' + escapeHTML(item.preview) + '" alt="Preview ' + (index+1) + '"><div class="portfolio-preview-actions"><button type="button" class="portfolio-cover-button ' + (index===0?"is-cover":"") + '" data-cover-index="' + index + '">' + (index===0?"ภาพหน้าปก":"ตั้งเป็นหน้าปก") + '</button>' + (index===0?'<button type="button" class="portfolio-crop-open" data-crop-index="0">ปรับหน้าปก</button>':"") + '<label class="portfolio-image-caption">รายละเอียดรูป<input type="text" maxlength="240" data-image-caption-index="' + index + '" value="' + escapeHTML(item.caption||"") + '" placeholder="อธิบายรูปนี้..."></label><button type="button" class="portfolio-remove-image" data-remove-index="' + index + '" aria-label="ลบรูป">×</button></div><small>ลากเพื่อจัดลำดับ · ' + (index+1) + '</small></article>').join("");
     return '<section class="portfolio-upload-zone"><div class="portfolio-upload-zone-heading"><div><h4>' + zone.label + '</h4><p>' + zone.hint + '</p></div><span>' + items.length + ' รูป</span></div><div class="portfolio-upload-zone-grid">' + (cards || '<p class="portfolio-upload-empty">ยังไม่มีรูปในหมวดนี้</p>') + '</div></section>';
   }).join("");
 }
@@ -2566,6 +2566,10 @@ function registerPortfolioEvents() {
     window.portfolioDraftFiles=[...existing,...chosen.map(file=>({file,preview:URL.createObjectURL(file),existing:false,sectionKey,caption:"",cropBlob:null,cropSettings:null}))];
     renderPortfolioSelectedFiles();event.target.value="";
   }));
+  $("portfolio-image-preview")?.addEventListener("input",event=>{
+    const field=event.target.closest("[data-image-caption-index]");if(!field)return;
+    const item=(window.portfolioDraftFiles||[])[Number(field.dataset.imageCaptionIndex)];if(item)item.caption=field.value;
+  });
   $("portfolio-image-preview")?.addEventListener("click", (event) => {
     const crop = event.target.closest("[data-crop-index]");
     const cover = event.target.closest("[data-cover-index]");
