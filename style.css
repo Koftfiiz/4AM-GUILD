@@ -4896,7 +4896,7 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 .member-directory-card:hover{transform:translateY(-3px);border-color:rgba(216,176,106,.42);background:linear-gradient(135deg,rgba(178,32,46,.10),rgba(255,255,255,.035))}
 .member-directory-card .member-guild-position-badge{display:inline-flex;align-items:center;width:max-content;max-width:100%;margin-top:5px;padding:4px 9px;border:1px solid rgba(216,176,106,.28);border-radius:999px;background:rgba(216,176,106,.09);color:#f0d29c;font-size: 14px;font-weight:800}
 .member-directory-card .member-secondary-name{display:block;margin-top:5px;color:var(--muted);font-size: 14px}
-.member-directory-card .member-record-status{position:absolute;top:12px;right:12px;padding:3px 7px;border:1px solid rgba(101,114,242,.28);border-radius:999px;background:rgba(101,114,242,.1);color:#b9c0ff;font-size: 14px;font-weight:800;letter-spacing:.04em}
+.member-directory-card .member-record-status{position:static;display:inline-flex;align-items:center;width:max-content;max-width:100%;margin:0 0 7px;padding:3px 8px;border:1px solid rgba(101,114,242,.32);border-radius:999px;background:rgba(101,114,242,.1);color:#b9c0ff;font-size:13px;font-weight:800;letter-spacing:.02em}
 .member-directory-card .member-info{min-width:0}
 .member-directory-card .member-game-uid{margin-top:8px}
 .member-directory-card .member-game-uid strong{overflow-wrap:anywhere}
