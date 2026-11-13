@@ -6420,3 +6420,6 @@ body select:disabled {
 .portfolio-upload-zone-heading>span{color:var(--muted);font-size:12px}
 .portfolio-upload-zone-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:10px}
 @media(max-width:650px){.portfolio-build-upload-pickers{grid-template-columns:1fr}.portfolio-build-upload-pickers .portfolio-file-picker{min-height:82px}.portfolio-upload-zone-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.portfolio-image-caption{display:grid;gap:5px;margin:7px 0;color:var(--muted);font-size:11px;text-align:left}
+.portfolio-image-caption input{width:100%;min-width:0;padding:7px 8px;border:1px solid rgba(205,160,120,.25);border-radius:5px;background:#10090c;color:#f3ebe6;font:inherit;font-size:12px}
