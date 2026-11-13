@@ -8,13 +8,14 @@
   let submissions = [];
   let images = [];
   let requests = [];
+  let editPermissions = [];
   let busy = false;
 
   const $ = (id) => document.getElementById(id);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const management = () => typeof isManagement === "function" && isManagement();
   const memberName = (id) => {
-    const member = (window.allMembers || []).find(m => m.user_id === id);
+    const member = (allMembers || []).find(m => m.user_id === id);
     return member && typeof getMemberName === "function" ? getMemberName(member) : (member?.character_name || id);
   };
   const dateLabel = (value) => value ? new Date(value).toLocaleString("th-TH",{dateStyle:"medium",timeStyle:"short"}) : "—";
@@ -78,23 +79,25 @@
   }
 
   async function loadData() {
-    const [roundResult, subResult, imageResult, requestResult] = await Promise.all([
+    const [roundResult, subResult, imageResult, requestResult, permissionResult] = await Promise.all([
       supabaseClient.from("portfolio_update_rounds").select("*").order("created_at",{ascending:false}),
       supabaseClient.from("portfolio_update_submissions").select("*"),
       supabaseClient.from("portfolio_update_images").select("*").order("sort_order"),
-      supabaseClient.from("portfolio_update_edit_requests").select("*").order("created_at",{ascending:false})
+      supabaseClient.from("portfolio_update_edit_requests").select("*").order("created_at",{ascending:false}),
+      supabaseClient.from("portfolio_update_edit_permissions").select("*").eq("member_id",currentUser.id)
     ]);
-    const failure = [roundResult,subResult,imageResult,requestResult].find(r=>r.error);
+    const failure = [roundResult,subResult,imageResult,requestResult,permissionResult].find(r=>r.error);
     if (failure) throw failure.error;
     rounds = roundResult.data || [];
     submissions = subResult.data || [];
     images = imageResult.data || [];
     requests = requestResult.data || [];
+    editPermissions = permissionResult.data || [];
     if (!selectedRoundId || !rounds.some(r=>r.id===selectedRoundId)) selectedRoundId = rounds[0]?.id || "";
   }
 
   function roundStats(roundId) {
-    const rows = (window.allMembers || []).filter(m=>m.active !== false);
+    const rows = (allMembers || []).filter(m=>m.active !== false);
     let complete=0,partial=0,empty=0;
     const detail=rows.map(member=>{
       const cats=CATEGORIES.map(category=>{
@@ -120,13 +123,13 @@
     injectStyles();
     const selected=rounds.find(r=>r.id===selectedRoundId);
     const stats=selected?roundStats(selected.id):null;
-    const own=window.currentUser?.id;
-    const ownMember=(window.allMembers||[]).find(m=>m.user_id===own);
+    const own=currentUser?.id;
+    const ownMember=(allMembers||[]).find(m=>m.user_id===own);
     const ownSubs=selected?CATEGORIES.map(category=>{
       const sub=submissions.find(s=>s.round_id===selected.id&&s.member_id===own&&s.category_key===category.key);
       return {category,sub,rows:sub?images.filter(i=>i.submission_id===sub.id):[]};
     }):[];
-    const editable=selected&&(isRoundEditable(selected)||!!window.portfolioTrackerOwnPermission);
+    const editable=selected&&(isRoundEditable(selected)||editPermissions.some(p=>p.round_id===selected.id&&new Date(p.expires_at).getTime()>Date.now()));
     const request=selected?requests.find(r=>r.round_id===selected.id&&r.member_id===own&&r.status==="pending"):null;
 
     root.innerHTML=`
@@ -275,7 +278,7 @@
   }
 
   async function loadPortfolioTracker() {
-    if(!window.currentUser||!window.currentMember)return;
+    if(!currentUser||!currentMember)return;
     try{await loadData();render();}
     catch(error){
       const root=ensureRoot();if(!root)return;injectStyles();
@@ -286,5 +289,5 @@
 
   window.loadPortfolioTracker=loadPortfolioTracker;
   window.addEventListener("4am:app-ready",loadPortfolioTracker);
-  if(window.currentUser&&window.currentMember)loadPortfolioTracker();
+  if(currentUser&&currentMember)loadPortfolioTracker();
 })();
