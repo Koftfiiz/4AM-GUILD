@@ -991,11 +991,12 @@ function drawDuck(k,x,y,s,t){
   const w=c.measureText(txt).width;
   const bw=Math.max(s*.32,w+s*.22),bh=Math.max(fs*1.5,s*.2);
   const tagY=yb-s*1.22;
+  // Keep the complete label inside the canvas where possible; long names grow the label, not the font.
+  const tagX=bw+12>W?W/2:Math.max(bw/2+6,Math.min(W-bw/2-6,tx));
   c.save();c.shadowColor='rgba(0,0,0,.28)';c.shadowBlur=Math.max(2,s*.045);c.shadowOffsetY=Math.max(1,s*.018);
   c.fillStyle='#fff';c.strokeStyle='#5a4a2a';c.lineWidth=Math.max(1,s*.018);
-  c.beginPath();c.roundRect(tx-bw/2,tagY-bh/2,bw,bh,bh/2);c.fill();c.stroke();
+  c.beginPath();c.roundRect(tagX-bw/2,tagY-bh/2,bw,bh,bh/2);c.fill();c.stroke();
   // Keep one consistent font size for every duck. Expand the label background for long names.
-  const tagX=Math.max(bw/2+6,Math.min(W-bw/2-6,tx));
   c.restore();c.fillStyle='#111';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,tagX,tagY+fs*.05);
 }
 
