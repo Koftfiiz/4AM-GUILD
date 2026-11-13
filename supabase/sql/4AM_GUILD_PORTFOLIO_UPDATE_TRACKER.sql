@@ -206,3 +206,7 @@ for all to authenticated using (public.is_portfolio_management()) with check (pu
 
 grant execute on function public.is_portfolio_management() to authenticated;
 grant execute on function public.can_edit_portfolio_update(uuid) to authenticated;
+
+-- Build portfolios store each uploaded image in a dedicated review section.
+alter table public.portfolio_images add column if not exists section_key text not null default 'stats';
+comment on column public.portfolio_images.section_key is 'Build image section: stats, inner_power, or affixes. Legacy images default to stats.';
