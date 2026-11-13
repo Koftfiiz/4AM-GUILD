@@ -6472,12 +6472,13 @@ body select:disabled {
 /* Portfolio delete badge: iPhone-style minus at the top-right of the cover */
 .portfolio-card{position:relative;overflow:visible}
 .portfolio-iphone-delete{
-  position:absolute;top:10px;right:10px;left:auto;z-index:20;
+  position:absolute;top:-15px;right:-15px;left:auto;z-index:50;
   display:grid;place-items:center;width:34px;height:34px;min-width:34px;
-  padding:0;border:2px solid rgba(255,255,255,.9);border-radius:50%;
-  background:#e53945;color:#fff;font:600 27px/1 Arial,sans-serif;
-  box-shadow:0 3px 12px rgba(0,0,0,.6);cursor:pointer;
-  opacity:1;visibility:visible;pointer-events:auto;
+  padding:0;border:2px solid rgba(255,255,255,.96);border-radius:50%;
+  background:#e32636;color:#fff;font:700 27px/1 Arial,sans-serif;
+  box-shadow:0 4px 14px rgba(0,0,0,.72),0 0 0 1px rgba(227,38,54,.28);
+  cursor:pointer;opacity:1;visibility:visible;pointer-events:auto;
+  transform:translateZ(0);
 }
 .portfolio-iphone-delete:hover{background:#ff5965;transform:scale(1.08)}
 .portfolio-iphone-delete.is-confirming{background:#ff5965;outline:3px solid rgba(255,89,101,.3);outline-offset:2px}
