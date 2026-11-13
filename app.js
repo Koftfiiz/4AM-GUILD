@@ -1905,9 +1905,9 @@ function renderPortfolioSelectedFiles() {
       <img src="${item.preview}" alt="Preview ${index + 1}">
       <div class="portfolio-preview-actions">
         <button type="button" class="portfolio-cover-button ${index === 0 ? "is-cover" : ""}" data-cover-index="${index}">
-        ${index === 0 ? '<button type="button" class="portfolio-crop-open" data-crop-index="0">ปรับหน้าปก</button>' : ""}
           ${index === 0 ? "ภาพหน้าปก" : "ตั้งเป็นหน้าปก"}
         </button>
+        ${index === 0 ? '<button type="button" class="portfolio-crop-open" data-crop-index="0">ปรับหน้าปก</button>' : ""}
         <button type="button" class="portfolio-remove-image" data-remove-index="${index}" aria-label="ลบรูป">×</button>
       </div>
       <small>ลากเพื่อจัดลำดับ · ${index + 1}</small>
@@ -2323,7 +2323,7 @@ async function handlePortfolioCreate(event) {
 
       const keptIds = new Set(files.filter((item) => item.existing).map((item) => item.imageId));
       const removedImages = (window.portfolioOriginalImages || []).filter((item) => !keptIds.has(item.id));
-      const removedPaths = removedImages.map((item) => item.path).filter((path) => path && !/^https?:\/\//i.test(path));
+      const removedPaths = removedImages.flatMap((item) => [item.path, item.coverPath]).filter((path) => path && !/^https?:\/\//i.test(path));
       if (removedPaths.length) {
         const { error } = await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove(removedPaths);
         if (error) throw error;
