@@ -2010,6 +2010,7 @@ async function renderPortfolioMemberDirectory() {
   const container=$("portfolio-member-grid"); if(!container)return;
   const search=String($("portfolio-member-search")?.value||"").trim().toLowerCase();
   const members=(allMembers||[]).filter(m=>m.active!==false)
+    .filter(m=>portfolioClassFilter==="all"||getMemberClass(m).toLowerCase()===portfolioClassFilter.toLowerCase())
     .filter(m=>!search||[getMemberName(m),m.nickname,m.discord_name,getMemberClass(m)].filter(Boolean).join(" ").toLowerCase().includes(search))
     .sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));
   if(!members.length){showEmpty(container,"ไม่พบสมาชิก","ลองค้นหาด้วยชื่อตัวละคร ชื่อเล่น หรือคลาสอาชีพ");return;}
