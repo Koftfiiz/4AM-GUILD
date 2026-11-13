@@ -6550,3 +6550,10 @@ body select:disabled {
     min-height:220px;
   }
 }
+
+
+/* Ensure the owner's pencil control is always above the clickable member card. */
+.portfolio-member-card{isolation:isolate}
+.portfolio-member-open{position:relative;z-index:1}
+.portfolio-member-cover-edit{z-index:20;pointer-events:auto}
+.bond-profile-modal{z-index:20000;pointer-events:auto}
