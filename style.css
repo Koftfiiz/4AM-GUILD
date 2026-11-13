@@ -6520,3 +6520,33 @@ body select:disabled {
 @media(max-width:1000px){.portfolio-member-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){.portfolio-member-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.bond-profile-cover-preview img{width:104px}}
 @media(max-width:380px){.portfolio-member-grid{grid-template-columns:1fr}}
+
+
+/* Portfolio member cards: taller cover-first layout */
+.portfolio-member-cover{
+  height:250px;
+  min-height:250px;
+  max-height:none;
+  aspect-ratio:auto;
+}
+.portfolio-member-card-content{
+  min-height:160px;
+  box-sizing:border-box;
+}
+@media(max-width:650px){
+  .portfolio-member-cover{
+    height:190px;
+    min-height:190px;
+    max-height:none;
+    aspect-ratio:auto;
+  }
+  .portfolio-member-card-content{
+    min-height:150px;
+  }
+}
+@media(max-width:380px){
+  .portfolio-member-cover{
+    height:220px;
+    min-height:220px;
+  }
+}
