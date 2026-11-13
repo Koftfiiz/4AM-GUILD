@@ -538,6 +538,7 @@ async function loadApplication() {
     openGuildPage(getLastGuildPage());
 
     await handleDiscordCallback();
+    window.dispatchEvent(new Event("4am:app-ready"));
 
   } catch (error) {
     console.error("Application loading error:", error);
