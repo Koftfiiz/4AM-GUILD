@@ -5122,6 +5122,35 @@ async function markAllFeedbackNotificationsRead() {
   await loadFeedbackNotifications();
 }
 
+async function clearAllFeedbackNotifications() {
+  if (!currentUser || !feedbackNotificationsCache.length) return;
+  const confirmed = confirm("ต้องการล้างการแจ้งเตือนทั้งหมดใช่หรือไม่?\\nรายการแจ้งเตือนของคุณจะถูกลบและไม่สามารถกู้คืนได้");
+  if (!confirmed) return;
+  const button = $("feedback-notification-clear-all");
+  if (button) {
+    button.disabled = true;
+    button.textContent = "กำลังล้าง...";
+  }
+  const { error } = await supabaseClient.from("guild_notifications")
+    .delete()
+    .eq("recipient_user_id", currentUser.id);
+  if (error) {
+    console.error("Clear guild notifications:", error);
+    alert("ไม่สามารถล้างการแจ้งเตือนได้: " + error.message);
+    if (button) {
+      button.disabled = false;
+      button.textContent = "ล้างทั้งหมด";
+    }
+    return;
+  }
+  feedbackNotificationsCache = [];
+  renderFeedbackNotifications();
+  if (button) {
+    button.disabled = false;
+    button.textContent = "ล้างทั้งหมด";
+  }
+}
+
 function subscribeToFeedbackRealtime() {
   if (feedbackRealtimeChannel) {
     supabaseClient.removeChannel(feedbackRealtimeChannel);
@@ -5158,6 +5187,7 @@ function registerFeedbackEvents() {
     if (open) await loadFeedbackNotifications();
   });
   $("feedback-notification-read-all")?.addEventListener("click", markAllFeedbackNotificationsRead);
+  $("feedback-notification-clear-all")?.addEventListener("click", clearAllFeedbackNotifications);
   $("feedback-notification-list")?.addEventListener("click", async event => {
     const item = event.target.closest("[data-feedback-notification]");
     if (!item) return;
