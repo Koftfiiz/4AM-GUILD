@@ -1897,11 +1897,42 @@ function renderPortfolioSelectedFiles() {
   const container = $("portfolio-image-preview");
   const files = window.portfolioDraftFiles || [];
   if (!container) return;
-  const zones = [{key:"stats",label:"Stats ตัวละคร",hint:"ค่าสถานะและรายละเอียดตัวละคร"},{key:"inner_power",label:"กำลังภายใน",hint:"ภาพข้อมูลกำลังภายใน"},{key:"affixes",label:"ออฟสร้าง",hint:"ภาพออฟและการสร้างตัวละคร"}];
-  container.innerHTML = zones.map(zone => {
-    const items = files.map((item,index)=>({item,index})).filter(x=>(x.item.sectionKey||"stats")===zone.key);
-    const cards = items.map(({item,index}) => '<article class="portfolio-preview-item" draggable="true" data-index="' + index + '" data-section-key="' + zone.key + '"><img src="' + escapeHTML(item.preview) + '" alt="Preview ' + (index+1) + '"><div class="portfolio-preview-actions"><button type="button" class="portfolio-cover-button ' + (index===0?"is-cover":"") + '" data-cover-index="' + index + '">' + (index===0?"ภาพหน้าปก":"ตั้งเป็นหน้าปก") + '</button>' + (index===0?'<button type="button" class="portfolio-crop-open" data-crop-index="0">ปรับหน้าปก</button>':"") + '<label class="portfolio-image-caption">รายละเอียดรูป<input type="text" maxlength="240" data-image-caption-index="' + index + '" value="' + escapeHTML(item.caption||"") + '" placeholder="อธิบายรูปนี้..."></label><button type="button" class="portfolio-remove-image" data-remove-index="' + index + '" aria-label="ลบรูป">×</button></div><small>ลากเพื่อจัดลำดับ · ' + (index+1) + '</small></article>').join("");
-    return '<section class="portfolio-upload-zone"><div class="portfolio-upload-zone-heading"><div><h4>' + zone.label + '</h4><p>' + zone.hint + '</p></div><span>' + items.length + ' รูป</span></div><div class="portfolio-upload-zone-grid">' + (cards || '<p class="portfolio-upload-empty">ยังไม่มีรูปในหมวดนี้</p>') + '</div></section>';
+  const zones = [
+    { key: "stats", inputId: "portfolio-image-input-stats", label: "Stats ตัวละคร", hint: "ค่าสถานะและรายละเอียดตัวละคร" },
+    { key: "inner_power", inputId: "portfolio-image-input-inner", label: "กำลังภายใน", hint: "ภาพข้อมูลกำลังภายใน" },
+    { key: "affixes", inputId: "portfolio-image-input-affixes", label: "ออฟสร้าง", hint: "ภาพออฟสร้าง" }
+  ];
+  container.innerHTML = zones.map((zone, zoneIndex) => {
+    const items = files.map((item, index) => ({ item, index })).filter(entry => (entry.item.sectionKey || "stats") === zone.key);
+    const cards = items.map(({ item, index }) => `
+      <article class="portfolio-preview-item" draggable="true" data-index="${index}" data-section-key="${zone.key}">
+        <div class="portfolio-preview-image-wrap">
+          <img src="${escapeHTML(item.preview)}" alt="${escapeHTML(zone.label)} รูปที่ ${index + 1}">
+          <span class="portfolio-preview-number">${index + 1}</span>
+          <button type="button" class="portfolio-remove-image" data-remove-index="${index}" aria-label="ลบรูปนี้" title="ลบรูปนี้">−</button>
+        </div>
+        <div class="portfolio-preview-controls">
+          <button type="button" class="portfolio-cover-button ${index === 0 ? "is-cover" : ""}" data-cover-index="${index}">${index === 0 ? "ภาพหน้าปก" : "ตั้งเป็นหน้าปก"}</button>
+          ${index === 0 ? '<button type="button" class="portfolio-crop-open" data-crop-index="0">ปรับหน้าปก</button>' : ""}
+          <label class="portfolio-image-caption">รายละเอียดรูป
+            <input type="text" maxlength="240" data-image-caption-index="${index}" value="${escapeHTML(item.caption || "")}" placeholder="อธิบายรูปนี้...">
+          </label>
+        </div>
+      </article>`).join("");
+    return `
+      <section class="portfolio-upload-zone portfolio-upload-zone-${zone.key}">
+        <header class="portfolio-upload-zone-heading">
+          <div><span class="portfolio-upload-zone-index">${String(zoneIndex + 1).padStart(2, "0")}</span><div><h4>${zone.label}</h4><p>${zone.hint}</p></div></div>
+          <span class="portfolio-upload-zone-count">${items.length} รูป</span>
+        </header>
+        <div class="portfolio-upload-zone-grid">
+          ${cards}
+          <label class="portfolio-upload-add-tile" for="${zone.inputId}">
+            <span class="portfolio-upload-add-icon">＋</span><strong>${zone.key === "affixes" ? "เพิ่มรูปออฟสร้าง" : "เพิ่มรูป"}</strong>
+            <small>เลือกได้หลายรูป</small>
+          </label>
+        </div>
+      </section>`;
   }).join("");
 }
 let portfolioCropper = null;
