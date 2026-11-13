@@ -2045,6 +2045,8 @@ async function savePortfolioCrop() {
       if(updateError){await supabaseClient.storage.from(AVATAR_BUCKET).remove([path]);throw updateError;}
       allMembers=allMembers.map(m=>m.user_id===currentUser.id?{...m,member_cover_url:path,member_cover_crop_settings:cropSettings}:m);
       if(currentMember?.user_id===currentUser.id){currentMember.member_cover_url=path;currentMember.member_cover_crop_settings=cropSettings;}
+       const bondCoverPreview=$("bond-profile-current-cover");
+       if(bondCoverPreview)bondCoverPreview.src=await resolveAvatarUrl({...allMembers.find(m=>m.user_id===currentUser.id),avatar_url:path});
       if(oldPath&&!/^https?:\/\//i.test(oldPath))await supabaseClient.storage.from(AVATAR_BUCKET).remove([oldPath]);
       closePortfolioCropEditor();
       await renderPortfolioMemberDirectory();
