@@ -1186,6 +1186,7 @@ function renderMembers(members) {
             loading="lazy" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'">
         </div>
         <div class="member-info">
+          ${member.is_manual_record ? '<span class="member-record-status">รายชื่อ Manual</span>' : ""}
           <div class="member-details">
             <h4>${escapeHTML(name)}</h4>
             <span class="member-guild-position-badge">${escapeHTML(guildPosition)}</span>
@@ -1201,7 +1202,6 @@ function renderMembers(members) {
           ${classInfo?.iconPath ? `<img class="member-class-icon" src="${classInfo.iconPath}" alt="${escapeHTML(className)}" loading="lazy" onerror="this.style.display='none'">` : ""}
           <span>${escapeHTML(className)}</span>
         </div>
-        ${member.is_manual_record ? '<span class="member-record-status">รายชื่อ Manual</span>' : ""}
       </article>
     `;
   }).join("");
