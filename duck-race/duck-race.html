@@ -1563,7 +1563,9 @@ function renderLuckyRankGrid(){
 function renderLuckyResults(){
   const list=$('luckyResults');
   list.innerHTML='';
-  const count=luckyDrawMode==='all'?luckyDrawWinners.length:luckyDrawRevealed;
+  // Always derive the reveal behavior from the saved draw when it exists.
+  const activeRevealMode=luckyDrawRecord?.reveal_mode||luckyDrawMode;
+  const count=activeRevealMode==='all'?luckyDrawWinners.length:Math.min(luckyDrawRevealed,luckyDrawWinners.length);
   $('luckySendDiscord').disabled=count<luckyDrawWinners.length;
   $('luckyCopy').disabled=count<luckyDrawWinners.length;
   $('luckySendDiscord').textContent=count<luckyDrawWinners.length?'เปิดเผยผลครบก่อนส่ง Discord':'SEND TO DISCORD';
@@ -1577,8 +1579,8 @@ function renderLuckyResults(){
   $('luckyRevealed').textContent=count+'/'+luckyDrawWinners.length;
   $('luckyProgressBar').style.width=(luckyDrawWinners.length?count/luckyDrawWinners.length*100:0)+'%';
   $('luckyNext').textContent='ประกาศผลรางวัล';
-  $('luckyNext').disabled=(luckyDrawMode!=='sequential'||count>=luckyDrawWinners.length);
-  $('luckyNext').classList.toggle('hide',luckyDrawMode!=='sequential'||count>=luckyDrawWinners.length);
+  $('luckyNext').disabled=(activeRevealMode!=='sequential'||!luckyDrawWinners.length||count>=luckyDrawWinners.length);
+  $('luckyNext').classList.toggle('hide',activeRevealMode!=='sequential'||!luckyDrawWinners.length||count>=luckyDrawWinners.length);
   if(count){
     const w=luckyDrawWinners[count-1];
     $('luckySpotlight').innerHTML='';
@@ -1779,10 +1781,24 @@ $('luckyStart').onclick=async()=>{
   }
 };
 $('luckyNext').onclick=()=>{
-  if(luckyDrawMode!=='sequential'||luckyDrawRevealed>=luckyDrawWinners.length)return;
-  luckyDrawRevealed++;
+  const activeRevealMode=luckyDrawRecord?.reveal_mode||luckyDrawMode;
+  if(activeRevealMode!=='sequential'){
+    $('luckyStatus').textContent='รายการนี้ตั้งค่าเป็นการเปิดเผยผลทั้งหมดพร้อมกัน';
+    return;
+  }
+  if(!Array.isArray(luckyDrawWinners)||!luckyDrawWinners.length){
+    $('luckyStatus').textContent='ไม่พบรายชื่อผู้ได้รับรางวัล กรุณาปิดแล้วเปิดผล Lucky Draw อีกครั้ง';
+    return;
+  }
+  const nextIndex=Math.min(luckyDrawRevealed,luckyDrawWinners.length-1);
+  if(nextIndex>=luckyDrawWinners.length){
+    $('luckyStatus').textContent='ประกาศผลรางวัลครบทุกคนแล้ว';
+    return;
+  }
+  luckyDrawMode='sequential';
+  luckyDrawRevealed=nextIndex+1;
   renderLuckyResults();
-  const announced=luckyDrawWinners[luckyDrawRevealed-1];
+  const announced=luckyDrawWinners[nextIndex];
   $('luckyStatus').textContent='ประกาศรางวัลที่ '+announced.prize_number+' · '+announced.duck_label+' · อันดับการแข่งขัน '+announced.race_rank;
 };
 $('luckyBack').onclick=()=>{
