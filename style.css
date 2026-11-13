@@ -6479,3 +6479,34 @@ body select:disabled {
 .portfolio-iphone-delete:hover{background:#ff5965;transform:scale(1.08)}
 .portfolio-iphone-delete.is-confirming{background:#ff5965;outline:3px solid rgba(255,89,101,.3);outline-offset:2px}
 .portfolio-iphone-delete:disabled{opacity:.65;cursor:wait}
+
+
+/* Portfolio categories and Bond Profile */
+.portfolio-type-step{padding:18px;border:1px solid rgba(239,68,78,.22);border-radius:14px;background:linear-gradient(145deg,rgba(25,12,15,.96),rgba(10,10,12,.98))}
+.portfolio-type-choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
+.portfolio-type-choice{display:flex;min-height:150px;flex-direction:column;align-items:flex-start;justify-content:center;gap:8px;padding:18px;border:1px solid rgba(239,68,78,.28);border-radius:13px;background:#111113;color:#f4eeee;text-align:left;cursor:pointer;transition:.18s ease}
+.portfolio-type-choice:hover,.portfolio-type-choice.is-selected{border-color:#ed3949;background:linear-gradient(145deg,rgba(112,20,31,.34),#111113);transform:translateY(-2px);box-shadow:0 8px 24px rgba(229,57,69,.13)}
+.portfolio-type-choice-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:10px;background:rgba(229,57,69,.15);color:#ff5965;font-size:23px}
+.portfolio-type-choice strong{font-size:16px;color:#fff}
+.portfolio-type-choice small{font-size:12px;color:#aaa1a3;line-height:1.5}
+.portfolio-type-chip{display:inline-flex;width:max-content;max-width:100%;margin:0 0 9px;padding:4px 9px;border:1px solid rgba(239,68,78,.35);border-radius:999px;background:rgba(229,57,69,.1);color:#ff7b85;font-size:11px;font-weight:800}
+.portfolio-member-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.portfolio-member-cover{aspect-ratio:16/10;min-height:190px;max-height:230px}
+.portfolio-member-card-content{min-height:148px;padding:13px 15px 15px}
+.portfolio-member-bonds{display:flex;flex-direction:column;gap:3px;margin-top:9px;min-height:37px}
+.portfolio-member-bonds strong{color:#ff6874;font-size:11px;letter-spacing:.25px}
+.portfolio-member-bonds span{display:-webkit-box;overflow:hidden;color:#d2c9cb;font-size:12px;line-height:1.45;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.bond-profile-modal{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.82);backdrop-filter:blur(9px)}
+.bond-profile-modal.hidden{display:none}
+.bond-profile-dialog{width:min(680px,100%);max-height:min(88vh,850px);overflow:auto;padding:22px;border:1px solid rgba(239,68,78,.35);border-radius:18px;background:linear-gradient(155deg,#1b1114,#09090b);box-shadow:0 24px 80px rgba(0,0,0,.65)}
+.bond-profile-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
+.bond-profile-heading h3{margin:4px 0;color:#fff;font-size:24px}
+.bond-profile-heading p{margin:0;color:#aaa1a3;font-size:13px}
+.bond-profile-cover-row{display:flex;justify-content:space-between;align-items:center;gap:14px;margin:0 0 20px;padding:16px;border:1px solid rgba(239,68,78,.2);border-radius:12px;background:#111113}
+.bond-profile-cover-row>div{display:flex;flex-direction:column;gap:4px}
+.bond-profile-cover-row strong{color:#fff}
+.bond-profile-cover-row small{color:#aaa1a3;font-size:12px}
+.bond-profile-dialog .portfolio-field textarea{width:100%;min-height:130px;resize:vertical}
+@media(max-width:850px){.portfolio-type-choices{grid-template-columns:1fr}.portfolio-type-choice{min-height:112px}.portfolio-member-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:650px){.portfolio-member-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.portfolio-member-cover{min-height:150px;max-height:none;aspect-ratio:4/3}.portfolio-member-card-content{min-height:150px;padding:10px}.portfolio-member-card-content h3{font-size:15px}.portfolio-member-bonds span{font-size:11px}.bond-profile-dialog{padding:16px}.bond-profile-cover-row{align-items:flex-start;flex-direction:column}}
+@media(max-width:380px){.portfolio-member-grid{grid-template-columns:1fr}.portfolio-member-cover{min-height:190px}}
