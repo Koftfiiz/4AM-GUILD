@@ -5442,24 +5442,81 @@ function registerGuildGuideEvents() {
     panel.classList.toggle("hidden");
     $("guide-preview-button").textContent = panel.classList.contains("hidden") ? "ดูตัวอย่าง" : "ซ่อนตัวอย่าง";
   });
+  const insertAtGuideSelection = (node, savedRange) => {
+    const body = $("guide-editor-body");
+    body.focus();
+    const selection = window.getSelection();
+    let range = savedRange;
+    if (!range || !body.contains(range.commonAncestorContainer)) {
+      range = document.createRange();
+      range.selectNodeContents(body);
+      range.collapse(false);
+    }
+    selection.removeAllRanges();
+    selection.addRange(range);
+    range.deleteContents();
+    range.insertNode(node);
+    range.setStartAfter(node);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+    body.dispatchEvent(new InputEvent("input", {bubbles:true, inputType:"insertText"}));
+  };
+
   $("guide-link-button")?.addEventListener("click", () => {
+    const body = $("guide-editor-body");
+    const selection = window.getSelection();
+    const savedRange = selection && selection.rangeCount && body.contains(selection.getRangeAt(0).commonAncestorContainer)
+      ? selection.getRangeAt(0).cloneRange() : null;
     const url = window.prompt("วาง URL ของเว็บไซต์หรือแหล่งข้อมูล (https://...)");
     if (!url || !/^https?:\/\//i.test(url.trim())) return;
     const label = window.prompt("ข้อความที่ต้องการให้แสดงบนลิงก์", url.trim()) || url.trim();
-    const body = $("guide-editor-body"); body.focus();
-    document.execCommand("insertHTML", false, '<a href="' + escapeHTML(url.trim()) + '">' + escapeHTML(label) + '</a>');
+    const link = document.createElement("a");
+    link.href = url.trim();
+    link.textContent = label.trim() || url.trim();
+    insertAtGuideSelection(link, savedRange);
   });
+
   $("guide-video-button")?.addEventListener("click", () => {
+    const body = $("guide-editor-body");
+    const selection = window.getSelection();
+    const savedRange = selection && selection.rangeCount && body.contains(selection.getRangeAt(0).commonAncestorContainer)
+      ? selection.getRangeAt(0).cloneRange() : null;
     const url = window.prompt("วางลิงก์วิดีโอ YouTube");
     if (!url) return;
-    const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,20})/i);
+    const match = url.trim().match(/(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{6,20})/i);
     if (!match) { alert("ลิงก์ YouTube ไม่ถูกต้อง"); return; }
-    $("guide-editor-body").focus();
-    document.execCommand("insertHTML", false, '<p><iframe src="https://www.youtube-nocookie.com/embed/' + match[1] + '" title="YouTube video" allowfullscreen></iframe></p>');
+    const paragraph = document.createElement("p");
+    const frame = document.createElement("iframe");
+    frame.src = "https://www.youtube-nocookie.com/embed/" + match[1];
+    frame.title = "YouTube video";
+    frame.setAttribute("allowfullscreen", "");
+    paragraph.appendChild(frame);
+    insertAtGuideSelection(paragraph, savedRange);
   });
+
   $("guide-table-button")?.addEventListener("click", () => {
-    $("guide-editor-body").focus();
-    document.execCommand("insertHTML", false, '<table><tbody><tr><th>หัวข้อ</th><th>รายละเอียด</th></tr><tr><td>ข้อมูล</td><td>รายละเอียด</td></tr></tbody></table><p></p>');
+    const body = $("guide-editor-body");
+    const selection = window.getSelection();
+    const savedRange = selection && selection.rangeCount && body.contains(selection.getRangeAt(0).commonAncestorContainer)
+      ? selection.getRangeAt(0).cloneRange() : null;
+    const table = document.createElement("table");
+    table.className = "guild-rich-table";
+    const tbody = document.createElement("tbody");
+    [["หัวข้อ","รายละเอียด"],["ข้อมูล","รายละเอียด"]].forEach((row, rowIndex) => {
+      const tr = document.createElement("tr");
+      row.forEach(value => {
+        const cell = document.createElement(rowIndex === 0 ? "th" : "td");
+        cell.textContent = value;
+        tr.appendChild(cell);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    insertAtGuideSelection(table, savedRange);
+    const paragraph = document.createElement("p");
+    paragraph.appendChild(document.createElement("br"));
+    table.after(paragraph);
   });
   page.addEventListener("click", async event => {
     const command = event.target.closest("[data-guide-command]");
