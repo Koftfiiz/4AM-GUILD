@@ -6458,3 +6458,9 @@ body select:disabled {
 .portfolio-iphone-delete:hover,.portfolio-iphone-delete.is-confirming{background:#ff5965;transform:scale(1.06)}
 @media(max-width:650px){.portfolio-upload-zone{padding:13px}.portfolio-upload-zone-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.portfolio-upload-add-tile{min-height:160px;padding:10px}.portfolio-preview-item{padding:7px}.portfolio-preview-controls{grid-template-columns:1fr}.portfolio-preview-controls .portfolio-crop-open{width:100%}}
 @media(max-width:380px){.portfolio-upload-zone-grid{grid-template-columns:1fr 1fr}}
+
+
+/* Portfolio card class identity: class icon + readable class name */
+.portfolio-card-tags{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
+.portfolio-card-tag.portfolio-card-class{display:inline-flex;align-items:center;justify-content:flex-start;gap:7px;width:max-content;max-width:100%;padding:5px 10px;border:1px solid color-mix(in srgb,var(--class-color,#e53945) 48%,transparent);border-radius:999px;background:color-mix(in srgb,var(--class-color,#e53945) 12%,#101010);color:var(--class-color,#ff5965);font-size:12px;font-weight:750;line-height:1.2;white-space:nowrap}
+.portfolio-card-class-icon{display:block;flex:0 0 22px;width:22px;height:22px;object-fit:contain}
