@@ -274,7 +274,7 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
         </div>
         <div class="lucky-progress"><i id="luckyProgressBar"></i></div>
         <div class="lucky-results" id="luckyResults"></div>
-        <button type="button" class="lucky-primary" id="luckyNext" style="width:100%">เปิดเผยรางวัลถัดไป</button>
+        <button type="button" class="lucky-primary" id="luckyNext" style="width:100%">ประกาศผลรางวัล</button>
         <div class="lucky-footer" style="margin-top:12px">
           <button type="button" class="lucky-secondary" id="luckySendDiscord" disabled>SEND TO DISCORD</button>
           <button type="button" class="lucky-secondary" id="luckyCopy" disabled>คัดลอกผลการแข่งขัน</button>
@@ -1464,7 +1464,6 @@ let luckySelectionMode='random';
 let luckySelectedRanks=[];
 let luckyPreRaceConfig=null;
 let luckyIsPreRaceSetup=false;
-const LUCKY_CONFIG_STORAGE_KEY='4am-duck-race-lucky-config';
 // Lucky Draw configuration is kept in memory for the current race only.
 // A page refresh starts a clean setup and cannot restore old manual rank selections.
 
