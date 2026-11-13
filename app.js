@@ -2006,7 +2006,7 @@ function closeBondProfileEditor() { $("bond-profile-modal")?.classList.add("hidd
 async function saveBondProfile(event) {
   event.preventDefault();
   const button = $("bond-profile-save");
-  const names = ($("bond-profile-names")?.value || "").split(/[\\n,;]+/).map(name => name.trim()).filter(Boolean);
+  const names = ($("bond-profile-names")?.value || "").split(/[\n,;]+/).map(name => name.trim()).filter(Boolean);
   const uniqueNames = [...new Set(names)];
   if (uniqueNames.length > 40) { alert("กรอกรายชื่อได้สูงสุด 40 คน"); return; }
   button.disabled = true; button.textContent = "กำลังบันทึก...";
