@@ -6423,3 +6423,38 @@ body select:disabled {
 
 .portfolio-image-caption{display:grid;gap:5px;margin:7px 0;color:var(--muted);font-size:11px;text-align:left}
 .portfolio-image-caption input{width:100%;min-width:0;padding:7px 8px;border:1px solid rgba(205,160,120,.25);border-radius:5px;background:#10090c;color:#f3ebe6;font:inherit;font-size:12px}
+
+
+/* 4AM Portfolio Build uploader — clean black/red zone layout */
+.portfolio-build-upload-pickers{display:none!important}
+#portfolio-image-preview{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;min-width:0}
+.portfolio-upload-zone{margin:0;padding:18px;border:1px solid rgba(239,68,78,.24);border-radius:14px;background:linear-gradient(145deg,rgba(25,12,15,.96),rgba(10,10,12,.98));min-width:0;box-shadow:inset 0 1px rgba(255,255,255,.025)}
+.portfolio-upload-zone-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 16px;padding-bottom:12px;border-bottom:1px solid rgba(239,68,78,.16)}
+.portfolio-upload-zone-heading>div{display:flex;align-items:center;gap:12px;min-width:0}
+.portfolio-upload-zone-index{display:grid;place-items:center;flex:0 0 36px;width:36px;height:36px;border:1px solid rgba(239,68,78,.45);border-radius:10px;background:rgba(220,38,52,.12);color:#ff5965;font-size:13px;font-weight:800}
+.portfolio-upload-zone-heading h4{margin:0;color:#ff5965;font-size:16px;font-weight:800;letter-spacing:.2px}
+.portfolio-upload-zone-heading p{margin:4px 0 0;color:#aaa1a3;font-size:12px}
+.portfolio-upload-zone-count{flex:0 0 auto;padding:5px 10px;border:1px solid rgba(239,68,78,.24);border-radius:999px;background:rgba(220,38,52,.08);color:#ff7a83;font-size:12px;font-weight:700}
+.portfolio-upload-zone-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));align-items:stretch;gap:14px;min-width:0}
+.portfolio-preview-item{display:flex;flex-direction:column;min-width:0;padding:9px;border:1px solid rgba(255,255,255,.09);border-radius:12px;background:#111113;cursor:grab;overflow:hidden}
+.portfolio-preview-image-wrap{position:relative;min-width:0;overflow:hidden;border-radius:8px;background:#080809;aspect-ratio:4/3}
+.portfolio-preview-image-wrap>img{display:block;width:100%;height:100%;object-fit:contain}
+.portfolio-preview-number{position:absolute;left:8px;top:8px;padding:3px 7px;border-radius:6px;background:rgba(0,0,0,.78);color:#fff;font-size:11px;font-weight:700}
+.portfolio-remove-image{position:absolute;right:8px;top:8px;display:grid;place-items:center;width:30px;height:30px;min-height:30px;padding:0;border:0;border-radius:50%;background:#e53945;color:#fff;font-size:24px;font-weight:500;line-height:1;box-shadow:0 3px 12px rgba(0,0,0,.45);cursor:pointer}
+.portfolio-remove-image:hover{background:#ff5965;transform:scale(1.06)}
+.portfolio-preview-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;margin-top:10px;min-width:0}
+.portfolio-preview-controls .portfolio-cover-button,.portfolio-preview-controls .portfolio-crop-open{min-width:0;min-height:34px;padding:7px 9px;border:1px solid rgba(239,68,78,.3);border-radius:7px;background:#1b1113;color:#ff7a83;font-size:12px;cursor:pointer}
+.portfolio-preview-controls .portfolio-cover-button.is-cover{border-color:#e53945;background:#e53945;color:#fff;font-weight:800}
+.portfolio-image-caption{grid-column:1/-1;display:grid;gap:6px;margin:0;color:#ff7a83;font-size:12px;text-align:left}
+.portfolio-image-caption input{box-sizing:border-box;width:100%;min-width:0;min-height:36px;padding:8px 10px;border:1px solid rgba(255,255,255,.12);border-radius:7px;background:#09090b;color:#f5f5f5;font-size:12px}
+.portfolio-image-caption input:focus{outline:2px solid rgba(229,57,69,.35);border-color:#e53945}
+.portfolio-upload-add-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-width:0;min-height:210px;padding:18px;border:1.5px dashed rgba(239,68,78,.55);border-radius:12px;background:rgba(220,38,52,.045);color:#ff5965;text-align:center;cursor:pointer;transition:background .18s,border-color .18s,transform .18s}
+.portfolio-upload-add-tile:hover{border-color:#ff5965;background:rgba(220,38,52,.11);transform:translateY(-2px)}
+.portfolio-upload-add-icon{display:grid;place-items:center;width:42px;height:42px;border:1px solid rgba(239,68,78,.4);border-radius:50%;font-size:28px;line-height:1}
+.portfolio-upload-add-tile strong{font-size:14px;color:#ff5965}
+.portfolio-upload-add-tile small{font-size:11px;color:#aaa1a3}
+.portfolio-upload-empty{grid-column:1/-1;display:grid;place-items:center;min-height:100px;margin:0;padding:16px;border:1px dashed rgba(239,68,78,.2);border-radius:10px;color:#81797b;font-size:13px}
+.portfolio-iphone-delete{display:grid;place-items:center;width:30px;height:30px;min-width:30px;padding:0;border:0;border-radius:50%;background:#e53945;color:#fff;font-size:24px;font-weight:500;line-height:1;box-shadow:0 3px 12px rgba(0,0,0,.45);cursor:pointer}
+.portfolio-iphone-delete:hover,.portfolio-iphone-delete.is-confirming{background:#ff5965;transform:scale(1.06)}
+@media(max-width:650px){.portfolio-upload-zone{padding:13px}.portfolio-upload-zone-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.portfolio-upload-add-tile{min-height:160px;padding:10px}.portfolio-preview-item{padding:7px}.portfolio-preview-controls{grid-template-columns:1fr}.portfolio-preview-controls .portfolio-crop-open{width:100%}}
+@media(max-width:380px){.portfolio-upload-zone-grid{grid-template-columns:1fr 1fr}}
