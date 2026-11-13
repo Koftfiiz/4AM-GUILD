@@ -5368,7 +5368,7 @@ function refreshGuideCategoryFilter() {
   const select = $("guide-category-filter");
   if (!select) return;
   const current = select.value || "all";
-  const categories = [...new Set(guildGuidesCache.map(row => row.category).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"th"));
+  const categories = ["เควสทั่วไป","ดันเจี้ยน","สกิลต่างๆ","Class อาชีพ","แนะนำ Build PvP","แนะนำ Build PvE","สำรวจแมพ","อื่นๆ"];
   select.innerHTML = '<option value="all">ทุกหมวดหมู่</option>' + categories.map(value => '<option value="' + escapeHTML(value) + '">' + escapeHTML(value) + '</option>').join("");
   select.value = categories.includes(current) ? current : "all";
 }
@@ -5394,7 +5394,7 @@ function openGuildGuideEditor(id = null) {
   panel.dataset.editingId = item?.id || "";
   $("guide-editor-title").textContent = item ? "แก้ไขไกด์เกม" : "สร้างไกด์ใหม่";
   $("guide-title-input").value = item?.title || "";
-  $("guide-category-input").value = item?.category || "ทั่วไป";
+  $("guide-category-input").value = item?.category || "อื่นๆ";
   $("guide-editor-body").innerHTML = sanitizeGuildGuideHTML(item?.content_html || "");
   $("guide-preview-panel").classList.add("hidden");
   $("guide-editor-message").textContent = "";
@@ -5410,7 +5410,7 @@ function closeGuildGuideEditor() {
   panel.classList.add("hidden");
   panel.dataset.editingId = "";
   $("guide-title-input").value = "";
-  $("guide-category-input").value = "ทั่วไป";
+  $("guide-category-input").value = "อื่นๆ";
   $("guide-editor-body").innerHTML = "";
   $("guide-preview-panel").classList.add("hidden");
   $("guide-editor-message").textContent = "";
