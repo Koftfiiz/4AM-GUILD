@@ -4705,18 +4705,6 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 
 
 
-/* ==========================================
-   4AM CYBERPUNK NUMBER GUESS — NEON GRID
-   ========================================== */
-#guild-activities-submenu .nav-subitem{padding-left:59px}
-#guild-activities-submenu .nav-subitem.active{color:#fff;background:linear-gradient(90deg,rgba(190,30,46,.25),rgba(125,16,30,.12));box-shadow:inset 2px 0 0 #ed5364}
-#guild-activities-submenu .nav-subitem:last-child.active{background:linear-gradient(90deg,rgba(0,220,255,.13),rgba(123,75,255,.08));box-shadow:inset 2px 0 0 #00e5ff;color:#d8fbff}
-#guild-activities-submenu .nav-subitem:last-child.active .nav-subitem-dot{background:#00e5ff;border-color:#00e5ff;box-shadow:0 0 8px #00e5ff}
-.legend-available{border:1px solid #00e5ff;background:rgba(0,229,255,.15);box-shadow:0 0 7px rgba(0,229,255,.4)}
-.legend-selected{background:#b94cff;box-shadow:0 0 7px #b94cff}
-.legend-taken{background:#9b526b}
-
-
 /* Guild activities parent label follows primary sidebar typography */
 .sidebar .nav-parent[data-toggle-submenu="guild-activities-submenu"] > span:not(.nav-chevron){font-weight:700}
 
@@ -4729,7 +4717,6 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 
 /* 4AM DUCK RACE — local prototype UI */
 
-/* Number guess demo identity + management controls */
 
 /* 4AM DUCK RACE — live multi-client race */
 
