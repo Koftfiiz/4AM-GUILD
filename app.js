@@ -1918,10 +1918,15 @@ function renderPortfolioSelectedFiles() {
 let portfolioCropper = null;
 let portfolioCropIndex = null;
 let portfolioCropSourceUrl = null;
+let portfolioMemberCoverMode = false;
+let portfolioMemberCoverMemberId = null;
 function closePortfolioCropEditor() {
   if (portfolioCropper) { portfolioCropper.destroy(); portfolioCropper = null; }
   if (portfolioCropSourceUrl?.startsWith("blob:")) URL.revokeObjectURL(portfolioCropSourceUrl);
   portfolioCropSourceUrl = null; portfolioCropIndex = null;
+  portfolioMemberCoverMode = false; portfolioMemberCoverMemberId = null;
+  $("portfolio-crop-title").textContent = "จัดตำแหน่งภาพหน้าปก";
+  $("portfolio-crop-save").textContent = "ใช้ภาพนี้เป็นหน้าปก";
   $("portfolio-crop-modal")?.classList.add("hidden");
 }
 async function openPortfolioCropEditor(index = 0) {
@@ -1944,8 +1949,51 @@ async function openPortfolioCropEditor(index = 0) {
   image.src = portfolioCropSourceUrl;
   $("portfolio-crop-modal")?.classList.remove("hidden");
 }
+function openPortfolioMemberCoverPicker() {
+  if(!currentUser||!allMembers.some(m=>m.user_id===currentUser.id)){alert("ไม่พบข้อมูลสมาชิกของบัญชีนี้");return;}
+  const input=$("portfolio-member-cover-input");
+  if(input)input.click();
+}
+async function openPortfolioMemberCoverCrop(file) {
+  if(typeof window.Cropper!=="function"){alert("โหลดเครื่องมือ Crop ภาพไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ");return;}
+  closePortfolioCropEditor();
+  portfolioMemberCoverMode=true;
+  portfolioMemberCoverMemberId=currentUser.id;
+  portfolioCropSourceUrl=URL.createObjectURL(file);
+  $("portfolio-crop-title").textContent="เปลี่ยนรูปหน้าปกการ์ดสมาชิก";
+  $("portfolio-crop-save").textContent="บันทึกรูปหน้าปก";
+  const image=$("portfolio-crop-image");
+  image.onload=()=>{
+    portfolioCropper=new Cropper(image,{aspectRatio:16/9,viewMode:1,dragMode:"move",autoCropArea:.92,responsive:true,restore:false,background:false,guides:true,center:true,cropBoxMovable:true,cropBoxResizable:true,toggleDragModeOnDblclick:false,ready(){$("portfolio-crop-zoom").value="1";$("portfolio-crop-zoom-value").textContent="100%";}});
+  };
+  image.src=portfolioCropSourceUrl;
+}
+
 async function savePortfolioCrop() {
-  if (!portfolioCropper || portfolioCropIndex === null) return;
+  if (!portfolioCropper) return;
+  if (portfolioMemberCoverMode) {
+    const button=$("portfolio-crop-save"); button.disabled=true; button.textContent="กำลังบันทึก...";
+    try {
+      if (!currentUser || portfolioMemberCoverMemberId !== currentUser.id) throw new Error("คุณแก้ไขรูปหน้าปกได้เฉพาะการ์ดของตัวเอง");
+      const canvas=portfolioCropper.getCroppedCanvas({width:1600,height:900,minWidth:800,minHeight:450,imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"});
+      const blob=await new Promise((resolve,reject)=>canvas.toBlob(v=>v?resolve(v):reject(new Error("ไม่สามารถสร้างภาพหน้าปกได้")),"image/webp",.9));
+      const path=`${currentUser.id}/portfolio-cover-${Date.now()}.webp`;
+      const {error:uploadError}=await supabaseClient.storage.from(AVATAR_BUCKET).upload(path,blob,{cacheControl:"3600",upsert:false,contentType:"image/webp"});
+      if(uploadError)throw uploadError;
+      const oldPath=allMembers.find(m=>m.user_id===currentUser.id)?.member_cover_url||null;
+      const cropSettings=portfolioCropper.getData(true);
+      const {error:updateError}=await supabaseClient.from("guild_members").update({member_cover_url:path,member_cover_crop_settings:cropSettings}).eq("user_id",currentUser.id);
+      if(updateError){await supabaseClient.storage.from(AVATAR_BUCKET).remove([path]);throw updateError;}
+      allMembers=allMembers.map(m=>m.user_id===currentUser.id?{...m,member_cover_url:path,member_cover_crop_settings:cropSettings}:m);
+      if(currentMember?.user_id===currentUser.id){currentMember.member_cover_url=path;currentMember.member_cover_crop_settings=cropSettings;}
+      if(oldPath&&!/^https?:\/\//i.test(oldPath))await supabaseClient.storage.from(AVATAR_BUCKET).remove([oldPath]);
+      closePortfolioCropEditor();
+      await renderPortfolioMemberDirectory();
+    } catch(error) { console.error("Member cover save error:",error); alert("บันทึกรูปหน้าปกไม่สำเร็จ: "+(error.message||"Unknown error")); }
+    finally { button.disabled=false;button.textContent="ใช้ภาพนี้เป็นหน้าปก"; }
+    return;
+  }
+  if (portfolioCropIndex === null) return;
   const button=$("portfolio-crop-save"); button.disabled=true; button.textContent="กำลังประมวลผล...";
   try {
     const canvas=portfolioCropper.getCroppedCanvas({width:1600,height:900,minWidth:800,minHeight:450,imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"});
@@ -2015,17 +2063,19 @@ async function renderPortfolioMemberDirectory() {
     .sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));
   if(!members.length){showEmpty(container,"ไม่พบสมาชิก","ลองค้นหาด้วยชื่อตัวละคร ชื่อเล่น หรือคลาสอาชีพ");return;}
   const cards=await Promise.all(members.map(async m=>{
-    const ps=allPortfolios.filter(p=>p.member_id===m.user_id),cover=ps[0]?.portfolio_images?.[0];
+    const ps=allPortfolios.filter(p=>p.member_id===m.user_id);
     const cn=getMemberClass(m),ci=getClassInfo(cn),color=ci?.color||"#aaa";
-    let src=cover?await getPortfolioImageUrl(cover.cover_image_url || cover.image_url):"";
+    let src=m.member_cover_url?await resolveAvatarUrl({...m,avatar_url:m.member_cover_url}):"";
     if(!src)src=await resolveAvatarUrl(m)||DEFAULT_AVATAR;
     return `<article class="portfolio-member-card" style="--class-color:${color}">
       <button type="button" class="portfolio-member-open" data-portfolio-member-id="${escapeHTML(m.user_id)}">
-        <div class="portfolio-member-cover"><img src="${escapeHTML(src)}" alt="ปกแฟ้มผลงาน ${escapeHTML(getMemberName(m))}" loading="lazy"><span class="portfolio-member-count">${ps.length} แฟ้ม</span></div>
+        <div class="portfolio-member-cover"><img src="${escapeHTML(src)}" alt="รูปหน้าปก ${escapeHTML(getMemberName(m))}" loading="lazy"><span class="portfolio-member-count">${ps.length} แฟ้ม</span></div>
         <div class="portfolio-member-card-content"><div class="portfolio-member-class">${ci?.iconPath?`<img src="${escapeHTML(ci.iconPath)}" alt="">`:""}<span>${escapeHTML(cn||"ยังไม่ระบุคลาส")}</span></div>
         <h3>${escapeHTML(getMemberName(m))}</h3><p>${escapeHTML(m.nickname||m.discord_name||"4AM GUILD Member")}</p>
         <span class="portfolio-member-open-label">${m.user_id===currentUser?.id?"แฟ้มผลงานของคุณ":"ดูแฟ้มผลงาน"} <span>↗</span></span></div>
-      </button></article>`;
+      </button>
+      ${m.user_id===currentUser?.id?'<button type="button" class="portfolio-member-cover-edit" data-member-cover-edit="true" aria-label="เปลี่ยนรูปหน้าปก" title="เปลี่ยนรูปหน้าปก">✎</button>':""}
+    </article>`;
   }));
   container.innerHTML=cards.join("");
 }
@@ -2466,6 +2516,8 @@ function registerPortfolioEvents() {
   window.portfolioDraftFiles = [];
   $("portfolio-member-search")?.addEventListener("input",()=>{void renderPortfolioMemberDirectory();});
   $("portfolio-member-grid")?.addEventListener("click",async event=>{
+    const editButton=event.target.closest("[data-member-cover-edit]");
+    if(editButton){event.preventDefault();event.stopPropagation();openPortfolioMemberCoverPicker();return;}
     const button=event.target.closest("[data-portfolio-member-id]");if(!button)return;
     currentPortfolioMemberId=button.dataset.portfolioMemberId;portfolioClassFilter="all";portfolioManageMode=false;await renderPortfolios();
   });
@@ -2503,6 +2555,13 @@ function registerPortfolioEvents() {
     button.setAttribute("aria-pressed", String(button.classList.contains("is-selected")));
   });
 
+  $("portfolio-member-cover-input")?.addEventListener("change",event=>{
+    const file=event.target.files?.[0];event.target.value="";
+    if(!file)return;
+    if(!file.type.startsWith("image/")){alert("กรุณาเลือกไฟล์รูปภาพ");return;}
+    if(file.size>12*1024*1024){alert("รูปภาพต้องมีขนาดไม่เกิน 12 MB");return;}
+    void openPortfolioMemberCoverCrop(file);
+  });
   $("portfolio-crop-close")?.addEventListener("click",closePortfolioCropEditor);
   $("portfolio-crop-cancel")?.addEventListener("click",closePortfolioCropEditor);
   $("portfolio-crop-save")?.addEventListener("click",()=>{void savePortfolioCrop();});
