@@ -6308,6 +6308,11 @@ body select:disabled {
 .guide-editor-heading h3{margin:5px 0 16px;color:var(--cream);font-size:21px}
 .guide-editor-fields{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(180px,.8fr);gap:14px;margin-bottom:14px}
 .guide-editor-body{min-height:300px;padding:16px;line-height:1.8}
+.guide-editor-body table,.guide-editor-body .guild-rich-table{width:100%;border-collapse:collapse;table-layout:fixed;margin:14px 0;background:rgba(10,8,10,.72)}
+.guide-editor-body table th,.guide-editor-body table td,.guide-editor-body .guild-rich-table th,.guide-editor-body .guild-rich-table td{min-width:70px;padding:10px 12px;border:1px solid rgba(235,75,95,.8)!important;text-align:left;vertical-align:top;color:#f5eeee}
+.guide-editor-body table th,.guide-editor-body .guild-rich-table th{background:rgba(150,25,43,.32);font-weight:800}
+.guide-editor-body table td,.guide-editor-body .guild-rich-table td{background:rgba(255,255,255,.025)}
+.guide-editor-body table:focus,.guide-editor-body table td:focus,.guide-editor-body table th:focus{outline:1px solid rgba(255,90,110,.8);outline-offset:-1px}
 .guide-editor-hint{display:block;margin-top:8px;color:var(--muted);font-size:13px}
 .guide-editor-toolbar{flex-wrap:wrap}
 .guide-editor-toolbar button{min-height:36px}
