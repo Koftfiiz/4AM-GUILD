@@ -1980,13 +1980,27 @@ async function openPortfolioCropEditor(index = 0) {
   $("portfolio-crop-modal")?.classList.remove("hidden");
 }
 async function openBondProfileEditor() {
-  if (!currentUser || !allMembers.some(member => member.user_id === currentUser.id)) { alert("ไม่พบข้อมูลสมาชิกของบัญชีนี้"); return; }
+  if (!currentUser) { alert("ไม่พบข้อมูลบัญชีที่เข้าสู่ระบบ"); return; }
   const member = allMembers.find(item => item.user_id === currentUser.id);
-  $("bond-profile-names").value = Array.isArray(member.bond_names) ? member.bond_names.join("\\n") : "";
-  const cover = member.member_cover_url ? await resolveAvatarUrl({...member, avatar_url:member.member_cover_url}) : await resolveAvatarUrl(member) || DEFAULT_AVATAR;
+  if (!member) { alert("ไม่พบข้อมูลสมาชิกของบัญชีนี้"); return; }
+
+  // Show the editor immediately. Resolving a remote cover URL must not block opening the modal.
+  const modal = $("bond-profile-modal");
+  const namesField = $("bond-profile-names");
   const image = $("bond-profile-current-cover");
-  if (image) image.src = cover || DEFAULT_AVATAR;
-  $("bond-profile-modal")?.classList.remove("hidden");
+  if (namesField) namesField.value = Array.isArray(member.bond_names) ? member.bond_names.join("\n") : "";
+  if (image) image.src = DEFAULT_AVATAR;
+  modal?.classList.remove("hidden");
+
+  try {
+    const cover = member.member_cover_url
+      ? await resolveAvatarUrl({...member, avatar_url:member.member_cover_url})
+      : await resolveAvatarUrl(member);
+    if (image && modal && !modal.classList.contains("hidden")) image.src = cover || DEFAULT_AVATAR;
+  } catch (error) {
+    console.warn("Bond profile cover preview could not be loaded:", error);
+    if (image) image.src = DEFAULT_AVATAR;
+  }
 }
 function closeBondProfileEditor() { $("bond-profile-modal")?.classList.add("hidden"); }
 async function saveBondProfile(event) {
