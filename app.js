@@ -3345,12 +3345,14 @@ async function deleteWarEvent(eventId,button){
   if(!isManagement())return;
   const event=allWarEvents.find(item=>item.id===eventId);
   if(!event)return;
-  const confirmed=window.confirm(`ยืนยันลบวอร์ "${event.event_name}" (${getWarEventStage(event).toUpperCase()}) ใช่หรือไม่?\\n\\nการลบนี้จะลบรายการวอร์ ปาร์ตี้ และรายชื่อสมาชิกที่ผูกกับวอร์นี้ทั้งหมด ไม่สามารถกู้คืนได้`);
-  if(!confirmed)return;
+  if(!window.confirm(`ยืนยันลบวอร์ "${event.event_name}" (${getWarEventStage(event).toUpperCase()}) ใช่หรือไม่?\\n\\nการลบนี้จะลบรายการวอร์ ปาร์ตี้ และรายชื่อสมาชิกที่ผูกกับวอร์นี้ทั้งหมด ไม่สามารถกู้คืนได้`))return;
   if(button){button.disabled=true;button.textContent="กำลังลบ...";}
   try{
-    const {error}=await supabaseClient.from("war_events").delete().eq("id",eventId).select("id").single();
+    const {error}=await supabaseClient.from("war_events").delete().eq("id",eventId);
     if(error)throw error;
+    const check=await supabaseClient.from("war_events").select("id").eq("id",eventId).maybeSingle();
+    if(check.error)throw check.error;
+    if(check.data)throw new Error("รายการยังอยู่ในฐานข้อมูลหลังสั่งลบ กรุณาตรวจสอบสิทธิ์ DELETE (RLS) ของตาราง war_events");
     if(selectedWarEventId===eventId)selectedWarEventId=null;
     if(warAttendanceEventId===eventId)warAttendanceEventId=null;
     await loadWarEvents();
@@ -4072,11 +4074,20 @@ async function startEditWarSignupEvent(id){
   $("war-signup-create-form").scrollIntoView({behavior:"smooth",block:"center"});
 }
 async function deleteWarSignupEvent(id,button){
-  if(!isManagement()||!confirm("ยืนยันลบ Event ลงชื่อวอร์นี้?"))return;
-  button.disabled=true;button.textContent="กำลังลบ...";
-  const q=await supabaseClient.from("war_events").delete().eq("id",id).select("id").maybeSingle();
-  if(q.error||!q.data){alert("ลบ Event ไม่สำเร็จ: "+(q.error?.message||"ไม่พบ Event หรือไม่มีสิทธิ์"));button.disabled=false;button.textContent="ลบ Event";return;}
-  await loadWarSignups();
+  if(!isManagement()||!window.confirm("ยืนยันลบ Event ลงชื่อวอร์นี้?"))return;
+  if(button){button.disabled=true;button.textContent="กำลังลบ...";}
+  try{
+    const {error}=await supabaseClient.from("war_events").delete().eq("id",id);
+    if(error)throw error;
+    const check=await supabaseClient.from("war_events").select("id").eq("id",id).maybeSingle();
+    if(check.error)throw check.error;
+    if(check.data)throw new Error("Event ยังอยู่ในฐานข้อมูลหลังสั่งลบ กรุณาตรวจสอบสิทธิ์ DELETE (RLS) ของตาราง war_events");
+    await loadWarSignups();
+  }catch(error){
+    console.error("War signup event deletion failed:",error);
+    alert("ลบ Event ไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));
+    if(button){button.disabled=false;button.textContent="ลบ Event";}
+  }
 }
 async function createWarSignupEvent(form){
   if(!isManagement())return;
@@ -4538,7 +4549,6 @@ function getNextFourWarSaturdays(){
 function openGlobalDatePicker(input){
  if(!input||input.disabled||(input.readOnly&&!input.matches("[data-activity-date-input],[data-activity-datetime-input]")))return;
  closeGlobalDateTimePicker();
- const wrapper=input.closest(".form-group")||input.parentElement;if(!wrapper)return;
  const isOfficialWarDate=input.matches("[data-war-signup-date]")&&$("war-signup-type")?.value==="official";
  const allowedWarDates=isOfficialWarDate?getNextFourWarSaturdays():null;
  let dateValue=globalPickerDateValue(input);
@@ -4546,12 +4556,28 @@ function openGlobalDatePicker(input){
  let chosenDate=dateValue||"";
  let chosenTime=globalPickerTimeValue(input)||"20:00";
  const isDateTime=input.type==="datetime-local"||input.matches("[data-activity-datetime-input]");
- const panel=document.createElement("div");panel.className="war-date-picker-popover global-date-time-popover";
+ const panel=document.createElement("div");
+ panel.className="war-date-picker-popover global-date-time-popover";
+ panel.style.position="fixed";
+ panel.style.zIndex="10000";
+ const positionPanel=()=>{
+  const rect=input.getBoundingClientRect(),pad=12,gap=8;
+  const width=Math.min(320,window.innerWidth-pad*2);
+  panel.style.width=width+"px";
+  const height=panel.offsetHeight||360;
+  let top=rect.bottom+gap;
+  if(top+height>window.innerHeight-pad&&rect.top-height-gap>=pad)top=rect.top-height-gap;
+  top=Math.max(pad,Math.min(top,window.innerHeight-height-pad));
+  const left=Math.max(pad,Math.min(rect.left,window.innerWidth-width-pad));
+  panel.style.left=left+"px";
+  panel.style.top=top+"px";
+ };
  const render=()=>{
   if(allowedWarDates){
    panel.innerHTML='<div class="war-date-picker-heading"><strong>เลือกวันเสาร์ 4 ครั้งถัดไป</strong></div><div class="war-calendar-grid war-next-saturdays">'+allowedWarDates.map(iso=>'<button type="button" class="war-calendar-day'+(iso===chosenDate?' is-selected':'')+'" data-global-date="'+iso+'">'+formatDisplayDate(iso)+'</button>').join("")+'</div>';
    panel.querySelectorAll("[data-global-date]").forEach(btn=>btn.addEventListener("click",()=>{setGlobalPickerValue(input,btn.dataset.globalDate,"");closeGlobalDateTimePicker();}));
-   wrapper.appendChild(panel);return;
+   positionPanel();
+   return;
   }
   const year=view.getFullYear(),month=view.getMonth(),offset=(new Date(year,month,1).getDay()+6)%7,days=new Date(year,month+1,0).getDate();
   const label=new Intl.DateTimeFormat("th-TH",{month:"long",year:"numeric"}).format(view);
@@ -4569,10 +4595,12 @@ function openGlobalDatePicker(input){
    panel.querySelector(".war-time-picker-cancel").addEventListener("click",closeGlobalDateTimePicker);
    panel.querySelector(".war-time-picker-confirm").addEventListener("click",()=>{if(!chosenDate){alert("กรุณาเลือกวันที่");return;}setGlobalPickerValue(input,chosenDate,chosenTime);closeGlobalDateTimePicker();});
   }
+  positionPanel();
  };
  const initial=dateValue?new Date(dateValue+"T12:00:00"):new Date();
  let view=new Date(initial.getFullYear(),initial.getMonth(),1);
- wrapper.appendChild(panel);render();
+ document.body.appendChild(panel);
+ render();
 }
 function openGlobalTimePicker(input){
  if(!input||input.disabled||(input.readOnly&&!input.matches("[data-activity-time-input]")))return;
