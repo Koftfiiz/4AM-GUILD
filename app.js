@@ -2002,12 +2002,11 @@ async function renderPortfolios() {
   $("portfolio-manage-button")?.classList.toggle("hidden",!canManage);
   const manageButton=$("portfolio-manage-button");if(manageButton){manageButton.textContent=portfolioManageMode?"เสร็จสิ้น":"จัดการแฟ้ม";manageButton.classList.toggle("is-active",portfolioManageMode);manageButton.setAttribute("aria-pressed",String(portfolioManageMode));}
 
-  if (!allPortfolios.length) {
-    showEmpty(container, "No Portfolio Yet", "ยังไม่มีผลงานในระบบ · กด Add Portfolio เพื่อสร้างแฟ้มแรกของคุณ");
+  const memberPortfolios=allPortfolios.filter(portfolio=>portfolio.member_id===currentPortfolioMemberId);
+  if (!memberPortfolios.length) {
+    showEmpty(container, "ยังไม่มีแฟ้มผลงาน", ownCollection ? "กด ADD NEW PORTFOLIO เพื่อสร้างแฟ้มแรกของคุณ" : "สมาชิกคนนี้ยังไม่ได้เพิ่มแฟ้มผลงาน");
     return;
   }
-
-  const memberPortfolios=allPortfolios.filter(portfolio=>portfolio.member_id===currentPortfolioMemberId);
   const visiblePortfolios=portfolioClassFilter==="all"?memberPortfolios:memberPortfolios.filter(portfolio=>getPortfolioClasses(portfolio.game_class).some(name=>name.toLowerCase()===portfolioClassFilter.toLowerCase()));
   if (!visiblePortfolios.length) {
     showEmpty(container, "No Portfolio Found", `ยังไม่มีแฟ้มผลงานของคลาส ${portfolioClassFilter}`);
@@ -2075,7 +2074,7 @@ async function renderPortfolios() {
     ` : "";
 
     return `
-      <article class="portfolio-card" ${color ? `style="--class-color:${color}"` : ""}>
+      <article class="portfolio-card ${portfolioManageMode && (isOwner || reviewer) ? "is-jiggling" : ""}" ${color ? `style="--class-color:${color}"` : ""}>
         ${imageUrl ? `<img class="portfolio-card-image" src="${escapeHTML(imageUrl)}" alt="${escapeHTML(portfolio.title)}" loading="lazy">` : '<div class="portfolio-card-no-image">4AM GUILD</div>'}
         <div class="portfolio-card-content">
           <div class="portfolio-card-owner">${escapeHTML(ownerName)}</div>
@@ -2422,6 +2421,17 @@ async function handlePortfolioCardAction(event) {
 
 function registerPortfolioEvents() {
   window.portfolioDraftFiles = [];
+  $("portfolio-member-search")?.addEventListener("input",()=>{void renderPortfolioMemberDirectory();});
+  $("portfolio-member-grid")?.addEventListener("click",async event=>{
+    const button=event.target.closest("[data-portfolio-member-id]");if(!button)return;
+    currentPortfolioMemberId=button.dataset.portfolioMemberId;portfolioClassFilter="all";portfolioManageMode=false;await renderPortfolios();
+  });
+  $("portfolio-back-to-members")?.addEventListener("click",async()=>{
+    currentPortfolioMemberId=null;portfolioManageMode=false;portfolioClassFilter="all";resetPortfolioForm();
+    $("portfolio-create-panel")?.classList.add("hidden");$("portfolio-add-button")?.setAttribute("aria-expanded","false");await renderPortfolios();
+  });
+  $("portfolio-manage-button")?.addEventListener("click",()=>{portfolioManageMode=!portfolioManageMode;void renderPortfolios();});
+
   $("class-legend")?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-portfolio-class-filter]");
     if (!button) return;
