@@ -1714,6 +1714,43 @@ async function openLuckySetup(isPreRace){
       $('luckyNext').disabled=false;
       $('luckyStatus').textContent='พบรายชื่อจากอันดับที่เลือกไว้แล้ว · กำลังบันทึกประวัติ Lucky Draw...';
       renderLuckyResults();
+
+      // Manual rank selection is deterministic: show the exact race finishers immediately.
+      // Persist the draw in the background so a slow Supabase request can never block reveal.
+      if(!currentRaceSessionId)throw new Error('ไม่พบรหัสผลการแข่งขัน กรุณาจบการแข่งขันรอบนี้ใหม่');
+      const manualSessionId=currentRaceSessionId;
+      const manualPayload={
+        action:'create_lucky_draw',
+        session_id:manualSessionId,
+        prize_count:prizeCount,
+        reveal_mode:savedConfig.reveal_mode,
+        selection_mode:'manual',
+        selected_ranks:[...savedConfig.selected_ranks]
+      };
+      $('luckyStatus').textContent='พร้อมประกาศผลจากอันดับที่เลือกไว้แล้ว · '+luckyDrawWinners.length+' รางวัล';
+      $('luckyNext').textContent='ประกาศผลรางวัล';
+      $('luckyNext').disabled=false;
+      // The copy action becomes available after reveal; Discord waits for the saved draw ID.
+      $('luckyCopy').disabled=true;
+      $('luckySendDiscord').disabled=true;
+      (async()=>{
+        try{
+          if(currentRaceSavePromise)await luckyWithTimeout(currentRaceSavePromise,'บันทึกผลการแข่งขัน',20000);
+          if(!currentRaceSaved)await luckyWithTimeout(saveCompletedRace(),'บันทึกผลการแข่งขัน',20000);
+          const saved=await luckyInvoke(manualPayload);
+          if(currentRaceSessionId!==manualSessionId)return;
+          luckyDrawRecord=saved.draw;
+          const persisted=Array.isArray(saved.winners)?saved.winners:[];
+          if(!luckyDrawRecord?.id||persisted.length!==prizeCount)throw new Error('ข้อมูลที่บันทึกกลับมาไม่ครบ');
+          $('luckySendDiscord').disabled=!(luckyDrawRevealed>=luckyDrawWinners.length);
+          $('luckyStatus').textContent='บันทึกประวัติ Lucky Draw แล้ว · '+luckyDrawWinners.length+' รางวัล';
+          await loadLuckyHistory();
+        }catch(saveError){
+          console.error('Manual Lucky Draw background save failed:',saveError);
+          $('luckyStatus').textContent='รายชื่อพร้อมประกาศแล้ว แต่บันทึกประวัติ/ส่ง Discord ไม่พร้อม: '+(saveError.message||'เชื่อมต่อ Supabase ไม่สำเร็จ');
+        }
+      })();
+      return;
     }
     $('luckyEligible').textContent=resultCount;
     $('luckyPrizeInput').value=prizeCount;
