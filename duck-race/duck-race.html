@@ -1626,7 +1626,7 @@ async function openLuckySetup(isPreRace){
   $('luckySetup').classList.remove('hide');$('luckyReveal').classList.add('hide');
   $('luckySendDiscord').disabled=true;$('luckySendDiscord').textContent='SEND TO DISCORD';$('luckyCopy').disabled=true;
   $('luckyResults').innerHTML='';
-  $('luckySpotlight').innerHTML='<div><div class="prize">LUCKY WINNER</div><div class="name">รอผลการแข่งขัน</div><div class="rank">ระบบจะจับรางวัลหลังการแข่งขันจบเท่านั้น</div></div>';
+  $('luckySpotlight').innerHTML='<div><div class="prize">LUCKY WINNER</div><div class="name"></div><div class="rank">ระบบจะจับรางวัลหลังการแข่งขันจบเท่านั้น</div></div>';
   const count=isPreRace?getPendingRosterCount():roster.length;
   $('luckyEligible').textContent=count;
   $('luckyPrizeInput').max=count;
