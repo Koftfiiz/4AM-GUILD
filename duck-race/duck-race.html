@@ -1660,12 +1660,13 @@ async function openLuckySetup(isPreRace){
   $('luckyPrizeInput').max=count;
 
   if(savedConfig){
-    $('luckyPrizeInput').value=Math.min(savedConfig.prize_count,count);
-    luckyDrawMode=savedConfig.reveal_mode;
-    luckySelectionMode=savedConfig.selection_mode;
-    // Older or incomplete in-memory configs may not contain selected_ranks.
-    // Never let a missing array throw before openLuckySetup reaches its error handler.
-    luckySelectedRanks=Array.isArray(savedConfig.selected_ranks)?[...savedConfig.selected_ranks]:[];
+    $('luckyPrizeInput').value=Math.min(Number(savedConfig.prize_count)||1,count);
+    luckyDrawMode=savedConfig.reveal_mode==='sequential'?'sequential':'all';
+    luckySelectionMode=savedConfig.selection_mode==='manual'?'manual':'random';
+    // Normalize ranks defensively: persisted/browser state may contain numeric strings.
+    luckySelectedRanks=Array.isArray(savedConfig.selected_ranks)
+      ?savedConfig.selected_ranks.map(Number).filter(Number.isInteger)
+      :[];
   }else{
     $('luckyPrizeInput').value=Math.min(20,count);
     luckyDrawMode='all';luckySelectionMode='random';luckySelectedRanks=[];
@@ -1700,11 +1701,12 @@ async function openLuckySetup(isPreRace){
     if(!resultCount)throw new Error('ไม่พบอันดับการแข่งขันสำหรับจับรางวัล');
     const prizeCount=Number(savedConfig.prize_count);
     if(!Number.isInteger(prizeCount)||prizeCount<1||prizeCount>resultCount)throw new Error('จำนวนรางวัลจากการตั้งค่าไม่ถูกต้อง');
-    if(savedConfig.selection_mode==='manual'){
-      if(!Array.isArray(savedConfig.selected_ranks)||savedConfig.selected_ranks.length!==prizeCount)throw new Error('จำนวนอันดับที่เลือกไว้ไม่ครบตามจำนวนรางวัล');
-      if(savedConfig.selected_ranks.some(rank=>!Number.isInteger(rank)||rank<1||rank>resultCount)||new Set(savedConfig.selected_ranks).size!==prizeCount)throw new Error('อันดับที่เลือกไว้ไม่ถูกต้องหรือมีอันดับซ้ำ');
-      // Build the exact manually selected winners from the finished race order immediately.
-      manualFallbackWinners=savedConfig.selected_ranks.map((rank,index)=>({
+    if(luckySelectionMode==='manual'){
+      const selectedRanks=luckySelectedRanks.map(Number);
+      if(selectedRanks.length!==prizeCount)throw new Error('อันดับที่เลือกไว้ไม่ครบตามจำนวนรางวัล ('+selectedRanks.length+'/'+prizeCount+')');
+      if(selectedRanks.some(rank=>!Number.isInteger(rank)||rank<1||rank>resultCount)||new Set(selectedRanks).size!==prizeCount)throw new Error('อันดับที่เลือกไว้ไม่ถูกต้องหรือมีอันดับซ้ำ');
+      // Build winners from the normalized in-memory selection captured before the race.
+      manualFallbackWinners=selectedRanks.map((rank,index)=>({
         prize_number:index+1,
         race_rank:rank,
         duck_label:rankedResults[rank-1].label
@@ -1727,7 +1729,7 @@ async function openLuckySetup(isPreRace){
         prize_count:prizeCount,
         reveal_mode:savedConfig.reveal_mode,
         selection_mode:'manual',
-        selected_ranks:[...savedConfig.selected_ranks]
+        selected_ranks:[...selectedRanks]
       };
       $('luckyStatus').textContent='พร้อมประกาศผลจากอันดับที่เลือกไว้แล้ว · '+luckyDrawWinners.length+' รางวัล';
       $('luckyNext').textContent='ประกาศผลรางวัล';
