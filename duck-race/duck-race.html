@@ -1587,7 +1587,7 @@ function renderLuckyResults(){
     const row=document.createElement('div');row.className='lucky-result';
     const number=document.createElement('div');number.className='num';number.textContent='#'+w.prize_number;
     const name=document.createElement('div');name.className='duck';name.textContent=w.duck_label;
-    const rank=document.createElement('div');rank.className='race-rank';rank.textContent='อันดับการแข่งขัน '+w.race_rank;
+    const rank=document.createElement('div');rank.className='race-rank';rank.textContent='ลำดับที่ '+w.race_rank;
     row.append(number,name,rank);list.appendChild(row);
   });
   $('luckyRevealed').textContent=count+'/'+luckyDrawWinners.length;
@@ -1915,7 +1915,7 @@ function revealNextLuckyPrize(){
   luckyDrawRevealed=nextIndex+1;
   renderLuckyResults();
   const announced=luckyDrawWinners[nextIndex];
-  $('luckyStatus').textContent='ประกาศรางวัลที่ '+announced.prize_number+' · '+announced.duck_label+' · อันดับการแข่งขัน '+announced.race_rank;
+  $('luckyStatus').textContent='ประกาศรางวัลที่ '+announced.prize_number+' · '+announced.duck_label+' · ลำดับที่ '+announced.race_rank;
 }
 // Delegate the click from the game root. This survives re-rendering of the reveal panel.
 $('luckyNext').onclick=null;
@@ -1937,7 +1937,7 @@ $('luckyBack').onclick=()=>{
 $('luckyCopy').onclick=async()=>{
   const visibleWinners=luckyDrawMode==='all'?luckyDrawWinners:luckyDrawWinners.slice(0,luckyDrawRevealed);
   if(!visibleWinners.length){$('luckyStatus').textContent='ยังไม่มีผลที่เปิดเผยให้คัดลอก';return;}
-  const lines=['4AM GUILD · LUCKY DRAW','ผู้เข้าร่วม: '+$('luckyEligible').textContent+' คน','จำนวนรางวัลที่เปิดเผย: '+visibleWinners.length,'',...visibleWinners.map(w=>'Prize #'+w.prize_number+' — '+w.duck_label+' (อันดับการแข่งขัน '+w.race_rank+')')];
+  const lines=['4AM GUILD · LUCKY DRAW','ผู้เข้าร่วม: '+$('luckyEligible').textContent+' คน','จำนวนรางวัลที่เปิดเผย: '+visibleWinners.length,'',...visibleWinners.map(w=>'Prize #'+w.prize_number+' — '+w.duck_label+' (ลำดับที่ '+w.race_rank+')')];
   try{
     await navigator.clipboard.writeText(lines.join('\n'));
     $('luckyStatus').textContent='คัดลอกผล Lucky Draw แล้ว';
