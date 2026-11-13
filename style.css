@@ -6498,7 +6498,7 @@ body select:disabled {
 .portfolio-member-bonds span{display:-webkit-box;overflow:hidden;color:#d2c9cb;font-size:12px;line-height:1.45;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow-wrap:anywhere}
 .bond-profile-modal{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:20px;background:rgba(0,0,0,.82);backdrop-filter:blur(9px)}
 .bond-profile-modal.hidden{display:none}
-.bond-profile-dialog{width:min(680px,100%);max-height:min(88vh,850px);overflow:auto;padding:22px;border:1px solid rgba(239,68,78,.35);border-radius:18px;background:linear-gradient(155deg,#1b1114,#09090b);box-shadow:0 24px 80px rgba(0,0,0,.65)}
+.bond-profile-dialog{width:min(720px,100%);min-height:min(620px,calc(100dvh - 40px));max-height:min(94vh,960px);overflow:auto;padding:26px;border:1px solid rgba(239,68,78,.35);border-radius:18px;background:linear-gradient(155deg,#1b1114,#09090b);box-shadow:0 24px 80px rgba(0,0,0,.65)}
 .bond-profile-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px}
 .bond-profile-heading h3{margin:4px 0;color:#fff;font-size:24px}
 .bond-profile-heading p{margin:0;color:#aaa1a3;font-size:13px}
@@ -6508,7 +6508,7 @@ body select:disabled {
 .bond-profile-cover-row small{color:#aaa1a3;font-size:12px}
 .bond-profile-dialog .portfolio-field textarea{width:100%;min-height:130px;resize:vertical}
 @media(max-width:850px){.portfolio-type-choices{grid-template-columns:1fr}.portfolio-type-choice{min-height:112px}.portfolio-member-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
-@media(max-width:650px){.portfolio-member-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.portfolio-member-cover{min-height:150px;max-height:none;aspect-ratio:4/3}.portfolio-member-card-content{min-height:150px;padding:10px}.portfolio-member-card-content h3{font-size:15px}.portfolio-member-bonds span{font-size:11px}.bond-profile-dialog{padding:16px}.bond-profile-cover-row{align-items:flex-start;flex-direction:column}}
+@media(max-width:650px){.portfolio-member-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.portfolio-member-cover{min-height:150px;max-height:none;aspect-ratio:4/3}.portfolio-member-card-content{min-height:150px;padding:10px}.portfolio-member-card-content h3{font-size:15px}.portfolio-member-bonds span{font-size:11px}.bond-profile-dialog{width:100%;min-height:min(580px,calc(100dvh - 32px));max-height:calc(100dvh - 32px);padding:18px}.bond-profile-cover-row{align-items:flex-start;flex-direction:column}}
 @media(max-width:380px){.portfolio-member-grid{grid-template-columns:1fr}.portfolio-member-cover{min-height:190px}}
 
 .portfolio-member-grid{grid-template-columns:repeat(5,minmax(0,1fr))}
