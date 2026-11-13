@@ -1977,10 +1977,13 @@ async function openPortfolioCropEditor(index = 0) {
   image.src = portfolioCropSourceUrl;
   $("portfolio-crop-modal")?.classList.remove("hidden");
 }
-function openBondProfileEditor() {
+async function openBondProfileEditor() {
   if (!currentUser || !allMembers.some(member => member.user_id === currentUser.id)) { alert("ไม่พบข้อมูลสมาชิกของบัญชีนี้"); return; }
   const member = allMembers.find(item => item.user_id === currentUser.id);
   $("bond-profile-names").value = Array.isArray(member.bond_names) ? member.bond_names.join("\\n") : "";
+  const cover = member.member_cover_url ? await resolveAvatarUrl({...member, avatar_url:member.member_cover_url}) : await resolveAvatarUrl(member) || DEFAULT_AVATAR;
+  const image = $("bond-profile-current-cover");
+  if (image) image.src = cover || DEFAULT_AVATAR;
   $("bond-profile-modal")?.classList.remove("hidden");
 }
 function closeBondProfileEditor() { $("bond-profile-modal")?.classList.add("hidden"); }
@@ -2506,6 +2509,9 @@ async function startPortfolioEdit(portfolioId) {
   $("portfolio-description").value = portfolio.description || "";
   $("portfolio-type").value = portfolio.portfolio_type || "pvp";
   document.querySelectorAll("[data-portfolio-type]").forEach(button => button.classList.toggle("is-selected", button.dataset.portfolioType === $("portfolio-type").value));
+  $("portfolio-type-step")?.classList.add("hidden");
+  $("portfolio-create-form")?.classList.remove("hidden");
+  $("portfolio-title-label").textContent = $("portfolio-type").value === "cultivation_skills" ? "ชื่อแฟ้มคัมภีร์ / ขั้นสกิล" : "ชื่อ Build";
   renderPortfolioClassChoices();
   const selected = new Set(getPortfolioClasses(portfolio.game_class));
   document.querySelectorAll(".portfolio-class-tag").forEach((button) => {
