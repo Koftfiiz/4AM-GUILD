@@ -1631,6 +1631,12 @@ async function loadLuckyHistory(){
 }
 async function openLuckySetup(isPreRace){
   luckyIsPreRaceSetup=!!isPreRace;
+  // Lock the reveal action until the server has returned a complete winner list.
+  $('luckyNext').disabled=true;
+  $('luckyNext').textContent='กำลังเตรียมผลรางวัล...';
+  luckyDrawRecord=null;
+  luckyDrawWinners=[];
+  luckyDrawRevealed=0;
   $('luckyM').classList.remove('hide');
   $('luckySendDiscord').disabled=true;$('luckySendDiscord').textContent='SEND TO DISCORD';$('luckyCopy').disabled=true;
   $('luckyResults').innerHTML='';
@@ -1696,14 +1702,22 @@ async function openLuckySetup(isPreRace){
     luckyDrawRecord=data.draw;
     // Trust the mode saved by the server so sequential reveal works for manual and random selection alike.
     luckyDrawMode=data.draw?.reveal_mode||savedConfig.reveal_mode;
-    luckyDrawWinners=(data.winners||[]).slice().sort((a,b)=>Number(a.prize_number)-Number(b.prize_number));
+    luckyDrawWinners=Array.isArray(data.winners)?data.winners.slice().sort((a,b)=>Number(a.prize_number)-Number(b.prize_number)):[];
     luckyDrawRevealed=0;
+    if(!luckyDrawRecord?.id||luckyDrawWinners.length!==prizeCount){
+      throw new Error('ระบบบันทึกผล Lucky Draw ได้ไม่ครบตามจำนวนรางวัลที่ตั้งไว้ กรุณาลองเปิด Lucky Draw อีกครั้ง');
+    }
     $('luckyNext').textContent='ประกาศผลรางวัล';
     $('luckyNext').disabled=false;
     $('luckyStatus').textContent=(savedConfig.selection_mode==='manual'?'ประกาศผลตามอันดับที่เลือกไว้แล้ว':'สุ่มและบันทึกผลเรียบร้อยแล้ว')+' · '+luckyDrawWinners.length+' ผู้ชนะ · ไม่มีผู้ชนะซ้ำ';
     renderLuckyResults();
     await loadLuckyHistory();
   }catch(error){
+    luckyDrawRecord=null;
+    luckyDrawWinners=[];
+    luckyDrawRevealed=0;
+    $('luckyNext').disabled=true;
+    $('luckyNext').textContent='ผลรางวัลยังไม่พร้อม';
     $('luckyStatus').textContent='เตรียมประกาศผลไม่สำเร็จ: '+(error.message||'กรุณาลองใหม่');
   }
 }
