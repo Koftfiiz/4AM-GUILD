@@ -18,7 +18,27 @@
     const member = (allMembers || []).find(m => m.user_id === id);
     return member && typeof getMemberName === "function" ? getMemberName(member) : (member?.character_name || id);
   };
-  const dateLabel = (value) => value ? new Date(value).toLocaleString("th-TH",{dateStyle:"medium",timeStyle:"short"}) : "—";
+  const dateLabel = (value) => {
+    if (!value) return "—";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "—";
+    return String(date.getDate()).padStart(2,"0") + "/" +
+      String(date.getMonth()+1).padStart(2,"0") + "/" +
+      date.getFullYear() + " " +
+      String(date.getHours()).padStart(2,"0") + ":" +
+      String(date.getMinutes()).padStart(2,"0");
+  };
+  const parseRoundDateTime = (value,label) => {
+    const match = String(value || "").trim().match(/^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2}):(\d{2})$/);
+    if (!match) throw new Error("กรุณาระบุ" + label + "ในรูปแบบ dd/mm/yyyy HH:mm");
+    const [,d,m,y,h,min] = match;
+    const date = new Date(Number(y),Number(m)-1,Number(d),Number(h),Number(min),0,0);
+    if (date.getFullYear()!==Number(y) || date.getMonth()!==Number(m)-1 ||
+        date.getDate()!==Number(d) || date.getHours()!==Number(h) || date.getMinutes()!==Number(min)) {
+      throw new Error("วันที่หรือเวลา" + label + "ไม่ถูกต้อง");
+    }
+    return date;
+  };
   const isRoundEditable = (round) => round && round.status === "open" && Date.now() >= new Date(round.starts_at).getTime() && Date.now() <= new Date(round.closes_at).getTime();
 
   function ensureRoot() {
@@ -138,8 +158,8 @@
         <div class="portfolio-tracker-heading"><div><span class="panel-kicker">PORTFOLIO CONTROL CENTER</span><h3>จัดการรอบอัปเดตแฟ้มผลงาน</h3><p>กำหนดรอบรับข้อมูลและติดตามการส่งของสมาชิกทั้งกิลด์</p></div><span class="portfolio-tracker-pill is-complete">Management</span></div>
         <form id="pt-create-round" class="portfolio-tracker-form">
           <label>ชื่อรอบ<input name="round_name" maxlength="120" required placeholder="เช่น รอบพฤศจิกายน 2026"></label>
-          <label>วันและเวลาเริ่ม<input name="starts_at" type="datetime-local" required></label>
-          <label>วันและเวลาปิดรับ<input name="closes_at" type="datetime-local" required></label>
+          <label>วันและเวลาเริ่ม<input name="starts_at" type="text" data-activity-datetime-input readonly autocomplete="off" placeholder="dd/mm/yyyy HH:mm" required></label>
+          <label>วันและเวลาปิดรับ<input name="closes_at" type="text" data-activity-datetime-input readonly autocomplete="off" placeholder="dd/mm/yyyy HH:mm" required></label>
           <button class="btn btn-primary" type="submit">＋ สร้างรอบใหม่</button>
         </form>
         <div class="portfolio-tracker-actions"><small class="portfolio-tracker-muted">เมื่อปิดรอบ สมาชิกจะส่งหรือแก้ไขไม่ได้ เว้นแต่ได้รับอนุญาตเป็นรายบุคคล</small></div>
@@ -234,8 +254,12 @@
     root.querySelector("#pt-create-round")?.addEventListener("submit",async e=>{
       e.preventDefault();if(!management())return;
       const form=new FormData(e.currentTarget);
-      const starts=new Date(form.get("starts_at")),closes=new Date(form.get("closes_at"));
-      if(!(closes>starts)){alert("วันปิดรับต้องอยู่หลังวันเริ่มต้น");return;}
+      let starts,closes;
+      try {
+        starts=parseRoundDateTime(form.get("starts_at"),"วันและเวลาเริ่ม");
+        closes=parseRoundDateTime(form.get("closes_at"),"วันและเวลาปิดรับ");
+      } catch(error) { alert(error.message); return; }
+      if(!(closes>starts)){alert("วันและเวลาปิดรับต้องอยู่หลังวันและเวลาเริ่มต้น");return;}
       const {data,error}=await supabaseClient.from("portfolio_update_rounds").insert({round_name:String(form.get("round_name")).trim(),starts_at:starts.toISOString(),closes_at:closes.toISOString(),created_by:currentUser.id}).select("id").single();
       if(error){alert("สร้างรอบไม่สำเร็จ: "+error.message);return;}
       selectedRoundId=data.id;await loadData();render();
