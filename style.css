@@ -6464,3 +6464,18 @@ body select:disabled {
 .portfolio-card-tags{display:flex;flex-wrap:wrap;align-items:center;gap:7px}
 .portfolio-card-tag.portfolio-card-class{display:inline-flex;align-items:center;justify-content:flex-start;gap:7px;width:max-content;max-width:100%;padding:5px 10px;border:1px solid color-mix(in srgb,var(--class-color,#e53945) 48%,transparent);border-radius:999px;background:color-mix(in srgb,var(--class-color,#e53945) 12%,#101010);color:var(--class-color,#ff5965);font-size:12px;font-weight:750;line-height:1.2;white-space:nowrap}
 .portfolio-card-class-icon{display:block;flex:0 0 22px;width:22px;height:22px;object-fit:contain}
+
+
+/* Portfolio delete badge: iPhone-style minus at the top-right of the cover */
+.portfolio-card{position:relative;overflow:visible}
+.portfolio-iphone-delete{
+  position:absolute;top:10px;right:10px;left:auto;z-index:20;
+  display:grid;place-items:center;width:34px;height:34px;min-width:34px;
+  padding:0;border:2px solid rgba(255,255,255,.9);border-radius:50%;
+  background:#e53945;color:#fff;font:600 27px/1 Arial,sans-serif;
+  box-shadow:0 3px 12px rgba(0,0,0,.6);cursor:pointer;
+  opacity:1;visibility:visible;pointer-events:auto;
+}
+.portfolio-iphone-delete:hover{background:#ff5965;transform:scale(1.08)}
+.portfolio-iphone-delete.is-confirming{background:#ff5965;outline:3px solid rgba(255,89,101,.3);outline-offset:2px}
+.portfolio-iphone-delete:disabled{opacity:.65;cursor:wait}
