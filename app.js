@@ -2037,9 +2037,6 @@ async function openPortfolioMemberCoverCrop(file) {
   $("portfolio-crop-save").textContent="บันทึกรูปหน้าปก";
   const image=$("portfolio-crop-image");
   image.onload=()=>{
-    portfolioCropper=new Cropper(image,{aspectRatio:16/9,viewMode:1,dragMode:"move",autoCropArea:.92,responsive:true,restore:false,background:false,guides:true,center:true,cropBoxMovable:true,cropBoxResizable:true,toggleDragModeOnDblclick:false,ready(){$("portfolio-crop-zoom").value="1";$("portfolio-crop-zoom-value").textContent="100%";}});
-  };
-  image.onload=()=>{
     portfolioCropper=new Cropper(image,{
       aspectRatio:16/9,viewMode:1,dragMode:"move",autoCropArea:.92,responsive:true,
       restore:false,background:false,guides:true,center:true,cropBoxMovable:true,cropBoxResizable:true,
