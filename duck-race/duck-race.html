@@ -988,15 +988,15 @@ function drawDuck(k,x,y,s,t){
   // number / name tag on the belly
   const tx=x,ty=yb+s*.34;let fs=s*.17,txt=k.r.label;
   c.font='700 '+fs+'px "Noto Sans Thai",Arial,sans-serif';
-  const maxw=s*.55;let w=c.measureText(txt).width;
-  while(w>maxw&&fs>6){fs-=1;c.font='700 '+fs+'px "Noto Sans Thai",Arial,sans-serif';w=c.measureText(txt).width}
-  if(w>maxw){while(txt.length>2&&c.measureText(txt+'…').width>maxw)txt=txt.slice(0,-1);txt+='…';w=c.measureText(txt).width}
-  const bw=Math.max(s*.32,w+s*.1),bh=Math.max(fs*1.5,s*.2);
+  const w=c.measureText(txt).width;
+  const bw=Math.max(s*.32,w+s*.22),bh=Math.max(fs*1.5,s*.2);
   const tagY=yb-s*1.22;
   c.save();c.shadowColor='rgba(0,0,0,.28)';c.shadowBlur=Math.max(2,s*.045);c.shadowOffsetY=Math.max(1,s*.018);
   c.fillStyle='#fff';c.strokeStyle='#5a4a2a';c.lineWidth=Math.max(1,s*.018);
   c.beginPath();c.roundRect(tx-bw/2,tagY-bh/2,bw,bh,bh/2);c.fill();c.stroke();
-  c.restore();c.fillStyle='#111';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,tx,tagY+fs*.05);
+  // Keep one consistent font size for every duck. Expand the label background for long names.
+  const tagX=Math.max(bw/2+6,Math.min(W-bw/2-6,tx));
+  c.restore();c.fillStyle='#111';c.textAlign='center';c.textBaseline='middle';c.fillText(txt,tagX,tagY+fs*.05);
 }
 
 
@@ -1579,8 +1579,10 @@ function renderLuckyResults(){
   $('luckyRevealed').textContent=count+'/'+luckyDrawWinners.length;
   $('luckyProgressBar').style.width=(luckyDrawWinners.length?count/luckyDrawWinners.length*100:0)+'%';
   $('luckyNext').textContent='ประกาศผลรางวัล';
-  $('luckyNext').disabled=(activeRevealMode!=='sequential'||!luckyDrawWinners.length||count>=luckyDrawWinners.length);
-  $('luckyNext').classList.toggle('hide',activeRevealMode!=='sequential'||!luckyDrawWinners.length||count>=luckyDrawWinners.length);
+  const canRevealNext=activeRevealMode==='sequential'&&luckyDrawWinners.length>0&&count<luckyDrawWinners.length;
+  $('luckyNext').disabled=!canRevealNext;
+  $('luckyNext').classList.toggle('hide',!canRevealNext);
+  $('luckyNext').setAttribute('aria-disabled',String(!canRevealNext));
   if(count){
     const w=luckyDrawWinners[count-1];
     $('luckySpotlight').innerHTML='';
@@ -1780,27 +1782,37 @@ $('luckyStart').onclick=async()=>{
     button.textContent=luckySelectionMode==='manual'?'ยืนยันอันดับและแสดงผลรางวัล':'เริ่มสุ่มรางวัล';
   }
 };
-$('luckyNext').onclick=()=>{
+function revealNextLuckyPrize(){
   const activeRevealMode=luckyDrawRecord?.reveal_mode||luckyDrawMode;
   if(activeRevealMode!=='sequential'){
-    $('luckyStatus').textContent='รายการนี้ตั้งค่าเป็นการเปิดเผยผลทั้งหมดพร้อมกัน';
+    $('luckyStatus').textContent='รายการนี้ตั้งค่าให้เปิดเผยผลทั้งหมดพร้อมกัน จึงไม่มีรางวัลถัดไป';
     return;
   }
-  if(!Array.isArray(luckyDrawWinners)||!luckyDrawWinners.length){
-    $('luckyStatus').textContent='ไม่พบรายชื่อผู้ได้รับรางวัล กรุณาปิดแล้วเปิดผล Lucky Draw อีกครั้ง';
+  if(!Array.isArray(luckyDrawWinners)||luckyDrawWinners.length===0){
+    $('luckyStatus').textContent='ไม่พบรายชื่อผู้ได้รับรางวัลในหน้านี้ กรุณาปิดหน้าต่างแล้วเปิด Lucky Draw จากผลการแข่งขันอีกครั้ง';
     return;
   }
-  const nextIndex=Math.min(luckyDrawRevealed,luckyDrawWinners.length-1);
+  const nextIndex=Math.max(0,Number(luckyDrawRevealed)||0);
   if(nextIndex>=luckyDrawWinners.length){
     $('luckyStatus').textContent='ประกาศผลรางวัลครบทุกคนแล้ว';
+    renderLuckyResults();
     return;
   }
-  luckyDrawMode='sequential';
   luckyDrawRevealed=nextIndex+1;
   renderLuckyResults();
   const announced=luckyDrawWinners[nextIndex];
   $('luckyStatus').textContent='ประกาศรางวัลที่ '+announced.prize_number+' · '+announced.duck_label+' · อันดับการแข่งขัน '+announced.race_rank;
-};
+}
+// Delegate the click from the game root. This survives re-rendering of the reveal panel.
+$('luckyNext').onclick=null;
+root.addEventListener('click',event=>{
+  const button=event.target.closest('#luckyNext');
+  if(!button||!root.contains(button))return;
+  event.preventDefault();
+  event.stopPropagation();
+  if(button.disabled)return;
+  revealNextLuckyPrize();
+});
 $('luckyBack').onclick=()=>{
   const hasCurrentResult=!!luckyDrawRecord?.id;
   if(hasCurrentResult&&!confirm('กลับไปหน้าตั้งค่า Lucky Draw หรือไม่?\nผลสุ่มรอบนี้จะยังคงอยู่ในประวัติ หากกดเริ่มสุ่มอีกครั้งจะสร้างรายการจับรางวัลใหม่'))return;
