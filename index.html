@@ -661,7 +661,14 @@
           <div id="class-legend" class="class-legend"></div>
         </section>
 
-        <section class="panel portfolio-create-section">
+        <section id="portfolio-member-directory" class="panel portfolio-member-directory">
+          <div class="portfolio-section-heading"><div><span class="panel-kicker">4AM CHARACTER DIRECTORY</span><h3>แฟ้มผลงานสมาชิก</h3><p>เลือกสมาชิกเพื่อเปิดดูคอลเลกชันแฟ้มผลงานและ Build ของตัวละคร</p></div></div>
+          <label class="portfolio-member-search-wrap"><span aria-hidden="true">⌕</span><input id="portfolio-member-search" type="search" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น หรือคลาส..."></label>
+          <div id="portfolio-member-grid" class="portfolio-member-grid"><p class="muted">กำลังโหลดรายชื่อสมาชิก...</p></div>
+        </section>
+        <section id="portfolio-member-detail" class="hidden">
+          <div class="portfolio-member-detail-header"><button type="button" id="portfolio-back-to-members" class="btn btn-outline">← สมาชิกทั้งหมด</button><div class="portfolio-member-detail-title"><span id="portfolio-member-detail-class" class="portfolio-member-detail-class"></span><h2 id="portfolio-member-detail-name">แฟ้มผลงานสมาชิก</h2><p id="portfolio-member-detail-subtitle"></p></div><button type="button" id="portfolio-manage-button" class="btn btn-outline hidden" aria-pressed="false">จัดการแฟ้ม</button></div>
+                  <section id="portfolio-create-section" class="panel portfolio-create-section">
           <div class="portfolio-section-heading">
             <div>
               <span class="panel-kicker">YOUR CHARACTER BUILDS</span>
@@ -721,6 +728,8 @@
         </section>
       </section>
 
+
+        </section>
       <!-- ============ FEEDBACK & SUPPORT CENTER ============ -->
       <section id="page-feedback" class="page page-padded hidden">
         <div class="page-intro">

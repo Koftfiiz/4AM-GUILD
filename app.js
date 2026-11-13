@@ -30,6 +30,8 @@ let directoryMembers = [];
 let discordAccount = null;
 let allPortfolios = [];
 let portfolioClassFilter = "all";
+let currentPortfolioMemberId = null;
+let portfolioManageMode = false;
 let allWarEvents = [];
 let currentWarParties = [];
 let currentWarPartyAssignments = [];
@@ -1922,6 +1924,11 @@ function resetPortfolioForm() {
     if (item.preview && item.preview.startsWith("blob:")) URL.revokeObjectURL(item.preview);
   });
   window.portfolioDraftFiles = [];
+  $("portfolio-member-search")?.addEventListener("input",()=>{void renderPortfolioMemberDirectory();});
+  $("portfolio-member-grid")?.addEventListener("click",async event=>{const b=event.target.closest("[data-portfolio-member-id]");if(!b)return;currentPortfolioMemberId=b.dataset.portfolioMemberId;portfolioClassFilter="all";portfolioManageMode=false;await renderPortfolios();});
+  $("portfolio-back-to-members")?.addEventListener("click",async()=>{currentPortfolioMemberId=null;portfolioManageMode=false;portfolioClassFilter="all";resetPortfolioForm();$("portfolio-create-panel")?.classList.add("hidden");$("portfolio-add-button")?.setAttribute("aria-expanded","false");await renderPortfolios();});
+  $("portfolio-manage-button")?.addEventListener("click",()=>{portfolioManageMode=!portfolioManageMode;void renderPortfolios();});
+
   window.editingPortfolioId = null;
   window.portfolioOriginalImages = [];
   renderPortfolioClassChoices();
@@ -1955,18 +1962,53 @@ function portfolioReviewStatusLabel(status) {
   })[status] || "รอตรวจสอบ";
 }
 
+async function renderPortfolioMemberDirectory() {
+  const container=$("portfolio-member-grid"); if(!container)return;
+  const search=String($("portfolio-member-search")?.value||"").trim().toLowerCase();
+  const members=(allMembers||[]).filter(m=>m.active!==false)
+    .filter(m=>!search||[getMemberName(m),m.nickname,m.discord_name,getMemberClass(m)].filter(Boolean).join(" ").toLowerCase().includes(search))
+    .sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));
+  if(!members.length){showEmpty(container,"ไม่พบสมาชิก","ลองค้นหาด้วยชื่อตัวละคร ชื่อเล่น หรือคลาสอาชีพ");return;}
+  const cards=await Promise.all(members.map(async m=>{
+    const ps=allPortfolios.filter(p=>p.member_id===m.user_id),cover=ps[0]?.portfolio_images?.[0];
+    const cn=getMemberClass(m),ci=getClassInfo(cn),color=ci?.color||"#aaa";
+    let src=cover?await getPortfolioImageUrl(cover.image_url):"";
+    if(!src)src=await resolveAvatarUrl(m)||DEFAULT_AVATAR;
+    return `<article class="portfolio-member-card" style="--class-color:${color}">
+      <button type="button" class="portfolio-member-open" data-portfolio-member-id="${escapeHTML(m.user_id)}">
+        <div class="portfolio-member-cover"><img src="${escapeHTML(src)}" alt="ปกแฟ้มผลงาน ${escapeHTML(getMemberName(m))}" loading="lazy"><span class="portfolio-member-count">${ps.length} แฟ้ม</span></div>
+        <div class="portfolio-member-card-content"><div class="portfolio-member-class">${ci?.iconPath?`<img src="${escapeHTML(ci.iconPath)}" alt="">`:""}<span>${escapeHTML(cn||"ยังไม่ระบุคลาส")}</span></div>
+        <h3>${escapeHTML(getMemberName(m))}</h3><p>${escapeHTML(m.nickname||m.discord_name||"4AM GUILD Member")}</p>
+        <span class="portfolio-member-open-label">${m.user_id===currentUser?.id?"แฟ้มผลงานของคุณ":"ดูแฟ้มผลงาน"} <span>↗</span></span></div>
+      </button></article>`;
+  }));
+  container.innerHTML=cards.join("");
+}
+
 async function renderPortfolios() {
   const container = $("portfolio-grid");
   if (!container) return;
+  const directory=$("portfolio-member-directory"),detail=$("portfolio-member-detail");
+  if(!currentPortfolioMemberId){directory?.classList.remove("hidden");detail?.classList.add("hidden");await renderPortfolioMemberDirectory();return;}
+  const selectedMember=allMembers.find(m=>m.user_id===currentPortfolioMemberId);
+  if(!selectedMember){currentPortfolioMemberId=null;await renderPortfolios();return;}
+  directory?.classList.add("hidden");detail?.classList.remove("hidden");
+  const memberClass=getMemberClass(selectedMember),memberClassInfo=getClassInfo(memberClass);
+  if($("portfolio-member-detail-name"))$("portfolio-member-detail-name").textContent=getMemberName(selectedMember);
+  if($("portfolio-member-detail-subtitle"))$("portfolio-member-detail-subtitle").textContent=selectedMember.user_id===currentUser?.id?"จัดการและแบ่งปันแฟ้มผลงานตัวละครของคุณ":"แฟ้มผลงานและ Build ที่สมาชิกคนนี้แบ่งปัน";
+  if($("portfolio-member-detail-class")){$("portfolio-member-detail-class").textContent=memberClass||"ยังไม่ระบุคลาส";$("portfolio-member-detail-class").style.setProperty("--class-color",memberClassInfo?.color||"#aaa");}
+  const ownCollection=selectedMember.user_id===currentUser?.id,canManage=ownCollection||isPortfolioReviewer();
+  $("portfolio-create-section")?.classList.toggle("hidden",!ownCollection);
+  $("portfolio-manage-button")?.classList.toggle("hidden",!canManage);
+  const manageButton=$("portfolio-manage-button");if(manageButton){manageButton.textContent=portfolioManageMode?"เสร็จสิ้น":"จัดการแฟ้ม";manageButton.classList.toggle("is-active",portfolioManageMode);manageButton.setAttribute("aria-pressed",String(portfolioManageMode));}
+
   if (!allPortfolios.length) {
     showEmpty(container, "No Portfolio Yet", "ยังไม่มีผลงานในระบบ · กด Add Portfolio เพื่อสร้างแฟ้มแรกของคุณ");
     return;
   }
 
-  const visiblePortfolios = portfolioClassFilter === "all"
-    ? allPortfolios
-    : allPortfolios.filter((portfolio) => getPortfolioClasses(portfolio.game_class)
-        .some((name) => name.toLowerCase() === portfolioClassFilter.toLowerCase()));
+  const memberPortfolios=allPortfolios.filter(portfolio=>portfolio.member_id===currentPortfolioMemberId);
+  const visiblePortfolios=portfolioClassFilter==="all"?memberPortfolios:memberPortfolios.filter(portfolio=>getPortfolioClasses(portfolio.game_class).some(name=>name.toLowerCase()===portfolioClassFilter.toLowerCase()));
   if (!visiblePortfolios.length) {
     showEmpty(container, "No Portfolio Found", `ยังไม่มีแฟ้มผลงานของคลาส ${portfolioClassFilter}`);
     return;
@@ -2051,12 +2093,7 @@ async function renderPortfolios() {
                 <span>แก้ไข</span>
               </button>
             ` : ""}
-            ${reviewer ? `
-              <button type="button" class="portfolio-delete-button" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงาน" title="ลบแฟ้มผลงาน">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/><path d="M10 11v5M14 11v5"/></svg>
-                <span>ลบ</span>
-              </button>
-            ` : ""}
+            ${portfolioManageMode && (isOwner || reviewer) ? `<button type="button" class="portfolio-iphone-delete" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงาน">−</button>` : ""}
           </div>
           ${reviewPanel}
           ${reviewControls}
@@ -2337,12 +2374,9 @@ async function startPortfolioEdit(portfolioId) {
 }
 
 async function deletePortfolio(portfolioId) {
-  if (!isPortfolioReviewer()) {
-    alert("เฉพาะ Developer, Leader และ Management เท่านั้นที่ลบแฟ้มผลงานได้");
-    return;
-  }
   const portfolio = allPortfolios.find((item) => item.id === portfolioId);
   if (!portfolio) return;
+  if (portfolio.member_id !== currentUser?.id && !isPortfolioReviewer()) { alert("คุณลบได้เฉพาะแฟ้มผลงานของตัวเองเท่านั้น"); return; }
   try {
     const paths = (portfolio.portfolio_images || []).map((image) => image.image_url)
       .filter((path) => path && !/^https?:\/\//i.test(path));
@@ -2370,6 +2404,7 @@ async function handlePortfolioCardAction(event) {
     return;
   }
   if (button.dataset.portfolioAction === "delete") {
+    if (!portfolioManageMode) return;
     // Use an in-page two-click confirmation instead of window.confirm(),
     // which may be suppressed by some browser/event-handler contexts.
     if (button.dataset.confirmDelete !== "true") {
