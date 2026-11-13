@@ -2613,15 +2613,7 @@ async function handlePortfolioCardAction(event) {
     const canReviewDelete = portfolioManageMode && isPortfolioReviewer();
     if (!isOwner && !canReviewDelete) return;
 
-    // Two-step confirmation: tap the red minus, then tap the checkmark.
-    if (button.dataset.confirmDelete !== "true") {
-      button.dataset.confirmDelete = "true";
-      button.classList.add("is-confirming");
-      button.textContent = "✓";
-      button.setAttribute("aria-label", "ยืนยันลบแฟ้มผลงาน กดอีกครั้ง");
-      button.title = "กดอีกครั้งเพื่อยืนยันการลบ";
-      return;
-    }
+    if (!confirm("ต้องการลบแฟ้มผลงานนี้ใช่หรือไม่?\\nรูปภาพและข้อมูลในแฟ้มนี้จะถูกลบด้วย")) return;
 
     button.disabled = true;
     button.textContent = "…";
