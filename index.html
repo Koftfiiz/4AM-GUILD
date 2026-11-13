@@ -10,7 +10,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=war-class-icon-20261112-r1">
+  <link rel="stylesheet" href="style.css?v=portfolio-cover-editor-20261113-r1">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
   <script>
     (function loadGuildApp() {
@@ -699,7 +701,7 @@
               </div>
               <div class="portfolio-field">
                 <span>Upload Images <i>*</i></span>
-                <p class="portfolio-field-hint">เลือกได้สูงสุด 12 รูป · ไม่เกิน 12 MB ต่อรูป · รูปแรกเป็นภาพหน้าปก</p>
+                <p class="portfolio-field-hint">เลือกได้สูงสุด 12 รูป · ไม่เกิน 12 MB ต่อรูป · รูปแรกเป็นภาพหน้าปก 16:9 · กด “ปรับหน้าปก” เพื่อ Crop ภาพได้</p>
                 <label class="portfolio-file-picker" for="portfolio-image-input">
                   <span>＋</span>
                   <strong>เลือกรูปภาพ</strong>
@@ -717,7 +719,17 @@
               </div>
             </form>
           </div>
-
+          <div id="portfolio-crop-modal" class="portfolio-crop-modal hidden" role="dialog" aria-modal="true" aria-labelledby="portfolio-crop-title">
+            <div class="portfolio-crop-dialog">
+              <div class="portfolio-crop-heading"><div><span class="panel-kicker">COVER IMAGE EDITOR</span><h3 id="portfolio-crop-title">จัดตำแหน่งภาพหน้าปก</h3><p>ลากภาพเพื่อจัดตำแหน่ง · ซูมเพื่อเน้นจุดสำคัญ · สัดส่วน 16:9</p></div><button type="button" id="portfolio-crop-close" class="portfolio-crop-close" aria-label="ปิด">×</button></div>
+              <div class="portfolio-crop-workspace"><img id="portfolio-crop-image" alt="ภาพสำหรับจัดหน้าปก"></div>
+              <div class="portfolio-crop-tools">
+                <label class="portfolio-crop-zoom"><span>ซูม</span><input id="portfolio-crop-zoom" type="range" min="0.5" max="3" step="0.01" value="1"><output id="portfolio-crop-zoom-value">100%</output></label>
+                <div class="portfolio-crop-tool-buttons"><button type="button" id="portfolio-crop-rotate-left" class="btn btn-outline">↶ หมุนซ้าย</button><button type="button" id="portfolio-crop-rotate-right" class="btn btn-outline">↷ หมุนขวา</button><button type="button" id="portfolio-crop-reset" class="btn btn-outline">คืนค่า</button></div>
+              </div>
+              <div class="portfolio-crop-footer"><span>ภาพต้นฉบับจะถูกเก็บไว้ ไม่ถูกแก้ไข</span><div><button type="button" id="portfolio-crop-cancel" class="btn btn-outline">ยกเลิก</button><button type="button" id="portfolio-crop-save" class="btn btn-primary">ใช้ภาพนี้เป็นหน้าปก</button></div></div>
+            </div>
+          </div>
           <div id="portfolio-grid" class="portfolio-grid">
             <div class="empty-state">
               <span>▤</span>

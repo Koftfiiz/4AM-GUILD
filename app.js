@@ -1830,27 +1830,24 @@ async function uploadMemberAvatar(file) {
 // ==========================================
 
 async function loadPortfolios() {
-  const { data, error } = await supabaseClient
-    .from("portfolios")
-    .select(`
+  const extended = `
+    id, member_id, title, description, game_class, created_at, updated_at,
+    portfolio_images ( id, image_url, cover_image_url, crop_settings, image_type, caption, created_at, sort_order ),
+    portfolio_reviews ( status, reason, reviewer_user_id, reviewed_at )
+  `;
+  let { data, error } = await supabaseClient.from("portfolios").select(extended).order("created_at", { ascending: false });
+  if (error && /cover_image_url|crop_settings|column/i.test(error.message || "")) {
+    ({ data, error } = await supabaseClient.from("portfolios").select(`
       id, member_id, title, description, game_class, created_at, updated_at,
       portfolio_images ( id, image_url, image_type, caption, created_at, sort_order ),
       portfolio_reviews ( status, reason, reviewer_user_id, reviewed_at )
-    `)
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("Portfolio loading error:", error);
-    allPortfolios = [];
-    renderPortfolios();
-    return;
+    `).order("created_at", { ascending: false }));
   }
-
+  if (error) { console.error("Portfolio loading error:", error); allPortfolios = []; renderPortfolios(); return; }
   allPortfolios = (data || []).map((portfolio) => ({
     ...portfolio,
     portfolio_images: (portfolio.portfolio_images || []).sort((a, b) =>
-      (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0) ||
-      new Date(a.created_at) - new Date(b.created_at)
+      (Number(a.sort_order) || 0) - (Number(b.sort_order) || 0) || new Date(a.created_at) - new Date(b.created_at)
     )
   }));
   renderPortfolios();
@@ -1908,6 +1905,7 @@ function renderPortfolioSelectedFiles() {
       <img src="${item.preview}" alt="Preview ${index + 1}">
       <div class="portfolio-preview-actions">
         <button type="button" class="portfolio-cover-button ${index === 0 ? "is-cover" : ""}" data-cover-index="${index}">
+        ${index === 0 ? '<button type="button" class="portfolio-crop-open" data-crop-index="0">ปรับหน้าปก</button>' : ""}
           ${index === 0 ? "ภาพหน้าปก" : "ตั้งเป็นหน้าปก"}
         </button>
         <button type="button" class="portfolio-remove-image" data-remove-index="${index}" aria-label="ลบรูป">×</button>
@@ -1917,11 +1915,57 @@ function renderPortfolioSelectedFiles() {
   `).join("");
 }
 
+let portfolioCropper = null;
+let portfolioCropIndex = null;
+let portfolioCropSourceUrl = null;
+function closePortfolioCropEditor() {
+  if (portfolioCropper) { portfolioCropper.destroy(); portfolioCropper = null; }
+  if (portfolioCropSourceUrl?.startsWith("blob:")) URL.revokeObjectURL(portfolioCropSourceUrl);
+  portfolioCropSourceUrl = null; portfolioCropIndex = null;
+  $("portfolio-crop-modal")?.classList.add("hidden");
+}
+async function openPortfolioCropEditor(index = 0) {
+  const item = (window.portfolioDraftFiles || [])[index];
+  if (!item) return;
+  if (typeof window.Cropper !== "function") { alert("โหลดเครื่องมือ Crop ภาพไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ"); return; }
+  closePortfolioCropEditor();
+  portfolioCropIndex = index;
+  portfolioCropSourceUrl = item.file instanceof File ? URL.createObjectURL(item.file) : await getPortfolioImageUrl(item.path || "");
+  if (!portfolioCropSourceUrl) { alert("ไม่สามารถเปิดภาพต้นฉบับได้"); return; }
+  const image = $("portfolio-crop-image");
+  image.onload = () => {
+    portfolioCropper = new Cropper(image, {
+      aspectRatio:16/9, viewMode:1, dragMode:"move", autoCropArea:.92, responsive:true,
+      restore:false, background:false, guides:true, center:true, cropBoxMovable:true, cropBoxResizable:true,
+      toggleDragModeOnDblclick:false,
+      ready() { $("portfolio-crop-zoom").value="1"; $("portfolio-crop-zoom-value").textContent="100%"; }
+    });
+  };
+  image.src = portfolioCropSourceUrl;
+  $("portfolio-crop-modal")?.classList.remove("hidden");
+}
+async function savePortfolioCrop() {
+  if (!portfolioCropper || portfolioCropIndex === null) return;
+  const button=$("portfolio-crop-save"); button.disabled=true; button.textContent="กำลังประมวลผล...";
+  try {
+    const canvas=portfolioCropper.getCroppedCanvas({width:1600,height:900,minWidth:800,minHeight:450,imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"});
+    const blob=await new Promise((resolve,reject)=>canvas.toBlob(v=>v?resolve(v):reject(new Error("ไม่สามารถสร้างภาพหน้าปกได้")),"image/webp",.9));
+    const files=[...(window.portfolioDraftFiles||[])],item=files[portfolioCropIndex];
+    if(!item)return;
+    if(item.coverPreview?.startsWith("blob:"))URL.revokeObjectURL(item.coverPreview);
+    item.cropBlob=blob; item.cropSettings=portfolioCropper.getData(true);
+    item.coverPreview=URL.createObjectURL(blob); item.preview=item.coverPreview;
+    window.portfolioDraftFiles=files; closePortfolioCropEditor(); renderPortfolioSelectedFiles();
+  } catch(error) { alert(error.message||"จัดเตรียมภาพหน้าปกไม่สำเร็จ"); }
+  finally { button.disabled=false; button.textContent="ใช้ภาพนี้เป็นหน้าปก"; }
+}
+
 function resetPortfolioForm() {
   const form = $("portfolio-create-form");
   if (form) form.reset();
   (window.portfolioDraftFiles || []).forEach((item) => {
-    if (item.preview && item.preview.startsWith("blob:")) URL.revokeObjectURL(item.preview);
+    if (item.preview?.startsWith("blob:")) URL.revokeObjectURL(item.preview);
+    if (item.coverPreview?.startsWith("blob:") && item.coverPreview !== item.preview) URL.revokeObjectURL(item.coverPreview);
   });
   window.portfolioDraftFiles = [];
   $("portfolio-member-search")?.addEventListener("input",()=>{void renderPortfolioMemberDirectory();});
@@ -1972,7 +2016,7 @@ async function renderPortfolioMemberDirectory() {
   const cards=await Promise.all(members.map(async m=>{
     const ps=allPortfolios.filter(p=>p.member_id===m.user_id),cover=ps[0]?.portfolio_images?.[0];
     const cn=getMemberClass(m),ci=getClassInfo(cn),color=ci?.color||"#aaa";
-    let src=cover?await getPortfolioImageUrl(cover.image_url):"";
+    let src=cover?await getPortfolioImageUrl(cover.cover_image_url || cover.image_url):"";
     if(!src)src=await resolveAvatarUrl(m)||DEFAULT_AVATAR;
     return `<article class="portfolio-member-card" style="--class-color:${color}">
       <button type="button" class="portfolio-member-open" data-portfolio-member-id="${escapeHTML(m.user_id)}">
@@ -2017,7 +2061,7 @@ async function renderPortfolios() {
   const cards = await Promise.all(visiblePortfolios.map(async (portfolio) => {
     const images = portfolio.portfolio_images || [];
     const firstImage = images[0];
-    const imageUrl = firstImage ? await getPortfolioImageUrl(firstImage.image_url) : "";
+    const imageUrl = firstImage ? await getPortfolioImageUrl(firstImage.cover_image_url || firstImage.image_url) : "";
     const owner = allMembers.find((member) => member.user_id === portfolio.member_id);
     const ownerName = owner ? getMemberName(owner) : "Guild Member";
     const classes = getPortfolioClasses(portfolio.game_class);
@@ -2194,34 +2238,20 @@ function handlePortfolioReviewAction(event) {
   }
 }
 
-async function uploadPortfolioImage(file, portfolioId, caption = "", sortOrder = 0) {
-  if (!currentUser) throw new Error("กรุณาเข้าสู่ระบบก่อน");
-  if (!file || !file.type.startsWith("image/")) throw new Error("กรุณาเลือกไฟล์รูปภาพ");
-  const extension = file.name.split(".").pop().toLowerCase();
-  const safeExtension = /^[a-z0-9]+$/.test(extension) ? extension : "jpg";
-  const path = `${currentUser.id}/${portfolioId}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${safeExtension}`;
-
-  const { error: uploadError } = await supabaseClient.storage
-    .from(PORTFOLIO_BUCKET)
-    .upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
-  if (uploadError) throw uploadError;
-
-  const { data, error: insertError } = await supabaseClient
-    .from("portfolio_images")
-    .insert({
-      portfolio_id: portfolioId,
-      image_url: path,
-      image_type: "other",
-      caption,
-      sort_order: sortOrder
-    })
-    .select("id")
-    .single();
-
-  if (insertError) {
-    await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove([path]);
-    throw insertError;
-  }
+async function uploadPortfolioImage(file, portfolioId, caption="", sortOrder=0, coverBlob=null, cropSettings=null) {
+  if(!currentUser)throw new Error("กรุณาเข้าสู่ระบบก่อน");
+  if(!file||!file.type.startsWith("image/"))throw new Error("กรุณาเลือกรูปภาพ");
+  const ext=(file.name.split(".").pop()||"jpg").toLowerCase(),safe=/^[a-z0-9]+$/.test(ext)?ext:"jpg";
+  const base=`${currentUser.id}/${portfolioId}/${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+  const originalPath=`${base}.${safe}`,coverPath=coverBlob?`${base}-cover.webp`:null,storage=supabaseClient.storage.from(PORTFOLIO_BUCKET);
+  const {error:originalError}=await storage.upload(originalPath,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+  if(originalError)throw originalError;
+  if(coverBlob){const {error}=await storage.upload(coverPath,coverBlob,{cacheControl:"31536000",upsert:false,contentType:"image/webp"});if(error){await storage.remove([originalPath]);throw error;}}
+  const {data,error:insertError}=await supabaseClient.from("portfolio_images").insert({
+    portfolio_id:portfolioId,image_url:originalPath,cover_image_url:coverPath,crop_settings:cropSettings,
+    image_type:"other",caption,sort_order:sortOrder
+  }).select("id").single();
+  if(insertError){await storage.remove([originalPath,...(coverPath?[coverPath]:[])]);throw insertError;}
   return data;
 }
 
@@ -2262,6 +2292,11 @@ async function handlePortfolioCreate(event) {
     if (status) status.textContent = "กรุณาเก็บรูปภาพไว้อย่างน้อย 1 รูป";
     return;
   }
+  if (!files[0].existing && !files[0].cropBlob) {
+    if (status) status.textContent = "กรุณาจัดตำแหน่งและ Crop ภาพหน้าปกก่อนบันทึก";
+    await openPortfolioCropEditor(0);
+    return;
+  }
   if (!selectedClasses.length) {
     if (status) status.textContent = "กรุณาเลือก Class Tags อย่างน้อย 1 คลาส";
     return;
@@ -2300,18 +2335,25 @@ async function handlePortfolioCreate(event) {
       for (let index = 0; index < files.length; index++) {
         const item = files[index];
         if (item.existing) {
-          const { error } = await supabaseClient.from("portfolio_images")
-            .update({ sort_order: index }).eq("id", item.imageId);
-          if (error) throw error;
+          const updatePayload = { sort_order:index };
+          if(index===0 && item.cropBlob){
+            const coverPath=`${currentUser.id}/${editingId}/${Date.now()}-${Math.random().toString(36).slice(2,8)}-cover.webp`;
+            const {error:coverError}=await supabaseClient.storage.from(PORTFOLIO_BUCKET).upload(coverPath,item.cropBlob,{cacheControl:"31536000",upsert:false,contentType:"image/webp"});
+            if(coverError)throw coverError;
+            updatePayload.cover_image_url=coverPath; updatePayload.crop_settings=item.cropSettings||null;
+            if(item.coverPath && item.coverPath!==item.path && !/^https?:\/\//i.test(item.coverPath)){const {error:removeError}=await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove([item.coverPath]);if(removeError)throw removeError;}
+          }
+          const {error}=await supabaseClient.from("portfolio_images").update(updatePayload).eq("id",item.imageId);
+          if(error)throw error;
         } else {
-          await uploadPortfolioImage(item.file, editingId, "", index);
+          await uploadPortfolioImage(item.file, editingId, "", index, index===0?item.cropBlob:null, index===0?item.cropSettings:null);
         }
         if (status) status.textContent = `กำลังบันทึกรูปภาพ ${index + 1}/${files.length}...`;
       }
     } else {
       createdPortfolio = await createPortfolio({ title, description, gameClasses: selectedClasses });
       for (let index = 0; index < files.length; index++) {
-        await uploadPortfolioImage(files[index].file, createdPortfolio.id, "", index);
+        await uploadPortfolioImage(files[index].file, createdPortfolio.id, "", index, index===0?files[index].cropBlob:null, index===0?files[index].cropSettings:null);
         if (status) status.textContent = `กำลังอัปโหลดรูปภาพ ${index + 1}/${files.length}...`;
       }
     }
@@ -2342,7 +2384,7 @@ async function startPortfolioEdit(portfolioId) {
   }
   resetPortfolioForm();
   window.editingPortfolioId = portfolio.id;
-  window.portfolioOriginalImages = (portfolio.portfolio_images || []).map((image) => ({ id: image.id, path: image.image_url }));
+  window.portfolioOriginalImages = (portfolio.portfolio_images || []).map((image) => ({ id:image.id,path:image.image_url,coverPath:image.cover_image_url||null }));
   $("portfolio-title").value = portfolio.title || "";
   $("portfolio-description").value = portfolio.description || "";
   renderPortfolioClassChoices();
@@ -2353,8 +2395,8 @@ async function startPortfolioEdit(portfolioId) {
     button.setAttribute("aria-pressed", String(active));
   });
   const imageItems = await Promise.all((portfolio.portfolio_images || []).map(async (image) => ({
-    file: null, preview: await getPortfolioImageUrl(image.image_url), existing: true,
-    imageId: image.id, path: image.image_url
+    file:null,preview:await getPortfolioImageUrl(image.cover_image_url||image.image_url),existing:true,
+    imageId:image.id,path:image.image_url,coverPath:image.cover_image_url||null,cropSettings:image.crop_settings||null,cropBlob:null
   })));
   window.portfolioDraftFiles = imageItems.filter((item) => item.preview);
   renderPortfolioSelectedFiles();
@@ -2377,8 +2419,8 @@ async function deletePortfolio(portfolioId) {
   if (!portfolio) return;
   if (portfolio.member_id !== currentUser?.id && !isPortfolioReviewer()) { alert("คุณลบได้เฉพาะแฟ้มผลงานของตัวเองเท่านั้น"); return; }
   try {
-    const paths = (portfolio.portfolio_images || []).map((image) => image.image_url)
-      .filter((path) => path && !/^https?:\/\//i.test(path));
+    const paths = (portfolio.portfolio_images || []).flatMap(image=>[image.image_url,image.cover_image_url])
+      .filter(path=>path&&!/^https?:\/\//i.test(path));
     if (paths.length) {
       const { error } = await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove(paths);
       if (error) throw error;
@@ -2460,6 +2502,15 @@ function registerPortfolioEvents() {
     button.setAttribute("aria-pressed", String(button.classList.contains("is-selected")));
   });
 
+  $("portfolio-crop-close")?.addEventListener("click",closePortfolioCropEditor);
+  $("portfolio-crop-cancel")?.addEventListener("click",closePortfolioCropEditor);
+  $("portfolio-crop-save")?.addEventListener("click",()=>{void savePortfolioCrop();});
+  $("portfolio-crop-rotate-left")?.addEventListener("click",()=>portfolioCropper?.rotate(-90));
+  $("portfolio-crop-rotate-right")?.addEventListener("click",()=>portfolioCropper?.rotate(90));
+  $("portfolio-crop-reset")?.addEventListener("click",()=>{portfolioCropper?.reset();$("portfolio-crop-zoom").value="1";$("portfolio-crop-zoom-value").textContent="100%";});
+  $("portfolio-crop-zoom")?.addEventListener("input",event=>{const v=Number(event.target.value);portfolioCropper?.zoomTo(v);$("portfolio-crop-zoom-value").textContent=`${Math.round(v*100)}%`;});
+  $("portfolio-crop-modal")?.addEventListener("click",event=>{if(event.target.id==="portfolio-crop-modal")closePortfolioCropEditor();});
+
   $("portfolio-image-input")?.addEventListener("change", (event) => {
     const chosen = [...(event.target.files || [])];
     const existing = window.portfolioDraftFiles || [];
@@ -2468,17 +2519,16 @@ function registerPortfolioEvents() {
       const status = $("portfolio-form-status");
       if (status) status.textContent = "เพิ่มรูปได้สูงสุด 12 รูปต่อ Portfolio";
     }
-    window.portfolioDraftFiles = combined.map((file) => ({
-      file: file instanceof File ? file : file.file,
-      preview: file instanceof File ? URL.createObjectURL(file) : file.preview
-    }));
+    window.portfolioDraftFiles = combined.map((item) => item instanceof File ? { file:item, preview:URL.createObjectURL(item), existing:false, cropBlob:null, cropSettings:null } : item);
     renderPortfolioSelectedFiles();
     event.target.value = "";
   });
 
   $("portfolio-image-preview")?.addEventListener("click", (event) => {
+    const crop = event.target.closest("[data-crop-index]");
     const cover = event.target.closest("[data-cover-index]");
     const remove = event.target.closest("[data-remove-index]");
+    if(crop){void openPortfolioCropEditor(Number(crop.dataset.cropIndex));return;}
     let files = window.portfolioDraftFiles || [];
     if (cover) {
       const index = Number(cover.dataset.coverIndex);
