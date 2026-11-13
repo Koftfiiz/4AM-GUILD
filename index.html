@@ -693,8 +693,9 @@
                 <p>ผลงานนี้จะถูกบันทึกไว้ในบัญชีและตัวละครของคุณ</p>
               </div>
               <label class="portfolio-field">
-                <span>Portfolio Title <i>*</i></span>
-                <input id="portfolio-title" name="title" type="text" maxlength="100" placeholder="ตั้งชื่อผลงาน / Build" required>
+                <span>ชื่อ Build <i>*</i></span>
+                <input id="portfolio-title" name="title" type="text" maxlength="100" placeholder="เช่น ดินไฟ, DPS, Support" required>
+                <small class="portfolio-field-hint">ชื่อบนการ์ดจะแสดงเป็น “Build ตามด้วยชื่อที่กรอก”</small>
               </label>
               <label class="portfolio-field">
                 <span>Description</span>
@@ -706,14 +707,16 @@
                 <div id="portfolio-class-tags" class="portfolio-class-tags"></div>
               </div>
               <div class="portfolio-field">
-                <span>Upload Images <i>*</i></span>
-                <p class="portfolio-field-hint">เลือกได้สูงสุด 12 รูป · ไม่เกิน 12 MB ต่อรูป · รูปแรกเป็นภาพหน้าปก 16:9 · กด “ปรับหน้าปก” เพื่อ Crop ภาพได้</p>
-                <label class="portfolio-file-picker" for="portfolio-image-input">
-                  <span>＋</span>
-                  <strong>เลือกรูปภาพ</strong>
-                  <small>รองรับ JPG, PNG, WEBP และไฟล์ภาพทั่วไป</small>
-                </label>
-                <input id="portfolio-image-input" type="file" accept="image/*" multiple hidden>
+                <span>จัดหมวดหมู่รูปภาพ Build <i>*</i></span>
+                <p class="portfolio-field-hint">อัปโหลดได้ไม่จำกัดจำนวนรูป แยกตามหัวข้อเพื่อให้สมาชิกและฝ่ายบริหารตรวจสอบได้ง่าย · รูปแรกของแฟ้มใช้เป็นภาพหน้าปก 16:9</p>
+                <div class="portfolio-build-upload-pickers">
+                  <label class="portfolio-file-picker" for="portfolio-image-input-stats"><span>＋</span><strong>Stats ตัวละคร</strong><small>เพิ่มรูปค่าสถานะตัวละคร</small></label>
+                  <input id="portfolio-image-input-stats" data-portfolio-section-input="stats" type="file" accept="image/*" multiple hidden>
+                  <label class="portfolio-file-picker" for="portfolio-image-input-inner"><span>＋</span><strong>กำลังภายใน</strong><small>เพิ่มรูปกำลังภายใน</small></label>
+                  <input id="portfolio-image-input-inner" data-portfolio-section-input="inner_power" type="file" accept="image/*" multiple hidden>
+                  <label class="portfolio-file-picker" for="portfolio-image-input-affixes"><span>＋</span><strong>ออฟสร้าง</strong><small>เพิ่มรูปออฟและการสร้าง</small></label>
+                  <input id="portfolio-image-input-affixes" data-portfolio-section-input="affixes" type="file" accept="image/*" multiple hidden>
+                </div>
                 <div id="portfolio-image-preview" class="portfolio-image-preview">
                   <p class="portfolio-upload-empty">ยังไม่ได้เลือกรูปภาพ</p>
                 </div>
