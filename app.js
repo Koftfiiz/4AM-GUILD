@@ -2194,6 +2194,7 @@ async function renderPortfolios() {
     return `
       <article class="portfolio-card ${portfolioManageMode && (isOwner || reviewer) ? "is-jiggling" : ""}" ${color ? `style="--class-color:${color}"` : ""}>
         ${imageUrl ? `<img class="portfolio-card-image" src="${escapeHTML(imageUrl)}" alt="${escapeHTML(portfolio.title)}" loading="lazy">` : '<div class="portfolio-card-no-image">4AM GUILD</div>'}
+        ${isOwner || (portfolioManageMode && reviewer) ? `<button type="button" class="portfolio-iphone-delete" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงาน" title="ลบแฟ้มผลงาน">−</button>` : ""}
         <div class="portfolio-card-content">
           <div class="portfolio-card-owner">${escapeHTML(ownerName)}</div>
           <div class="portfolio-card-tags">${classTags || '<span class="portfolio-card-tag">Unassigned</span>'}</div>
@@ -2210,7 +2211,7 @@ async function renderPortfolios() {
                 <span>แก้ไข</span>
               </button>
             ` : ""}
-            ${portfolioManageMode && (isOwner || reviewer) ? `<button type="button" class="portfolio-iphone-delete" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงาน">−</button>` : ""}
+
           </div>
           ${reviewPanel}
           ${reviewControls}
@@ -2519,18 +2520,21 @@ async function handlePortfolioCardAction(event) {
     return;
   }
   if (button.dataset.portfolioAction === "delete") {
-    if (!portfolioManageMode) return;
+    // Owner delete control is always visible on their own card; reviewers still use manage mode.
+    if (portfolio.member_id !== currentUser?.id && (!portfolioManageMode || !isPortfolioReviewer())) return;
     // Use an in-page two-click confirmation instead of window.confirm(),
     // which may be suppressed by some browser/event-handler contexts.
     if (button.dataset.confirmDelete !== "true") {
       button.dataset.confirmDelete = "true";
       button.classList.add("is-confirming");
-      button.textContent = "ยืนยันลบ?";
-      button.setAttribute("aria-label", "คลิกอีกครั้งเพื่อยืนยันการลบแฟ้มผลงาน");
+      button.textContent = "−";
+      button.setAttribute("aria-label", "ยืนยันลบแฟ้มผลงาน กดอีกครั้ง");
+      button.title = "กดอีกครั้งเพื่อยืนยันการลบ";
       return;
     }
     button.disabled = true;
-    button.textContent = "กำลังลบ...";
+    button.textContent = "−";
+    button.title = "กำลังลบแฟ้มผลงาน...";
     await deletePortfolio(portfolioId);
   }
 }
