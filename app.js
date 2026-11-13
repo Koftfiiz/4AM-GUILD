@@ -2153,6 +2153,15 @@ async function renderPortfolioMemberDirectory() {
     </article>`;
   }));
   container.innerHTML=cards.join("");
+  // Bind the pencil directly after rendering so its action never depends on a parent-grid delegate.
+  container.querySelectorAll("[data-bond-profile-edit]").forEach(button=>{
+    button.addEventListener("click",event=>{
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+      void openBondProfileEditor();
+    });
+  });
 }
 
 async function renderPortfolios() {
@@ -2605,15 +2614,7 @@ async function handlePortfolioCardAction(event) {
 function registerPortfolioEvents() {
   window.portfolioDraftFiles = [];
   $("portfolio-member-search")?.addEventListener("input",()=>{void renderPortfolioMemberDirectory();});
-  // Capture the pencil click before the parent member-card button can receive it.
-  $("portfolio-member-grid")?.addEventListener("click",event=>{
-    const editButton=event.target instanceof Element ? event.target.closest("[data-bond-profile-edit]") : null;
-    if(!editButton)return;
-    event.preventDefault();
-    event.stopPropagation();
-    event.stopImmediatePropagation();
-    void openBondProfileEditor();
-  },true);
+  // Pencil controls are bound directly after each directory render.
   $("portfolio-member-grid")?.addEventListener("click",async event=>{
     if(event.target instanceof Element && event.target.closest("[data-bond-profile-edit]"))return;
     const button=event.target instanceof Element ? event.target.closest("[data-portfolio-member-id]") : null;
