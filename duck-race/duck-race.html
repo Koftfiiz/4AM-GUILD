@@ -1382,7 +1382,7 @@ function frame(now){
 /* ---------- race control ---------- */
 function reset(){
   if(typeof currentRaceSessionId!=='undefined'&&S.fin){currentRaceSessionId=null;currentRaceSavePromise=null;currentRaceSaved=false;}
-  if(typeof luckyPreRaceConfig!=='undefined'&&S.fin){luckyPreRaceConfig=null;try{localStorage.removeItem(LUCKY_CONFIG_STORAGE_KEY);}catch(_){}if($('openLuckySetupBeforeRace')){$('openLuckySetupBeforeRace').textContent='✦ ตั้งค่า Lucky Draw ก่อนแข่ง';$('openLuckySetupBeforeRace').style.display='block';}}
+  if(typeof luckyPreRaceConfig!=='undefined'&&S.fin){luckyPreRaceConfig=null;if($('openLuckySetupBeforeRace')){$('openLuckySetupBeforeRace').textContent='✦ ตั้งค่า Lucky Draw ก่อนแข่ง';$('openLuckySetupBeforeRace').style.display='block';}}
   // Clear DOM-based GIF overlays as well as race state. The previous duck objects
   // are replaced below, so their emote nodes must be removed explicitly here.
   ducks.forEach(k=>{if(k.emoteNode){k.emoteNode.remove();k.emoteNode=null;}});
@@ -1465,7 +1465,8 @@ let luckySelectedRanks=[];
 let luckyPreRaceConfig=null;
 let luckyIsPreRaceSetup=false;
 const LUCKY_CONFIG_STORAGE_KEY='4am-duck-race-lucky-config';
-try{const savedLuckyConfig=localStorage.getItem(LUCKY_CONFIG_STORAGE_KEY);if(savedLuckyConfig)luckyPreRaceConfig=JSON.parse(savedLuckyConfig);}catch(_){luckyPreRaceConfig=null;}
+// Lucky Draw configuration is kept in memory for the current race only.
+// A page refresh starts a clean setup and cannot restore old manual rank selections.
 
 async function luckyInvoke(payload){
   if(!duckRaceSupabase)throw new Error('ไม่สามารถเชื่อมต่อ Supabase ได้');
@@ -1576,8 +1577,9 @@ function renderLuckyResults(){
   });
   $('luckyRevealed').textContent=count+'/'+luckyDrawWinners.length;
   $('luckyProgressBar').style.width=(luckyDrawWinners.length?count/luckyDrawWinners.length*100:0)+'%';
-  $('luckyNext').classList.toggle('hide',luckyDrawMode==='all'||count>=luckyDrawWinners.length);
-  if(luckyDrawMode==='all')$('luckyNext').classList.add('hide');
+  $('luckyNext').textContent='ประกาศผลรางวัล';
+  $('luckyNext').disabled=(luckyDrawMode!=='sequential'||count>=luckyDrawWinners.length);
+  $('luckyNext').classList.toggle('hide',luckyDrawMode!=='sequential'||count>=luckyDrawWinners.length);
   if(count){
     const w=luckyDrawWinners[count-1];
     $('luckySpotlight').innerHTML='';
@@ -1687,8 +1689,12 @@ async function openLuckySetup(isPreRace){
     if(savedConfig.selection_mode==='manual')payload.selected_ranks=[...savedConfig.selected_ranks];
     const data=await luckyInvoke(payload);
     luckyDrawRecord=data.draw;
-    luckyDrawWinners=data.winners||[];
+    // Trust the mode saved by the server so sequential reveal works for manual and random selection alike.
+    luckyDrawMode=data.draw?.reveal_mode||savedConfig.reveal_mode;
+    luckyDrawWinners=(data.winners||[]).slice().sort((a,b)=>Number(a.prize_number)-Number(b.prize_number));
     luckyDrawRevealed=luckyDrawMode==='all'?luckyDrawWinners.length:0;
+    $('luckyNext').textContent='ประกาศผลรางวัล';
+    $('luckyNext').disabled=false;
     $('luckyStatus').textContent=(savedConfig.selection_mode==='manual'?'ประกาศผลตามอันดับที่เลือกไว้แล้ว':'สุ่มและบันทึกผลเรียบร้อยแล้ว')+' · '+luckyDrawWinners.length+' ผู้ชนะ · ไม่มีผู้ชนะซ้ำ';
     renderLuckyResults();
     await loadLuckyHistory();
@@ -1740,7 +1746,6 @@ $('luckyStart').onclick=async()=>{
   const button=$('luckyStart');
   if(!S.fin){
     luckyPreRaceConfig={prize_count:prizeCount,selection_mode:luckySelectionMode,selected_ranks:luckySelectionMode==='manual'?[...luckySelectedRanks]:[],reveal_mode:luckyDrawMode};
-    try{localStorage.setItem(LUCKY_CONFIG_STORAGE_KEY,JSON.stringify(luckyPreRaceConfig));}catch(_){}
     button.disabled=true;button.textContent='บันทึกแล้ว';
     $('luckyStatus').textContent='บันทึกการตั้งค่า Lucky Draw แล้ว · ระบบจะจับรางวัลหลังการแข่งขันจบ';
     $('openLuckySetupBeforeRace').textContent='✦ แก้ไขการตั้งค่า Lucky Draw';
@@ -1775,7 +1780,11 @@ $('luckyStart').onclick=async()=>{
   }
 };
 $('luckyNext').onclick=()=>{
-  if(luckyDrawRevealed<luckyDrawWinners.length){luckyDrawRevealed++;renderLuckyResults();}
+  if(luckyDrawMode!=='sequential'||luckyDrawRevealed>=luckyDrawWinners.length)return;
+  luckyDrawRevealed++;
+  renderLuckyResults();
+  const announced=luckyDrawWinners[luckyDrawRevealed-1];
+  $('luckyStatus').textContent='ประกาศรางวัลที่ '+announced.prize_number+' · '+announced.duck_label+' · อันดับการแข่งขัน '+announced.race_rank;
 };
 $('luckyBack').onclick=()=>{
   const hasCurrentResult=!!luckyDrawRecord?.id;
