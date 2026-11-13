@@ -2599,25 +2599,32 @@ async function handlePortfolioCardAction(event) {
   if (!button) return;
   const portfolioId = button.dataset.portfolioId;
   if (!portfolioId) return;
+
+  const portfolio = allPortfolios.find((item) => item.id === portfolioId);
+  if (!portfolio) return;
+
   if (button.dataset.portfolioAction === "edit") {
     await startPortfolioEdit(portfolioId);
     return;
   }
+
   if (button.dataset.portfolioAction === "delete") {
-    // Owner delete control is always visible on their own card; reviewers still use manage mode.
-    if (portfolio.member_id !== currentUser?.id && (!portfolioManageMode || !isPortfolioReviewer())) return;
-    // Use an in-page two-click confirmation instead of window.confirm(),
-    // which may be suppressed by some browser/event-handler contexts.
+    const isOwner = portfolio.member_id === currentUser?.id;
+    const canReviewDelete = portfolioManageMode && isPortfolioReviewer();
+    if (!isOwner && !canReviewDelete) return;
+
+    // Two-step confirmation: tap the red minus, then tap the checkmark.
     if (button.dataset.confirmDelete !== "true") {
       button.dataset.confirmDelete = "true";
       button.classList.add("is-confirming");
-      button.textContent = "−";
+      button.textContent = "✓";
       button.setAttribute("aria-label", "ยืนยันลบแฟ้มผลงาน กดอีกครั้ง");
       button.title = "กดอีกครั้งเพื่อยืนยันการลบ";
       return;
     }
+
     button.disabled = true;
-    button.textContent = "−";
+    button.textContent = "…";
     button.title = "กำลังลบแฟ้มผลงาน...";
     await deletePortfolio(portfolioId);
   }
