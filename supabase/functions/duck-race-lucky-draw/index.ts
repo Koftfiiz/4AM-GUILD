@@ -189,7 +189,7 @@ Deno.serve(async (request) => {
       }
       const lines = winners.map((winner: any) =>
         "**Prize #" + winner.prize_number + "** — " + String(winner.duck_label).slice(0, 80) +
-        " (อันดับการแข่งขัน: " + winner.race_rank + ")"
+        " (ลำดับที่ " + winner.race_rank + ")"
       );
       const chunks: string[] = [];
       for (let i = 0; i < lines.length; i += 35) chunks.push(lines.slice(i, i + 35).join("\n"));
