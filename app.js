@@ -1909,6 +1909,8 @@ function renderPortfolioSelectedFiles() {
         { key: "affixes", label: "ออฟสร้าง", hint: "ภาพออฟสร้าง" },
         { key: "weapons", label: "ศาสตราวุธ", hint: "อาวุธและรายละเอียดศาสตราวุธ" }
       ];
+  const allowedSections = new Set(zones.map(zone => zone.key));
+  files.forEach(item => { if (!allowedSections.has(item.sectionKey || "stats")) item.sectionKey = zones[0].key; });
   container.innerHTML = zones.map((zone, zoneIndex) => {
     const items = files.map((item, index) => ({ item, index })).filter(entry => (entry.item.sectionKey || "stats") === zone.key);
     const cards = items.map(({ item, index }) => `
@@ -2047,7 +2049,7 @@ async function savePortfolioCrop() {
       closePortfolioCropEditor();
       await renderPortfolioMemberDirectory();
     } catch(error) { console.error("Member cover save error:",error); alert("บันทึกรูปหน้าปกไม่สำเร็จ: "+(error.message||"Unknown error")); }
-    finally { button.disabled=false;button.textContent="บันทึกรูปหน้าปก"; }
+    finally { button.disabled=false;button.textContent="ใช้ภาพนี้เป็นหน้าปก"; }
     return;
   }
   if (portfolioCropIndex === null) return;
@@ -2076,11 +2078,6 @@ function resetPortfolioForm() {
   $("portfolio-type-step")?.classList.remove("hidden");
   $("portfolio-create-form")?.classList.add("hidden");
   $("portfolio-type").value = "pvp";
-  $("portfolio-member-search")?.addEventListener("input",()=>{void renderPortfolioMemberDirectory();});
-  $("portfolio-member-grid")?.addEventListener("click",async event=>{const b=event.target.closest("[data-portfolio-member-id]");if(!b)return;currentPortfolioMemberId=b.dataset.portfolioMemberId;portfolioClassFilter="all";portfolioManageMode=false;await renderPortfolios();});
-  $("portfolio-back-to-members")?.addEventListener("click",async()=>{currentPortfolioMemberId=null;portfolioManageMode=false;portfolioClassFilter="all";resetPortfolioForm();$("portfolio-create-panel")?.classList.add("hidden");$("portfolio-add-button")?.setAttribute("aria-expanded","false");await renderPortfolios();});
-  $("portfolio-manage-button")?.addEventListener("click",()=>{portfolioManageMode=!portfolioManageMode;void renderPortfolios();});
-
   window.editingPortfolioId = null;
   window.portfolioOriginalImages = [];
   renderPortfolioClassChoices();
@@ -2241,7 +2238,7 @@ async function renderPortfolios() {
           <div class="portfolio-card-owner">${escapeHTML(ownerName)}</div>
           <span class="portfolio-type-chip">${portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : portfolio.portfolio_type === "pve" ? "PvE Build" : "PvP Build"}</span>
           <div class="portfolio-card-tags">${classTags || '<span class="portfolio-card-tag">Unassigned</span>'}</div>
-          <h3>${escapeHTML(/^build\b/i.test(portfolio.title||"")?(portfolio.title||"Untitled"):"Build "+(portfolio.title||"Untitled"))}</h3>
+          <h3>${escapeHTML(portfolio.portfolio_type === "cultivation_skills" ? (portfolio.title || "Untitled") : (/^build\b/i.test(portfolio.title||"")?(portfolio.title||"Untitled"):"Build "+(portfolio.title||"Untitled")))}</h3>
           <p>${escapeHTML(portfolio.description || "")}</p>
           <div class="portfolio-card-footer">
             <small>${images.length} รูป · ${formatDate(portfolio.created_at)}</small>
