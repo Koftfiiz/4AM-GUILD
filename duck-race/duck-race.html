@@ -1663,7 +1663,9 @@ async function openLuckySetup(isPreRace){
     $('luckyPrizeInput').value=Math.min(savedConfig.prize_count,count);
     luckyDrawMode=savedConfig.reveal_mode;
     luckySelectionMode=savedConfig.selection_mode;
-    luckySelectedRanks=[...savedConfig.selected_ranks];
+    // Older or incomplete in-memory configs may not contain selected_ranks.
+    // Never let a missing array throw before openLuckySetup reaches its error handler.
+    luckySelectedRanks=Array.isArray(savedConfig.selected_ranks)?[...savedConfig.selected_ranks]:[];
   }else{
     $('luckyPrizeInput').value=Math.min(20,count);
     luckyDrawMode='all';luckySelectionMode='random';luckySelectedRanks=[];
@@ -1816,7 +1818,12 @@ $('openLuckySetupBeforeRace').onclick=()=>{
 };
 $('openLuckyDraw').onclick=()=>{
   if(!S.fin)return;
-  openLuckySetup(false);
+  openLuckySetup(false).catch(error=>{
+    console.error('Lucky Draw opening failed:',error);
+    $('luckyNext').disabled=true;
+    $('luckyNext').textContent='ผลรางวัลยังไม่พร้อม';
+    $('luckyStatus').textContent='เปิดหน้า Lucky Draw ไม่สำเร็จ: '+(error?.message||'เกิดข้อผิดพลาดระหว่างเตรียมผล');
+  });
 };
 $('luckyPrizeInput').oninput=()=>{
   $('luckyPrizeCount').textContent=$('luckyPrizeInput').value||'0';
