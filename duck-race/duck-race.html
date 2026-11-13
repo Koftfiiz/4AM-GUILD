@@ -164,6 +164,12 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
 #duck-race-root .lucky-result .num{color:#ff5968}
 #duck-race-root .lucky-result .race-rank{color:#c5bfc1}
 #duck-race-root .lucky-secondary{background:#1b1517;border:1px solid #6b3039;color:#fff;min-height:42px}
+#duck-race-root #luckySendDiscord{background:#5865F2;border:1px solid #7180ff;color:#fff;min-height:44px;transition:background .18s,border-color .18s,transform .18s}
+#duck-race-root #luckySendDiscord:hover:not(:disabled){background:#4752c4;border-color:#8792ff;transform:translateY(-1px)}
+#duck-race-root #luckyCopy{background:#7C3AED;border:1px solid #9b6bff;color:#fff;min-height:44px;transition:background .18s,border-color .18s,transform .18s}
+#duck-race-root #luckyCopy:hover:not(:disabled){background:#6D28D9;border-color:#b08aff;transform:translateY(-1px)}
+#duck-race-root #luckyCopy.is-copied{background:#16834A;border-color:#32b66f;color:#fff}
+#duck-race-root #luckySendDiscord:disabled,#duck-race-root #luckyCopy:disabled{opacity:.48;cursor:not-allowed;transform:none}
 #duck-race-root .lucky-secondary:disabled{opacity:.4}
 #duck-race-root .lucky-status{color:#d0c3c5}
 #duck-race-root .lucky-manual-summary{background:#211316;border:1px solid #8e2938;border-radius:10px;padding:12px 14px;color:#ff9aa4;font-weight:800;margin-bottom:12px}
@@ -1665,7 +1671,7 @@ async function openLuckySetup(isPreRace){
   luckyDrawWinners=[];
   luckyDrawRevealed=0;
   $('luckyM').classList.remove('hide');
-  $('luckySendDiscord').disabled=true;$('luckySendDiscord').textContent='SEND TO DISCORD';$('luckyCopy').disabled=true;
+  $('luckySendDiscord').disabled=true;$('luckySendDiscord').textContent='SEND TO DISCORD';$('luckyCopy').disabled=true;$('luckyCopy').textContent='คัดลอกผลการแข่งขัน';$('luckyCopy').classList.remove('is-copied');
   $('luckyResults').innerHTML='';
   $('luckySpotlight').innerHTML='<div><div class="prize">LUCKY WINNER</div><div class="name">พร้อมประกาศผล</div><div class="rank">ผลสุ่มจะปรากฏที่นี่</div></div>';
 
@@ -1943,13 +1949,24 @@ root.addEventListener('click',event=>{
   revealNextLuckyPrize();
 });
 $('luckyCopy').onclick=async()=>{
-  const visibleWinners=luckyDrawMode==='all'?luckyDrawWinners:luckyDrawWinners.slice(0,luckyDrawRevealed);
+  const button=$('luckyCopy');
+  const visibleWinners=luckyDrawMode==='all'?luckyDrawWinners.slice(0,luckyDrawRevealed>0?luckyDrawWinners.length:0):luckyDrawWinners.slice(0,luckyDrawRevealed);
   if(!visibleWinners.length){$('luckyStatus').textContent='ยังไม่มีผลที่เปิดเผยให้คัดลอก';return;}
   const lines=['4AM GUILD · LUCKY DRAW','ผู้เข้าร่วม: '+$('luckyEligible').textContent+' คน','จำนวนรางวัลที่เปิดเผย: '+visibleWinners.length,'',...visibleWinners.map(w=>'Prize #'+w.prize_number+' — '+w.duck_label+' (ลำดับที่ '+w.race_rank+')')];
   try{
     await navigator.clipboard.writeText(lines.join('\n'));
+    button.textContent='คัดลอกแล้ว ✓';
+    button.classList.add('is-copied');
+    button.disabled=true;
     $('luckyStatus').textContent='คัดลอกผล Lucky Draw แล้ว';
-  }catch(_){$('luckyStatus').textContent='คัดลอกไม่สำเร็จ กรุณาเปิดหน้าเว็บผ่าน HTTPS';}
+    window.setTimeout(()=>{
+      button.textContent='คัดลอกผลการแข่งขัน';
+      button.classList.remove('is-copied');
+      button.disabled=false;
+    },2000);
+  }catch(error){
+    $('luckyStatus').textContent='คัดลอกไม่สำเร็จ: '+(error.message||'กรุณาเปิดหน้าเว็บผ่าน HTTPS');
+  }
 };
 $('luckySendDiscord').onclick=async()=>{
   if(!luckyDrawRecord?.id){$('luckyStatus').textContent='ยังไม่มีผล Lucky Draw ให้ส่ง';return;}
