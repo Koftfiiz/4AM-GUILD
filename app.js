@@ -2605,10 +2605,19 @@ async function handlePortfolioCardAction(event) {
 function registerPortfolioEvents() {
   window.portfolioDraftFiles = [];
   $("portfolio-member-search")?.addEventListener("input",()=>{void renderPortfolioMemberDirectory();});
+  // Capture the pencil click before the parent member-card button can receive it.
+  $("portfolio-member-grid")?.addEventListener("click",event=>{
+    const editButton=event.target instanceof Element ? event.target.closest("[data-bond-profile-edit]") : null;
+    if(!editButton)return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+    void openBondProfileEditor();
+  },true);
   $("portfolio-member-grid")?.addEventListener("click",async event=>{
-    const editButton=event.target.closest("[data-bond-profile-edit]");
-    if(editButton){event.preventDefault();event.stopPropagation();openBondProfileEditor();return;}
-    const button=event.target.closest("[data-portfolio-member-id]");if(!button)return;
+    if(event.target instanceof Element && event.target.closest("[data-bond-profile-edit]"))return;
+    const button=event.target instanceof Element ? event.target.closest("[data-portfolio-member-id]") : null;
+    if(!button)return;
     currentPortfolioMemberId=button.dataset.portfolioMemberId;portfolioClassFilter="all";portfolioManageMode=false;await renderPortfolios();
   });
   $("portfolio-back-to-members")?.addEventListener("click",async()=>{
