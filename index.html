@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=portfolio-delete-badge-topright-20261113-r1">
+  <link rel="stylesheet" href="style.css?v=portfolio-categories-bond-profile-20261114-r1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
@@ -40,7 +40,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=portfolio-delete-badge-topright-20261113-r1";
+          app.src = "app.js?v=portfolio-categories-bond-profile-20261114-r1";
           app.onload = () => {
             const tracker = document.createElement("script");
             tracker.src = "portfolio-tracker.js?v=portfolio-tracker-20261113-r1";
@@ -687,13 +687,23 @@
           <button type="button" id="portfolio-add-button" class="guild-add-entry-card" aria-expanded="false"><span class="guild-add-entry-icon" aria-hidden="true">+</span><span class="guild-add-entry-copy"><strong>ADD NEW PORTFOLIO</strong><small>เพิ่มแฟ้มผลงานตัวละคร แชร์ Build ค่าสถานะ อุปกรณ์ และแนวทางการเล่น</small></span><span class="guild-add-entry-arrow" aria-hidden="true">↗</span></button>
 
           <div id="portfolio-create-panel" class="portfolio-create-panel hidden">
-            <form id="portfolio-create-form" class="portfolio-form">
+            <section id="portfolio-type-step" class="portfolio-type-step">
+              <div class="portfolio-form-heading"><h3>เลือกประเภทแฟ้มผลงาน</h3><p>เลือกหมวดหมู่ก่อนเริ่มสร้างแฟ้มใหม่</p></div>
+              <div id="portfolio-type-choices" class="portfolio-type-choices">
+                <button type="button" class="portfolio-type-choice" data-portfolio-type="pvp"><span class="portfolio-type-choice-icon">⚔</span><strong>PvP Build</strong><small>Build สำหรับต่อสู้กับผู้เล่น</small></button>
+                <button type="button" class="portfolio-type-choice" data-portfolio-type="pve"><span class="portfolio-type-choice-icon">✦</span><strong>PvE Build</strong><small>Build สำหรับดันเจี้ยนและบอส</small></button>
+                <button type="button" class="portfolio-type-choice" data-portfolio-type="cultivation_skills"><span class="portfolio-type-choice-icon">卷</span><strong>คัมภีร์หู่เฉียน / ขั้นสกิล</strong><small>จัดเก็บคัมภีร์และขั้นสกิลเหล่าผู้กล้า / อัลติ</small></button>
+              </div>
+            </section>
+            <form id="portfolio-create-form" class="portfolio-form hidden">
+              <input type="hidden" id="portfolio-type" value="pvp">
+              <div class="portfolio-form-heading" id="portfolio-form-heading">
               <div class="portfolio-form-heading" id="portfolio-form-heading">
                 <h3>สร้างแฟ้มผลงานใหม่</h3>
                 <p>ผลงานนี้จะถูกบันทึกไว้ในบัญชีและตัวละครของคุณ</p>
               </div>
               <label class="portfolio-field">
-                <span>ชื่อ Build <i>*</i></span>
+                <span id="portfolio-title-label">ชื่อ Build <i>*</i></span>
                 <input id="portfolio-title" name="title" type="text" maxlength="100" placeholder="เช่น ดินไฟ, DPS, Support" required>
                 <small class="portfolio-field-hint">ชื่อบนการ์ดจะแสดงเป็น “Build ตามด้วยชื่อที่กรอก”</small>
               </label>
@@ -707,28 +717,27 @@
                 <div id="portfolio-class-tags" class="portfolio-class-tags"></div>
               </div>
               <div class="portfolio-field">
-                <span>จัดหมวดหมู่รูปภาพ Build <i>*</i></span>
-                <p class="portfolio-field-hint">อัปโหลดได้ไม่จำกัดจำนวนรูป แยกตามหัวข้อเพื่อให้สมาชิกและฝ่ายบริหารตรวจสอบได้ง่าย · รูปแรกของแฟ้มใช้เป็นภาพหน้าปก 16:9</p>
-                <div class="portfolio-build-upload-pickers">
-                  <label class="portfolio-file-picker" for="portfolio-image-input-stats"><span>＋</span><strong>Stats ตัวละคร</strong><small>เพิ่มรูปค่าสถานะตัวละคร</small></label>
-                  <input id="portfolio-image-input-stats" data-portfolio-section-input="stats" type="file" accept="image/*" multiple hidden>
-                  <label class="portfolio-file-picker" for="portfolio-image-input-inner"><span>＋</span><strong>กำลังภายใน</strong><small>เพิ่มรูปกำลังภายใน</small></label>
-                  <input id="portfolio-image-input-inner" data-portfolio-section-input="inner_power" type="file" accept="image/*" multiple hidden>
-                  <label class="portfolio-file-picker" for="portfolio-image-input-affixes"><span>＋</span><strong>ออฟสร้าง</strong><small>เพิ่มรูปออฟและการสร้าง</small></label>
-                  <input id="portfolio-image-input-affixes" data-portfolio-section-input="affixes" type="file" accept="image/*" multiple hidden>
-                </div>
-                <div id="portfolio-image-preview" class="portfolio-image-preview">
-                  <p class="portfolio-upload-empty">ยังไม่ได้เลือกรูปภาพ</p>
-                </div>
+                <span>จัดหมวดหมู่รูปภาพ <i>*</i></span>
+                <p class="portfolio-field-hint">อัปโหลดรูปได้ไม่จำกัดจำนวน แยกตามโซน · รูปแรกของแฟ้มใช้เป็นภาพหน้าปก 16:9</p>
+                <div id="portfolio-image-preview" class="portfolio-image-preview"></div>
               </div>
               <p id="portfolio-form-status" class="portfolio-form-status" role="status" aria-live="polite"></p>
               <div class="portfolio-form-actions">
+                <button type="button" class="btn btn-outline" id="portfolio-type-back">เปลี่ยนประเภทแฟ้ม</button>
                 <button type="button" class="btn btn-outline" id="portfolio-cancel-button" onclick="document.getElementById('portfolio-create-panel').classList.add('hidden'); document.getElementById('portfolio-add-button').setAttribute('aria-expanded','false');">ยกเลิก</button>
                 <button type="submit" id="portfolio-create-submit" class="btn btn-primary">บันทึก Portfolio</button>
               </div>
             </form>
           </div>
           <input id="portfolio-member-cover-input" type="file" accept="image/*" hidden>
+          <section id="bond-profile-modal" class="bond-profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="bond-profile-title">
+            <form id="bond-profile-form" class="bond-profile-dialog">
+              <div class="bond-profile-heading"><div><span class="panel-kicker">MEMBER PROFILE</span><h3 id="bond-profile-title">Bond Profile</h3><p>จัดการรูปปกการ์ดสมาชิกและรายชื่อสายใยผูกพันธ์</p></div><button type="button" id="bond-profile-close" class="portfolio-crop-close" aria-label="ปิด">×</button></div>
+              <div class="bond-profile-cover-row"><div><strong>รูปปกการ์ดสมาชิก</strong><small>รูปแนวนอน 16:9 · ปรับตำแหน่งและซูมได้</small></div><button type="button" id="bond-profile-cover-button" class="btn btn-outline">เปลี่ยนรูปปก</button></div>
+              <label class="portfolio-field"><span>รายชื่อสายใยผูกพันธ์</span><textarea id="bond-profile-names" rows="5" maxlength="3000" placeholder="กรอกชื่อเพื่อนที่มีค่าสนิทถึง 3,000 คนละ 1 บรรทัด"></textarea><small class="portfolio-field-hint">กรอกชื่อเพื่อนที่มีค่าสนิทถึง 3,000 · แยกชื่อด้วยการขึ้นบรรทัดใหม่</small></label>
+              <div class="portfolio-form-actions"><button type="button" id="bond-profile-cancel" class="btn btn-outline">ยกเลิก</button><button type="submit" id="bond-profile-save" class="btn btn-primary">บันทึกโปรไฟล์</button></div>
+            </form>
+          </section>
           <div id="portfolio-crop-modal" class="portfolio-crop-modal hidden" role="dialog" aria-modal="true" aria-labelledby="portfolio-crop-title">
             <div class="portfolio-crop-dialog">
               <div class="portfolio-crop-heading"><div><span class="panel-kicker">COVER IMAGE EDITOR</span><h3 id="portfolio-crop-title">จัดตำแหน่งภาพหน้าปก</h3><p>ลากภาพเพื่อจัดตำแหน่ง · ซูมเพื่อเน้นจุดสำคัญ · สัดส่วน 16:9</p></div><button type="button" id="portfolio-crop-close" class="portfolio-crop-close" aria-label="ปิด">×</button></div>
