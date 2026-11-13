@@ -6377,11 +6377,14 @@ body select:disabled {
 .portfolio-member-detail-title p{margin:0;color:var(--muted);font-size:14px}
 .portfolio-member-detail-class{display:inline-flex;padding:4px 10px;border:1px solid var(--class-color,#aaa);border-radius:20px;color:var(--class-color,#aaa);font-size:12px;font-weight:700}
 #portfolio-manage-button.is-active{border-color:#e54858;color:#ff8994;background:rgba(229,72,88,.12)}
-.portfolio-card{position:relative}
+.portfolio-card{position:relative;overflow:visible}
+.portfolio-card-image{border-radius:7px 7px 0 0}
 .portfolio-card.is-jiggling{animation:portfolio-jiggle .28s ease-in-out infinite alternate;transform-origin:center}
 @keyframes portfolio-jiggle{from{transform:rotate(-.45deg)}to{transform:rotate(.45deg)}}
-.portfolio-iphone-delete{position:absolute;z-index:5;top:9px;left:9px;display:grid;place-items:center;width:29px;height:29px;padding:0;border:1px solid rgba(255,255,255,.7);border-radius:50%;background:#ed3349;color:#fff;font:900 23px/1 Arial,sans-serif;box-shadow:0 2px 9px rgba(0,0,0,.55);cursor:pointer}
+.portfolio-iphone-delete{position:absolute;z-index:30;top:-13px;right:-13px;left:auto;display:grid;place-items:center;width:32px;height:32px;padding:0;border:2px solid rgba(255,255,255,.9);border-radius:50%;background:#ed3349;color:#fff;font:900 21px/1 Arial,sans-serif;box-shadow:0 3px 12px rgba(0,0,0,.65);cursor:pointer;pointer-events:auto;touch-action:manipulation}
 .portfolio-iphone-delete:hover{background:#ff5265;transform:scale(1.08)}
+.portfolio-iphone-delete.is-confirming{background:#b91f35;border-color:#fff;box-shadow:0 0 0 3px rgba(237,51,73,.22),0 3px 12px rgba(0,0,0,.65)}
+.portfolio-iphone-delete:disabled{opacity:.75;cursor:wait}
 @media(max-width:600px){.portfolio-member-cover-edit{top:8px;right:8px;width:34px;height:34px;font-size:19px}.portfolio-member-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.portfolio-member-card-content{padding:11px}.portfolio-member-card-content h3{font-size:15px}.portfolio-member-detail-header{align-items:flex-start}.portfolio-member-detail-title h2{font-size:20px}}
 @media(max-width:380px){.portfolio-member-grid{grid-template-columns:1fr}}
 
