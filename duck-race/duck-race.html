@@ -266,7 +266,6 @@ html,body{margin:0!important;width:100%;height:100%;overflow:hidden}
       </div>
       <div id="luckyReveal" class="hide">
         <div class="lucky-reveal-toolbar">
-          <button type="button" class="lucky-back" id="luckyBack">← กลับไปตั้งค่า Lucky Draw</button>
           <div class="lucky-reveal-heading">ผลการจับรางวัล</div>
         </div>
         <div class="lucky-winner-stage" id="luckySpotlight">
@@ -1620,10 +1619,21 @@ async function loadLuckyHistory(){
       const date=document.createElement('div');date.className='race-rank';date.textContent=new Date(draw.created_at).toLocaleString('th-TH');
       const remove=document.createElement('button');remove.type='button';remove.className='lucky-history-delete';remove.textContent='−';remove.title='ลบประวัติรายการนี้';remove.setAttribute('aria-label','ลบประวัติรายการนี้');
       remove.onclick=async()=>{
-        if(!confirm('ลบประวัติการจับรางวัลรายการนี้ออกจากเว็บไซต์หรือไม่?\nข้อมูลผู้ชนะของรายการนี้จะถูกลบด้วย\nข้อความที่ส่งไป Discord ก่อนหน้านี้จะไม่ถูกลบ'))return;
+        if(remove.dataset.confirmDelete!=='true'){
+          remove.dataset.confirmDelete='true';
+          remove.classList.add('is-confirming');
+          remove.textContent='✓';
+          remove.title='กดอีกครั้งเพื่อยืนยันการลบ';
+          remove.setAttribute('aria-label','ยืนยันลบประวัติรายการนี้ กดอีกครั้ง');
+          $('luckyStatus').textContent='กดเครื่องหมาย ✓ อีกครั้งเพื่อลบประวัติรายการนี้ · ข้อความที่ส่งไป Discord จะไม่ถูกลบ';
+          return;
+        }
         remove.disabled=true;
+        remove.textContent='…';
+        $('luckyStatus').textContent='กำลังลบประวัติการจับรางวัล...';
         try{
-          await luckyInvoke({action:'delete_lucky_draw',draw_id:draw.id});
+          const deleted=await luckyInvoke({action:'delete_lucky_draw',draw_id:draw.id});
+          if(!deleted?.deleted_id)throw new Error('ระบบไม่ยืนยันการลบประวัติ');
           if(luckyDrawRecord?.id===draw.id){
             luckyDrawRecord=null;luckyDrawWinners=[];luckyDrawRevealed=0;
             $('luckyReveal').classList.add('hide');$('luckySetup').classList.remove('hide');
@@ -1634,6 +1644,11 @@ async function loadLuckyHistory(){
           $('luckyStatus').textContent='ลบประวัติการจับรางวัลแล้ว';
         }catch(error){
           remove.disabled=false;
+          remove.dataset.confirmDelete='false';
+          remove.classList.remove('is-confirming');
+          remove.textContent='−';
+          remove.title='ลบประวัติรายการนี้';
+          remove.setAttribute('aria-label','ลบประวัติรายการนี้');
           $('luckyStatus').textContent='ลบประวัติไม่สำเร็จ: '+(error.message||'กรุณาลองใหม่');
         }
       };
@@ -1927,13 +1942,6 @@ root.addEventListener('click',event=>{
   if(button.disabled)return;
   revealNextLuckyPrize();
 });
-$('luckyBack').onclick=()=>{
-  const hasCurrentResult=!!luckyDrawRecord?.id;
-  if(hasCurrentResult&&!confirm('กลับไปหน้าตั้งค่า Lucky Draw หรือไม่?\nผลสุ่มรอบนี้จะยังคงอยู่ในประวัติ หากกดเริ่มสุ่มอีกครั้งจะสร้างรายการจับรางวัลใหม่'))return;
-  $('luckyReveal').classList.add('hide');
-  $('luckySetup').classList.remove('hide');
-  $('luckyStatus').textContent=hasCurrentResult?'ผลสุ่มรอบก่อนหน้ายังคงอยู่ในประวัติ · ปรับค่าเพื่อเริ่มรอบใหม่ได้':'กลับไปหน้าตั้งค่า Lucky Draw แล้ว';
-};
 $('luckyCopy').onclick=async()=>{
   const visibleWinners=luckyDrawMode==='all'?luckyDrawWinners:luckyDrawWinners.slice(0,luckyDrawRevealed);
   if(!visibleWinners.length){$('luckyStatus').textContent='ยังไม่มีผลที่เปิดเผยให้คัดลอก';return;}
