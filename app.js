@@ -2143,7 +2143,10 @@ async function renderPortfolios() {
     const canSeeReview = reviewer || isOwner;
     const classTags = classes.map((className) => {
       const info = getClassInfo(className);
-      return `<span class="portfolio-card-tag" ${info ? `style="--class-color:${info.color}"` : ""}>${escapeHTML(className)}</span>`;
+      return `<span class="portfolio-card-tag portfolio-card-class" ${info ? `style="--class-color:${info.color}"` : ""}>
+        ${info?.iconPath ? `<img class="portfolio-card-class-icon" src="${escapeHTML(info.iconPath)}" alt="" loading="lazy">` : ""}
+        <span>${escapeHTML(className)}</span>
+      </span>`;
     }).join("");
 
     const reviewPanel = canSeeReview ? `
