@@ -27,6 +27,10 @@ let rolePreviewRole = null;
 let allMembers = [];
 let manualGuildMembers = [];
 let directoryMembers = [];
+let guildPresenceByUserId = new Map();
+let presenceHeartbeatTimer = null;
+let presenceRefreshTimer = null;
+let presenceRefreshBusy = false;
 let discordAccount = null;
 let discordGuildMembersCache = [];
 let allPortfolios = [];
@@ -450,6 +454,7 @@ async function logout(event) {
 
   try {
     // Clear only this application's Supabase session.
+    await stopGuildPresence();
     const { error } = await supabaseClient.auth.signOut({ scope: "local" });
     if (error) throw error;
 
@@ -555,6 +560,7 @@ async function loadApplication() {
     // OAuth identity has already been synchronized before membership lookup.
     // OAuth login alone never grants app access; loadCurrentMember remains the access gate.
     await loadDiscordAccount();
+    startGuildPresence();
 
     await Promise.allSettled([
       loadDashboard(),
@@ -1513,6 +1519,85 @@ function resetManualMemberForm() {
   closeManualMemberModal();
 }
 
+// ==========================================
+// WEBSITE MEMBER PRESENCE
+// ==========================================
+
+const GUILD_PRESENCE_STALE_MS = 2 * 60 * 1000;
+const GUILD_PRESENCE_HEARTBEAT_MS = 45 * 1000;
+const GUILD_PRESENCE_REFRESH_MS = 30 * 1000;
+
+async function sendGuildPresenceHeartbeat() {
+  if (!currentUser?.id || currentMember?.active !== true) return;
+  const { error } = await supabaseClient
+    .from("guild_member_presence")
+    .upsert({ user_id: currentUser.id, last_seen_at: new Date().toISOString() }, { onConflict: "user_id" });
+  if (error) console.warn("Guild presence heartbeat failed:", error.message);
+}
+
+async function refreshGuildPresence() {
+  if (presenceRefreshBusy || !isManagement()) return;
+  presenceRefreshBusy = true;
+  try {
+    const { data, error } = await supabaseClient
+      .from("guild_member_presence")
+      .select("user_id,last_seen_at");
+    if (error) throw error;
+    guildPresenceByUserId = new Map((data || []).map(row => [String(row.user_id), row.last_seen_at]));
+    if ($("manual-member-list")) renderManualMemberManagement();
+  } catch (error) {
+    console.warn("Guild presence refresh failed:", error.message);
+  } finally {
+    presenceRefreshBusy = false;
+  }
+}
+
+function isGuildMemberOnline(userId) {
+  const lastSeen = userId ? guildPresenceByUserId.get(String(userId)) : null;
+  if (!lastSeen) return false;
+  const timestamp = new Date(lastSeen).getTime();
+  return Number.isFinite(timestamp) && Date.now() - timestamp <= GUILD_PRESENCE_STALE_MS;
+}
+
+function renderGuildPresenceStatus(userId) {
+  const online = isGuildMemberOnline(userId);
+  return `<span class="guild-presence-status ${online ? "is-online" : "is-offline"}"><span class="guild-presence-dot" aria-hidden="true"></span>${online ? "ออนไลน์" : "ออฟไลน์"}</span>`;
+}
+
+function handleGuildPresenceVisibility() {
+  if (document.visibilityState === "visible") {
+    void sendGuildPresenceHeartbeat();
+    if (isManagement()) void refreshGuildPresence();
+  }
+}
+
+function startGuildPresence() {
+  if (!currentUser?.id || currentMember?.active !== true) return;
+  if (presenceHeartbeatTimer) window.clearInterval(presenceHeartbeatTimer);
+  if (presenceRefreshTimer) window.clearInterval(presenceRefreshTimer);
+  void sendGuildPresenceHeartbeat();
+  void refreshGuildPresence();
+  presenceHeartbeatTimer = window.setInterval(() => {
+    if (document.visibilityState === "visible") void sendGuildPresenceHeartbeat();
+  }, GUILD_PRESENCE_HEARTBEAT_MS);
+  presenceRefreshTimer = window.setInterval(() => {
+    if (isManagement()) void refreshGuildPresence();
+  }, GUILD_PRESENCE_REFRESH_MS);
+  document.removeEventListener("visibilitychange", handleGuildPresenceVisibility);
+  document.addEventListener("visibilitychange", handleGuildPresenceVisibility);
+}
+
+async function stopGuildPresence() {
+  if (presenceHeartbeatTimer) window.clearInterval(presenceHeartbeatTimer);
+  if (presenceRefreshTimer) window.clearInterval(presenceRefreshTimer);
+  presenceHeartbeatTimer = null;
+  presenceRefreshTimer = null;
+  document.removeEventListener("visibilitychange", handleGuildPresenceVisibility);
+  if (!currentUser?.id) return;
+  const { error } = await supabaseClient.from("guild_member_presence").delete().eq("user_id", currentUser.id);
+  if (error) console.warn("Guild presence logout cleanup failed:", error.message);
+}
+
 async function loadManualMemberManagement() {
   if (!isManagement()) return;
   const list = $("manual-member-list");
@@ -1593,6 +1678,7 @@ function renderManualMemberManagement() {
       <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class || "ยังไม่ระบุ")}</span></td>
       <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
       <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
+      <td>${renderGuildPresenceStatus(member.user_id)}</td>
       <td><div class="manual-member-actions">
         <button type="button" class="btn btn-outline btn-sm" data-account-edit="${escapeHTML(member.user_id)}">แก้ไข</button>
         <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-account-toggle="${escapeHTML(member.user_id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
@@ -1607,6 +1693,7 @@ function renderManualMemberManagement() {
       <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class)}</span></td>
       <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
       <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
+      <td>${renderGuildPresenceStatus(null)}</td>
       <td><div class="manual-member-actions">
         <button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button>
         <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
@@ -1617,7 +1704,7 @@ function renderManualMemberManagement() {
   list.innerHTML = `
     <div class="manual-member-table-wrap">
       <table class="manual-member-table">
-        <thead><tr><th>สมาชิก</th><th>Class</th><th>ตำแหน่งกิลด์</th><th>สถานะ</th><th>จัดการ</th></tr></thead>
+        <thead><tr><th>สมาชิก</th><th>Class</th><th>ตำแหน่งกิลด์</th><th>สถานะ</th><th>ออนไลน์</th><th>จัดการ</th></tr></thead>
         <tbody>${accountRows}${manualRows}</tbody>
       </table>
     </div>`;
