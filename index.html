@@ -236,10 +236,15 @@
           <span>ไกด์เกม</span>
         </button>
 
-        <button class="nav-item" data-page="portfolio">
-          <svg class="icon"><use href="#i-folder-image"/></svg>
-          <span>แฟ้มผลงาน</span>
-        </button>
+        <div class="nav-group">
+          <button class="nav-item nav-parent" type="button" data-toggle-submenu="portfolio-submenu" aria-expanded="false">
+            <svg class="icon"><use href="#i-folder-image"/></svg><span>แฟ้มผลงาน</span><span class="nav-chevron" aria-hidden="true">⌄</span>
+          </button>
+          <div class="nav-submenu" id="portfolio-submenu">
+            <button class="nav-subitem" data-page="portfolio"><span class="nav-subitem-dot"></span><span>แฟ้มผลงานสมาชิก</span></button>
+            <button class="nav-subitem management-only" data-page="portfolio-review-center" data-management-only><span class="nav-subitem-dot"></span><span>ศูนย์ตรวจสอบแฟ้ม</span></button>
+          </div>
+        </div>
 
         <div class="nav-group">
           <button class="nav-item nav-parent" type="button" data-toggle-submenu="guild-community-submenu" aria-expanded="false">
@@ -695,8 +700,8 @@
       <section id="page-portfolio" class="page page-padded hidden">
         <div class="page-intro">
           <span class="section-kicker">CHARACTER SHOWCASE</span>
-          <h1>แฟ้มผลงาน</h1>
-          <p>ดูตัวละครและบิลด์ของสมาชิกกิลด์</p>
+          <h1>แฟ้มผลงานสมาชิก</h1>
+          <p>คลังผลงานตัวละครและ Build ของสมาชิกกิลด์</p>
         </div>
 
           <section id="portfolio-own-bond-profile" class="portfolio-own-bond-profile hidden" aria-label="สายใยผูกพันของคุณ"></section>
@@ -777,6 +782,23 @@
             </div>
           </div>
         </section>
+        </section>
+      </section>
+      <section id="page-portfolio-review-center" class="page page-padded hidden">
+        <div class="page-intro"><span class="section-kicker">4AM PORTFOLIO REVIEW CENTER</span><h1>ศูนย์ตรวจสอบแฟ้ม</h1><p>ภาพรวมความพร้อมและสถานะการตรวจแฟ้มผลงานสมาชิก</p></div>
+        <section class="portfolio-review-overview" id="portfolio-review-overview">
+          <div class="portfolio-review-stat"><span>สมาชิกทั้งหมด</span><strong data-review-stat="members">—</strong><small>สมาชิกที่ยังใช้งาน</small></div>
+          <div class="portfolio-review-stat"><span>มีแฟ้มผลงาน</span><strong data-review-stat="with-portfolios">—</strong><small>สมาชิกที่มีแฟ้มอย่างน้อย 1 แฟ้ม</small></div>
+          <div class="portfolio-review-stat"><span>ยังไม่มีแฟ้ม</span><strong data-review-stat="no-portfolios">—</strong><small>สมาชิกที่ยังไม่เริ่มจัดทำ</small></div>
+          <div class="portfolio-review-stat is-pending"><span>รอตรวจสอบ</span><strong data-review-stat="pending">—</strong><small>แฟ้มที่มีข้อมูลพร้อมตรวจ</small></div>
+          <div class="portfolio-review-stat is-incomplete"><span>ข้อมูลไม่ครบ</span><strong data-review-stat="incomplete">—</strong><small>แฟ้มที่ยังขาดรายละเอียดหรือรูปภาพ</small></div>
+          <div class="portfolio-review-stat is-approved"><span>ผ่านแล้ว</span><strong data-review-stat="approved">—</strong><small>แฟ้มที่ตรวจสอบผ่าน</small></div>
+          <div class="portfolio-review-stat is-rejected"><span>ยังไม่ผ่าน</span><strong data-review-stat="rejected">—</strong><small>แฟ้มที่ต้องแก้ไข</small></div>
+        </section>
+        <section class="panel portfolio-review-list-panel">
+          <div class="portfolio-review-list-heading"><div><span class="panel-kicker">REVIEW QUEUE</span><h3>รายการแฟ้มผลงาน</h3><p>เลือกแฟ้มเพื่อเปิดดูรายละเอียดและใช้เครื่องมือตรวจสอบเดิม</p></div><button type="button" class="btn btn-outline" id="portfolio-review-refresh">↻ รีเฟรชข้อมูล</button></div>
+          <div class="portfolio-review-toolbar"><label class="portfolio-review-search"><span>⌕</span><input id="portfolio-review-search" type="search" placeholder="ค้นหาชื่อสมาชิก ชื่อแฟ้ม หรือคลาส..."></label><select id="portfolio-review-filter" aria-label="กรองสถานะแฟ้ม"><option value="all">ทุกสถานะ</option><option value="pending">รอตรวจสอบ</option><option value="incomplete">ข้อมูลไม่ครบ</option><option value="approved">ผ่านแล้ว</option><option value="rejected">ยังไม่ผ่าน</option></select></div>
+          <div id="portfolio-review-queue" class="portfolio-review-queue" aria-live="polite"><div class="empty-state"><span>◷</span><h3>กำลังโหลดข้อมูล</h3><p>กรุณารอสักครู่</p></div></div>
         </section>
       </section>
       <!-- ============ FEEDBACK & SUPPORT CENTER ============ -->
