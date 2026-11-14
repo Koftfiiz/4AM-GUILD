@@ -1348,7 +1348,7 @@ function getMemberSelectedBondNames(memberId) {
 }
 function getWarBondMarkup(memberId, partyMemberIds = []) {
   const partnerIds = [...new Set(guildMemberBonds.filter(row => row.member_id === memberId || row.partner_member_id === memberId).map(row => row.member_id === memberId ? row.partner_member_id : row.member_id))];
-  const partners = partnerIds.map(id => ({ id, member: allMembers.find(member => member.user_id === id) })).filter(item => item.member);
+  const partners = partnerIds.map(id => ({ id, member: allMembers.find(member => member.user_id === id) })).filter(item => item.member && (item.member.active !== false || partyMemberIds.includes(item.id)));
   if (!partners.length) return "";
   const html = partners.map(({ id, member }) => {
     const inParty = partyMemberIds.includes(id);
