@@ -6608,3 +6608,14 @@ body select:disabled {
 .discord-member-picker-error{color:#f2a0a8}
 .discord-member-picker-footer{display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid rgba(255,255,255,.07)}
 @media(max-width:620px){.discord-member-picker-panel{padding:16px;max-height:88vh}.manual-member-modal-panel .manual-member-form{grid-template-columns:1fr}.manual-member-field-wide{grid-column:auto}}
+
+
+/* Explicit Discord Manual member confirmation */
+.manual-member-link-list{display:grid;gap:11px;margin:18px 0}
+.manual-member-link-option{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:15px;border:1px solid rgba(229,57,69,.3);border-radius:11px;background:linear-gradient(145deg,rgba(35,13,17,.92),rgba(13,12,14,.96))}
+.manual-member-link-copy{display:grid;gap:4px;min-width:0}
+.manual-member-link-copy strong{color:#fff;font-size:16px;overflow-wrap:anywhere}
+.manual-member-link-copy span,.manual-member-link-copy small{color:#b9a6aa;font-size:12px;overflow-wrap:anywhere}
+.manual-member-link-copy .manual-member-link-inactive{color:#ff929a}
+.manual-member-link-confirm{flex:0 0 auto;min-height:38px}
+@media(max-width:560px){.manual-member-link-option{align-items:stretch;flex-direction:column}.manual-member-link-confirm{width:100%}}
