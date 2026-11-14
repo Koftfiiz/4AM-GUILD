@@ -6843,3 +6843,13 @@ body select:disabled {
  .bond-picker-hint{display:none}
  .war-member-bond-line{padding-left:8px}
 }
+
+
+/* Manual member directory live search */
+.manual-member-search-wrap{display:flex;align-items:center;gap:11px;min-height:48px;margin:0 0 16px;padding:0 14px;border:1px solid rgba(229,57,69,.3);border-radius:11px;background:rgba(0,0,0,.28);color:#ff7783;transition:border-color .18s ease,box-shadow .18s ease}
+.manual-member-search-wrap:focus-within{border-color:rgba(239,83,98,.78);box-shadow:0 0 0 3px rgba(229,57,69,.1)}
+.manual-member-search-icon{flex:0 0 auto;font-size:25px;line-height:1}
+.manual-member-search-wrap input{width:100%;min-width:0;min-height:46px;border:0;outline:0;background:transparent;color:#fff;font:inherit;font-size:14px}
+.manual-member-search-wrap input::placeholder{color:#938589;opacity:1}
+.manual-member-search-empty{padding:30px 16px}
+@media(max-width:560px){.manual-member-search-wrap{min-height:46px;padding:0 11px}.manual-member-search-wrap input{font-size:14px}}
