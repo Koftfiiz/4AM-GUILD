@@ -64,7 +64,7 @@ alter table public.guild_notifications enable row level security;
 -- Explicit client privileges; row-level policies below enforce per-user access.
 grant select, insert, update on public.guild_feedback to authenticated;
 grant select on public.guild_feedback_status_history to authenticated;
-grant select, update on public.guild_notifications to authenticated;
+grant select, insert, update, delete on public.guild_notifications to authenticated;
 
 
 drop policy if exists "Guild feedback owner and management can read" on public.guild_feedback;
@@ -131,6 +131,12 @@ create policy "Recipients can update their notification read state"
 on public.guild_notifications for update to authenticated
 using (recipient_user_id = auth.uid())
 with check (recipient_user_id = auth.uid());
+
+-- Members may permanently delete only their own notification history.
+drop policy if exists "Recipients can delete their own notifications" on public.guild_notifications;
+create policy "Recipients can delete their own notifications"
+on public.guild_notifications for delete to authenticated
+using (recipient_user_id = auth.uid());
 
 create or replace function public.guard_guild_feedback_insert()
 returns trigger
