@@ -1379,7 +1379,7 @@ function renderBondMemberPicker() {
     const selected = bondSelectedMemberIds.has(member.user_id), info = getClassInfo(getMemberClass(member));
     return `<button type="button" class="bond-member-option ${selected?"is-selected":""}" data-bond-toggle="${escapeHTML(member.user_id)}" aria-pressed="${selected}"><span class="bond-member-avatar">${info?.iconPath ? `<img src="${escapeHTML(info.iconPath)}" alt="">` : "✦"}</span><span class="bond-member-option-copy"><strong>${escapeHTML(getMemberName(member))}</strong><small>${escapeHTML(getMemberClass(member))}${member.nickname ? " · "+escapeHTML(member.nickname) : ""}</small></span><span class="bond-member-option-action">${selected?"เลือกแล้ว ✓":"＋ เพิ่ม"}</span></button>`;
   }).join("") : '<div class="bond-picker-empty">ไม่พบสมาชิกที่ตรงกับคำค้นหา</div>';
-  const count = $("bond-profile-selected-count"); if (count) count.textContent = String(bondSelectedMemberIds.size);
+  const count = $("bond-profile-selected-count"); if (count) count.textContent = String(selectedMembers.length);
 }
 
 async function loadMembers() {
@@ -1415,6 +1415,7 @@ async function loadMembers() {
   ].sort((a, b) => String(a.character_name || "").localeCompare(String(b.character_name || ""), "th"));
 
   renderMembers(directoryMembers);
+  if ($("portfolio-member-grid")) await renderPortfolioMemberDirectory();
 }
 
 function renderMembers(members) {
