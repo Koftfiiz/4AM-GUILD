@@ -1609,8 +1609,12 @@ async function saveManualGuildMember(form) {
   if (!isManagement() || !form) return;
   const formData = new FormData(form);
   const id = String(formData.get("id") || "");
-  const recordType = String(formData.get("record_type") || "manual");
+  const requestedRecordType = String(formData.get("record_type") || "manual");
   const userId = String(formData.get("user_id") || "");
+  // A linked account is identified by its immutable auth user_id, not only
+  // by the hidden record_type field. This prevents account edits from
+  // accidentally entering Manual duplicate validation if that field is stale.
+  const recordType = userId ? "account" : requestedRecordType;
   const payload = {
     character_name: String(formData.get("character_name") || "").trim(),
     game_class: String(formData.get("game_class") || "").trim(),
@@ -1648,7 +1652,7 @@ async function saveManualGuildMember(form) {
     // Manual duplicate checks apply only when creating/editing a Manual record.
     // An account-backed member may have its own source Manual row; that row must
     // never block editing the linked guild_members profile.
-    if (recordType !== "account") {
+    if (recordType !== "account" && !userId) {
       const duplicate = await supabaseClient.from("guild_manual_members")
         .select("id").ilike("character_name", payload.character_name);
       if (duplicate.error) throw duplicate.error;
