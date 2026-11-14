@@ -6877,6 +6877,7 @@ body select:disabled {
 #page-portfolio-review-center label, #page-portfolio-review-center input, #page-portfolio-review-center select,
 #page-portfolio-review-center button { font-size:15px; }
 #page-portfolio-review-center .page-intro p,#page-portfolio-review-center .portfolio-review-list-heading p { color:#b9aeb0; }
+#page-portfolio-review-center .section-kicker,#page-portfolio-review-center .panel-kicker { font-size:15px !important; }
 #page-portfolio-review-center .panel { background:linear-gradient(145deg,#151112,#090909); border:1px solid rgba(232,51,63,.22); }
 .portfolio-review-overview { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin:22px 0; }
 .portfolio-review-stat { min-width:0; padding:18px; border:1px solid rgba(232,51,63,.24); border-radius:12px; background:linear-gradient(145deg,#191315,#0b0a0b); display:grid; gap:7px; }
