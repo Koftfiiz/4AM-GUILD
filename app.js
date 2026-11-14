@@ -28,6 +28,7 @@ let allMembers = [];
 let manualGuildMembers = [];
 let directoryMembers = [];
 let discordAccount = null;
+let discordGuildMembersCache = [];
 let allPortfolios = [];
 let portfolioClassFilter = "all";
 let currentPortfolioMemberId = null;
@@ -1220,6 +1221,106 @@ function renderMembers(members) {
 }
 
 // ==========================================
+// DISCORD SERVER MEMBER PICKER
+// ==========================================
+
+function closeDiscordMemberPicker() {
+  $("discord-member-picker")?.classList.add("hidden");
+}
+
+function setManualDiscordMember(member) {
+  const fields = {
+    "manual-member-discord-id": member?.id || "",
+    "manual-member-discord-username": member?.username || "",
+    "manual-member-discord-global-name": member?.global_name || "",
+    "manual-member-discord-nickname": member?.nick || "",
+    "manual-member-discord-avatar": member?.avatar_url || "",
+    "manual-member-discord-name": member?.username || ""
+  };
+  Object.entries(fields).forEach(([id, value]) => { if ($(id)) $(id).value = value; });
+  const display = $("manual-member-discord-selected");
+  const clear = $("manual-member-discord-clear");
+  if (!display) return;
+  if (!member) {
+    display.classList.add("is-empty");
+    display.innerHTML = '<span class="discord-member-selected-icon">◈</span><span>ยังไม่ได้เลือกบัญชี Discord</span>';
+    clear?.classList.add("hidden");
+    return;
+  }
+  const label = member.nick || member.global_name || member.username || "Discord Member";
+  const avatar = member.avatar_url ? '<img src="' + escapeHTML(member.avatar_url) + '" alt="" loading="lazy">' : '<span class="discord-member-selected-icon">◈</span>';
+  display.classList.remove("is-empty");
+  display.innerHTML = avatar + '<span class="discord-member-selected-copy"><strong>' + escapeHTML(label) +
+    '</strong><small>@' + escapeHTML(member.username || "unknown") + ' · ID: ' + escapeHTML(member.id) +
+    '</small></span><span class="discord-member-selected-check">✓</span>';
+  clear?.classList.remove("hidden");
+}
+
+async function openDiscordMemberPicker() {
+  if (!isManagement()) return;
+  $("discord-member-picker")?.classList.remove("hidden");
+  const search = $("discord-member-picker-search");
+  if (search) { search.value = ""; search.focus(); }
+  await loadDiscordGuildMembers(false);
+}
+
+async function loadDiscordGuildMembers(forceRefresh = false) {
+  if (!isManagement()) return;
+  const status = $("discord-member-picker-status");
+  const list = $("discord-member-picker-list");
+  const refresh = $("discord-member-picker-refresh");
+  if (!forceRefresh && discordGuildMembersCache.length) {
+    renderDiscordMemberPicker();
+    if (status) status.textContent = "โหลดสมาชิกแล้ว " + discordGuildMembersCache.length + " บัญชี";
+    return;
+  }
+  if (status) status.textContent = "กำลังดึงรายชื่อสมาชิกจาก Discord Server...";
+  if (list) list.innerHTML = '<div class="discord-member-picker-loading">กำลังเชื่อมต่อ Discord Bot...</div>';
+  if (refresh) refresh.disabled = true;
+  try {
+    const { data, error } = await supabaseClient.functions.invoke("discord-member-directory", { body: {} });
+    if (error) throw new Error(error.message || "เรียก Discord Bot ไม่สำเร็จ");
+    if (!data?.success || !Array.isArray(data.members)) throw new Error(data?.message || "ไม่สามารถโหลดรายชื่อสมาชิก Discord ได้");
+    discordGuildMembersCache = data.members;
+    renderDiscordMemberPicker();
+    if (status) status.textContent = "พบสมาชิกใน Discord Server " + data.members.length + " บัญชี";
+  } catch (error) {
+    console.error("Discord member directory:", error);
+    if (status) status.textContent = "โหลดรายชื่อไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด");
+    if (list) list.innerHTML = '<div class="discord-member-picker-error">ตรวจสอบ Bot Token, Server ID และ Server Members Intent ใน Discord Developer Portal</div>';
+  } finally {
+    if (refresh) refresh.disabled = false;
+  }
+}
+
+function renderDiscordMemberPicker() {
+  const list = $("discord-member-picker-list");
+  const status = $("discord-member-picker-status");
+  if (!list) return;
+  const query = String($("discord-member-picker-search")?.value || "").trim().toLowerCase();
+  const members = discordGuildMembersCache.filter(member =>
+    [member.username, member.global_name, member.nick, member.id].some(value => String(value || "").toLowerCase().includes(query))
+  );
+  if (!members.length) {
+    list.innerHTML = '<div class="discord-member-picker-empty">' + (discordGuildMembersCache.length ? "ไม่พบสมาชิกที่ตรงกับคำค้นหา" : "ยังไม่มีรายชื่อให้แสดง") + '</div>';
+    if (status && discordGuildMembersCache.length) status.textContent = "ไม่พบผลลัพธ์ · ทั้งหมด " + discordGuildMembersCache.length + " บัญชี";
+    return;
+  }
+  list.innerHTML = members.map(member => {
+    const title = member.nick || member.global_name || member.username || "Discord Member";
+    const avatar = member.avatar_url
+      ? '<img src="' + escapeHTML(member.avatar_url) + '" alt="" loading="lazy">'
+      : '<span class="discord-member-option-avatar-fallback">◈</span>';
+    return '<button type="button" class="discord-member-option" data-discord-member-id="' + escapeHTML(member.id) + '">' +
+      '<span class="discord-member-option-avatar">' + avatar + '</span><span class="discord-member-option-copy"><strong>' +
+      escapeHTML(title) + '</strong><small>@' + escapeHTML(member.username || "unknown") +
+      (member.global_name ? ' · ' + escapeHTML(member.global_name) : '') +
+      '</small></span><span class="discord-member-option-select">เลือก</span></button>';
+  }).join("");
+  if (status) status.textContent = "แสดง " + members.length + " จาก " + discordGuildMembersCache.length + " บัญชี";
+}
+
+// ==========================================
 // MANUAL MEMBER MANAGEMENT
 // ==========================================
 
@@ -1253,6 +1354,8 @@ function resetManualMemberForm() {
   $("manual-member-submit").textContent = "บันทึกสมาชิก";
   $("manual-member-cancel").classList.add("hidden");
   $("manual-member-active").checked = true;
+  setManualDiscordMember(null);
+  closeDiscordMemberPicker();
   closeManualMemberModal();
 }
 
@@ -1351,7 +1454,12 @@ async function saveManualGuildMember(form) {
     character_name: String(formData.get("character_name") || "").trim(),
     game_class: String(formData.get("game_class") || "").trim(),
     nickname: String(formData.get("nickname") || "").trim() || null,
-    discord_name: String(formData.get("discord_name") || "").trim() || null,
+    discord_name: String(formData.get("discord_username") || formData.get("discord_name") || "").trim() || null,
+    discord_user_id: String(formData.get("discord_user_id") || "").trim() || null,
+    discord_username: String(formData.get("discord_username") || "").trim() || null,
+    discord_global_name: String(formData.get("discord_global_name") || "").trim() || null,
+    discord_server_nickname: String(formData.get("discord_server_nickname") || "").trim() || null,
+    discord_avatar_url: String(formData.get("discord_avatar_url") || "").trim() || null,
     age: String(formData.get("age") || "").trim() ? Number(formData.get("age")) : null,
     guild_position: String(formData.get("guild_position") || "").trim() || null,
     active: $("manual-member-active").checked,
@@ -1382,6 +1490,9 @@ async function saveManualGuildMember(form) {
     if ((duplicate.data || []).some(row => row.id !== id)) {
       throw new Error("มีชื่อตัวละครนี้ในรายชื่อ Manual แล้ว");
     }
+    if (payload.discord_user_id && manualGuildMembers.some(member =>
+      member.discord_user_id === payload.discord_user_id && member.id !== id
+    )) throw new Error("Discord Account นี้ถูกผูกกับรายชื่อ Manual อื่นแล้ว");
     const accountDuplicate = allMembers.some(member =>
       String(member.character_name || "").trim().toLowerCase() === payload.character_name.toLowerCase() &&
       !(recordType === "account" && member.user_id === userId)
@@ -1438,7 +1549,17 @@ function fillManualMemberForm(member, type = "manual") {
   form.elements.character_name.value = member.character_name || "";
   form.elements.game_class.value = member.game_class || "";
   form.elements.nickname.value = member.nickname || "";
-  form.elements.discord_name.value = member.discord_name || "";
+  form.elements.discord_name.value = member.discord_name || member.discord_username || "";
+  $("manual-member-discord-id").value = member.discord_user_id || "";
+  $("manual-member-discord-username").value = member.discord_username || "";
+  $("manual-member-discord-global-name").value = member.discord_global_name || "";
+  $("manual-member-discord-nickname").value = member.discord_server_nickname || "";
+  $("manual-member-discord-avatar").value = member.discord_avatar_url || "";
+  setManualDiscordMember(member.discord_user_id ? {
+    id: member.discord_user_id, username: member.discord_username || member.discord_name || "",
+    global_name: member.discord_global_name || "", nick: member.discord_server_nickname || "",
+    avatar_url: member.discord_avatar_url || ""
+  } : null);
   form.elements.age.value = member.age || "";
   form.elements.guild_position.value = member.guild_position || "";
   form.elements.notes.value = member.notes || "";
@@ -6302,6 +6423,18 @@ function registerAppEventListeners() {
   $("manual-member-add-trigger")?.addEventListener("click", () => {
     resetManualMemberForm();
     openManualMemberModal();
+  });
+  $("manual-member-discord-select")?.addEventListener("click", () => void openDiscordMemberPicker());
+  $("manual-member-discord-clear")?.addEventListener("click", () => setManualDiscordMember(null));
+  $("discord-member-picker-refresh")?.addEventListener("click", () => void loadDiscordGuildMembers(true));
+  $("discord-member-picker-search")?.addEventListener("input", renderDiscordMemberPicker);
+  $("discord-member-picker")?.addEventListener("click", event => {
+    if (event.target.closest("[data-discord-picker-close]")) closeDiscordMemberPicker();
+    const option = event.target.closest("[data-discord-member-id]");
+    if (option) {
+      const selected = discordGuildMembersCache.find(member => member.id === option.dataset.discordMemberId);
+      if (selected) { setManualDiscordMember(selected); closeDiscordMemberPicker(); }
+    }
   });
   $("manual-member-form")?.addEventListener("submit", event => { event.preventDefault(); saveManualGuildMember(event.currentTarget); });
   $("manual-member-cancel")?.addEventListener("click", resetManualMemberForm);
