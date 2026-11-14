@@ -6976,3 +6976,33 @@ body select:disabled {
 #page-war [data-war-drop-slot]{transition:border-color .16s,background .16s,box-shadow .16s}
 #page-war [data-war-drop-slot].is-war-drop-active{border:1px solid #ff5265!important;background:rgba(190,25,48,.16)!important;box-shadow:inset 0 0 0 1px rgba(255,82,101,.2),0 0 18px rgba(225,30,55,.2)}
 #page-war [data-war-drop-slot].is-war-drop-saved{border-color:#54d69a!important;box-shadow:0 0 15px rgba(84,214,154,.25)}
+
+/* 4AM Portfolio typography: readable 15px minimum throughout the member portfolio page */
+#page-portfolio :is(p, small, label, input, textarea, select, button, a, li, td, th, time, figcaption, kbd, output, .muted, .portfolio-card-tag, .portfolio-owner-label, .portfolio-member-class, .portfolio-member-count, .portfolio-member-open-label, .portfolio-type-chip, .portfolio-preview-number, .portfolio-upload-zone-index, .portfolio-upload-zone-count, .portfolio-image-caption, .portfolio-upload-empty, .portfolio-example-tip, .portfolio-lightbox-meta, .portfolio-own-bond-chip, .portfolio-own-bond-empty, .portfolio-review-meta, .portfolio-review-status-label, .portfolio-review-badge, .portfolio-tracker-muted, .portfolio-tracker-form label, .portfolio-tracker-table, .portfolio-tracker-stat span, .portfolio-tracker-pill) {
+  font-size: 15px !important;
+}
+#page-portfolio small,
+#page-portfolio .portfolio-tracker-muted,
+#page-portfolio .portfolio-tracker-form label,
+#page-portfolio .portfolio-tracker-table th,
+#page-portfolio .portfolio-tracker-table td,
+#page-portfolio .portfolio-tracker-stat span,
+#page-portfolio .portfolio-tracker-pill {
+  font-size: 15px !important;
+}
+#page-portfolio .page-intro > .section-kicker,
+#page-portfolio .panel-heading .panel-kicker,
+#page-portfolio .portfolio-section-heading .panel-kicker,
+#page-portfolio .portfolio-tracker-heading .panel-kicker,
+#page-portfolio .portfolio-own-bond-copy > .panel-kicker,
+.bond-profile-heading .panel-kicker {
+  color: #fff !important;
+  font-size: 16px !important;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+#page-portfolio .panel-heading h3 {
+  color: #fff;
+  font-size: 20px;
+  font-weight: 800;
+}
