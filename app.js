@@ -1352,10 +1352,10 @@ function getWarBondMarkup(memberId, partyMemberIds = []) {
   if (!partners.length) return "";
   const html = partners.map(({ id, member }) => {
     const inParty = partyMemberIds.includes(id);
-    return `<span class="war-bond-partner ${inParty ? "is-in-party" : "is-outside-party"}">${inParty ? "✓" : "↗"} ${escapeHTML(getMemberName(member))}</span>`;
+    return `<span class="war-bond-partner ${inParty ? "is-in-party" : "is-outside-party"}"><span aria-hidden="true">${inParty ? "✓" : "↗"}</span><span>${escapeHTML(getMemberName(member))}</span></span>`;
   }).join("");
   const samePartyCount = partners.filter(item => partyMemberIds.includes(item.id)).length;
-  return `<span class="war-member-bond-line"><span class="war-bond-label">สายใย</span><span class="war-bond-partner-list">${html}</span><span class="war-bond-party-count">${samePartyCount}/${partners.length} ในตี้</span></span>`;
+  return `<section class="war-modal-bond-section" aria-label="สายใยผูกพัน"><div class="war-modal-bond-heading"><strong>สายใยผูกพัน</strong><span>${samePartyCount}/${partners.length} คนอยู่ในตี้</span></div><div class="war-modal-bond-list">${html}</div></section>`;
 }
 function renderOwnBondProfileSection() {
   const root = $("portfolio-own-bond-profile");
@@ -3877,7 +3877,7 @@ function renderRaid(containerId,raidName,parties=[],options={}){
  const container=$(containerId);if(!container)return;const canArrange=options.editable===true;
  container.innerHTML=Array.from({length:5},(_,i)=>{const n=i+1,p=parties.find(x=>Number(x.party_number)===n),members=p?.war_party_members||[],partyMemberIds=members.map(slot=>slot.member_id).filter(Boolean);
  return `<article class="party-card" data-party-card data-raid="${raidName}"><div class="party-header"><div class="party-heading-fields"><h3>${raidName}${n}</h3>${p?.party_name&&p.party_name!==`${raidName}${n}`?`<small class="war-party-role-label">${escapeHTML(p.party_name)}</small>`:""}</div></div><div class="party-slots">${Array.from({length:6},(_,j)=>{const pos=j+1,slot=members.find(x=>Number(x.position)===pos),member=allMembers.find(x=>x.user_id===slot?.member_id);
- if(slot&&member){const info=getClassInfo(getMemberClass(member));return `<button class="party-slot party-slot-filled war-member-slot" type="button" data-war-manage-slot data-assignment-id="${escapeHTML(slot.id)}" data-party-id="${escapeHTML(p.id)}" data-position="${pos}" style="--class-color:${info?.color||"#aaa"}" ${canArrange?"":"disabled"}><img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath||"")}" alt="${escapeHTML(info?.name||"")}"><span class="war-member-identity"><strong class="slot-member-name">${escapeHTML(getMemberName(member))}</strong><small class="war-member-class">${escapeHTML(info?.name||getMemberClass(member))}</small>${getWarBondMarkup(member.user_id,partyMemberIds)}</span><span class="war-member-skills" aria-label="Skill ของสมาชิก">${getMemberSkillIconsMarkup(member.user_id)}</span><span class="war-member-slot-edit">${canArrange?"MANAGE":""}</span></button>`;}
+ if(slot&&member){const info=getClassInfo(getMemberClass(member));return `<button class="party-slot party-slot-filled war-member-slot" type="button" data-war-manage-slot data-assignment-id="${escapeHTML(slot.id)}" data-party-id="${escapeHTML(p.id)}" data-position="${pos}" style="--class-color:${info?.color||"#aaa"}" ${canArrange?"":"disabled"}><img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath||"")}" alt="${escapeHTML(info?.name||"")}"><span class="war-member-identity"><strong class="slot-member-name">${escapeHTML(getMemberName(member))}</strong><small class="war-member-class">${escapeHTML(info?.name||getMemberClass(member))}</small></span><span class="war-member-skills" aria-label="Skill ของสมาชิก">${getMemberSkillIconsMarkup(member.user_id)}</span><span class="war-member-slot-edit">${canArrange?"MANAGE":""}</span></button>`;}
  return `<div class="party-slot ${canArrange&&p?"party-slot-editor":""}">${canArrange&&p?`<button class="war-slot-add-button" type="button" data-war-add-slot data-party-id="${escapeHTML(p.id)}" data-position="${pos}">＋ ADD</button>`:'<span class="slot-empty">Empty Slot</span>'}</div>`;
  }).join("")}</div></article>`;}).join("");
 }
@@ -3921,8 +3921,7 @@ function openWarAssignmentModal(partyId,position,assignmentId=null){
     <img src="${escapeHTML(getClassInfo(getMemberClass(current))?.iconPath||"")}" alt="">
     <div class="war-modal-member-details"><strong>${escapeHTML(getMemberName(current))}</strong><small>${escapeHTML(getMemberClass(current))} · UID: ${escapeHTML(current.game_uid||"—")}</small></div>
     <div class="war-member-status-tags">${statusTags}</div>
-   ${getWarBondMarkup(current.user_id,currentWarPartyAssignments.filter(item=>item.party_id===party.id).map(item=>item.member_id))}
-  </div>`:""}
+  </div>${getWarBondMarkup(current.user_id,currentWarPartyAssignments.filter(item=>item.party_id===party.id).map(item=>item.member_id))}`:""}
   <div class="war-modal-tabs" role="tablist" aria-label="จัดการสมาชิก">
    <button type="button" role="tab" data-war-modal-tab="skills" class="${current?"is-active":""}" aria-selected="${current?"true":"false"}">Skill</button>
    <button type="button" role="tab" data-war-modal-tab="members" class="${current?"":"is-active"}" aria-selected="${current?"false":"true"}">${current?"เปลี่ยนคน":"เลือกสมาชิก"}</button>
