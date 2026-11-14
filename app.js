@@ -67,6 +67,8 @@ let bondRelationshipsLoadError = "";
 let bondSelectedMemberIds = new Set();
 let manualGuildMembers = [];
 let directoryMembers = [];
+let memberDirectoryClassFilter = "all";
+let manualMemberClassFilter = "all";
 let guildPresenceByUserId = new Map();
 let presenceHeartbeatTimer = null;
 let presenceRefreshTimer = null;
@@ -1422,23 +1424,20 @@ async function loadMembers() {
 function renderMembers(members) {
   const container = $("members-list");
   if (!container) return;
-
   const classSummary = $("members-class-summary");
   if (classSummary) {
+    const countSource = directoryMembers.length ? directoryMembers : members;
     const counts = new Map();
-    members.forEach(member => {
+    countSource.forEach(member => {
       const name = String(getMemberClass(member) || "").trim().toLocaleLowerCase();
       if (name) counts.set(name, (counts.get(name) || 0) + 1);
     });
-    classSummary.innerHTML = CLASS_DATA.map(item => {
+    classSummary.innerHTML = '<button type="button" class="war-class-filter member-class-filter ' + (memberDirectoryClassFilter === "all" ? "is-active" : "") + '" data-member-class-filter="all" title="สมาชิกทุกอาชีพ">ALL</button>' + CLASS_DATA.map(item => {
       const count = counts.get(String(item.name).toLocaleLowerCase()) || 0;
-      return `<div class="member-class-count-tile" style="--class-color:${escapeHTML(item.color)}" title="${escapeHTML(item.name)}: ${count} คน">
-        <img src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
-        <strong>${count}</strong>
-      </div>`;
+      return `<button type="button" class="war-class-filter member-class-filter" data-member-class-filter="${escapeHTML(item.name)}" style="--class-color:${escapeHTML(item.color)}" title="${escapeHTML(item.name)}: ${count} คน" aria-label="${escapeHTML(item.name)} ${count} คน"><img src="${escapeHTML(item.iconPath)}" alt="" loading="lazy"><span>${count}</span></button>`;
     }).join("");
+    classSummary.querySelectorAll("[data-member-class-filter]").forEach(button => button.classList.toggle("is-active", button.dataset.memberClassFilter === memberDirectoryClassFilter));
   }
-
   if (!members.length) {
     showEmpty(container, "ยังไม่มีรายชื่อสมาชิก", "เมื่อมีสมาชิกในกิลด์ รายชื่อจะแสดงที่นี่");
     return;
@@ -1770,13 +1769,11 @@ function renderManualMemberManagement() {
       const className = String(member.game_class || "").trim().toLocaleLowerCase();
       if (className) classCounts.set(className, (classCounts.get(className) || 0) + 1);
     });
-    classSummary.innerHTML = CLASS_DATA.map(item => {
+    classSummary.innerHTML = '<button type="button" class="war-class-filter manual-member-class-filter ' + (manualMemberClassFilter === "all" ? "is-active" : "") + '" data-manual-member-class="all" title="สมาชิกทุกอาชีพ">ALL</button>' + CLASS_DATA.map(item => {
       const count = classCounts.get(item.name.toLocaleLowerCase()) || 0;
-      return `<div class="manual-member-class-chip" style="--class-color:${escapeHTML(item.color)}" title="${escapeHTML(item.name)}: ${count} คน">
-        <img src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
-        <strong>${count}</strong>
-      </div>`;
+      return `<button type="button" class="war-class-filter manual-member-class-filter" data-manual-member-class="${escapeHTML(item.name)}" style="--class-color:${escapeHTML(item.color)}" title="${escapeHTML(item.name)}: ${count} คน" aria-label="${escapeHTML(item.name)} ${count} คน"><img src="${escapeHTML(item.iconPath)}" alt="" loading="lazy"><span>${count}</span></button>`;
     }).join("");
+    classSummary.querySelectorAll("[data-manual-member-class]").forEach(button => button.classList.toggle("is-active", button.dataset.manualMemberClass === manualMemberClassFilter));
   }
 
   if (!linkedCount && !manualCount) {
@@ -1809,25 +1806,12 @@ function renderManualMemberManagement() {
 
   const searchInput = $("manual-member-search");
   const searchQuery = String(searchInput?.value || "").trim().toLocaleLowerCase();
-  const filteredVisibleMembers = searchQuery
-    ? allVisibleMembers.filter(member => {
-        const searchableFields = [
-          member.character_name,
-          member.nickname,
-          member.game_class,
-          member.guild_position,
-          member.game_uid,
-          member.discord_name,
-          member.discord_username,
-          member.discord_global_name,
-          member.discord_server_nickname,
-          member.discord_user_id
-        ];
-        return searchableFields.some(value =>
-          String(value || "").toLocaleLowerCase().includes(searchQuery)
-        );
-      })
-    : allVisibleMembers;
+  const filteredVisibleMembers = allVisibleMembers.filter(member => {
+    const searchableFields = [member.character_name, member.nickname, member.game_class, member.guild_position, member.game_uid, member.discord_name, member.discord_username, member.discord_global_name, member.discord_server_nickname, member.discord_user_id];
+    const matchesSearch = !searchQuery || searchableFields.some(value => String(value || "").toLocaleLowerCase().includes(searchQuery));
+    const matchesClass = manualMemberClassFilter === "all" || String(member.game_class || "").toLowerCase() === manualMemberClassFilter.toLowerCase();
+    return matchesSearch && matchesClass;
+  });
 
   const memberRows = filteredVisibleMembers.map((member, index) => {
     const cls = getClassInfo(member.game_class);
@@ -2051,23 +2035,11 @@ async function updateLinkedGuildMemberStatus(userId) {
 
 function filterMembers() {
   const search = $("member-search")?.value.trim().toLowerCase() || "";
-
-  const filtered = directoryMembers.filter((member) => {
-    const searchable = [
-      getMemberName(member),
-      member.nickname,
-      member.discord_name,
-      member.role,
-      member.display_position,
-      member.guild_position,
-      getMemberClass(member),
-      member.user_id,
-      member.game_uid
-    ].join(" ").toLowerCase();
-
-    return searchable.includes(search);
+  const filtered = directoryMembers.filter(member => {
+    const searchable = [getMemberName(member), member.nickname, member.discord_name, member.role, member.display_position, member.guild_position, getMemberClass(member), member.user_id, member.game_uid].join(" ").toLowerCase();
+    const matchesClass = memberDirectoryClassFilter === "all" || getMemberClass(member).toLowerCase() === memberDirectoryClassFilter.toLowerCase();
+    return searchable.includes(search) && matchesClass;
   });
-
   renderMembers(filtered);
 }
 
@@ -3974,8 +3946,8 @@ function renderWarAssignmentToolbar(raidCount=2){
  applyWarAssignmentMemberFilters();
 }
 function applyWarAssignmentMemberFilters(){
- const q=warAssignmentSearch.trim().toLowerCase(),members=getWarAssignmentRosterMembers().filter(m=>{const st=warMemberStatus(m.user_id);if(warAssignmentFilter==="leave"&&!st.leave)return false;if(warAssignmentFilter==="reserve"&&!st.reserve)return false;if(warAssignmentFilter==="absent"&&!st.absent)return false;if(["A","B","C","D"].includes(warAssignmentFilter)&&st.raid!==warAssignmentFilter)return false;if(warAssignmentClassFilter!=="all"&&getMemberClass(m).toLowerCase()!==warAssignmentClassFilter.toLowerCase())return false;return !q||getMemberName(m).toLowerCase().includes(q)||String(m.game_uid||"").includes(q);});
- const out=$("war-assignment-results");if(out){out.innerHTML=members.length?members.slice(0,40).map(m=>{const info=getClassInfo(getMemberClass(m)),st=warMemberStatus(m.user_id);return `<button class="war-assignment-member-pill" data-war-pool-member="${escapeHTML(m.user_id)}" ${isManagement()?'draggable="true"':""} type="button" style="--class-color:${info?.color||"#aaa"}"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span>${escapeHTML(getMemberName(m))}</span><small>${st.addedByManagement?"เพิ่มโดยฝ่ายบริหาร":st.leave?"ลาวอร์":st.absent?"ขาดวอร์":st.reserve?"สำรอง":st.raid?"RAID "+st.raid:"ยังไม่จัดตี้"}</small></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่ตรงกับตัวกรอง</p>';if(members.length>40)out.insertAdjacentHTML("beforeend",`<small class="war-assignment-more">แสดง 40 จาก ${members.length} คน · ใช้ช่องค้นหาเพื่อจำกัดผลลัพธ์</small>`);}
+ const assignedIds=getAssignedWarMemberIds(),q=warAssignmentSearch.trim().toLowerCase(),members=getWarAssignmentRosterMembers().filter(m=>{if(assignedIds.has(m.user_id))return false;const st=warMemberStatus(m.user_id);if(warAssignmentFilter==="leave"&&!st.leave)return false;if(warAssignmentFilter==="reserve"&&!st.reserve)return false;if(warAssignmentFilter==="absent"&&!st.absent)return false;if(["A","B","C","D"].includes(warAssignmentFilter)&&st.raid!==warAssignmentFilter)return false;if(warAssignmentClassFilter!=="all"&&getMemberClass(m).toLowerCase()!==warAssignmentClassFilter.toLowerCase())return false;return !q||getMemberName(m).toLowerCase().includes(q)||String(m.game_uid||"").includes(q);});
+ const out=$("war-assignment-results");if(out){out.innerHTML=members.length?members.slice(0,40).map(m=>{const info=getClassInfo(getMemberClass(m)),st=warMemberStatus(m.user_id);return `<button class="war-assignment-member-pill" data-war-pool-member="${escapeHTML(m.user_id)}" ${isManagement()?'draggable="true"':""} type="button" style="--class-color:${info?.color||"#aaa"}" title="${escapeHTML(getMemberName(m))}"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span>${escapeHTML(getMemberName(m))}</span></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่ตรงกับตัวกรอง</p>';if(members.length>40)out.insertAdjacentHTML("beforeend",`<small class="war-assignment-more">แสดง 40 จาก ${members.length} คน · ใช้ช่องค้นหาเพื่อจำกัดผลลัพธ์</small>`);}
  document.querySelectorAll("[data-war-filter]").forEach(b=>b.classList.toggle("is-active",b.dataset.warFilter===warAssignmentFilter));document.querySelectorAll("[data-war-class-filter]").forEach(b=>b.classList.toggle("is-active",b.dataset.warClassFilter===warAssignmentClassFilter));
  document.querySelectorAll("[data-raid-section]").forEach(s=>s.classList.toggle("hidden",["leave","reserve","absent"].includes(warAssignmentFilter)||(warAssignmentFilter!=="all"&&s.dataset.raidSection!==warAssignmentFilter)));
 }
@@ -4283,9 +4255,35 @@ function getThaiFontCss() {
   }
   return thaiFontCssPromise;
 }
+function deliverWarPng(blob, filename, downloadWindow) {
+  const url = URL.createObjectURL(blob);
+  try {
+    if (downloadWindow && !downloadWindow.closed) {
+      const doc = downloadWindow.document;
+      doc.open();
+      doc.write('<!doctype html><html lang="th"><meta charset="utf-8"><title>4AM GUILD · Download</title><body style="margin:0;background:#080608;color:#fff;font:16px sans-serif;display:grid;place-items:center;min-height:100vh"><main style="padding:28px;text-align:center"><h2>เตรียมรูปภาพเรียบร้อยแล้ว</h2><p>หากยังไม่เริ่มดาวน์โหลด กดปุ่มด้านล่างได้เลย</p><a id="war-png-download" style="display:inline-block;padding:12px 22px;border-radius:9px;background:#b51d34;color:white;text-decoration:none;font-weight:700">ดาวน์โหลดรูปภาพ</a></main></body></html>');
+      doc.close();
+      const link = doc.getElementById("war-png-download");
+      link.href = url; link.download = filename; link.click();
+      link.textContent = "ดาวน์โหลดอีกครั้ง";
+      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+      return;
+    }
+    const link = document.createElement("a");
+    link.href = url; link.download = filename;
+    document.body.appendChild(link); link.click(); link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+  } catch (error) {
+    URL.revokeObjectURL(url);
+    if (downloadWindow && !downloadWindow.closed) downloadWindow.close();
+    throw error;
+  }
+}
+
 async function exportWarImage(raidFilter = null){
   const event=allWarEvents.find(item=>item.id===selectedWarEventId);
   if(!event||!event.is_draft_confirmed)return;
+  const downloadWindow=window.open("about:blank","_blank");
   const config=getWarEventConfig(event),width=1600,allRaidNames=["A","B","C","D"].slice(0,config.raidCount);
   const raidNames=raidFilter?allRaidNames.filter(raid=>raid===raidFilter):allRaidNames;
   if(raidFilter&&!raidNames.length)return;
@@ -4374,9 +4372,8 @@ async function exportWarImage(raidFilter = null){
       context.drawImage(img,0,0);
       const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
       if(!png)throw Error("PNG export failed");
-      const url=URL.createObjectURL(png),link=document.createElement("a");
-      link.href=url;link.download=raidFilter?`4AM-War-Raid-${raidFilter}-${event.event_date}.png`:`4AM-War-${event.event_date}.png`;link.click();
-      setTimeout(()=>URL.revokeObjectURL(url),1000);
+      const filename=raidFilter?`4AM-War-Raid-${raidFilter}-${event.event_date}.png`:`4AM-War-${event.event_date}.png`;
+      deliverWarPng(png,filename,downloadWindow);
     }finally{URL.revokeObjectURL(svgUrl);}
   }catch(error){
     console.error("War image export failed:",error);
@@ -4399,6 +4396,7 @@ function addWarPartyExportButtons(container,parties){
   });
 }
 async function exportWarPartyImage(partyId){
+  const downloadWindow=window.open("about:blank","_blank");
   let party=currentWarParties.find(item=>item.id===partyId)||null;
   if(!party){
     const result=await supabaseClient.from("war_parties")
@@ -4435,9 +4433,7 @@ async function exportWarPartyImage(partyId){
       ctx.drawImage(img,0,0);
       const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
       if(!blob)throw Error("สร้าง PNG ไม่สำเร็จ");
-      const url=URL.createObjectURL(blob),link=document.createElement("a");
-      link.href=url;link.download=`4AM-${label}-${event?.event_date||"War"}.png`;link.click();
-      setTimeout(()=>URL.revokeObjectURL(url),1200);
+      deliverWarPng(blob,`4AM-${label}-${event?.event_date||"War"}.png`,downloadWindow);
     }finally{URL.revokeObjectURL(svgUrl);}
   }catch(error){console.error("Party image export failed:",error);alert("บันทึกรูปตี้ไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));}
 }
@@ -7023,25 +7019,28 @@ async function saveOwnCharacterProfile(form) {
   const nickname = String(form.querySelector("[name='nickname']")?.value || "").trim();
   const gameClass = String(form.querySelector("[name='game_class']")?.value || "").trim();
   const gameUID = String(form.querySelector("[name='game_uid']")?.value || "").trim();
+  const ageRaw = String(form.querySelector("[name='age']")?.value || "").trim();
+  const age = ageRaw ? Number(ageRaw) : null;
   const button = form.querySelector("button[type='submit']");
   if (!characterName) { showMessage("account-profile-status", "กรุณากรอกชื่อตัวละคร"); return; }
   if (characterName.length > 40) { showMessage("account-profile-status", "ชื่อตัวละครต้องไม่เกิน 40 ตัวอักษร"); return; }
   if (!nickname) { showMessage("account-profile-status", "กรุณากรอกชื่อเล่น"); return; }
   if (nickname.length > 40) { showMessage("account-profile-status", "ชื่อเล่นต้องไม่เกิน 40 ตัวอักษร"); return; }
+  if (ageRaw && (!Number.isInteger(age) || age < 1 || age > 120)) { showMessage("account-profile-status", "กรุณากรอกอายุเป็นตัวเลข 1–120 ปี"); return; }
   if (!CLASS_DATA.some(item => item.name === gameClass)) { showMessage("account-profile-status", "กรุณาเลือกอาชีพจากรายการ"); return; }
   if (!/^[0-9]{1,12}$/.test(gameUID)) { showMessage("account-profile-status", "UID ตัวละครต้องเป็นตัวเลข 1–12 หลักเท่านั้น"); return; }
   if (button) { button.disabled = true; button.textContent = "กำลังบันทึก..."; }
   showMessage("account-profile-status", "กำลังบันทึกข้อมูลบัญชี...", "info");
   try {
     const { data, error } = await supabaseClient.from("guild_members")
-      .update({ character_name: characterName, nickname, game_class: gameClass, game_uid: gameUID })
+      .update({ character_name: characterName, nickname, age, game_class: gameClass, game_uid: gameUID })
       .eq("user_id", currentUser.id)
-      .select("user_id, character_name, nickname, game_class, game_uid")
+      .select("user_id, character_name, nickname, age, game_class, game_uid")
       .single();
     if (error) throw error;
-    Object.assign(currentMember, { character_name: data.character_name, nickname: data.nickname, game_class: data.game_class, game_uid: data.game_uid });
+    Object.assign(currentMember, { character_name: data.character_name, nickname: data.nickname, age: data.age, game_class: data.game_class, game_uid: data.game_uid });
     const cachedMember = allMembers.find(member => member.user_id === currentUser.id);
-    if (cachedMember) Object.assign(cachedMember, { character_name: data.character_name, nickname: data.nickname, game_class: data.game_class, game_uid: data.game_uid });
+    if (cachedMember) Object.assign(cachedMember, { character_name: data.character_name, nickname: data.nickname, age: data.age, game_class: data.game_class, game_uid: data.game_uid });
     renderAccountDetails();
     updateUserChip();
     renderDashboardProfile();
@@ -7076,6 +7075,7 @@ function renderAccountDetails() {
     <div class="account-details-list">
       <div class="settings-detail"><span>ชื่อตัวละคร</span><strong>${escapeHTML(name)}</strong></div>
       <div class="settings-detail"><span>ชื่อเล่น</span><strong>${escapeHTML(currentMember?.nickname || "ยังไม่ได้ตั้งชื่อเล่น")}</strong></div>
+      <div class="settings-detail"><span>อายุ</span><strong>${currentMember?.age ? escapeHTML(currentMember.age) + " ปี" : "ยังไม่ได้ระบุ"}</strong></div>
       <div class="settings-detail"><span>Email</span><strong>${escapeHTML(currentUser?.email || "-")}</strong></div>
       <div class="settings-detail"><span>Class อาชีพ</span><strong class="account-class-display" style="--class-color:${classColor}"><img class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'"><span>${escapeHTML(currentMember?.game_class || "ยังไม่ได้เลือกอาชีพ")}</span></strong></div>
       <div class="settings-detail"><span>UID ตัวละคร</span><strong>${escapeHTML(currentMember?.game_uid || "ยังไม่ได้กรอก UID")}</strong></div>
@@ -7089,6 +7089,8 @@ function renderAccountDetails() {
       <input id="account-character-name" name="character_name" type="text" maxlength="40" autocomplete="off" placeholder="กรอกชื่อตัวละคร" value="${escapeHTML(currentMember?.character_name || "")}" required>
       <label for="account-nickname">ชื่อเล่น</label>
       <input id="account-nickname" name="nickname" type="text" maxlength="40" autocomplete="nickname" placeholder="กรอกชื่อเล่น" value="${escapeHTML(currentMember?.nickname || "")}" required>
+      <label for="account-age">อายุ</label>
+      <input id="account-age" name="age" type="number" inputmode="numeric" min="1" max="120" step="1" placeholder="กรอกอายุ (1–120 ปี)" value="${escapeHTML(currentMember?.age ?? "")}">
       <label for="account-game-class">Class อาชีพ</label>
       <div class="account-class-select-wrap">
         <img id="account-class-preview" class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'">
@@ -7338,6 +7340,18 @@ function registerAppEventListeners() {
   $("logout-btn")?.addEventListener("click", logout);
 
   $("member-search")?.addEventListener("input", filterMembers);
+  $("members-class-summary")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-member-class-filter]");
+    if (!button) return;
+    memberDirectoryClassFilter = button.dataset.memberClassFilter || "all";
+    filterMembers();
+  });
+  $("manual-member-class-summary")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-manual-member-class]");
+    if (!button) return;
+    manualMemberClassFilter = button.dataset.manualMemberClass || "all";
+    renderManualMemberManagement();
+  });
   $("manual-member-add-trigger")?.addEventListener("click", () => {
     resetManualMemberForm();
     openManualMemberModal();
