@@ -2358,7 +2358,7 @@ function renderPortfolioSelectedFiles() {
     return `
       <section class="portfolio-upload-zone portfolio-upload-zone-${zone.key}" data-portfolio-paste-zone="${zone.key}" tabindex="0" aria-label="โซนอัปโหลดรูป ${zone.label}">
         <header class="portfolio-upload-zone-heading">
-          <div><span class="portfolio-upload-zone-index">${String(zoneIndex + 1).padStart(2, "0")}</span><div><h4>${zone.label}</h4><p>${zone.hint}</p><p class="portfolio-paste-hint"><kbd>Ctrl</kbd> + <kbd>V</kbd> วางรูปภาพ หรือ ลากรูปมาวางที่นี่</p></div></div>
+          <div><span class="portfolio-upload-zone-index">${String(zoneIndex + 1).padStart(2, "0")}</span><div><h4>${zone.label}</h4><p>${zone.hint}</p><p class="portfolio-paste-hint"><kbd>Ctrl</kbd> + <kbd>V</kbd> วางรูปภาพ (คลิกโซนนี้ก่อน) หรือ ลากรูปมาวางที่นี่</p></div></div>
           <span class="portfolio-upload-zone-count">${items.length} รูป</span>
         </header>
         <div class="portfolio-upload-zone-grid">
@@ -3254,36 +3254,53 @@ function registerPortfolioEvents() {
   $("portfolio-crop-modal")?.addEventListener("click",event=>{if(event.target.id==="portfolio-crop-modal")closePortfolioCropEditor();});
 
   const portfolioImagePreview = $("portfolio-image-preview");
-  portfolioImagePreview?.addEventListener("click", event => {
-    const zone = event.target.closest("[data-portfolio-paste-zone]");
-    if (zone && !event.target.closest("button, input, textarea, select, label")) {
-      window.portfolioActiveUploadSection = zone.dataset.portfolioPasteZone;
-    }
-  });
+  portfolioImagePreview?.addEventListener("pointerdown", event => {
+    const zone = event.target instanceof Element ? event.target.closest("[data-portfolio-paste-zone]") : null;
+    if (zone) window.portfolioActiveUploadSection = zone.dataset.portfolioPasteZone;
+  }, true);
   portfolioImagePreview?.addEventListener("focusin", event => {
-    const zone = event.target.closest("[data-portfolio-paste-zone]");
+    const zone = event.target instanceof Element ? event.target.closest("[data-portfolio-paste-zone]") : null;
     if (zone) window.portfolioActiveUploadSection = zone.dataset.portfolioPasteZone;
   });
-  window.addEventListener("paste", event => {
+  // Capture paste at document level so the upload zones receive screenshots
+  // even when the browser focus remains on the surrounding form/panel.
+  document.addEventListener("paste", event => {
     const form = $("portfolio-create-form");
     if (!form || form.classList.contains("hidden") || !portfolioImagePreview) return;
+
     const target = event.target instanceof Element ? event.target : event.target?.parentElement;
     if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
-    const clipboardItems = [...(event.clipboardData?.items || [])];
-    const pastedImages = clipboardItems
-      .filter(item => item.kind === "file" && item.type.startsWith("image/"))
+
+    const clipboard = event.clipboardData;
+    const items = [...(clipboard?.items || [])];
+    let pastedImages = items
+      .filter(item => item.kind === "file" && /^image\//i.test(item.type || ""))
       .map(item => item.getAsFile())
       .filter(Boolean);
+    if (!pastedImages.length && clipboard?.files?.length) {
+      pastedImages = [...clipboard.files].filter(file => file.type.startsWith("image/"));
+    }
     if (!pastedImages.length) return;
+
     const activeElement = document.activeElement;
     if (activeElement?.closest?.("input, textarea, select, [contenteditable='true']")) return;
+
     const zoneKeys = [...portfolioImagePreview.querySelectorAll("[data-portfolio-paste-zone]")].map(zone => zone.dataset.portfolioPasteZone);
-    const activeSection = window.portfolioActiveUploadSection;
-    const sectionKey = zoneKeys.includes(activeSection) ? activeSection : zoneKeys[0];
+    const eventZone = (event.composedPath?.() || []).find(node => node instanceof Element && node.matches?.("[data-portfolio-paste-zone]"));
+    const focusedZone = activeElement instanceof Element ? activeElement.closest("[data-portfolio-paste-zone]") : null;
+    const selectedSection = eventZone?.dataset.portfolioPasteZone || focusedZone?.dataset.portfolioPasteZone || window.portfolioActiveUploadSection;
+    const sectionKey = zoneKeys.includes(selectedSection) ? selectedSection : zoneKeys[0];
     if (!sectionKey) return;
+
     event.preventDefault();
-    addPortfolioImagesToSection(pastedImages, sectionKey);
-  });
+    window.portfolioActiveUploadSection = sectionKey;
+    const added = addPortfolioImagesToSection(pastedImages, sectionKey);
+    if (!added && pastedImages.length) {
+      const hint = portfolioImagePreview.querySelector("[data-portfolio-paste-zone]");
+      hint?.classList.add("is-paste-target");
+      window.setTimeout(() => hint?.classList.remove("is-paste-target"), 700);
+    }
+  }, true);
 
   $("portfolio-image-preview")?.addEventListener("change", event => {
     const input = event.target.closest("[data-portfolio-section-input]");
