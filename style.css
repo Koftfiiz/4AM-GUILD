@@ -3800,8 +3800,8 @@ body { font-size:16px; }
 .feedback-management-filters{display:grid;grid-template-columns:minmax(140px,.7fr) minmax(160px,.8fr) minmax(180px,1.5fr);gap:12px;margin:4px 0 18px}
 .feedback-management-filters .form-group{display:grid;gap:6px;min-width:0}
 .guild-feedback-list{display:grid;gap:13px}
-.feedback-ticket-card{min-width:0;padding:18px;border:1px solid rgba(190,45,60,.32);border-radius:8px;background:linear-gradient(145deg,rgba(27,13,17,.92),rgba(8,7,8,.94))}
-.feedback-ticket-topline{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.feedback-ticket-card{position:relative;min-width:0;padding:18px;border:1px solid rgba(190,45,60,.32);border-radius:8px;background:linear-gradient(145deg,rgba(27,13,17,.92),rgba(8,7,8,.94))}
+.feedback-ticket-topline{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-right:42px}
 .feedback-type-badge,.feedback-status-badge{display:inline-flex;align-items:center;min-height:25px;padding:4px 9px;border:1px solid rgba(205,160,120,.3);border-radius:20px;font-size: 14px;font-weight:700}
 .feedback-type-badge.type-problem{color:#ff9da7;border-color:rgba(235,90,105,.4);background:rgba(190,35,52,.12)}
 .feedback-type-badge.type-feedback{color:#e9c98f;border-color:rgba(205,160,90,.4);background:rgba(190,145,65,.1)}
@@ -6717,7 +6717,7 @@ body select:disabled {
 
 
 /* Feedback Soft Delete / Recovery */
-.feedback-delete-button{display:inline-grid;place-items:center;width:32px;height:32px;min-width:32px;border:0;border-radius:50%;background:#e53945;color:#fff;font-size:25px;line-height:1;cursor:pointer;transition:transform .18s ease,background .18s ease}
+.feedback-delete-button{position:absolute;top:12px;right:12px;z-index:2;display:inline-grid;place-items:center;width:32px;height:32px;min-width:32px;padding:0;border:0;border-radius:50%;background:#e53945;color:#fff;font-size:25px;line-height:1;cursor:pointer;transition:transform .18s ease,background .18s ease}
 .feedback-delete-button:hover{background:#c62835;transform:scale(1.06)}
 .feedback-delete-button:disabled{opacity:.55;cursor:wait}
 .feedback-deleted-section{margin-top:22px}
