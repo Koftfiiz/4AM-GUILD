@@ -4618,6 +4618,13 @@ function registerWarCreationEvents(){
  document.body.addEventListener("click",e=>{if(e.target.closest("[data-war-modal-close]")){closeWarAssignmentModal();return;}const tab=e.target.closest("[data-war-modal-tab]");if(tab){const modal=$("war-assignment-modal"),skillsPanel=$("war-modal-skills-panel"),membersPanel=$("war-modal-members-panel"),active=tab.dataset.warModalTab;if(modal)modal.dataset.activeTab=active;modal?.querySelectorAll("[data-war-modal-tab]").forEach(b=>{const selected=b===tab;b.classList.toggle("is-active",selected);b.setAttribute("aria-selected",String(selected));});if(skillsPanel)skillsPanel.hidden=active!=="skills";if(membersPanel)membersPanel.hidden=active!=="members";if(active==="members")renderWarAssignmentModalMembers();return;}const uploadToggle=e.target.closest("[data-war-skill-upload-toggle]");if(uploadToggle){const form=$("war-member-skill-create-form");if(form)form.hidden=!form.hidden;return;}const add=e.target.closest("[data-war-modal-assign]"),remove=e.target.closest("[data-war-modal-remove]"),saveSkills=e.target.closest("[data-war-save-member-skills]"),cls=e.target.closest("[data-war-modal-class]"),reserveTab=e.target.closest("[data-war-modal-reserve]");if(reserveTab){const modal=$("war-assignment-modal");if(modal){modal.dataset.reserveOnly=modal.dataset.reserveOnly==="true"?"false":"true";reserveTab.classList.toggle("is-active",modal.dataset.reserveOnly==="true");modal.querySelector("[data-war-modal-class=\"all\"]")?.classList.toggle("is-active",modal.dataset.reserveOnly!=="true");renderWarAssignmentModalMembers();}return;}if(saveSkills){saveWarMemberSkills(saveSkills.dataset.warSaveMemberSkills,saveSkills);return;}if(add){assignWarMemberToSlot(add.dataset.warModalAssign);return;}if(remove&&warAssignmentModalSlot?.assignmentId){removeWarPartyMember(warAssignmentModalSlot.assignmentId,remove);return;}if(cls){const modal=$("war-assignment-modal");if(modal)modal.dataset.classFilter=cls.dataset.warModalClass||"all";modal?.querySelectorAll("[data-war-modal-class]").forEach(b=>b.classList.toggle("is-active",b===cls));renderWarAssignmentModalMembers();}});
  document.body.addEventListener("input",e=>{if(e.target.id==="war-modal-member-search")renderWarAssignmentModalMembers();});
   $("war-events")?.addEventListener("click",event=>{
+    const deleteButton=event.target.closest("[data-war-delete]");
+    if(deleteButton){
+      event.preventDefault();
+      event.stopPropagation();
+      void deleteWarEvent(deleteButton.dataset.warDelete,deleteButton);
+      return;
+    }
     const button=event.target.closest("[data-war-open]");
     if(!button||!isManagement())return;
     renderWarLayout(button.dataset.warOpen);
@@ -6905,12 +6912,6 @@ function registerAppEventListeners() {
   // Stable delegated handlers for destructive War Event actions.
   // These remain active even when the event cards are re-rendered.
   document.body.addEventListener("click", event => {
-    const warDelete = event.target.closest("[data-war-delete]");
-    if (warDelete) {
-      event.preventDefault();
-      void deleteWarEvent(warDelete.dataset.warDelete, warDelete);
-      return;
-    }
     const signupDelete = event.target.closest("[data-war-signup-delete]");
     if (signupDelete) {
       event.preventDefault();
