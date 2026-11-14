@@ -514,17 +514,29 @@ async function loadApplication() {
   setConnectionStatus("เชื่อมต่อกับ Supabase แล้ว", true);
 
   try {
-    // Sync Discord OAuth identity before checking guild_members.
-    // The database RPC can auto-match a pre-approved Manual member by exact Discord User ID.
-    await syncOwnDiscordOAuthIdentity();
+    // Load an existing approved profile first. OAuth login itself never creates or links membership.
     await loadCurrentMember();
-    await loadAppearanceSettings();
 
-    // ยังไม่มีโปรไฟล์ ให้ลงทะเบียนก่อนเข้า Dashboard
+    // If no profile exists, perform a read-only exact Discord ID lookup.
+    // A matching Manual record must be explicitly confirmed by the member before linking.
     if (!currentMember) {
+      const { data: manualMatches, error: lookupError } =
+        await supabaseClient.rpc("lookup_my_manual_member");
+
+      if (lookupError) {
+        throw new Error("ไม่สามารถตรวจสอบรายชื่อสมาชิก Manual ได้: " + lookupError.message);
+      }
+
+      if (Array.isArray(manualMatches) && manualMatches.length > 0) {
+        showManualMemberChooser(manualMatches);
+        return;
+      }
+
       showRegistrationScreen();
       return;
     }
+
+    await loadAppearanceSettings();
 
     // สมาชิกที่ถูกปิดใช้งาน ไม่สามารถเข้าใช้งานได้
     if (currentMember.active !== true) {
@@ -614,18 +626,105 @@ function getDiscordOAuthIdentity() {
   return { discordId, username, globalName };
 }
 
-// Synchronize the signed-in Discord identity before the membership gate.
-// The database RPC may link a pre-approved Manual record by exact Discord User ID;
-// it never grants a management role or bypasses the member active-status check.
-async function syncOwnDiscordOAuthIdentity() {
-  if (!currentUser) {
-    throw new Error("ไม่พบข้อมูลผู้ใช้ที่เข้าสู่ระบบ");
+// Manual member lookup and linking are intentionally split:
+// lookup_my_manual_member() is read-only; confirm_my_manual_member() writes only
+// after the member explicitly chooses a matching Manual character.
+
+// ==========================================
+// MANUAL MEMBER ACCOUNT LINKING
+// ==========================================
+
+let manualMemberLinkBusy = false;
+
+function showManualMemberChooser(manualRows, errorMessage = "") {
+  const loginScreen = $("login-screen");
+  if (!loginScreen) return;
+
+  $("app-layout")?.classList.add("hidden");
+  loginScreen.classList.remove("hidden");
+  $("login-form")?.closest(".login-card")?.classList.add("hidden");
+  $("registration-screen")?.remove();
+
+  let screen = $("manual-member-link-screen");
+  if (!screen) {
+    screen = document.createElement("div");
+    screen.id = "manual-member-link-screen";
+    screen.className = "login-card";
+    loginScreen.appendChild(screen);
   }
 
-  const { error } = await supabaseClient.rpc("sync_my_discord_account");
-  if (error) {
-    console.error("Discord identity sync failed:", error);
-    throw new Error(error.message || "ไม่สามารถบันทึกข้อมูล Discord OAuth ได้");
+  const identity = getDiscordOAuthIdentity();
+  const rows = Array.isArray(manualRows) ? manualRows : [];
+  screen.innerHTML = `
+    <div class="login-logo registration-guild-logo">
+      <img src="/assets/4am-guild-logo.png?v=20261111b" alt="4AM GUILD Logo" onerror="this.style.display='none'">
+    </div>
+    <h2>CONFIRM GUILD MEMBER</h2>
+    <p class="login-description">พบรายชื่อที่ตรงกับ Discord User ID ของคุณ กรุณาตรวจสอบชื่อตัวละครก่อนยืนยันการเชื่อมบัญชี</p>
+    <div class="registration-discord-info">
+      <strong>Discord OAuth Identity</strong>
+      <span>ชื่อแสดงผล: ${escapeHTML(identity.globalName || "ไม่พบชื่อแสดงผล")}</span>
+      <span>Discord User ID: ${escapeHTML(identity.discordId || "ไม่พบ User ID")}</span>
+      <small>ระบบจับคู่ด้วย Discord User ID ที่ตรงกันเท่านั้น ไม่ใช้ Username หรือชื่อตัวละครในการจับคู่</small>
+    </div>
+    <div class="manual-member-link-list">
+      ${rows.map(row => {
+        const active = row.active === true;
+        return `
+          <article class="manual-member-link-option">
+            <div class="manual-member-link-copy">
+              <strong>${escapeHTML(row.character_name || "ไม่ระบุชื่อตัวละคร")}</strong>
+              <span>${escapeHTML(row.game_class || "ไม่ระบุ Class")}${row.nickname ? " · " + escapeHTML(row.nickname) : ""}</span>
+              ${row.guild_position ? `<small>${escapeHTML(row.guild_position)}</small>` : ""}
+              ${active ? "" : '<small class="manual-member-link-inactive">รายชื่อนี้ถูกปิดใช้งาน กรุณาติดต่อฝ่ายจัดการ</small>'}
+            </div>
+            <button type="button" class="btn btn-primary manual-member-link-confirm"
+              data-manual-member-id="${escapeHTML(row.id)}" ${active ? "" : "disabled"}>
+              ${active ? "ยืนยันตัวละครนี้" : "ไม่สามารถยืนยันได้"}
+            </button>
+          </article>`;
+      }).join("")}
+    </div>
+    <p id="manual-member-link-message" class="message">${escapeHTML(errorMessage)}</p>
+    <div class="registration-actions">
+      <button type="button" id="manual-member-link-logout" class="btn btn-outline registration-logout">LOG OUT / ออกจากระบบ</button>
+    </div>
+  `;
+
+  screen.querySelectorAll("[data-manual-member-id]").forEach(button => {
+    button.addEventListener("click", () => confirmManualMemberLink(button.dataset.manualMemberId));
+  });
+  $("manual-member-link-logout")?.addEventListener("click", logout);
+}
+
+async function confirmManualMemberLink(manualMemberId) {
+  if (manualMemberLinkBusy || !currentUser || !manualMemberId) return;
+  manualMemberLinkBusy = true;
+
+  const buttons = document.querySelectorAll("#manual-member-link-screen [data-manual-member-id]");
+  buttons.forEach(button => { button.disabled = true; });
+  showMessage("manual-member-link-message", "กำลังยืนยันตัวละครและเชื่อมบัญชี Discord...", "info");
+
+  try {
+    const { error } = await supabaseClient.rpc("confirm_my_manual_member", {
+      p_manual_member_id: manualMemberId
+    });
+    if (error) throw error;
+
+    showMessage("manual-member-link-message", "ยืนยันสำเร็จ กำลังเข้าสู่ Dashboard...", "success");
+    $("manual-member-link-screen")?.remove();
+    await loadCurrentMember();
+
+    if (!currentMember) {
+      throw new Error("เชื่อมบัญชีแล้ว แต่ไม่พบโปรไฟล์สมาชิก กรุณาติดต่อผู้ดูแล");
+    }
+    await loadApplication();
+  } catch (error) {
+    console.error("Manual member confirmation failed:", error);
+    showMessage("manual-member-link-message", error.message || "ไม่สามารถยืนยันการเชื่อมบัญชีได้");
+    buttons.forEach(button => { button.disabled = false; });
+  } finally {
+    manualMemberLinkBusy = false;
   }
 }
 
@@ -896,53 +995,33 @@ async function registerGuildMember(event) {
   );
 
   try {
-    // Retry Discord Auto-Match immediately before registration.
-    // This closes the timing gap if a Manual member was added after OAuth login
-    // or if the initial page-load sync did not complete successfully.
-    const { error: syncError } = await supabaseClient.rpc(
-      "sync_my_discord_account"
-    );
+    // Re-check Manual membership immediately before self-registration.
+    // This is read-only and prevents a newly-added Manual member from registering twice.
+    const { data: manualMatches, error: lookupError } =
+      await supabaseClient.rpc("lookup_my_manual_member");
 
-    if (syncError) {
-      throw new Error(
-        "ไม่สามารถตรวจสอบและจับคู่บัญชี Discord ได้ กรุณาลองใหม่อีกครั้ง: " +
-        syncError.message
-      );
+    if (lookupError) {
+      throw new Error("ไม่สามารถตรวจสอบรายชื่อสมาชิก Manual ได้: " + lookupError.message);
     }
 
-    // Check whether Auto-Match created/found the member profile.
-    // Do not call the registration Edge Function if a profile already exists.
-    const {
-      data: matchedMember,
-      error: matchedMemberError
-    } = await supabaseClient
+    if (Array.isArray(manualMatches) && manualMatches.length > 0) {
+      registrationBusy = false;
+      showManualMemberChooser(manualMatches);
+      return;
+    }
+
+    const { data: existingMember, error: existingMemberError } = await supabaseClient
       .from("guild_members")
       .select("*")
       .eq("user_id", currentUser.id)
       .maybeSingle();
 
-    if (matchedMemberError) {
-      throw new Error(
-        "ไม่สามารถตรวจสอบโปรไฟล์สมาชิกได้: " + matchedMemberError.message
-      );
+    if (existingMemberError) {
+      throw new Error("ไม่สามารถตรวจสอบโปรไฟล์สมาชิกได้: " + existingMemberError.message);
     }
 
-    if (matchedMember) {
-      currentMember = matchedMember;
-      syncManagementMenuVisibility();
-
-      if (currentMember.active !== true) {
-        throw new Error(
-          "บัญชีสมาชิกนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลกิลด์"
-        );
-      }
-
-      showMessage(
-        "registration-message",
-        "พบรายชื่อสมาชิกที่ได้รับอนุมัติแล้ว กำลังเชื่อมโยงบัญชี...",
-        "success"
-      );
-
+    if (existingMember) {
+      currentMember = existingMember;
       registrationBusy = false;
       await loadApplication();
       return;
