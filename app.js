@@ -1504,6 +1504,11 @@ async function saveManualGuildMember(form) {
       if (!userId) throw new Error("ไม่พบ User ID ของบัญชีสมาชิก");
       const accountPayload = { ...payload };
       delete accountPayload.updated_at;
+      delete accountPayload.discord_user_id;
+      delete accountPayload.discord_username;
+      delete accountPayload.discord_global_name;
+      delete accountPayload.discord_server_nickname;
+      delete accountPayload.discord_avatar_url;
       result = await supabaseClient.from("guild_members")
         .update(accountPayload)
         .eq("user_id", userId).select("*").single();
