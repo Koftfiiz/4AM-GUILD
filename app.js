@@ -1,4 +1,41 @@
-// ==========================================
+async function deleteGuildFeedback(feedbackId, button) {
+  if (!isManagement() || isRolePreviewActive()) {
+    alert("เฉพาะ Developer, Leader และ Management ที่ไม่ได้อยู่ในโหมด Preview เท่านั้น");
+    return;
+  }
+  if (!feedbackId) return;
+  const row = feedbackRowsCache.find(item => item.id === feedbackId);
+  const title = row?.title || "รายการนี้";
+  if (!confirm("ยืนยันย้ายรายการนี้ไปยังรายการที่ถูกลบหรือไม่?\\n\\n" + title + "\\n\\nคุณสามารถกู้คืนได้ภายหลัง")) return;
+  if (button) { button.disabled = true; button.textContent = "…"; }
+  try {
+    const { error } = await supabaseClient.rpc("delete_guild_feedback_secure", { p_feedback_id: feedbackId });
+    if (error) throw error;
+    await loadGuildFeedback();
+  } catch (error) {
+    console.error("Soft delete guild feedback:", error);
+    alert("ลบรายการไม่สำเร็จ: " + (error.message || "กรุณาลองอีกครั้ง"));
+    if (button) { button.disabled = false; button.textContent = "−"; }
+  }
+}
+
+async function restoreGuildFeedback(feedbackId, button) {
+  if (!isManagement() || isRolePreviewActive()) {
+    alert("เฉพาะ Developer, Leader และ Management ที่ไม่ได้อยู่ในโหมด Preview เท่านั้น");
+    return;
+  }
+  if (!feedbackId || !confirm("ยืนยันกู้คืนรายการ Feedback นี้หรือไม่?")) return;
+  if (button) { button.disabled = true; button.textContent = "กำลังกู้คืน..."; }
+  try {
+    const { error } = await supabaseClient.rpc("restore_guild_feedback_secure", { p_feedback_id: feedbackId });
+    if (error) throw error;
+    await loadGuildFeedback();
+  } catch (error) {
+    console.error("Restore guild feedback:", error);
+    alert("กู้คืนรายการไม่สำเร็จ: " + (error.message || "กรุณาลองอีกครั้ง"));
+    if (button) { button.disabled = false; button.textContent = "กู้คืน"; }
+  }
+}// ==========================================
 // 4AM GUILD - SUPABASE CONFIGURATION
 // ==========================================
 
@@ -5640,7 +5677,7 @@ function renderGuildFeedback() {
   const typeFilter = $("feedback-filter-type")?.value || "all";
   const statusFilter = $("feedback-filter-status")?.value || "all";
   const search = String($("feedback-filter-search")?.value || "").trim().toLocaleLowerCase();
-  let rows = [...feedbackRowsCache];
+  let rows = feedbackRowsCache.filter(row => !row.deleted_at);
   if (typeFilter !== "all") rows = rows.filter(row => row.type === typeFilter);
   if (statusFilter !== "all") rows = rows.filter(row => row.status === statusFilter);
   if (search) rows = rows.filter(row =>
@@ -5652,37 +5689,76 @@ function renderGuildFeedback() {
     showEmpty(container, "ยังไม่มีรายการ", management
       ? "ยังไม่มีรายการแจ้งปัญหาหรือ Feedback ที่ตรงกับเงื่อนไข"
       : "เมื่อคุณส่งปัญหาหรือ Feedback รายการจะปรากฏที่นี่");
-    return;
+  } else {
+    container.innerHTML = rows.map(row => {
+      const memberLine = management
+        ? '<div class="feedback-member-line">ผู้แจ้ง: <strong>' + escapeHTML(getFeedbackMemberLabel(row.user_id)) + '</strong></div>' : "";
+      const updated = row.updated_at && row.updated_at !== row.created_at
+        ? '<span>อัปเดตล่าสุด ' + escapeHTML(formatDate(row.updated_at)) + '</span>' : "";
+      const statusControl = management
+        ? '<label class="feedback-status-control"><span>เปลี่ยนสถานะ</span><select data-feedback-status="' + escapeHTML(row.id) + '">' +
+          Object.entries(FEEDBACK_STATUS_LABELS).map(([value,label]) =>
+            '<option value="' + value + '"' + (row.status === value ? " selected" : "") + '>' + escapeHTML(label) + '</option>'
+          ).join("") + '</select></label>' : "";
+      const discordStatus = management
+        ? (row.discord_notified_at
+          ? '<span class="feedback-discord-state is-sent">ส่ง Discord แล้ว</span>'
+          : '<button type="button" class="btn btn-outline btn-sm feedback-discord-retry" data-feedback-discord-retry="' + escapeHTML(row.id) + '">ส่ง Discord อีกครั้ง</button>') : "";
+      const deleteControl = management
+        ? '<button type="button" class="feedback-delete-button" data-feedback-delete="' + escapeHTML(row.id) + '" aria-label="ลบรายการ" title="ลบรายการ">−</button>' : "";
+      return '<article class="feedback-ticket-card" data-feedback-id="' + escapeHTML(row.id) + '">' +
+        '<div class="feedback-ticket-topline"><span class="feedback-type-badge type-' + escapeHTML(row.type) + '">' +
+        escapeHTML(FEEDBACK_TYPE_LABELS[row.type] || row.type) + '</span>' + feedbackStatusBadge(row.status) + '</div>' +
+        '<h3>' + escapeHTML(row.title) + '</h3>' + memberLine +
+        '<div class="feedback-ticket-content">' + sanitizeFeedbackHTML(row.content_html) + '</div>' +
+        '<div class="feedback-ticket-footer"><span>ส่งเมื่อ ' + escapeHTML(formatDate(row.created_at)) + '</span>' + updated + discordStatus + deleteControl + '</div>' +
+        (statusControl ? '<div class="feedback-ticket-management">' + statusControl + '</div>' : "") +
+        '</article>';
+    }).join("");
   }
-
-  container.innerHTML = rows.map(row => {
-    const memberLine = management
-      ? '<div class="feedback-member-line">ผู้แจ้ง: <strong>' + escapeHTML(getFeedbackMemberLabel(row.user_id)) + '</strong></div>'
-      : "";
-    const updated = row.updated_at && row.updated_at !== row.created_at
-      ? '<span>อัปเดตล่าสุด ' + escapeHTML(formatDate(row.updated_at)) + '</span>' : "";
-    const statusControl = management
-      ? '<label class="feedback-status-control"><span>เปลี่ยนสถานะ</span><select data-feedback-status="' + escapeHTML(row.id) + '">' +
-        Object.entries(FEEDBACK_STATUS_LABELS).map(([value,label]) =>
-          '<option value="' + value + '"' + (row.status === value ? " selected" : "") + '>' + escapeHTML(label) + '</option>'
-        ).join("") + '</select></label>' : "";
-    const discordStatus = management
-      ? (row.discord_notified_at
-        ? '<span class="feedback-discord-state is-sent">ส่ง Discord แล้ว</span>'
-        : '<button type="button" class="btn btn-outline btn-sm feedback-discord-retry" data-feedback-discord-retry="' + escapeHTML(row.id) + '">ส่ง Discord อีกครั้ง</button>') : "";
-    const deleteControl = management
-      ? '<button type="button" class="btn btn-danger btn-sm feedback-delete-button" data-feedback-delete="' + escapeHTML(row.id) + '">ลบรายการ</button>' : "";
-    return '<article class="feedback-ticket-card" data-feedback-id="' + escapeHTML(row.id) + '">' +
-      '<div class="feedback-ticket-topline"><span class="feedback-type-badge type-' + escapeHTML(row.type) + '">' +
-      escapeHTML(FEEDBACK_TYPE_LABELS[row.type] || row.type) + '</span>' + feedbackStatusBadge(row.status) + '</div>' +
-      '<h3>' + escapeHTML(row.title) + '</h3>' + memberLine +
-      '<div class="feedback-ticket-content">' + sanitizeFeedbackHTML(row.content_html) + '</div>' +
-      '<div class="feedback-ticket-footer"><span>ส่งเมื่อ ' + escapeHTML(formatDate(row.created_at)) + '</span>' + updated + discordStatus + deleteControl + '</div>' +
-      (statusControl ? '<div class="feedback-ticket-management">' + statusControl + '</div>' : "") +
-      '</article>';
-  }).join("");
+  if (management) renderDeletedGuildFeedback();
 }
 
+function renderDeletedGuildFeedback() {
+  const section = $("feedback-deleted-section");
+  const list = $("guild-feedback-deleted-list");
+  const audit = $("guild-feedback-audit-list");
+  if (!section || !list || !isManagement()) return;
+  section.classList.remove("hidden");
+  const deleted = feedbackRowsCache.filter(row => row.deleted_at);
+  if (!deleted.length) {
+    showEmpty(list, "ไม่มีรายการที่ถูกลบ", "รายการที่ลบแบบ Soft Delete จะแสดงที่นี่ และสามารถกู้คืนได้");
+  } else {
+    list.innerHTML = deleted.map(row =>
+      '<article class="feedback-deleted-row"><div><strong>' + escapeHTML(row.title) +
+      '</strong><p>ผู้แจ้ง: ' + escapeHTML(getFeedbackMemberLabel(row.user_id)) +
+      ' · ลบเมื่อ ' + escapeHTML(formatDate(row.deleted_at)) + '</p></div>' +
+      '<button type="button" class="btn btn-outline btn-sm" data-feedback-restore="' + escapeHTML(row.id) + '">กู้คืน</button></article>'
+    ).join("");
+  }
+  loadGuildFeedbackAuditLogs();
+}
+
+async function loadGuildFeedbackAuditLogs() {
+  const list = $("guild-feedback-audit-list");
+  if (!list || !isManagement()) return;
+  const { data, error } = await supabaseClient.from("guild_feedback_audit_logs")
+    .select("id,feedback_id,action,actor_name,actor_role,created_at")
+    .order("created_at", { ascending: false }).limit(100);
+  if (error) {
+    showEmpty(list, "โหลดประวัติไม่สำเร็จ", error.message || "กรุณาลองใหม่");
+    return;
+  }
+  if (!data?.length) {
+    showEmpty(list, "ยังไม่มีประวัติ", "ประวัติการลบและกู้คืนจะแสดงที่นี่");
+    return;
+  }
+  list.innerHTML = data.map(item =>
+    '<div class="feedback-audit-row"><strong>' + (item.action === "deleted" ? "ลบรายการ" : "กู้คืนรายการ") +
+    '</strong><span>' + escapeHTML(item.actor_name || "ผู้ดูแล") + ' · ' +
+    escapeHTML(item.actor_role || "") + ' · ' + escapeHTML(formatDate(item.created_at)) + '</span></div>'
+  ).join("");
+}
 async function deleteGuildFeedback(feedbackId, button) {
   if (!isManagement()) {
     alert("เฉพาะ Developer, Leader และ Management เท่านั้นที่ลบรายการได้");
@@ -5875,6 +5951,11 @@ function registerFeedbackEvents() {
     const deleteButton = event.target.closest("[data-feedback-delete]");
     if (deleteButton) {
       await deleteGuildFeedback(deleteButton.dataset.feedbackDelete, deleteButton);
+      return;
+    }
+    const restoreButton = event.target.closest("[data-feedback-restore]");
+    if (restoreButton) {
+      await restoreGuildFeedback(restoreButton.dataset.feedbackRestore, restoreButton);
       return;
     }
     const retry = event.target.closest("[data-feedback-discord-retry]");
