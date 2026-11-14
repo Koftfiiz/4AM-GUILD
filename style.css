@@ -6645,3 +6645,11 @@ body select:disabled {
     padding: 22px 16px !important;
   }
 }
+
+
+/* Website presence status in the Manual Member Management table */
+.guild-presence-status{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:13px;font-weight:800}
+.guild-presence-dot{width:8px;height:8px;flex:0 0 8px;border-radius:50%;background:#8b929a;box-shadow:0 0 0 3px rgba(139,146,154,.12)}
+.guild-presence-status.is-online{color:#75e39a}
+.guild-presence-status.is-online .guild-presence-dot{background:#35d875;box-shadow:0 0 0 3px rgba(53,216,117,.14),0 0 10px rgba(53,216,117,.35)}
+.guild-presence-status.is-offline{color:#a6a6ad}
