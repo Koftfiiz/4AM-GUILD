@@ -6728,3 +6728,37 @@ body select:disabled {
 .feedback-audit-heading h3{margin:5px 0 0}
 .feedback-audit-row{align-items:flex-start;flex-direction:column;gap:3px}
 @media(max-width:640px){.feedback-deleted-row{align-items:flex-start;flex-direction:column}.feedback-deleted-row button{width:100%}}
+
+
+/* Portfolio upload example zone */
+.portfolio-example-zone{margin:0 0 26px;padding:22px;border-color:rgba(229,57,69,.32);background:linear-gradient(145deg,rgba(23,11,14,.97),rgba(8,8,10,.98))}
+.portfolio-example-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;margin-bottom:20px}
+.portfolio-example-heading h2{margin:5px 0 7px;color:#fff;font-size:23px}
+.portfolio-example-heading p{margin:0;color:#bdb2b4;font-size:14px;line-height:1.7}
+.portfolio-example-heading p strong{color:#ff727d}
+.portfolio-example-demo-badge{flex:none;padding:7px 11px;border:1px solid rgba(239,68,78,.35);border-radius:999px;background:rgba(229,57,69,.1);color:#ff8992;font-size:11px;font-weight:800;letter-spacing:.5px}
+.portfolio-example-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.portfolio-example-card{min-width:0;padding:17px;border:1px solid rgba(239,68,78,.2);border-radius:12px;background:linear-gradient(155deg,rgba(26,16,19,.96),rgba(12,12,14,.98))}
+.portfolio-example-card-top{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.portfolio-example-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:rgba(229,57,69,.14);color:#ff6874;font-size:21px}
+.portfolio-example-card h3{margin:0 0 8px;color:#fff;font-size:16px;line-height:1.45}
+.portfolio-example-description{min-height:66px;margin:0 0 14px;color:#bdb3b5;font-size:12px;line-height:1.65}
+.portfolio-example-uploads{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.portfolio-example-upload{min-width:0;padding:7px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:#0a0a0c}
+.portfolio-example-screen{display:grid;place-items:center;min-height:68px;margin-bottom:7px;border:1px solid rgba(239,68,78,.18);border-radius:5px;background:radial-gradient(ellipse at 50% 40%,rgba(190,35,52,.28),rgba(25,13,17,.95));color:#ff9aa2;font-size:9px;font-weight:900;letter-spacing:.6px;text-align:center}
+.portfolio-example-screen.screen-gear{background:radial-gradient(ellipse at 50% 40%,rgba(100,75,90,.3),rgba(20,15,18,.95));color:#d7b6c1}
+.portfolio-example-screen.screen-inner{background:radial-gradient(ellipse at 50% 40%,rgba(100,45,130,.3),rgba(18,12,22,.95));color:#d7a8ed}
+.portfolio-example-upload strong,.portfolio-example-upload small{display:block;overflow-wrap:anywhere}
+.portfolio-example-upload strong{color:#f2e9ea;font-size:11px}
+.portfolio-example-upload small{margin-top:3px;color:#8e8588;font-size:10px;line-height:1.45}
+.portfolio-example-tip{display:flex;gap:8px;margin-top:13px;padding:10px;border-left:2px solid #e53945;background:rgba(229,57,69,.07);font-size:11px;line-height:1.6}
+.portfolio-example-tip b{flex:none;color:#ff7b85}
+.portfolio-example-tip span{color:#bcb1b4}
+.portfolio-example-skill-stack{display:grid;gap:8px}
+.portfolio-example-skill-stack>div{display:grid;grid-template-columns:28px minmax(0,1fr);column-gap:9px;align-items:center;padding:10px;border:1px solid rgba(239,68,78,.16);border-radius:8px;background:#0b0b0d}
+.portfolio-example-skill-stack>div>span{grid-row:span 2;display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:rgba(229,57,69,.15);color:#ff7b85;font-size:10px;font-weight:800}
+.portfolio-example-skill-stack strong{color:#f2e9ea;font-size:12px}
+.portfolio-example-skill-stack small{color:#91878a;font-size:10px;line-height:1.45}
+.portfolio-example-footnote{margin:16px 0 0;color:#8e8588;font-size:11px;line-height:1.6}
+@media(max-width:1050px){.portfolio-example-grid{grid-template-columns:1fr}.portfolio-example-description{min-height:0}.portfolio-example-uploads{max-width:520px}}
+@media(max-width:600px){.portfolio-example-zone{padding:15px}.portfolio-example-heading{flex-direction:column}.portfolio-example-demo-badge{align-self:flex-start}.portfolio-example-card{padding:13px}.portfolio-example-uploads{gap:5px}.portfolio-example-screen{min-height:56px}}
