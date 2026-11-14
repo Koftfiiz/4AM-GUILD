@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=bond-partner-ui-20261115-r2">
+  <link rel="stylesheet" href="style.css?v=portfolio-typography-20261115-r1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
@@ -43,7 +43,7 @@
           app.src = "app.js?v=uid-12-digit-fix-20261115-r1";
           app.onload = () => {
             const tracker = document.createElement("script");
-            tracker.src = "portfolio-tracker.js?v=portfolio-tracker-20261114-r2";
+            tracker.src = "portfolio-tracker.js?v=portfolio-typography-20261115-r1";
             tracker.onerror = () => console.error("Portfolio tracker script failed to load.");
             document.head.appendChild(tracker);
           };
@@ -700,7 +700,7 @@
       <!-- ============ PORTFOLIO ============ -->
       <section id="page-portfolio" class="page page-padded hidden">
         <div class="page-intro">
-          <span class="section-kicker">CHARACTER SHOWCASE</span>
+          <span class="section-kicker">CHARACTER PORTFOLIO</span>
           <h1>แฟ้มผลงานสมาชิก</h1>
           <p>คลังผลงานตัวละครและ Build ของสมาชิกกิลด์</p>
         </div>
@@ -710,14 +710,14 @@
           <div class="panel-heading">
             <div>
               <span class="panel-kicker">CLASS DIRECTORY</span>
-              <h3>Character Classes</h3>
+              <h3>Filter ตามอาชีพ</h3>
             </div>
           </div>
           <div id="class-legend" class="class-legend"></div>
         </section>
 
         <section id="portfolio-member-directory" class="panel portfolio-member-directory">
-          <div class="portfolio-section-heading"><div><span class="panel-kicker">4AM CHARACTER DIRECTORY</span><h3>แฟ้มผลงานสมาชิก</h3><p>เลือกสมาชิกเพื่อเปิดดูคอลเลกชันแฟ้มผลงานและ Build ของตัวละคร</p></div></div>
+          <div class="portfolio-section-heading"><div><span class="panel-kicker">4AM PORTFOLIO</span><h3>แฟ้มผลงานสมาชิก</h3><p>เลือกสมาชิกเพื่อเปิดดูคอลเลกชันแฟ้มผลงานและ Build ของตัวละคร</p></div></div>
           <label class="portfolio-member-search-wrap"><span aria-hidden="true">⌕</span><input id="portfolio-member-search" type="search" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น หรือคลาส..."></label>
           <div id="portfolio-member-grid" class="portfolio-member-grid"><p class="muted">กำลังโหลดรายชื่อสมาชิก...</p></div>
         </section>
