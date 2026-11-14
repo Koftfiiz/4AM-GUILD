@@ -2748,7 +2748,10 @@ async function renderPortfolios() {
   if($("portfolio-member-detail-subtitle"))$("portfolio-member-detail-subtitle").textContent=selectedMember.user_id===currentUser?.id?"จัดการและแบ่งปันแฟ้มผลงานตัวละครของคุณ":"แฟ้มผลงานและ Build ที่สมาชิกคนนี้แบ่งปัน";
   if($("portfolio-member-detail-class")){$("portfolio-member-detail-class").textContent=memberClass||"ยังไม่ระบุคลาส";$("portfolio-member-detail-class").style.setProperty("--class-color",memberClassInfo?.color||"#aaa");}
   const ownCollection=selectedMember.user_id===currentUser?.id,canManage=ownCollection||isPortfolioReviewer();
-  $("portfolio-create-section")?.classList.toggle("hidden",!ownCollection);
+  // Keep the shared Portfolio Gallery visible to every member. Only the creation controls are owner-only.
+  $("portfolio-create-section")?.classList.remove("hidden");
+  $("portfolio-add-button")?.classList.toggle("hidden",!ownCollection);
+  if (!ownCollection) $("portfolio-create-panel")?.classList.add("hidden");
   $("portfolio-manage-button")?.classList.toggle("hidden",!canManage);
   const manageButton=$("portfolio-manage-button");if(manageButton){manageButton.textContent=portfolioManageMode?"เสร็จสิ้น":"จัดการแฟ้ม";manageButton.classList.toggle("is-active",portfolioManageMode);manageButton.setAttribute("aria-pressed",String(portfolioManageMode));}
 
