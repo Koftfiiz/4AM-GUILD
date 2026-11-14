@@ -6911,7 +6911,7 @@ body select:disabled {
 #page-portfolio-review-center .portfolio-review-member-identity{display:grid;gap:5px;min-width:0}
 #page-portfolio-review-center .portfolio-review-member-identity h3{margin:0;color:var(--class-color);font-size:19px;font-weight:850;overflow-wrap:anywhere}
 #page-portfolio-review-center .portfolio-review-member-class{display:inline-flex;align-items:center;gap:7px;color:var(--class-color);font-size:15px;font-weight:750}
-#page-portfolio-review-center .portfolio-review-member-class img{width:23px;height:23px;object-fit:contain}
+#page-portfolio-review-center .portfolio-review-member-class img{width:18px;height:18px;flex:0 0 18px;object-fit:contain}
 #page-portfolio-review-center .portfolio-review-member-meta{color:#c4bfc0;font-size:15px}
 #page-portfolio-review-center .portfolio-review-member-summary{display:flex;flex-wrap:wrap;gap:7px;justify-content:flex-end}
 #page-portfolio-review-center .portfolio-review-member-status{padding:5px 9px;border:1px solid rgba(255,255,255,.15);border-radius:999px;color:#fff;font-size:14px;font-weight:700;white-space:nowrap}
