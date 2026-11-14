@@ -3325,6 +3325,14 @@ function registerPortfolioEvents() {
     item.classList.add("is-dragging");
   });
   $("portfolio-image-preview")?.addEventListener("dragover", (event) => {
+    const zone = event.target.closest("[data-portfolio-paste-zone]");
+    const hasExternalFiles = [...(event.dataTransfer?.types || [])].includes("Files");
+    if (zone && hasExternalFiles) {
+      event.preventDefault();
+      event.dataTransfer.dropEffect = "copy";
+      zone.classList.add("is-paste-target");
+      return;
+    }
     if (event.target.closest(".portfolio-preview-item")) event.preventDefault();
   });
   $("portfolio-image-preview")?.addEventListener("dragenter", event => {
