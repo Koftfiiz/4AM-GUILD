@@ -871,6 +871,58 @@ async function registerGuildMember(event) {
   );
 
   try {
+    // Retry Discord Auto-Match immediately before registration.
+    // This closes the timing gap if a Manual member was added after OAuth login
+    // or if the initial page-load sync did not complete successfully.
+    const { error: syncError } = await supabaseClient.rpc(
+      "sync_my_discord_account"
+    );
+
+    if (syncError) {
+      throw new Error(
+        "ไม่สามารถตรวจสอบและจับคู่บัญชี Discord ได้ กรุณาลองใหม่อีกครั้ง: " +
+        syncError.message
+      );
+    }
+
+    // Check whether Auto-Match created/found the member profile.
+    // Do not call the registration Edge Function if a profile already exists.
+    const {
+      data: matchedMember,
+      error: matchedMemberError
+    } = await supabaseClient
+      .from("guild_members")
+      .select("*")
+      .eq("user_id", currentUser.id)
+      .maybeSingle();
+
+    if (matchedMemberError) {
+      throw new Error(
+        "ไม่สามารถตรวจสอบโปรไฟล์สมาชิกได้: " + matchedMemberError.message
+      );
+    }
+
+    if (matchedMember) {
+      currentMember = matchedMember;
+      syncManagementMenuVisibility();
+
+      if (currentMember.active !== true) {
+        throw new Error(
+          "บัญชีสมาชิกนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลกิลด์"
+        );
+      }
+
+      showMessage(
+        "registration-message",
+        "พบรายชื่อสมาชิกที่ได้รับอนุมัติแล้ว กำลังเชื่อมโยงบัญชี...",
+        "success"
+      );
+
+      registrationBusy = false;
+      await loadApplication();
+      return;
+    }
+
     const { data, error } = await supabaseClient.functions.invoke(
       "register-guild-member",
       {
