@@ -155,7 +155,7 @@
     root.innerHTML=`
       ${management()? `
       <section class="portfolio-tracker-panel">
-        <div class="portfolio-tracker-heading"><div><span class="panel-kicker">PORTFOLIO CONTROL CENTER</span><h3>จัดการรอบอัปเดตแฟ้มผลงาน</h3><p>กำหนดรอบรับข้อมูลและติดตามการส่งของสมาชิกทั้งกิลด์</p></div><span class="portfolio-tracker-pill is-complete">Management</span></div>
+        <div class="portfolio-tracker-heading"><div><span class="panel-kicker">PORTFOLIO SCHEDULE</span><h3>จัดการรอบอัปเดตแฟ้มผลงาน</h3><p>กำหนดรอบรับข้อมูลและติดตามการส่งของสมาชิกทั้งกิลด์</p></div><span class="portfolio-tracker-pill is-complete">Management</span></div>
         <form id="pt-create-round" class="portfolio-tracker-form">
           <label>ชื่อรอบ<input name="round_name" maxlength="120" required placeholder="เช่น รอบพฤศจิกายน 2026"></label>
           <label>วันและเวลาเริ่ม<input name="starts_at" type="text" data-activity-datetime-input readonly autocomplete="off" placeholder="dd/mm/yyyy HH:mm" required></label>
