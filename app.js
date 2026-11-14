@@ -2672,6 +2672,16 @@ async function savePortfolioCrop() {
   finally { button.disabled=false; button.textContent="ใช้ภาพนี้เป็นหน้าปก"; }
 }
 
+function setPortfolioTitlePlaceholder(portfolioType = $("portfolio-type")?.value || "pvp") {
+  const titleInput = $("portfolio-title");
+  if (!titleInput) return;
+  titleInput.placeholder = portfolioType === "pve"
+    ? "เช่น PvE เทสหุ่น, PvE ดัน (ไฟทอง), PvE ดัน (ฟูลแทงค์), PvE ฟูลซัพ ฯลฯ"
+    : portfolioType === "pvp"
+      ? "เช่น GvG ดินไฟ, GvG ไฟทอง, GvG ตีป้อม, GvG Heal, GvG ฟูลแทงค์ ฯลฯ"
+      : "เช่น ดินไฟ, DPS, Support";
+}
+
 function setPortfolioTitleFieldVisibility(portfolioType = $("portfolio-type")?.value || "pvp") {
   const titleField = $("portfolio-title")?.closest(".portfolio-field");
   const isCultivationSkills = portfolioType === "cultivation_skills";
@@ -2692,6 +2702,7 @@ function resetPortfolioForm() {
   $("portfolio-create-form")?.classList.add("hidden");
   $("portfolio-type").value = "pvp";
   setPortfolioTitleFieldVisibility("pvp");
+  setPortfolioTitlePlaceholder("pvp");
   window.editingPortfolioId = null;
   window.portfolioOriginalImages = [];
   renderPortfolioClassChoices();
@@ -3244,6 +3255,7 @@ async function startPortfolioEdit(portfolioId) {
   $("portfolio-description").value = portfolio.description || "";
   $("portfolio-type").value = portfolio.portfolio_type || "pvp";
   setPortfolioTitleFieldVisibility($("portfolio-type").value);
+  setPortfolioTitlePlaceholder($("portfolio-type").value);
   document.querySelectorAll("[data-portfolio-type]").forEach(button => button.classList.toggle("is-selected", button.dataset.portfolioType === $("portfolio-type").value));
   $("portfolio-type-step")?.classList.add("hidden");
   $("portfolio-create-form")?.classList.remove("hidden");
@@ -3398,6 +3410,7 @@ function registerPortfolioEvents() {
     $("portfolio-create-form")?.classList.remove("hidden");
     const isSpecial = choice.dataset.portfolioType === "cultivation_skills";
     setPortfolioTitleFieldVisibility(choice.dataset.portfolioType);
+    setPortfolioTitlePlaceholder(choice.dataset.portfolioType);
     $("portfolio-title-label").textContent = "ชื่อ Build";
     $("portfolio-form-heading")?.querySelector("h3")?.replaceChildren(document.createTextNode(isSpecial ? "สร้างแฟ้มคัมภีร์หู่เฉียน / ขั้นสกิล" : choice.dataset.portfolioType === "pve" ? "สร้างแฟ้ม PvE Build" : "สร้างแฟ้ม PvP Build"));
     renderPortfolioSelectedFiles();
