@@ -62,6 +62,9 @@ let currentUser = null;
 let currentMember = null;
 let rolePreviewRole = null;
 let allMembers = [];
+let guildMemberBonds = [];
+let bondRelationshipsLoadError = "";
+let bondSelectedMemberIds = new Set();
 let manualGuildMembers = [];
 let directoryMembers = [];
 let guildPresenceByUserId = new Map();
@@ -1325,6 +1328,60 @@ async function renderDashboardProfile() {
 // MEMBERS
 // ==========================================
 
+async function loadBondRelationships() {
+  const { data, error } = await supabaseClient.from("guild_member_bonds")
+    .select("id, member_id, partner_member_id, created_at");
+  if (error) {
+    guildMemberBonds = [];
+    bondRelationshipsLoadError = error.message || "โหลดข้อมูลสายใยไม่สำเร็จ";
+    console.warn("Bond relationships are not ready:", bondRelationshipsLoadError);
+    return;
+  }
+  guildMemberBonds = data || [];
+  bondRelationshipsLoadError = "";
+}
+function getMemberSelectedBondIds(memberId) {
+  return guildMemberBonds.filter(row => row.member_id === memberId).map(row => row.partner_member_id);
+}
+function getMemberSelectedBondNames(memberId) {
+  return getMemberSelectedBondIds(memberId).map(id => allMembers.find(member => member.user_id === id && member.active !== false)).filter(Boolean).map(getMemberName);
+}
+function getWarBondMarkup(memberId, partyMemberIds = []) {
+  const partnerIds = [...new Set(guildMemberBonds.filter(row => row.member_id === memberId || row.partner_member_id === memberId).map(row => row.member_id === memberId ? row.partner_member_id : row.member_id))];
+  const partners = partnerIds.map(id => ({ id, member: allMembers.find(member => member.user_id === id && member.active !== false) })).filter(item => item.member);
+  if (!partners.length) return "";
+  const html = partners.map(({ id, member }) => {
+    const inParty = partyMemberIds.includes(id);
+    return `<span class="war-bond-partner ${inParty ? "is-in-party" : "is-outside-party"}">${inParty ? "✓" : "↗"} ${escapeHTML(getMemberName(member))}</span>`;
+  }).join("");
+  const samePartyCount = partners.filter(item => partyMemberIds.includes(item.id)).length;
+  return `<span class="war-member-bond-line"><span class="war-bond-label">สายใย</span><span class="war-bond-partner-list">${html}</span><span class="war-bond-party-count">${samePartyCount}/${partners.length} ในตี้</span></span>`;
+}
+function renderOwnBondProfileSection() {
+  const root = $("portfolio-own-bond-profile");
+  if (!root) return;
+  const member = allMembers.find(item => item.user_id === currentUser?.id && item.active !== false);
+  if (!member) { root.classList.add("hidden"); return; }
+  root.classList.remove("hidden");
+  const names = getMemberSelectedBondNames(member.user_id);
+  root.innerHTML = `<div class="portfolio-own-bond-copy"><span class="panel-kicker">YOUR CHARACTER CONNECTIONS</span><div class="portfolio-own-bond-title-row"><h3>สายใยผูกพันของคุณ</h3><span class="portfolio-own-bond-count">${names.length} คน</span></div><p>เลือกสมาชิกที่คุณมีสายใยผูกพันด้วย ระบบจะแสดงข้อมูลให้โดยอัตโนมัติในหน้าจัดตี้วอร์</p><div class="portfolio-own-bond-selected">${names.length ? names.map(name => `<span class="portfolio-own-bond-chip"><i></i>${escapeHTML(name)}</span>`).join("") : '<span class="portfolio-own-bond-empty">ยังไม่ได้เลือกสมาชิกสายใย</span>'}</div></div><button type="button" class="btn btn-outline portfolio-own-bond-manage" data-open-bond-profile>✦ จัดการสายใย</button>`;
+  root.querySelector("[data-open-bond-profile]")?.addEventListener("click", () => void openBondProfileEditor());
+}
+function renderBondMemberPicker() {
+  const selectedRoot = $("bond-profile-selected"), list = $("bond-profile-member-list"), searchInput = $("bond-profile-search");
+  if (!selectedRoot || !list) return;
+  const activeMembers = allMembers.filter(member => member.active === true && member.user_id !== currentUser?.id).sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));
+  const selectedMembers = activeMembers.filter(member => bondSelectedMemberIds.has(member.user_id));
+  selectedRoot.innerHTML = selectedMembers.length ? selectedMembers.map(member => `<button type="button" class="bond-selected-chip" data-bond-toggle="${escapeHTML(member.user_id)}"><span>${escapeHTML(getMemberName(member))}</span><b aria-hidden="true">×</b></button>`).join("") : '<span class="bond-picker-empty">ยังไม่ได้เลือกสายใย · เลือกสมาชิกจากรายชื่อด้านล่าง</span>';
+  const query = String(searchInput?.value || "").trim().toLocaleLowerCase();
+  const filtered = activeMembers.filter(member => !query || [getMemberName(member),member.nickname,member.discord_name,getMemberClass(member)].filter(Boolean).join(" ").toLocaleLowerCase().includes(query));
+  list.innerHTML = filtered.length ? filtered.map(member => {
+    const selected = bondSelectedMemberIds.has(member.user_id), info = getClassInfo(getMemberClass(member));
+    return `<button type="button" class="bond-member-option ${selected?"is-selected":""}" data-bond-toggle="${escapeHTML(member.user_id)}" aria-pressed="${selected}"><span class="bond-member-avatar">${info?.iconPath ? `<img src="${escapeHTML(info.iconPath)}" alt="">` : "✦"}</span><span class="bond-member-option-copy"><strong>${escapeHTML(getMemberName(member))}</strong><small>${escapeHTML(getMemberClass(member))}${member.nickname ? " · "+escapeHTML(member.nickname) : ""}</small></span><span class="bond-member-option-action">${selected?"เลือกแล้ว ✓":"＋ เพิ่ม"}</span></button>`;
+  }).join("") : '<div class="bond-picker-empty">ไม่พบสมาชิกที่ตรงกับคำค้นหา</div>';
+  const count = $("bond-profile-selected-count"); if (count) count.textContent = String(bondSelectedMemberIds.size);
+}
+
 async function loadMembers() {
   const container = $("members-list");
   if (container) container.innerHTML = `<p class="muted">กำลังโหลดรายชื่อสมาชิก...</p>`;
@@ -1341,6 +1398,7 @@ async function loadMembers() {
   }
 
   allMembers = accountsResult.data || [];
+  await loadBondRelationships();
   manualGuildMembers = manualResult.error ? [] : (manualResult.data || []);
   if (manualResult.error && !/guild_manual_members|relation.*does not exist/i.test(manualResult.error.message || "")) {
     console.warn("Load manual guild members:", manualResult.error);
@@ -2445,46 +2503,38 @@ async function openPortfolioCropEditor(index = 0) {
 }
 async function openBondProfileEditor() {
   if (!currentUser) { alert("ไม่พบข้อมูลบัญชีที่เข้าสู่ระบบ"); return; }
-  const member = allMembers.find(item => item.user_id === currentUser.id);
+  const member = allMembers.find(item => item.user_id === currentUser.id && item.active !== false);
   if (!member) { alert("ไม่พบข้อมูลสมาชิกของบัญชีนี้"); return; }
-
-  // Show the editor immediately. Resolving a remote cover URL must not block opening the modal.
-  const modal = $("bond-profile-modal");
-  const namesField = $("bond-profile-names");
-  const image = $("bond-profile-current-cover");
-  if (namesField) namesField.value = Array.isArray(member.bond_names) ? member.bond_names.join("\n") : "";
-  if (image) image.src = DEFAULT_AVATAR;
+  if (bondRelationshipsLoadError) { alert("ระบบสายใยยังไม่พร้อมใช้งาน กรุณารัน Query: 4AM_GUILD_BOND_PARTNERS_SETUP ใน Supabase ก่อน"); return; }
+  bondSelectedMemberIds = new Set(getMemberSelectedBondIds(currentUser.id));
+  const modal=$("bond-profile-modal"), image=$("bond-profile-current-cover");
+  if(image)image.src=DEFAULT_AVATAR;
+  if($("bond-profile-search"))$("bond-profile-search").value="";
+  renderBondMemberPicker();
   modal?.classList.remove("hidden");
-
+  document.body.classList.add("bond-panel-open");
   try {
-    const cover = member.member_cover_url
-      ? await resolveAvatarUrl({...member, avatar_url:member.member_cover_url})
-      : await resolveAvatarUrl(member);
-    if (image && modal && !modal.classList.contains("hidden")) image.src = cover || DEFAULT_AVATAR;
-  } catch (error) {
-    console.warn("Bond profile cover preview could not be loaded:", error);
-    if (image) image.src = DEFAULT_AVATAR;
-  }
+    const cover=member.member_cover_url?await resolveAvatarUrl({...member,avatar_url:member.member_cover_url}):await resolveAvatarUrl(member);
+    if(image&&modal&&!modal.classList.contains("hidden"))image.src=cover||DEFAULT_AVATAR;
+  } catch(error){console.warn("Bond profile cover preview could not be loaded:",error);if(image)image.src=DEFAULT_AVATAR;}
 }
-function closeBondProfileEditor() { $("bond-profile-modal")?.classList.add("hidden"); }
+function closeBondProfileEditor(){$("bond-profile-modal")?.classList.add("hidden");document.body.classList.remove("bond-panel-open");}
 async function saveBondProfile(event) {
-  event.preventDefault();
-  const button = $("bond-profile-save");
-  const names = ($("bond-profile-names")?.value || "").split(/[\n,;]+/).map(name => name.trim()).filter(Boolean);
-  const uniqueNames = [...new Set(names)];
-  if (uniqueNames.length > 40) { alert("กรอกรายชื่อได้สูงสุด 40 คน"); return; }
-  button.disabled = true; button.textContent = "กำลังบันทึก...";
-  try {
-    const { error } = await supabaseClient.from("guild_members").update({ bond_names: uniqueNames }).eq("user_id", currentUser.id);
-    if (error) throw error;
-    allMembers = allMembers.map(member => member.user_id === currentUser.id ? {...member, bond_names: uniqueNames} : member);
-    if (currentMember?.user_id === currentUser.id) currentMember.bond_names = uniqueNames;
-    closeBondProfileEditor();
-    await renderPortfolioMemberDirectory();
-  } catch (error) {
-    console.error("Bond profile save error:", error);
-    alert("บันทึกรายชื่อสายใยผูกพันธ์ไม่สำเร็จ: " + (error.message || "Unknown error"));
-  } finally { button.disabled = false; button.textContent = "บันทึกโปรไฟล์"; }
+  event.preventDefault(); if(!currentUser)return;
+  const button=$("bond-profile-save");
+  const activeIds=new Set(allMembers.filter(member=>member.active===true&&member.user_id!==currentUser.id).map(member=>member.user_id));
+  const selectedIds=[...bondSelectedMemberIds].filter(id=>activeIds.has(id));
+  const existingIds=getMemberSelectedBondIds(currentUser.id);
+  const addIds=selectedIds.filter(id=>!existingIds.includes(id)),removeIds=existingIds.filter(id=>!selectedIds.includes(id));
+  if(button){button.disabled=true;button.textContent="กำลังบันทึก...";}
+  try{
+    if(addIds.length){const {error}=await supabaseClient.from("guild_member_bonds").insert(addIds.map(partnerId=>({member_id:currentUser.id,partner_member_id:partnerId})));if(error)throw error;}
+    if(removeIds.length){const {error}=await supabaseClient.from("guild_member_bonds").delete().eq("member_id",currentUser.id).in("partner_member_id",removeIds);if(error)throw error;}
+    await loadBondRelationships(); if(bondRelationshipsLoadError)throw new Error(bondRelationshipsLoadError);
+    closeBondProfileEditor(); renderOwnBondProfileSection(); await renderPortfolioMemberDirectory();
+    if(currentWarAssignmentEventId)renderAllWarParties();
+  }catch(error){console.error("Bond profile save error:",error);alert("บันทึกสายใยผูกพันไม่สำเร็จ: "+(error.message||"Unknown error"));await loadBondRelationships();bondSelectedMemberIds=new Set(getMemberSelectedBondIds(currentUser.id));renderBondMemberPicker();}
+  finally{if(button){button.disabled=false;button.textContent="บันทึกสายใย";}}
 }
 function openPortfolioMemberCoverPicker() {
   if(!currentUser||!allMembers.some(m=>m.user_id===currentUser.id)){alert("ไม่พบข้อมูลสมาชิกของบัญชีนี้");return;}
@@ -2619,6 +2669,7 @@ async function renderPortfolioMemberDirectory() {
     .filter(m=>portfolioClassFilter==="all"||getMemberClass(m).toLowerCase()===portfolioClassFilter.toLowerCase())
     .filter(m=>!search||[getMemberName(m),m.nickname,m.discord_name,getMemberClass(m)].filter(Boolean).join(" ").toLowerCase().includes(search))
     .sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));
+  renderOwnBondProfileSection();
   if(!members.length){showEmpty(container,"ไม่พบสมาชิก","ลองค้นหาด้วยชื่อตัวละคร ชื่อเล่น หรือคลาสอาชีพ");return;}
   const cards=await Promise.all(members.map(async m=>{
     const ps=allPortfolios.filter(p=>p.member_id===m.user_id);
@@ -2627,7 +2678,7 @@ async function renderPortfolioMemberDirectory() {
     // Fall back to the guild logo only when the member has no usable avatar.
     let src=await resolveAvatarUrl(m);
     if(!src||src===DEFAULT_AVATAR)src="/assets/4am-guild-logo.png?v=20261111b";
-    const bondNames = Array.isArray(m.bond_names) ? m.bond_names : [];
+    const bondNames = getMemberSelectedBondNames(m.user_id);
     return `<article class="portfolio-member-card" style="--class-color:${color}">
       <button type="button" class="portfolio-member-open" data-portfolio-member-id="${escapeHTML(m.user_id)}">
         <div class="portfolio-member-cover"><img src="${escapeHTML(src)}" alt="รูปหน้าปก ${escapeHTML(getMemberName(m))}" loading="lazy"><span class="portfolio-member-count">${ps.length} แฟ้ม</span></div>
@@ -2640,6 +2691,7 @@ async function renderPortfolioMemberDirectory() {
     </article>`;
   }));
   container.innerHTML=cards.join("");
+  renderOwnBondProfileSection();
   // Bind the pencil directly after rendering so its action never depends on a parent-grid delegate.
   container.querySelectorAll("[data-bond-profile-edit]").forEach(button=>{
     button.addEventListener("click",event=>{
@@ -3276,6 +3328,10 @@ function registerPortfolioEvents() {
   $("bond-profile-cancel")?.addEventListener("click",closeBondProfileEditor);
   $("bond-profile-close")?.addEventListener("click",closeBondProfileEditor);
   $("bond-profile-form")?.addEventListener("submit", saveBondProfile);
+  $("bond-profile-search")?.addEventListener("input", renderBondMemberPicker);
+  $("bond-profile-member-list")?.addEventListener("click", event => { const button=event.target.closest("[data-bond-toggle]"); if(!button)return; const id=button.dataset.bondToggle; if(bondSelectedMemberIds.has(id))bondSelectedMemberIds.delete(id);else bondSelectedMemberIds.add(id);renderBondMemberPicker(); });
+  $("bond-profile-selected")?.addEventListener("click", event => { const button=event.target.closest("[data-bond-toggle]");if(!button)return;bondSelectedMemberIds.delete(button.dataset.bondToggle);renderBondMemberPicker(); });
+  $("bond-profile-modal")?.addEventListener("click", event => { if(event.target===$("bond-profile-modal"))closeBondProfileEditor(); });
   $("bond-profile-cover-button")?.addEventListener("click", openPortfolioMemberCoverPicker);
   $("portfolio-member-cover-input")?.addEventListener("change",event=>{
     const file=event.target.files?.[0];event.target.value="";
@@ -3773,13 +3829,13 @@ async function saveWarMemberSkills(memberId,button){
 
 function renderRaid(containerId,raidName,parties=[],options={}){
  const container=$(containerId);if(!container)return;const canArrange=options.editable===true;
- container.innerHTML=Array.from({length:5},(_,i)=>{const n=i+1,p=parties.find(x=>Number(x.party_number)===n),members=p?.war_party_members||[];
+ container.innerHTML=Array.from({length:5},(_,i)=>{const n=i+1,p=parties.find(x=>Number(x.party_number)===n),members=p?.war_party_members||[],partyMemberIds=members.map(slot=>slot.member_id).filter(Boolean);
  return `<article class="party-card" data-party-card data-raid="${raidName}"><div class="party-header"><div class="party-heading-fields"><h3>${raidName}${n}</h3>${p?.party_name&&p.party_name!==`${raidName}${n}`?`<small class="war-party-role-label">${escapeHTML(p.party_name)}</small>`:""}</div></div><div class="party-slots">${Array.from({length:6},(_,j)=>{const pos=j+1,slot=members.find(x=>Number(x.position)===pos),member=allMembers.find(x=>x.user_id===slot?.member_id);
- if(slot&&member){const info=getClassInfo(getMemberClass(member));return `<button class="party-slot party-slot-filled war-member-slot" type="button" data-war-manage-slot data-assignment-id="${escapeHTML(slot.id)}" data-party-id="${escapeHTML(p.id)}" data-position="${pos}" style="--class-color:${info?.color||"#aaa"}" ${canArrange?"":"disabled"}><img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath||"")}" alt="${escapeHTML(info?.name||"")}"><span class="war-member-identity"><strong class="slot-member-name">${escapeHTML(getMemberName(member))}</strong><small class="war-member-class">${escapeHTML(info?.name||getMemberClass(member))}</small></span><span class="war-member-skills" aria-label="Skill ของสมาชิก">${getMemberSkillIconsMarkup(member.user_id)}</span><span class="war-member-slot-edit">${canArrange?"MANAGE":""}</span></button>`;}
+ if(slot&&member){const info=getClassInfo(getMemberClass(member));return `<button class="party-slot party-slot-filled war-member-slot" type="button" data-war-manage-slot data-assignment-id="${escapeHTML(slot.id)}" data-party-id="${escapeHTML(p.id)}" data-position="${pos}" style="--class-color:${info?.color||"#aaa"}" ${canArrange?"":"disabled"}><img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath||"")}" alt="${escapeHTML(info?.name||"")}"><span class="war-member-identity"><strong class="slot-member-name">${escapeHTML(getMemberName(member))}</strong><small class="war-member-class">${escapeHTML(info?.name||getMemberClass(member))}</small></span><span class="war-member-skills" aria-label="Skill ของสมาชิก">${getMemberSkillIconsMarkup(member.user_id)}</span>${getWarBondMarkup(member.user_id,partyMemberIds)}<span class="war-member-slot-edit">${canArrange?"MANAGE":""}</span></button>`;}
  return `<div class="party-slot ${canArrange&&p?"party-slot-editor":""}">${canArrange&&p?`<button class="war-slot-add-button" type="button" data-war-add-slot data-party-id="${escapeHTML(p.id)}" data-position="${pos}">＋ ADD</button>`:'<span class="slot-empty">Empty Slot</span>'}</div>`;
  }).join("")}</div></article>`;}).join("");
- // ปุ่มบันทึกรูปภาพถูกย้ายไปอยู่ที่หัวข้อ Raid แล้ว
 }
+
 function warMemberStatus(id){const signup=warAssignmentSignups.find(x=>x.member_id===id),leaveRow=warAssignmentLeaves.find(x=>x.member_id===id&&x.status!=="rejected"),snapshot=warAssignmentRosterSnapshot.find(x=>x.member_id===id),alreadyAssigned=currentWarPartyAssignments.some(x=>x.member_id===id),leave=snapshot?snapshot.roster_status==="leave":!!leaveRow;return {signup,leave,leaveRow,snapshot,absent:snapshot?.roster_status==="absent",addedByManagement:snapshot?.roster_status==="added_by_management",reserve:(snapshot?.roster_status==="reserve"||(!snapshot&&!!signup&&Number(signup.queue_position)>=61))&&!alreadyAssigned,raid:signup?.raid||""};}
 function getWarAssignmentRosterMembers(){const snapshotIds=new Set(warAssignmentRosterSnapshot.map(x=>x.member_id));return allMembers.filter(m=>m.active===true||snapshotIds.has(m.user_id));}
 function renderWarAssignmentToolbar(raidCount=2){
@@ -3819,6 +3875,7 @@ function openWarAssignmentModal(partyId,position,assignmentId=null){
     <img src="${escapeHTML(getClassInfo(getMemberClass(current))?.iconPath||"")}" alt="">
     <div class="war-modal-member-details"><strong>${escapeHTML(getMemberName(current))}</strong><small>${escapeHTML(getMemberClass(current))} · UID: ${escapeHTML(current.game_uid||"—")}</small></div>
     <div class="war-member-status-tags">${statusTags}</div>
+   ${getWarBondMarkup(current.user_id,currentWarPartyAssignments.filter(item=>item.party_id===party.id).map(item=>item.member_id))}
   </div>`:""}
   <div class="war-modal-tabs" role="tablist" aria-label="จัดการสมาชิก">
    <button type="button" role="tab" data-war-modal-tab="skills" class="${current?"is-active":""}" aria-selected="${current?"true":"false"}">Skill</button>
