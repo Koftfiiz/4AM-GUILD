@@ -6911,3 +6911,56 @@ body select:disabled {
 .portfolio-review-open:hover { background:#b3202e; border-color:#e8333f; }
 @media(max-width:1050px) { .portfolio-review-overview { grid-template-columns:repeat(2,minmax(0,1fr)); } }
 @media(max-width:650px) { .portfolio-review-overview { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; } .portfolio-review-stat { padding:13px; } .portfolio-review-stat strong { font-size:24px; } .portfolio-review-list-panel { padding:14px; } .portfolio-review-toolbar { grid-template-columns:1fr; } .portfolio-review-row { align-items:stretch; flex-direction:column; } .portfolio-review-row-side { align-items:flex-start; flex-direction:row; flex-wrap:wrap; } .portfolio-review-open { width:100%; } }
+
+
+/* Member directory: compact class icon + count tiles */
+.member-class-count-grid,
+.manual-member-class-summary {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(76px,1fr));
+  gap:10px;
+  margin:0 0 18px;
+}
+.member-class-count-tile,
+.manual-member-class-chip {
+  --class-color:#aaa;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  min-width:0;
+  min-height:58px;
+  padding:9px 10px;
+  border:1px solid color-mix(in srgb,var(--class-color) 42%,transparent);
+  border-radius:11px;
+  background:linear-gradient(135deg,color-mix(in srgb,var(--class-color) 13%,transparent),rgba(8,8,10,.88));
+}
+.member-class-count-tile img,
+.manual-member-class-chip img {
+  width:32px;
+  height:32px;
+  flex:0 0 32px;
+  object-fit:contain;
+  filter:drop-shadow(0 0 5px color-mix(in srgb,var(--class-color) 35%,transparent));
+}
+.member-class-count-tile strong,
+.manual-member-class-chip strong {
+  display:grid;
+  place-items:center;
+  min-width:30px;
+  height:30px;
+  padding:0 7px;
+  border-radius:8px;
+  background:color-mix(in srgb,var(--class-color) 19%,#111);
+  color:var(--class-color);
+  font-size:15px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+.manual-member-class-summary .manual-member-class-chip { min-height:58px; }
+@media(max-width:560px) {
+  .member-class-count-grid,.manual-member-class-summary { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .member-class-count-tile,.manual-member-class-chip { min-height:52px; padding:7px 6px; gap:7px; }
+  .member-class-count-tile img,.manual-member-class-chip img { width:27px; height:27px; flex-basis:27px; }
+  .member-class-count-tile strong,.manual-member-class-chip strong { min-width:27px; height:27px; }
+}
