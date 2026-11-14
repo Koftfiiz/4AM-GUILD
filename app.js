@@ -1742,6 +1742,27 @@ function renderManualMemberManagement() {
     unlinkedManualMembers.filter(member => member.active).length;
   if (summary) summary.textContent = `สมาชิกในระบบ ${linkedCount} คน · Manual ที่ยังไม่เชื่อม ${manualCount} คน · Active ${activeCount} คน`;
 
+  const classSummary = $("manual-member-class-summary");
+  if (classSummary) {
+    const classCounts = new Map();
+    const countableMembers = [
+      ...allMembers,
+      ...unlinkedManualMembers
+    ];
+    countableMembers.forEach(member => {
+      const className = String(member.game_class || "").trim().toLocaleLowerCase();
+      if (className) classCounts.set(className, (classCounts.get(className) || 0) + 1);
+    });
+    classSummary.innerHTML = CLASS_DATA.map(item => {
+      const count = classCounts.get(item.name.toLocaleLowerCase()) || 0;
+      return `<div class="manual-member-class-chip" style="--class-color:${escapeHTML(item.color)}">
+        <img src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
+        <span>${escapeHTML(item.name)}</span>
+        <strong>${count}</strong>
+      </div>`;
+    }).join("");
+  }
+
   if (!linkedCount && !manualCount) {
     list.innerHTML = '<div class="manual-member-empty"><span>＋</span><strong>ยังไม่มีรายชื่อสมาชิก</strong><p>เพิ่มสมาชิกที่ยังไม่มีบัญชีเข้าใช้งานแอปได้จากแบบฟอร์มด้านบน</p></div>';
     return;
