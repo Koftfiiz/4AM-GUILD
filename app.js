@@ -2548,8 +2548,10 @@ async function renderPortfolioMemberDirectory() {
   const cards=await Promise.all(members.map(async m=>{
     const ps=allPortfolios.filter(p=>p.member_id===m.user_id);
     const cn=getMemberClass(m),ci=getClassInfo(cn),color=ci?.color||"#aaa";
-    let src=m.member_cover_url?await resolveAvatarUrl({...m,avatar_url:m.member_cover_url}):"";
-    if(!src)src=await resolveAvatarUrl(m)||DEFAULT_AVATAR;
+    // Portfolio directory covers use the guild logo when no member cover is set.
+    const src=m.member_cover_url
+      ? await resolveAvatarUrl({...m,avatar_url:m.member_cover_url})
+      : "/assets/4am-guild-logo.png?v=20261111b";
     const bondNames = Array.isArray(m.bond_names) ? m.bond_names : [];
     return `<article class="portfolio-member-card" style="--class-color:${color}">
       <button type="button" class="portfolio-member-open" data-portfolio-member-id="${escapeHTML(m.user_id)}">
