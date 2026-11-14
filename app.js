@@ -2298,7 +2298,7 @@ function renderPortfolioSelectedFiles() {
   const portfolioType = $("portfolio-type")?.value || "pvp";
   const zones = portfolioType === "cultivation_skills"
     ? [
-        { key: "cultivation", label: "คัมภีร์หู่เฉียน", hint: "ภาพข้อมูลและรายละเอียดคัมภีร์หู่เฉียน" },
+        { key: "cultivation", label: "คัมภีร์หู่เฉียน (หน้าฝึกฝน)", hint: "ภาพข้อมูลและรายละเอียดคัมภีร์หู่เฉียน" },
         { key: "hero_skills", label: "ขั้นสกิลเหล่าผู้กล้า / อัลติ", hint: "ภาพขั้นสกิลและอัลติ" }
       ]
     : [
