@@ -592,15 +592,11 @@ function getDiscordOAuthIdentity() {
   return { discordId, username, globalName };
 }
 
-// Persist the signed-in member's own Discord OAuth identity through a
-// SECURITY DEFINER RPC. This never grants guild membership or changes roles.
+// Synchronize the signed-in Discord identity before the membership gate.
+// The database RPC may link a pre-approved Manual record by exact Discord User ID;
+// it never grants a management role or bypasses the member active-status check.
 async function syncOwnDiscordOAuthIdentity() {
   if (!currentUser) return;
-  const { discordId } = getDiscordOAuthIdentity();
-  if (!discordId) {
-    console.warn("Discord OAuth identity did not include a Discord user ID.");
-    return;
-  }
 
   const { error } = await supabaseClient.rpc("sync_my_discord_account");
   if (error) {
