@@ -1645,15 +1645,23 @@ async function saveManualGuildMember(form) {
   if (submit) { submit.disabled = true; submit.textContent = "กำลังบันทึก..."; }
   if (status) status.textContent = "กำลังบันทึกข้อมูลสมาชิก...";
   try {
-    const duplicate = await supabaseClient.from("guild_manual_members")
-      .select("id").ilike("character_name", payload.character_name);
-    if (duplicate.error) throw duplicate.error;
-    if ((duplicate.data || []).some(row => row.id !== id)) {
-      throw new Error("มีชื่อตัวละครนี้ในรายชื่อ Manual แล้ว");
+    // Manual duplicate checks apply only when creating/editing a Manual record.
+    // An account-backed member may have its own source Manual row; that row must
+    // never block editing the linked guild_members profile.
+    if (recordType !== "account") {
+      const duplicate = await supabaseClient.from("guild_manual_members")
+        .select("id").ilike("character_name", payload.character_name);
+      if (duplicate.error) throw duplicate.error;
+      if ((duplicate.data || []).some(row => row.id !== id)) {
+        throw new Error("มีชื่อตัวละครนี้ในรายชื่อ Manual แล้ว");
+      }
+
+      if (payload.discord_user_id && manualGuildMembers.some(member =>
+        member.discord_user_id === payload.discord_user_id && member.id !== id
+      )) {
+        throw new Error("Discord Account นี้ถูกผูกกับรายชื่อ Manual อื่นแล้ว");
+      }
     }
-    if (payload.discord_user_id && manualGuildMembers.some(member =>
-      member.discord_user_id === payload.discord_user_id && member.id !== id
-    )) throw new Error("Discord Account นี้ถูกผูกกับรายชื่อ Manual อื่นแล้ว");
     const accountDuplicate = allMembers.some(member =>
       String(member.character_name || "").trim().toLowerCase() === payload.character_name.toLowerCase() &&
       !(recordType === "account" && member.user_id === userId)
