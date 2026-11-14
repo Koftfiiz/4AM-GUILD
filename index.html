@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=guide-editor-tools-20261114-r1">
+  <link rel="stylesheet" href="style.css?v=discord-member-picker-20261114-r1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
@@ -40,7 +40,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=guide-editor-tools-20261114-r1";
+          app.src = "app.js?v=discord-member-picker-20261114-r1";
           app.onload = () => {
             const tracker = document.createElement("script");
             tracker.src = "portfolio-tracker.js?v=portfolio-tracker-20261114-r2";
@@ -545,7 +545,22 @@
               <label class="manual-member-field"><span>ชื่อตัวละคร <i>*</i></span><input name="character_name" type="text" maxlength="40" placeholder="กรอกชื่อตัวละคร" required></label>
               <label class="manual-member-field"><span>Class อาชีพ <i>*</i></span><select name="game_class" required><option value="">เลือก Class อาชีพ</option></select></label>
               <label class="manual-member-field"><span>ชื่อเล่น</span><input name="nickname" type="text" maxlength="40" placeholder="กรอกชื่อเล่น"></label>
-              <label class="manual-member-field"><span>Discord Username</span><input name="discord_name" type="text" maxlength="100" placeholder="ชื่อผู้ใช้ Discord (ถ้ามี)"></label>
+              <div class="manual-member-field manual-member-field-wide discord-member-field">
+                <span>Discord Account</span>
+                <div class="discord-member-selection">
+                  <div id="manual-member-discord-selected" class="discord-member-selected is-empty"><span class="discord-member-selected-icon">◈</span><span>ยังไม่ได้เลือกบัญชี Discord</span></div>
+                  <div class="discord-member-selection-actions">
+                    <button type="button" id="manual-member-discord-select" class="btn btn-outline">เลือกสมาชิกจาก Discord</button>
+                    <button type="button" id="manual-member-discord-clear" class="btn btn-outline hidden">นำออก</button>
+                  </div>
+                </div>
+                <input type="hidden" name="discord_user_id" id="manual-member-discord-id">
+                <input type="hidden" name="discord_username" id="manual-member-discord-username">
+                <input type="hidden" name="discord_global_name" id="manual-member-discord-global-name">
+                <input type="hidden" name="discord_server_nickname" id="manual-member-discord-nickname">
+                <input type="hidden" name="discord_avatar_url" id="manual-member-discord-avatar">
+                <input type="hidden" name="discord_name" id="manual-member-discord-name">
+              </div>
               <label class="manual-member-field"><span>อายุ</span><input name="age" type="number" min="1" max="120" placeholder="อายุ"></label>
               <label class="manual-member-field"><span>ตำแหน่งกิลด์</span><select name="guild_position"><option value="">เลือกตำแหน่งกิลด์</option></select></label>
               <label class="manual-member-field manual-member-field-wide"><span>หมายเหตุ</span><textarea name="notes" rows="3" maxlength="500" placeholder="รายละเอียดเพิ่มเติม (ไม่บังคับ)"></textarea></label>
@@ -556,6 +571,20 @@
                 <button type="submit" id="manual-member-submit" class="btn btn-primary">＋ บันทึกสมาชิก</button>
               </div>
             </form>
+          </section>
+        </div>
+
+        <div id="discord-member-picker" class="discord-member-picker hidden" role="dialog" aria-modal="true" aria-labelledby="discord-member-picker-title">
+          <button type="button" class="discord-member-picker-backdrop" data-discord-picker-close aria-label="ปิดหน้าต่างเลือกสมาชิก"></button>
+          <section class="discord-member-picker-panel">
+            <div class="discord-member-picker-heading">
+              <div><span class="panel-kicker">4AM DISCORD SERVER</span><h3 id="discord-member-picker-title">เลือกสมาชิกจาก Discord</h3><p>ค้นหาด้วย Username หรือ Server Nickname</p></div>
+              <button type="button" class="manual-member-modal-close" data-discord-picker-close aria-label="ปิดหน้าต่าง">×</button>
+            </div>
+            <input id="discord-member-picker-search" class="discord-member-picker-search" type="search" placeholder="ค้นหาสมาชิก..." autocomplete="off">
+            <p id="discord-member-picker-status" class="discord-member-picker-status" role="status" aria-live="polite">กำลังเตรียมตัวเลือกสมาชิก</p>
+            <div id="discord-member-picker-list" class="discord-member-picker-list"></div>
+            <div class="discord-member-picker-footer"><button type="button" id="discord-member-picker-refresh" class="btn btn-outline">↻ โหลดรายชื่อใหม่</button></div>
           </section>
         </div>
 
