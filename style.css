@@ -6866,3 +6866,11 @@ body select:disabled {
 .bond-profile-dialog{font-size:14px}
 .bond-profile-dialog *:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6){font-size:max(14px,1em)!important}
 .bond-profile-dialog input::placeholder,.bond-profile-dialog textarea::placeholder{font-size:14px!important}
+
+
+/* Manual member class summary typography: readable at every viewport. */
+.manual-member-class-summary-heading{font-size:15px!important;line-height:1.5}
+.manual-member-class-chip{font-size:16px!important;gap:11px;min-height:58px;padding:10px 13px}
+.manual-member-class-chip span{font-size:16px!important;font-weight:750;line-height:1.35}
+.manual-member-class-chip strong{font-size:16px!important;font-weight:850;line-height:1.35}
+@media(max-width:560px){.manual-member-class-summary-heading{font-size:15px!important}.manual-member-class-chip{min-height:54px;padding:9px 10px;gap:8px}.manual-member-class-chip span,.manual-member-class-chip strong{font-size:15px!important}}
