@@ -385,6 +385,25 @@ async function login(event) {
   );
 
   try {
+    // Always start Discord login from a clean local Supabase session.
+    // Otherwise an existing Email session can be reused and the Discord
+    // identity may be linked to the wrong signed-in account.
+    const { data: existingSessionData, error: sessionCheckError } =
+      await supabaseClient.auth.getSession();
+
+    if (sessionCheckError) throw sessionCheckError;
+
+    if (existingSessionData?.session) {
+      const { error: signOutError } =
+        await supabaseClient.auth.signOut({ scope: "local" });
+
+      if (signOutError) throw signOutError;
+
+      currentUser = null;
+      currentMember = null;
+      discordAccount = null;
+    }
+
     const { data, error } =
       await supabaseClient.auth.signInWithOAuth({
         provider: "discord",
