@@ -6909,7 +6909,7 @@ body select:disabled {
 #page-portfolio-review-center .portfolio-review-member-group{--class-color:#aaa;overflow:hidden;border:1px solid color-mix(in srgb,var(--class-color) 48%,transparent);border-left:4px solid var(--class-color);border-radius:13px;background:linear-gradient(110deg,color-mix(in srgb,var(--class-color) 8%,#151214),#0d0b0c 68%);box-shadow:0 8px 24px rgba(0,0,0,.16)}
 #page-portfolio-review-center .portfolio-review-member-header{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:16px 18px;border-bottom:1px solid color-mix(in srgb,var(--class-color) 22%,rgba(255,255,255,.08))}
 #page-portfolio-review-center .portfolio-review-member-identity{display:grid;gap:5px;min-width:0}
-#page-portfolio-review-center .portfolio-review-member-identity h3{margin:0;color:var(--class-color);font-size:19px;font-weight:850;overflow-wrap:anywhere}
+#page-portfolio-review-center .portfolio-review-member-identity h3{margin:0;color:#fff;font-size:19px;font-weight:850;overflow-wrap:anywhere}
 #page-portfolio-review-center .portfolio-review-member-class{display:inline-flex;align-items:center;gap:7px;color:var(--class-color);font-size:15px;font-weight:750}
 #page-portfolio-review-center .portfolio-review-member-class img{width:18px;height:18px;flex:0 0 18px;object-fit:contain}
 #page-portfolio-review-center .portfolio-review-member-meta{color:#c4bfc0;font-size:15px}
