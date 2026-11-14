@@ -137,7 +137,8 @@ const PAGE_TITLES = {
   "war-stats": "สถิติกิลด์วอร์",
   "war-attendance-stats": "สถิติการเข้าร่วมวอร์",
   rules: "กฎกิลด์",
-  portfolio: "แฟ้มผลงาน",
+  portfolio: "แฟ้มผลงานสมาชิก",
+  "portfolio-review-center": "ศูนย์ตรวจสอบแฟ้ม",
   guides: "ไกด์เกม",
   "community-board": "Community Board",
   "duck-race": "4AM Duck Race",
@@ -2383,7 +2384,7 @@ async function loadPortfolios() {
       portfolio_reviews ( status, reason, reviewer_user_id, reviewed_at )
     `).order("created_at", { ascending: false }));
   }
-  if (error) { console.error("Portfolio loading error:", error); allPortfolios = []; renderPortfolios(); return; }
+  if (error) { console.error("Portfolio loading error:", error); allPortfolios = []; renderPortfolios(); renderPortfolioReviewCenter(); return; }
   allPortfolios = (data || []).map((portfolio) => ({
     ...portfolio,
     portfolio_images: (portfolio.portfolio_images || []).sort((a, b) =>
@@ -2391,6 +2392,7 @@ async function loadPortfolios() {
     )
   }));
   renderPortfolios();
+  renderPortfolioReviewCenter();
 }
 
 async function getPortfolioImageUrl(path) {
@@ -2708,6 +2710,28 @@ function portfolioReviewStatusLabel(status) {
   })[status] || "รอตรวจสอบ";
 }
 
+function getPortfolioReviewCenterStatus(portfolio) {
+  const review = getPortfolioReview(portfolio) || { status: "pending" };
+  if (review.status === "approved") return "approved";
+  if (review.status === "rejected") return "rejected";
+  return !String(portfolio.description || "").trim() || !(portfolio.portfolio_images || []).length ? "incomplete" : "pending";
+}
+
+function renderPortfolioReviewCenter() {
+  const queue = $("portfolio-review-queue"); if (!queue) return;
+  if (!isPortfolioReviewer()) { queue.innerHTML = '<div class="empty-state"><span>⛨</span><h3>ไม่มีสิทธิ์เข้าถึง</h3><p>หน้านี้สำหรับ Developer, Leader และ Management เท่านั้น</p></div>'; return; }
+  const members = (allMembers || []).filter(m => m.active !== false), portfolios = allPortfolios || [];
+  const has = new Set(portfolios.map(p => p.member_id));
+  const counts = { members:members.length, "with-portfolios":members.filter(m=>has.has(m.user_id)).length, "no-portfolios":members.filter(m=>!has.has(m.user_id)).length, pending:0, incomplete:0, approved:0, rejected:0 };
+  portfolios.forEach(p => counts[getPortfolioReviewCenterStatus(p)]++);
+  Object.entries(counts).forEach(([key,value]) => { const node=document.querySelector('[data-review-stat="' + key + '"]'); if(node)node.textContent=Number(value).toLocaleString("th-TH"); });
+  const search=String($("portfolio-review-search")?.value||"").trim().toLocaleLowerCase("th"), filter=$("portfolio-review-filter")?.value||"all";
+  const rows=portfolios.filter(p=>{const owner=members.find(m=>m.user_id===p.member_id), name=owner?getMemberName(owner):"สมาชิกที่ไม่พบข้อมูล", status=getPortfolioReviewCenterStatus(p), hay=[name,p.title,p.game_class,p.portfolio_type].filter(Boolean).join(" ").toLocaleLowerCase("th"); return (filter==="all"||filter===status)&&(!search||hay.includes(search));});
+  const order={pending:0,incomplete:1,rejected:2,approved:3}; rows.sort((a,b)=>order[getPortfolioReviewCenterStatus(a)]-order[getPortfolioReviewCenterStatus(b)]||new Date(b.updated_at||b.created_at)-new Date(a.updated_at||a.created_at));
+  if(!rows.length){showEmpty(queue,"ไม่พบแฟ้มผลงาน",portfolios.length?"ลองเปลี่ยนคำค้นหาหรือตัวกรองสถานะ":"ขณะนี้ยังไม่มีแฟ้มผลงานในระบบ");return;}
+  const labels={pending:"รอตรวจสอบ",incomplete:"ข้อมูลไม่ครบ",approved:"ผ่านแล้ว",rejected:"ยังไม่ผ่าน"};
+  queue.innerHTML=rows.map(p=>{const owner=members.find(m=>m.user_id===p.member_id),status=getPortfolioReviewCenterStatus(p),review=getPortfolioReview(p),images=p.portfolio_images||[],missing=[!String(p.description||"").trim()?"รายละเอียด":"",!images.length?"รูปภาพ":""].filter(Boolean); return '<article class="portfolio-review-row"><div class="portfolio-review-row-main"><span class="portfolio-review-row-owner">' + escapeHTML(owner?getMemberName(owner):"สมาชิกที่ไม่พบข้อมูล") + '</span><strong>' + escapeHTML(p.title||"ไม่มีชื่อแฟ้ม") + '</strong><span class="portfolio-review-row-meta">' + escapeHTML(p.game_class||"ยังไม่ระบุคลาส") + " · " + images.length + " รูป · อัปเดต " + escapeHTML(formatDate(p.updated_at||p.created_at)) + '</span>' + (missing.length?'<span class="portfolio-review-missing">ขาด: '+escapeHTML(missing.join(" และ "))+'</span>':"") + (status==="rejected"&&review?.reason?'<span class="portfolio-review-reason-preview">เหตุผลล่าสุด: '+escapeHTML(review.reason)+'</span>':"") + '</div><div class="portfolio-review-row-side"><span class="portfolio-review-queue-status is-' + status + '">' + labels[status] + '</span><button type="button" class="btn btn-outline portfolio-review-open" data-review-center-open="' + escapeHTML(p.member_id) + '">เปิดตรวจแฟ้ม ↗</button></div></article>';}).join("");
+}
 async function renderPortfolioMemberDirectory() {
   const container=$("portfolio-member-grid"); if(!container)return;
   const search=String($("portfolio-member-search")?.value||"").trim().toLowerCase();
@@ -3288,6 +3312,16 @@ async function handlePortfolioCardAction(event) {
 function registerPortfolioEvents() {
   window.portfolioDraftFiles = [];
   $("portfolio-member-search")?.addEventListener("input",()=>{void renderPortfolioMemberDirectory();});
+  $("portfolio-review-search")?.addEventListener("input", renderPortfolioReviewCenter);
+  $("portfolio-review-filter")?.addEventListener("change", renderPortfolioReviewCenter);
+  $("portfolio-review-refresh")?.addEventListener("click", () => { void loadPortfolios(); });
+  $("portfolio-review-queue")?.addEventListener("click", async event => {
+    const button = event.target instanceof Element ? event.target.closest("[data-review-center-open]") : null;
+    if (!button || !isPortfolioReviewer()) return;
+    currentPortfolioMemberId = button.dataset.reviewCenterOpen;
+    portfolioClassFilter = "all"; portfolioManageMode = false;
+    openGuildPage("portfolio"); await renderPortfolios();
+  });
   // Pencil controls are bound directly after each directory render.
   $("portfolio-member-grid")?.addEventListener("click",async event=>{
     if(event.target instanceof Element && event.target.closest("[data-bond-profile-edit]"))return;
@@ -6720,6 +6754,7 @@ function openGuildPage(pageName) {
   if (pageName === "system-management" && !isDeveloper()) {
     pageName = "dashboard";
   }
+  if (pageName === "portfolio-review-center" && !isManagement()) pageName = "portfolio";
   if (pageName === "discord-integration" && (!isDeveloper() || isRolePreviewActive())) {
     pageName = "dashboard";
   }
@@ -6761,6 +6796,12 @@ function openGuildPage(pageName) {
   warParent?.classList.toggle("active", warPage);
   if (warPage && warSubmenu) warSubmenu.classList.add("is-open");
 
+  const portfolioPages = ["portfolio", "portfolio-review-center"];
+  const portfolioParent = document.querySelector('[data-toggle-submenu="portfolio-submenu"]');
+  const portfolioSubmenu = $("portfolio-submenu");
+  portfolioParent?.classList.toggle("active", portfolioPages.includes(pageName));
+  if (portfolioPages.includes(pageName) && portfolioSubmenu) portfolioSubmenu.classList.add("is-open");
+
   const guildCommunityPage = ["community-board", "guild-news", "guild-activities", "duck-race"].includes(pageName);
   const guildCommunityParent = document.querySelector('[data-toggle-submenu="guild-community-submenu"]');
   const guildCommunitySubmenu = $("guild-community-submenu");
@@ -6793,7 +6834,7 @@ function openGuildPage(pageName) {
   }
   if (pageName === "appearance") renderAppearancePage();
 
-  if (pageName === "portfolio") loadPortfolios();
+  if (pageName === "portfolio" || pageName === "portfolio-review-center") loadPortfolios();
   if (pageName === "war") loadWarEvents();
   if (pageName === "war-attendance") loadWarAttendance();
   if (pageName === "war-signup") loadWarSignups();
