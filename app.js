@@ -6702,8 +6702,8 @@ async function saveOwnGameUID(form) {
   const button = form.querySelector("button[type='submit']");
   const uid = String(input?.value || "").trim();
 
-  if (!/^[0-9]{10}$/.test(uid)) {
-    showMessage("game-uid-message", "UID ตัวละครต้องเป็นตัวเลข 10 หลักเท่านั้น");
+  if (!/^[0-9]{1,12}$/.test(uid)) {
+    showMessage("game-uid-message", "UID ตัวละครต้องเป็นตัวเลข 1–12 หลักเท่านั้น");
     return;
   }
 
@@ -6755,7 +6755,7 @@ async function saveOwnCharacterProfile(form) {
   if (!characterName) { showMessage("account-profile-status", "กรุณากรอกชื่อตัวละคร"); return; }
   if (characterName.length > 40) { showMessage("account-profile-status", "ชื่อตัวละครต้องไม่เกิน 40 ตัวอักษร"); return; }
   if (!CLASS_DATA.some(item => item.name === gameClass)) { showMessage("account-profile-status", "กรุณาเลือกอาชีพจากรายการ"); return; }
-  if (!/^[0-9]{10}$/.test(gameUID)) { showMessage("account-profile-status", "UID ตัวละครต้องเป็นตัวเลข 10 หลักเท่านั้น"); return; }
+  if (!/^[0-9]{1,12}$/.test(gameUID)) { showMessage("account-profile-status", "UID ตัวละครต้องเป็นตัวเลข 1–12 หลักเท่านั้น"); return; }
   if (button) { button.disabled = true; button.textContent = "กำลังบันทึก..."; }
   showMessage("account-profile-status", "กำลังบันทึกข้อมูลบัญชี...", "info");
   try {
@@ -6819,8 +6819,8 @@ function renderAccountDetails() {
           ${CLASS_DATA.map(item => '<option value="' + escapeHTML(item.name) + '" ' + (item.name === currentMember?.game_class ? 'selected' : '') + '>' + escapeHTML(item.name) + '</option>').join("")}
         </select>
       </div>
-      <label for="account-game-uid">UID ตัวละคร (ตัวเลข 10 หลัก)</label>
-      <input id="account-game-uid" name="game_uid" type="text" inputmode="numeric" pattern="[0-9]{10}" minlength="10" maxlength="10" placeholder="กรอก UID ตัวละคร 10 หลัก" value="${escapeHTML(currentMember?.game_uid || "")}" required>
+      <label for="account-game-uid">UID ตัวละคร (ตัวเลขไม่เกิน 12 หลัก)</label>
+      <input id="account-game-uid" name="game_uid" type="text" inputmode="numeric" pattern="[0-9]{1,12}" minlength="1" maxlength="12" placeholder="กรอก UID ตัวละคร สูงสุด 12 หลัก" value="${escapeHTML(currentMember?.game_uid || "")}" autocomplete="off" required>
       <div class="account-profile-actions">
         <button type="button" class="btn btn-outline" id="account-edit-cancel">ยกเลิก</button>
         <button type="submit" class="btn btn-primary">ยืนยันข้อมูล</button>
@@ -7309,6 +7309,13 @@ function registerAppEventListeners() {
       if (button) { button.textContent = "✎ แก้ไข"; button.setAttribute("aria-expanded", "false"); }
       $("account-profile-status")?.replaceChildren();
     }
+  });
+
+  $("account-details")?.addEventListener("input", (event) => {
+    if (event.target.id !== "account-game-uid") return;
+    const input = event.target;
+    const cleaned = String(input.value || "").replace(/[^0-9]/g, "").slice(0, 12);
+    if (input.value !== cleaned) input.value = cleaned;
   });
 
   $("account-details")?.addEventListener("change", (event) => {
