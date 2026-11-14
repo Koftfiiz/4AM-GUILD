@@ -1423,6 +1423,22 @@ function renderMembers(members) {
   const container = $("members-list");
   if (!container) return;
 
+  const classSummary = $("members-class-summary");
+  if (classSummary) {
+    const counts = new Map();
+    members.forEach(member => {
+      const name = String(getMemberClass(member) || "").trim().toLocaleLowerCase();
+      if (name) counts.set(name, (counts.get(name) || 0) + 1);
+    });
+    classSummary.innerHTML = CLASS_DATA.map(item => {
+      const count = counts.get(String(item.name).toLocaleLowerCase()) || 0;
+      return `<div class="member-class-count-tile" style="--class-color:${escapeHTML(item.color)}" title="${escapeHTML(item.name)}: ${count} คน">
+        <img src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
+        <strong>${count}</strong>
+      </div>`;
+    }).join("");
+  }
+
   if (!members.length) {
     showEmpty(container, "ยังไม่มีรายชื่อสมาชิก", "เมื่อมีสมาชิกในกิลด์ รายชื่อจะแสดงที่นี่");
     return;
@@ -1756,9 +1772,8 @@ function renderManualMemberManagement() {
     });
     classSummary.innerHTML = CLASS_DATA.map(item => {
       const count = classCounts.get(item.name.toLocaleLowerCase()) || 0;
-      return `<div class="manual-member-class-chip" style="--class-color:${escapeHTML(item.color)}">
+      return `<div class="manual-member-class-chip" style="--class-color:${escapeHTML(item.color)}" title="${escapeHTML(item.name)}: ${count} คน">
         <img src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
-        <span>${escapeHTML(item.name)}</span>
         <strong>${count}</strong>
       </div>`;
     }).join("");
