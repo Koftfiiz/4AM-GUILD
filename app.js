@@ -1447,9 +1447,16 @@ function renderManualMemberManagement() {
   const summary = $("manual-member-summary");
   if (!list) return;
   const linkedCount = allMembers.length;
-  const manualCount = manualGuildMembers.length;
-  const activeCount = allMembers.filter(member => member.active).length + manualGuildMembers.filter(member => member.active).length;
-  if (summary) summary.textContent = `สมาชิกในระบบ ${linkedCount} คน · Manual ${manualCount} คน · Active ${activeCount} คน`;
+  // A linked Manual row is represented by its real guild_members account row.
+  // Keep the source record for administration, but do not render/count it twice.
+  const unlinkedManualMembers = manualGuildMembers.filter(
+    member => !member.linked_user_id
+  );
+  const manualCount = unlinkedManualMembers.length;
+  const activeCount =
+    allMembers.filter(member => member.active).length +
+    unlinkedManualMembers.filter(member => member.active).length;
+  if (summary) summary.textContent = `สมาชิกในระบบ ${linkedCount} คน · Manual ที่ยังไม่เชื่อม ${manualCount} คน · Active ${activeCount} คน`;
 
   if (!linkedCount && !manualCount) {
     list.innerHTML = '<div class="manual-member-empty"><span>＋</span><strong>ยังไม่มีรายชื่อสมาชิก</strong><p>เพิ่มสมาชิกที่ยังไม่มีบัญชีเข้าใช้งานแอปได้จากแบบฟอร์มด้านบน</p></div>';
@@ -1470,7 +1477,7 @@ function renderManualMemberManagement() {
     </tr>`;
   }).join("");
 
-  const manualRows = manualGuildMembers.map(member => {
+  const manualRows = unlinkedManualMembers.map(member => {
     const cls = getClassInfo(member.game_class);
     return `<tr>
       <td><strong>${escapeHTML(member.character_name)}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")} · ยังไม่มีบัญชีเข้าใช้งาน</small></td>
