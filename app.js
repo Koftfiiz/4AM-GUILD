@@ -7041,6 +7041,8 @@ async function saveOwnCharacterProfile(form) {
     Object.assign(currentMember, { character_name: data.character_name, nickname: data.nickname, age: data.age, game_class: data.game_class, game_uid: data.game_uid });
     const cachedMember = allMembers.find(member => member.user_id === currentUser.id);
     if (cachedMember) Object.assign(cachedMember, { character_name: data.character_name, nickname: data.nickname, age: data.age, game_class: data.game_class, game_uid: data.game_uid });
+    const directoryCachedMember = directoryMembers.find(member => member.user_id === currentUser.id);
+    if (directoryCachedMember) Object.assign(directoryCachedMember, { character_name: data.character_name, nickname: data.nickname, age: data.age, game_class: data.game_class, game_uid: data.game_uid });
     renderAccountDetails();
     updateUserChip();
     renderDashboardProfile();
