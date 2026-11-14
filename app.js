@@ -1770,7 +1770,29 @@ function renderManualMemberManagement() {
     );
   });
 
-  const memberRows = allVisibleMembers.map((member, index) => {
+  const searchInput = $("manual-member-search");
+  const searchQuery = String(searchInput?.value || "").trim().toLocaleLowerCase();
+  const filteredVisibleMembers = searchQuery
+    ? allVisibleMembers.filter(member => {
+        const searchableFields = [
+          member.character_name,
+          member.nickname,
+          member.game_class,
+          member.guild_position,
+          member.game_uid,
+          member.discord_name,
+          member.discord_username,
+          member.discord_global_name,
+          member.discord_server_nickname,
+          member.discord_user_id
+        ];
+        return searchableFields.some(value =>
+          String(value || "").toLocaleLowerCase().includes(searchQuery)
+        );
+      })
+    : allVisibleMembers;
+
+  const memberRows = filteredVisibleMembers.map((member, index) => {
     const cls = getClassInfo(member.game_class);
     const isAccount = member._recordType === "account";
     const name = member.character_name || (isAccount ? getMemberName(member) : "");
@@ -1797,13 +1819,15 @@ function renderManualMemberManagement() {
     </tr>`;
   }).join("");
 
-  list.innerHTML = `
-    <div class="manual-member-table-wrap">
-      <table class="manual-member-table">
-        <thead><tr><th style="text-align:center;">ลำดับ</th><th>สมาชิก</th><th>Class</th><th>ตำแหน่งกิลด์</th><th>สถานะ</th><th>ออนไลน์</th><th>จัดการ</th></tr></thead>
-        <tbody>${memberRows}</tbody>
-      </table>
-    </div>`;
+  list.innerHTML = filteredVisibleMembers.length
+    ? `
+      <div class="manual-member-table-wrap">
+        <table class="manual-member-table">
+          <thead><tr><th style="text-align:center;">ลำดับ</th><th>สมาชิก</th><th>Class</th><th>ตำแหน่งกิลด์</th><th>สถานะ</th><th>ออนไลน์</th><th>จัดการ</th></tr></thead>
+          <tbody>${memberRows}</tbody>
+        </table>
+      </div>`
+    : '<div class="manual-member-empty manual-member-search-empty"><strong>ไม่พบสมาชิกที่ค้นหา</strong><p>ลองตรวจสอบคำค้นหา หรือค้นหาด้วยชื่อตัวละคร ชื่อเล่น Class หรือ Discord</p></div>';
 }
 
 async function saveManualGuildMember(form) {
@@ -7164,6 +7188,9 @@ function registerAppEventListeners() {
     if (event.key === "Escape" && !$("manual-member-modal")?.classList.contains("hidden")) {
       resetManualMemberForm();
     }
+  });
+  $("manual-member-search")?.addEventListener("input", () => {
+    renderManualMemberManagement();
   });
   $("manual-member-list")?.addEventListener("click", event => {
     const edit = event.target.closest("[data-manual-edit]");
