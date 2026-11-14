@@ -12,3 +12,6 @@ verify_jwt = false
 
 [functions.duck-race-lucky-draw]
 verify_jwt = false
+
+[functions.discord-member-directory]
+verify_jwt = false
