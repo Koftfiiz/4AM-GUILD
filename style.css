@@ -6619,3 +6619,29 @@ body select:disabled {
 .manual-member-link-copy .manual-member-link-inactive{color:#ff929a}
 .manual-member-link-confirm{flex:0 0 auto;min-height:38px}
 @media(max-width:560px){.manual-member-link-option{align-items:stretch;flex-direction:column}.manual-member-link-confirm{width:100%}}
+
+
+/* Center the Discord manual-member confirmation panel as a viewport overlay. */
+#login-screen #manual-member-link-screen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 10000 !important;
+  width: min(620px, calc(100vw - 32px)) !important;
+  max-width: 620px !important;
+  max-height: calc(100dvh - 32px) !important;
+  margin: auto !important;
+  padding: 30px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  align-self: auto !important;
+  justify-self: auto !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 560px) {
+  #login-screen #manual-member-link-screen {
+    width: calc(100vw - 24px) !important;
+    max-height: calc(100dvh - 24px) !important;
+    padding: 22px 16px !important;
+  }
+}
