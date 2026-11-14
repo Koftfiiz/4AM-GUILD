@@ -6821,25 +6821,28 @@ async function saveOwnGameUID(form) {
 async function saveOwnCharacterProfile(form) {
   if (!currentUser || !currentMember || !form) return;
   const characterName = String(form.querySelector("[name='character_name']")?.value || "").trim();
+  const nickname = String(form.querySelector("[name='nickname']")?.value || "").trim();
   const gameClass = String(form.querySelector("[name='game_class']")?.value || "").trim();
   const gameUID = String(form.querySelector("[name='game_uid']")?.value || "").trim();
   const button = form.querySelector("button[type='submit']");
   if (!characterName) { showMessage("account-profile-status", "กรุณากรอกชื่อตัวละคร"); return; }
   if (characterName.length > 40) { showMessage("account-profile-status", "ชื่อตัวละครต้องไม่เกิน 40 ตัวอักษร"); return; }
+  if (!nickname) { showMessage("account-profile-status", "กรุณากรอกชื่อเล่น"); return; }
+  if (nickname.length > 40) { showMessage("account-profile-status", "ชื่อเล่นต้องไม่เกิน 40 ตัวอักษร"); return; }
   if (!CLASS_DATA.some(item => item.name === gameClass)) { showMessage("account-profile-status", "กรุณาเลือกอาชีพจากรายการ"); return; }
   if (!/^[0-9]{1,12}$/.test(gameUID)) { showMessage("account-profile-status", "UID ตัวละครต้องเป็นตัวเลข 1–12 หลักเท่านั้น"); return; }
   if (button) { button.disabled = true; button.textContent = "กำลังบันทึก..."; }
   showMessage("account-profile-status", "กำลังบันทึกข้อมูลบัญชี...", "info");
   try {
     const { data, error } = await supabaseClient.from("guild_members")
-      .update({ character_name: characterName, game_class: gameClass, game_uid: gameUID })
+      .update({ character_name: characterName, nickname, game_class: gameClass, game_uid: gameUID })
       .eq("user_id", currentUser.id)
-      .select("user_id, character_name, game_class, game_uid")
+      .select("user_id, character_name, nickname, game_class, game_uid")
       .single();
     if (error) throw error;
-    Object.assign(currentMember, { character_name: data.character_name, game_class: data.game_class, game_uid: data.game_uid });
+    Object.assign(currentMember, { character_name: data.character_name, nickname: data.nickname, game_class: data.game_class, game_uid: data.game_uid });
     const cachedMember = allMembers.find(member => member.user_id === currentUser.id);
-    if (cachedMember) Object.assign(cachedMember, { character_name: data.character_name, game_class: data.game_class, game_uid: data.game_uid });
+    if (cachedMember) Object.assign(cachedMember, { character_name: data.character_name, nickname: data.nickname, game_class: data.game_class, game_uid: data.game_uid });
     renderAccountDetails();
     updateUserChip();
     renderDashboardProfile();
@@ -6873,6 +6876,7 @@ function renderAccountDetails() {
     </div>
     <div class="account-details-list">
       <div class="settings-detail"><span>ชื่อตัวละคร</span><strong>${escapeHTML(name)}</strong></div>
+      <div class="settings-detail"><span>ชื่อเล่น</span><strong>${escapeHTML(currentMember?.nickname || "ยังไม่ได้ตั้งชื่อเล่น")}</strong></div>
       <div class="settings-detail"><span>Email</span><strong>${escapeHTML(currentUser?.email || "-")}</strong></div>
       <div class="settings-detail"><span>Class อาชีพ</span><strong class="account-class-display" style="--class-color:${classColor}"><img class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'"><span>${escapeHTML(currentMember?.game_class || "ยังไม่ได้เลือกอาชีพ")}</span></strong></div>
       <div class="settings-detail"><span>UID ตัวละคร</span><strong>${escapeHTML(currentMember?.game_uid || "ยังไม่ได้กรอก UID")}</strong></div>
@@ -6884,6 +6888,8 @@ function renderAccountDetails() {
     <form id="account-profile-form" class="game-uid-settings-form account-character-form hidden">
       <label for="account-character-name">ชื่อตัวละคร</label>
       <input id="account-character-name" name="character_name" type="text" maxlength="40" autocomplete="off" placeholder="กรอกชื่อตัวละคร" value="${escapeHTML(currentMember?.character_name || "")}" required>
+      <label for="account-nickname">ชื่อเล่น</label>
+      <input id="account-nickname" name="nickname" type="text" maxlength="40" autocomplete="nickname" placeholder="กรอกชื่อเล่น" value="${escapeHTML(currentMember?.nickname || "")}" required>
       <label for="account-game-class">Class อาชีพ</label>
       <div class="account-class-select-wrap">
         <img id="account-class-preview" class="account-class-icon" src="${escapeHTML(classIcon)}" alt="" onerror="this.style.display='none'">
