@@ -2585,6 +2585,45 @@ async function renderPortfolioMemberDirectory() {
   });
 }
 
+function closePortfolioLightbox() {
+  const viewer = $("portfolio-lightbox");
+  if (viewer) viewer.classList.add("hidden");
+}
+function updatePortfolioLightbox(index) {
+  const images = window.portfolioLightboxImages || [];
+  if (!images.length) return;
+  const nextIndex = (index + images.length) % images.length;
+  window.portfolioLightboxIndex = nextIndex;
+  const item = images[nextIndex];
+  const image = $("portfolio-lightbox-image");
+  if (image) { image.src = item.url; image.alt = item.label || "Portfolio image"; }
+  const caption = $("portfolio-lightbox-caption");
+  if (caption) caption.textContent = item.label || "รูปภาพ";
+  const counter = $("portfolio-lightbox-counter");
+  if (counter) counter.textContent = (nextIndex + 1) + " / " + images.length;
+  const prev = $("portfolio-lightbox-prev"), next = $("portfolio-lightbox-next");
+  if (prev) prev.disabled = images.length < 2;
+  if (next) next.disabled = images.length < 2;
+}
+function openPortfolioLightbox(index) {
+  const images = window.portfolioLightboxImages || [];
+  if (!images.length) return;
+  let viewer = $("portfolio-lightbox");
+  if (!viewer) {
+    viewer = document.createElement("div");
+    viewer.id = "portfolio-lightbox";
+    viewer.className = "portfolio-lightbox hidden";
+    viewer.innerHTML = '<button type="button" class="portfolio-lightbox-close" data-lightbox-close aria-label="ปิดภาพ">×</button><button type="button" id="portfolio-lightbox-prev" class="portfolio-lightbox-nav portfolio-lightbox-prev" aria-label="รูปก่อนหน้า">‹</button><div class="portfolio-lightbox-stage"><img id="portfolio-lightbox-image" alt=""><div class="portfolio-lightbox-meta"><span id="portfolio-lightbox-caption"></span><span id="portfolio-lightbox-counter"></span></div></div><button type="button" id="portfolio-lightbox-next" class="portfolio-lightbox-nav portfolio-lightbox-next" aria-label="รูปถัดไป">›</button>';
+    document.body.appendChild(viewer);
+    viewer.addEventListener("click", event => {
+      if (event.target === viewer || event.target.closest("[data-lightbox-close]")) closePortfolioLightbox();
+      else if (event.target.closest("#portfolio-lightbox-prev")) updatePortfolioLightbox((window.portfolioLightboxIndex || 0) - 1);
+      else if (event.target.closest("#portfolio-lightbox-next")) updatePortfolioLightbox((window.portfolioLightboxIndex || 0) + 1);
+    });
+  }
+  updatePortfolioLightbox(index);
+  viewer.classList.remove("hidden");
+}
 function closePortfolioDetail() {
   const modal = $("portfolio-detail-modal");
   if (modal) modal.classList.add("hidden");
@@ -2602,6 +2641,8 @@ async function openPortfolioDetail(portfolioId) {
     modal.innerHTML = '<div class="portfolio-detail-backdrop" data-portfolio-detail-close></div><section class="portfolio-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="portfolio-detail-title"><button type="button" class="portfolio-detail-close" data-portfolio-detail-close aria-label="ปิด">×</button><div class="portfolio-detail-body" id="portfolio-detail-body"></div></section>';
     document.body.appendChild(modal);
     modal.addEventListener("click", event => {
+      const imageButton = event.target.closest("[data-lightbox-index]");
+      if (imageButton) { openPortfolioLightbox(Number(imageButton.dataset.lightboxIndex)); return; }
       if (event.target.closest("[data-portfolio-detail-close]")) closePortfolioDetail();
     });
   }
@@ -2610,12 +2651,16 @@ async function openPortfolioDetail(portfolioId) {
   const images = portfolio.portfolio_images || [];
   const title = portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : (/^build\b/i.test(portfolio.title || "") ? portfolio.title : "Build " + (portfolio.title || "Untitled"));
   const sectionLabels = { cultivation:"คัมภีร์หู่เฉียน", hero_skills:"ขั้นสกิลเหล่าผู้กล้า / อัลติ", stats:"Stats ตัวละคร", inner_power:"กำลังภายใน", affixes:"ออฟสร้าง", weapons:"ศาสตราวุธ" };
+  const lightboxImages = [];
   const imageCards = await Promise.all(images.map(async image => {
     const url = await getPortfolioImageUrl(image.cover_image_url || image.image_url);
     if (!url) return "";
     const label = sectionLabels[image.section_key] || (image.image_type === "cover" ? "ภาพหน้าปก" : "รูปภาพ");
-    return '<figure class="portfolio-detail-image-card"><img src="' + escapeHTML(url) + '" alt="' + escapeHTML(label) + '" loading="lazy"><figcaption><strong>' + escapeHTML(label) + '</strong>' + (image.caption ? '<p>' + escapeHTML(image.caption) + '</p>' : '') + '</figcaption></figure>';
+    const index = lightboxImages.push({url, label: image.caption ? label + " · " + image.caption : label}) - 1;
+    return '<figure class="portfolio-detail-image-card"><button type="button" class="portfolio-detail-image-open" data-lightbox-index="' + index + '" aria-label="ดูรูป ' + escapeHTML(label) + ' แบบเต็มหน้าจอ"><img src="' + escapeHTML(url) + '" alt="' + escapeHTML(label) + '" loading="lazy"><span class="portfolio-image-zoom-hint">⌕ ดูภาพเต็ม</span></button><figcaption><strong>' + escapeHTML(label) + '</strong>' + (image.caption ? '<p>' + escapeHTML(image.caption) + '</p>' : '') + '</figcaption></figure>';
   }));
+  window.portfolioLightboxImages = lightboxImages;
+  window.portfolioLightboxIndex = 0;
   const classes = getPortfolioClasses(portfolio.game_class);
   body.innerHTML = '<div class="portfolio-detail-heading"><span class="portfolio-type-chip">' + escapeHTML(portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : portfolio.portfolio_type === "pve" ? "PvE Build" : "PvP Build") + '</span><h2 id="portfolio-detail-title">' + escapeHTML(title) + '</h2><p class="portfolio-detail-owner">' + escapeHTML(owner ? getMemberName(owner) : "Guild Member") + '</p><div class="portfolio-card-tags">' + classes.map(name => '<span class="portfolio-card-tag">' + escapeHTML(name) + '</span>').join("") + '</div></div>' +
     (portfolio.description ? '<div class="portfolio-detail-description"><h3>Description</h3><p>' + escapeHTML(portfolio.description) + '</p></div>' : '') +
@@ -3101,6 +3146,10 @@ function registerPortfolioEvents() {
     void openPortfolioDetail(card.dataset.portfolioCardId);
   });
   document.addEventListener("keydown", event => {
+    const viewerOpen = !$("portfolio-lightbox")?.classList.contains("hidden");
+    if (viewerOpen && event.key === "Escape") { closePortfolioLightbox(); return; }
+    if (viewerOpen && event.key === "ArrowLeft") { updatePortfolioLightbox((window.portfolioLightboxIndex || 0) - 1); return; }
+    if (viewerOpen && event.key === "ArrowRight") { updatePortfolioLightbox((window.portfolioLightboxIndex || 0) + 1); return; }
     if (event.key === "Escape" && !$("portfolio-detail-modal")?.classList.contains("hidden")) closePortfolioDetail();
   });
 
