@@ -1591,7 +1591,6 @@ function renderManualMemberManagement() {
       <td><div class="manual-member-actions">
         <button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button>
         <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
-        <button type="button" class="btn btn-danger btn-sm" data-manual-delete="${escapeHTML(member.id)}">ลบ</button>
       </div></td>
     </tr>`;
   }).join("");
@@ -1785,16 +1784,7 @@ async function updateLinkedGuildMemberStatus(userId) {
   await loadMembers();
 }
 
-async function deleteManualGuildMember(id) {
-  if (!isManagement()) return;
-  const member = manualGuildMembers.find(item => item.id === id);
-  if (!member || !confirm(`ยืนยันลบรายชื่อ "${member.character_name}" หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้`)) return;
-  const { error } = await supabaseClient.from("guild_manual_members").delete().eq("id", id);
-  if (error) { alert("ลบรายชื่อไม่สำเร็จ: " + error.message); return; }
-  manualGuildMembers = manualGuildMembers.filter(item => item.id !== id);
-  renderManualMemberManagement();
-  await loadMembers();
-}
+// Manual member records are retained for reactivation; use the status toggle instead of hard deletion.
 
 function filterMembers() {
   const search = $("member-search")?.value.trim().toLowerCase() || "";
@@ -6627,14 +6617,12 @@ function registerAppEventListeners() {
   $("manual-member-list")?.addEventListener("click", event => {
     const edit = event.target.closest("[data-manual-edit]");
     const toggle = event.target.closest("[data-manual-toggle]");
-    const remove = event.target.closest("[data-manual-delete]");
     const accountEdit = event.target.closest("[data-account-edit]");
     const accountToggle = event.target.closest("[data-account-toggle]");
     if (accountEdit) editLinkedGuildMember(accountEdit.dataset.accountEdit);
     else if (accountToggle) updateLinkedGuildMemberStatus(accountToggle.dataset.accountToggle);
     else if (edit) editManualGuildMember(edit.dataset.manualEdit);
     else if (toggle) updateManualGuildMemberStatus(toggle.dataset.manualToggle);
-    else if (remove) deleteManualGuildMember(remove.dataset.manualDelete);
   });
   $("refresh-members")?.addEventListener("click", loadMembers);
   $("connect-discord")?.addEventListener("click", connectDiscord);
