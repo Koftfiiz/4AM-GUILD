@@ -2291,6 +2291,35 @@ function renderPortfolioClassChoices() {
   `).join("");
 }
 
+const PORTFOLIO_PASTE_IMAGE_MAX_BYTES = 12 * 1024 * 1024;
+
+function addPortfolioImagesToSection(files, sectionKey) {
+  const images = [...(files || [])].filter(file => file && file.type && file.type.startsWith("image/"));
+  if (!images.length) return 0;
+  const accepted = [];
+  const rejected = [];
+  images.forEach(file => {
+    if (file.size > PORTFOLIO_PASTE_IMAGE_MAX_BYTES) rejected.push(file.name || "รูปภาพจาก Clipboard");
+    else accepted.push(file);
+  });
+  if (accepted.length) {
+    const existing = window.portfolioDraftFiles || [];
+    window.portfolioDraftFiles = [...existing, ...accepted.map(file => ({
+      file,
+      preview: URL.createObjectURL(file),
+      existing: false,
+      sectionKey,
+      caption: "",
+      cropBlob: null,
+      cropSettings: null
+    }))];
+    window.portfolioActiveUploadSection = sectionKey;
+    renderPortfolioSelectedFiles();
+  }
+  if (rejected.length) alert("มีรูปภาพที่ไม่ได้เพิ่ม เนื่องจากมีขนาดเกิน 12 MB ต่อรูป");
+  return accepted.length;
+}
+
 function renderPortfolioSelectedFiles() {
   const container = $("portfolio-image-preview");
   const files = window.portfolioDraftFiles || [];
@@ -2327,9 +2356,9 @@ function renderPortfolioSelectedFiles() {
         </div>
       </article>`).join("");
     return `
-      <section class="portfolio-upload-zone portfolio-upload-zone-${zone.key}">
+      <section class="portfolio-upload-zone portfolio-upload-zone-${zone.key}" data-portfolio-paste-zone="${zone.key}" tabindex="0" aria-label="โซนอัปโหลดรูป ${zone.label}">
         <header class="portfolio-upload-zone-heading">
-          <div><span class="portfolio-upload-zone-index">${String(zoneIndex + 1).padStart(2, "0")}</span><div><h4>${zone.label}</h4><p>${zone.hint}</p></div></div>
+          <div><span class="portfolio-upload-zone-index">${String(zoneIndex + 1).padStart(2, "0")}</span><div><h4>${zone.label}</h4><p>${zone.hint}</p><p class="portfolio-paste-hint"><kbd>Ctrl</kbd> + <kbd>V</kbd> วางรูปภาพ หรือ ลากรูปมาวางที่นี่</p></div></div>
           <span class="portfolio-upload-zone-count">${items.length} รูป</span>
         </header>
         <div class="portfolio-upload-zone-grid">
@@ -3224,6 +3253,38 @@ function registerPortfolioEvents() {
   $("portfolio-crop-zoom")?.addEventListener("input",event=>{const v=Number(event.target.value);portfolioCropper?.zoomTo(v);$("portfolio-crop-zoom-value").textContent=`${Math.round(v*100)}%`;});
   $("portfolio-crop-modal")?.addEventListener("click",event=>{if(event.target.id==="portfolio-crop-modal")closePortfolioCropEditor();});
 
+  const portfolioImagePreview = $("portfolio-image-preview");
+  portfolioImagePreview?.addEventListener("click", event => {
+    const zone = event.target.closest("[data-portfolio-paste-zone]");
+    if (zone && !event.target.closest("button, input, textarea, select, label")) {
+      window.portfolioActiveUploadSection = zone.dataset.portfolioPasteZone;
+    }
+  });
+  portfolioImagePreview?.addEventListener("focusin", event => {
+    const zone = event.target.closest("[data-portfolio-paste-zone]");
+    if (zone) window.portfolioActiveUploadSection = zone.dataset.portfolioPasteZone;
+  });
+  window.addEventListener("paste", event => {
+    const form = $("portfolio-create-form");
+    if (!form || form.classList.contains("hidden") || !portfolioImagePreview) return;
+    const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+    if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
+    const clipboardItems = [...(event.clipboardData?.items || [])];
+    const pastedImages = clipboardItems
+      .filter(item => item.kind === "file" && item.type.startsWith("image/"))
+      .map(item => item.getAsFile())
+      .filter(Boolean);
+    if (!pastedImages.length) return;
+    const activeElement = document.activeElement;
+    if (activeElement?.closest?.("input, textarea, select, [contenteditable='true']")) return;
+    const zoneKeys = [...portfolioImagePreview.querySelectorAll("[data-portfolio-paste-zone]")].map(zone => zone.dataset.portfolioPasteZone);
+    const activeSection = window.portfolioActiveUploadSection;
+    const sectionKey = zoneKeys.includes(activeSection) ? activeSection : zoneKeys[0];
+    if (!sectionKey) return;
+    event.preventDefault();
+    addPortfolioImagesToSection(pastedImages, sectionKey);
+  });
+
   $("portfolio-image-preview")?.addEventListener("change", event => {
     const input = event.target.closest("[data-portfolio-section-input]");
     if (!input) return;
@@ -3266,7 +3327,27 @@ function registerPortfolioEvents() {
   $("portfolio-image-preview")?.addEventListener("dragover", (event) => {
     if (event.target.closest(".portfolio-preview-item")) event.preventDefault();
   });
+  $("portfolio-image-preview")?.addEventListener("dragenter", event => {
+    const zone = event.target.closest("[data-portfolio-paste-zone]");
+    if (zone && [...(event.dataTransfer?.types || [])].includes("Files")) {
+      event.preventDefault();
+      zone.classList.add("is-paste-target");
+    }
+  });
+  $("portfolio-image-preview")?.addEventListener("dragleave", event => {
+    const zone = event.target.closest("[data-portfolio-paste-zone]");
+    if (zone && !zone.contains(event.relatedTarget)) zone.classList.remove("is-paste-target");
+  });
   $("portfolio-image-preview")?.addEventListener("drop", (event) => {
+    const zone = event.target.closest("[data-portfolio-paste-zone]");
+    const droppedFiles = [...(event.dataTransfer?.files || [])].filter(file => file.type.startsWith("image/"));
+    if (zone && droppedFiles.length) {
+      event.preventDefault();
+      event.stopPropagation();
+      zone.classList.remove("is-paste-target");
+      addPortfolioImagesToSection(droppedFiles, zone.dataset.portfolioPasteZone);
+      return;
+    }
     const target = event.target.closest(".portfolio-preview-item");
     if (!target || draggingIndex === null) return;
     event.preventDefault();
@@ -3281,6 +3362,7 @@ function registerPortfolioEvents() {
   $("portfolio-image-preview")?.addEventListener("dragend", () => {
     draggingIndex = null;
     $("portfolio-image-preview")?.querySelectorAll(".is-dragging").forEach((item) => item.classList.remove("is-dragging"));
+    $("portfolio-image-preview")?.querySelectorAll(".is-paste-target").forEach(zone => zone.classList.remove("is-paste-target"));
   });
 
   // Handle review actions at window capture phase, before document/card listeners.
