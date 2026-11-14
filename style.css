@@ -7019,9 +7019,9 @@ body select:disabled {
 #page-portfolio .portfolio-tracker-heading .panel-kicker,
 #page-portfolio .portfolio-own-bond-copy > .panel-kicker,
 .bond-profile-heading .panel-kicker {
-  color: #fff !important;
+  color: #d8b878 !important;
   font-size: 16px !important;
-  font-weight: 800;
+  font-weight: 400 !important;
   letter-spacing: 2px;
 }
 #page-portfolio .panel-heading h3 {
@@ -7033,3 +7033,57 @@ body select:disabled {
   font-size: 15px !important;
 }
 
+
+/* Member directory profession filters: match the compact War Party class controls */
+#page-members .member-class-count-grid,
+#page-member-management .manual-member-class-summary {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  gap:8px;
+  margin:0 0 18px;
+}
+#page-members .member-class-filter,
+#page-member-management .manual-member-class-filter {
+  min-width:42px;
+  width:auto;
+  height:38px;
+  padding:4px 8px;
+  gap:5px;
+  color:#f8e9e4;
+  background:rgba(255,255,255,.035);
+  border:1px solid rgba(225,175,155,.18);
+  border-radius:6px;
+  font-size:14px;
+  font-weight:800;
+}
+#page-members .member-class-filter img,
+#page-member-management .manual-member-class-filter img {
+  display:block;
+  width:25px;
+  height:25px;
+  flex:0 0 25px;
+  object-fit:contain;
+}
+#page-members .member-class-filter span,
+#page-member-management .manual-member-class-filter span {
+  min-width:14px;
+  text-align:center;
+  color:#fff;
+  font-size:14px;
+  font-weight:800;
+  font-variant-numeric:tabular-nums;
+}
+#page-members .member-class-filter.is-active,
+#page-member-management .manual-member-class-filter.is-active {
+  border-color:#e8b67f;
+  background:rgba(161,45,55,.32);
+}
+@media(max-width:560px) {
+  #page-members .member-class-count-grid,
+  #page-member-management .manual-member-class-summary { gap:7px; }
+  #page-members .member-class-filter,
+  #page-member-management .manual-member-class-filter { min-width:40px; height:36px; padding:3px 7px; }
+  #page-members .member-class-filter img,
+  #page-member-management .manual-member-class-filter img { width:23px; height:23px; flex-basis:23px; }
+}
