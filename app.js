@@ -5707,11 +5707,12 @@ function renderGuildFeedback() {
       const deleteControl = management
         ? '<button type="button" class="feedback-delete-button" data-feedback-delete="' + escapeHTML(row.id) + '" aria-label="ลบรายการ" title="ลบรายการ">−</button>' : "";
       return '<article class="feedback-ticket-card" data-feedback-id="' + escapeHTML(row.id) + '">' +
+        deleteControl +
         '<div class="feedback-ticket-topline"><span class="feedback-type-badge type-' + escapeHTML(row.type) + '">' +
         escapeHTML(FEEDBACK_TYPE_LABELS[row.type] || row.type) + '</span>' + feedbackStatusBadge(row.status) + '</div>' +
         '<h3>' + escapeHTML(row.title) + '</h3>' + memberLine +
         '<div class="feedback-ticket-content">' + sanitizeFeedbackHTML(row.content_html) + '</div>' +
-        '<div class="feedback-ticket-footer"><span>ส่งเมื่อ ' + escapeHTML(formatDate(row.created_at)) + '</span>' + updated + discordStatus + deleteControl + '</div>' +
+        '<div class="feedback-ticket-footer"><span>ส่งเมื่อ ' + escapeHTML(formatDate(row.created_at)) + '</span>' + updated + discordStatus + '</div>' +
         (statusControl ? '<div class="feedback-ticket-management">' + statusControl + '</div>' : "") +
         '</article>';
     }).join("");
