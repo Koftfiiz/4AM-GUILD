@@ -7045,6 +7045,11 @@ body select:disabled {
 }
 #page-members .member-class-filter,
 #page-member-management .manual-member-class-filter {
+  display:inline-flex;
+  flex-direction:row;
+  align-items:center;
+  justify-content:center;
+  white-space:nowrap;
   min-width:42px;
   width:auto;
   height:38px;
@@ -7067,7 +7072,10 @@ body select:disabled {
 }
 #page-members .member-class-filter span,
 #page-member-management .manual-member-class-filter span {
+  display:inline-block;
+  flex:0 0 auto;
   min-width:14px;
+  line-height:1;
   text-align:center;
   color:#fff;
   font-size:14px;
