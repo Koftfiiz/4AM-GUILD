@@ -2585,6 +2585,45 @@ async function renderPortfolioMemberDirectory() {
   });
 }
 
+function closePortfolioDetail() {
+  const modal = $("portfolio-detail-modal");
+  if (modal) modal.classList.add("hidden");
+  document.body.classList.remove("portfolio-detail-open");
+}
+
+async function openPortfolioDetail(portfolioId) {
+  const portfolio = allPortfolios.find(item => item.id === portfolioId);
+  if (!portfolio) return;
+  let modal = $("portfolio-detail-modal");
+  if (!modal) {
+    modal = document.createElement("div");
+    modal.id = "portfolio-detail-modal";
+    modal.className = "portfolio-detail-modal hidden";
+    modal.innerHTML = '<div class="portfolio-detail-backdrop" data-portfolio-detail-close></div><section class="portfolio-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="portfolio-detail-title"><button type="button" class="portfolio-detail-close" data-portfolio-detail-close aria-label="ปิด">×</button><div class="portfolio-detail-body" id="portfolio-detail-body"></div></section>';
+    document.body.appendChild(modal);
+    modal.addEventListener("click", event => {
+      if (event.target.closest("[data-portfolio-detail-close]")) closePortfolioDetail();
+    });
+  }
+  const body = $("portfolio-detail-body");
+  const owner = allMembers.find(member => member.user_id === portfolio.member_id);
+  const images = portfolio.portfolio_images || [];
+  const title = portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : (/^build\\b/i.test(portfolio.title || "") ? portfolio.title : "Build " + (portfolio.title || "Untitled"));
+  const sectionLabels = { cultivation:"คัมภีร์หู่เฉียน", hero_skills:"ขั้นสกิลเหล่าผู้กล้า / อัลติ", stats:"Stats ตัวละคร", inner_power:"กำลังภายใน", affixes:"ออฟสร้าง", weapons:"ศาสตราวุธ" };
+  const imageCards = await Promise.all(images.map(async image => {
+    const url = await getPortfolioImageUrl(image.cover_image_url || image.image_url);
+    if (!url) return "";
+    const label = sectionLabels[image.section_key] || (image.image_type === "cover" ? "ภาพหน้าปก" : "รูปภาพ");
+    return '<figure class="portfolio-detail-image-card"><img src="' + escapeHTML(url) + '" alt="' + escapeHTML(label) + '" loading="lazy"><figcaption><strong>' + escapeHTML(label) + '</strong>' + (image.caption ? '<p>' + escapeHTML(image.caption) + '</p>' : '') + '</figcaption></figure>';
+  }));
+  const classes = getPortfolioClasses(portfolio.game_class);
+  body.innerHTML = '<div class="portfolio-detail-heading"><span class="portfolio-type-chip">' + escapeHTML(portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : portfolio.portfolio_type === "pve" ? "PvE Build" : "PvP Build") + '</span><h2 id="portfolio-detail-title">' + escapeHTML(title) + '</h2><p class="portfolio-detail-owner">' + escapeHTML(owner ? getMemberName(owner) : "Guild Member") + '</p><div class="portfolio-card-tags">' + classes.map(name => '<span class="portfolio-card-tag">' + escapeHTML(name) + '</span>').join("") + '</div></div>' +
+    (portfolio.description ? '<div class="portfolio-detail-description"><h3>Description</h3><p>' + escapeHTML(portfolio.description) + '</p></div>' : '') +
+    '<div class="portfolio-detail-gallery">' + (imageCards.filter(Boolean).join("") || '<p class="muted">ไม่มีรูปภาพในแฟ้มนี้</p>') + '</div>';
+  modal.classList.remove("hidden");
+  document.body.classList.add("portfolio-detail-open");
+}
+
 async function renderPortfolios() {
   const container = $("portfolio-grid");
   if (!container) return;
@@ -2677,9 +2716,9 @@ async function renderPortfolios() {
     ` : "";
 
     return `
-      <article class="portfolio-card ${portfolioManageMode && (isOwner || reviewer) ? "is-jiggling" : ""}" ${color ? `style="--class-color:${color}"` : ""}>
+      <article class="portfolio-card ${portfolioManageMode && (isOwner || reviewer) ? "is-jiggling" : ""}" data-portfolio-card-id="${escapeHTML(portfolio.id)}" role="button" tabindex="0" aria-label="เปิดแฟ้ม ${escapeHTML(portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : portfolio.title || "ผลงาน")}" ${color ? `style="--class-color:${color}"` : ""}>
         ${imageUrl ? `<img class="portfolio-card-image" src="${escapeHTML(imageUrl)}" alt="${escapeHTML(portfolio.title)}" loading="lazy">` : '<div class="portfolio-card-no-image">4AM GUILD</div>'}
-        ${isOwner || (portfolioManageMode && reviewer) ? `<button type="button" class="portfolio-iphone-delete" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงาน" title="ลบแฟ้มผลงาน">−</button>` : ""}
+        ${portfolioManageMode && (isOwner || reviewer) ? `<button type="button" class="portfolio-iphone-delete" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงาน" title="ลบแฟ้มผลงาน">−</button>` : ""}
         <div class="portfolio-card-content">
           <div class="portfolio-card-owner">${escapeHTML(ownerName)}</div>
           <span class="portfolio-type-chip">${portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : portfolio.portfolio_type === "pve" ? "PvE Build" : "PvP Build"}</span>
@@ -3049,6 +3088,21 @@ function registerPortfolioEvents() {
     $("portfolio-create-panel")?.classList.add("hidden");$("portfolio-add-button")?.setAttribute("aria-expanded","false");await renderPortfolios();
   });
   $("portfolio-manage-button")?.addEventListener("click",()=>{portfolioManageMode=!portfolioManageMode;void renderPortfolios();});
+  $("portfolio-grid")?.addEventListener("click", event => {
+    const card = event.target instanceof Element ? event.target.closest("[data-portfolio-card-id]") : null;
+    if (!card || event.target.closest("button,a,input,textarea,select,[data-portfolio-review]")) return;
+    void openPortfolioDetail(card.dataset.portfolioCardId);
+  });
+  $("portfolio-grid")?.addEventListener("keydown", event => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const card = event.target instanceof Element ? event.target.closest("[data-portfolio-card-id]") : null;
+    if (!card || event.target !== card) return;
+    event.preventDefault();
+    void openPortfolioDetail(card.dataset.portfolioCardId);
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !$("portfolio-detail-modal")?.classList.contains("hidden")) closePortfolioDetail();
+  });
 
   $("class-legend")?.addEventListener("click", (event) => {
     const button = event.target.closest("[data-portfolio-class-filter]");
