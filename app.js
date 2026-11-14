@@ -5670,15 +5670,48 @@ function renderGuildFeedback() {
       ? (row.discord_notified_at
         ? '<span class="feedback-discord-state is-sent">ส่ง Discord แล้ว</span>'
         : '<button type="button" class="btn btn-outline btn-sm feedback-discord-retry" data-feedback-discord-retry="' + escapeHTML(row.id) + '">ส่ง Discord อีกครั้ง</button>') : "";
+    const deleteControl = management
+      ? '<button type="button" class="btn btn-danger btn-sm feedback-delete-button" data-feedback-delete="' + escapeHTML(row.id) + '">ลบรายการ</button>' : "";
     return '<article class="feedback-ticket-card" data-feedback-id="' + escapeHTML(row.id) + '">' +
       '<div class="feedback-ticket-topline"><span class="feedback-type-badge type-' + escapeHTML(row.type) + '">' +
       escapeHTML(FEEDBACK_TYPE_LABELS[row.type] || row.type) + '</span>' + feedbackStatusBadge(row.status) + '</div>' +
       '<h3>' + escapeHTML(row.title) + '</h3>' + memberLine +
       '<div class="feedback-ticket-content">' + sanitizeFeedbackHTML(row.content_html) + '</div>' +
-      '<div class="feedback-ticket-footer"><span>ส่งเมื่อ ' + escapeHTML(formatDate(row.created_at)) + '</span>' + updated + discordStatus + '</div>' +
+      '<div class="feedback-ticket-footer"><span>ส่งเมื่อ ' + escapeHTML(formatDate(row.created_at)) + '</span>' + updated + discordStatus + deleteControl + '</div>' +
       (statusControl ? '<div class="feedback-ticket-management">' + statusControl + '</div>' : "") +
       '</article>';
   }).join("");
+}
+
+async function deleteGuildFeedback(feedbackId, button) {
+  if (!isManagement()) {
+    alert("เฉพาะ Developer, Leader และ Management เท่านั้นที่ลบรายการได้");
+    return;
+  }
+  if (!feedbackId) return;
+  const row = feedbackRowsCache.find(item => item.id === feedbackId);
+  const title = row?.title || "รายการนี้";
+  if (!confirm("ยืนยันลบรายการแจ้งปัญหา / Feedback นี้หรือไม่?\\n\\n" + title + "\\n\\nการลบไม่สามารถกู้คืนได้")) return;
+
+  if (button) {
+    button.disabled = true;
+    button.textContent = "กำลังลบ...";
+  }
+  try {
+    const { error } = await supabaseClient.rpc("delete_guild_feedback_secure", {
+      p_feedback_id: feedbackId
+    });
+    if (error) throw error;
+    feedbackRowsCache = feedbackRowsCache.filter(item => item.id !== feedbackId);
+    renderGuildFeedback();
+  } catch (error) {
+    console.error("Delete guild feedback:", error);
+    alert("ลบรายการไม่สำเร็จ: " + (error.message || "กรุณาลองอีกครั้ง"));
+    if (button) {
+      button.disabled = false;
+      button.textContent = "ลบรายการ";
+    }
+  }
 }
 
 async function loadGuildFeedback() {
@@ -5839,6 +5872,11 @@ function registerFeedbackEvents() {
   });
 
   page.addEventListener("click", async event => {
+    const deleteButton = event.target.closest("[data-feedback-delete]");
+    if (deleteButton) {
+      await deleteGuildFeedback(deleteButton.dataset.feedbackDelete, deleteButton);
+      return;
+    }
     const retry = event.target.closest("[data-feedback-discord-retry]");
     if (retry) {
       if (!isManagement()) return;
