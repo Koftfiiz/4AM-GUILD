@@ -6868,3 +6868,45 @@ body select:disabled {
 @media(max-width:560px){.manual-member-class-summary{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.manual-member-class-chip{min-height:49px;padding:7px 8px;gap:7px}.manual-member-class-chip img{width:26px;height:26px;flex-basis:26px}.manual-member-class-chip span{font-size:14px}}
 
 
+
+
+
+/* 4AM Portfolio Review Center — black/red visual system, readable typography */
+#page-portfolio-review-center { --review-red:#e8333f; }
+#page-portfolio-review-center, #page-portfolio-review-center p, #page-portfolio-review-center small,
+#page-portfolio-review-center label, #page-portfolio-review-center input, #page-portfolio-review-center select,
+#page-portfolio-review-center button { font-size:15px; }
+#page-portfolio-review-center .page-intro p,#page-portfolio-review-center .portfolio-review-list-heading p { color:#b9aeb0; }
+#page-portfolio-review-center .panel { background:linear-gradient(145deg,#151112,#090909); border:1px solid rgba(232,51,63,.22); }
+.portfolio-review-overview { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin:22px 0; }
+.portfolio-review-stat { min-width:0; padding:18px; border:1px solid rgba(232,51,63,.24); border-radius:12px; background:linear-gradient(145deg,#191315,#0b0a0b); display:grid; gap:7px; }
+.portfolio-review-stat>span { color:#d8cdd0; font-weight:650; }
+.portfolio-review-stat strong { color:#fff; font-size:28px; line-height:1.2; font-weight:850; }
+.portfolio-review-stat small { color:#a99da0; }
+.portfolio-review-stat.is-pending { border-color:rgba(232,51,63,.55); }
+.portfolio-review-stat.is-pending strong,.portfolio-review-stat.is-incomplete strong,.portfolio-review-stat.is-rejected strong { color:#ff626d; }
+.portfolio-review-stat.is-approved strong { color:#f3f3f3; }
+.portfolio-review-list-panel { padding:22px; }
+.portfolio-review-list-heading { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:18px; }
+.portfolio-review-list-heading h3 { margin:5px 0; color:#fff; font-size:21px; }
+.portfolio-review-list-heading p { margin:0; }
+.portfolio-review-toolbar { display:grid; grid-template-columns:minmax(220px,1fr) minmax(180px,240px); gap:12px; margin-bottom:16px; }
+.portfolio-review-search { display:flex; align-items:center; gap:10px; min-height:48px; padding:0 14px; border:1px solid rgba(232,51,63,.28); border-radius:9px; background:#090909; color:#ff626d; }
+.portfolio-review-search input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:#fff; font:inherit; }
+.portfolio-review-toolbar select { min-height:48px; padding:0 12px; border:1px solid rgba(232,51,63,.28); border-radius:9px; background:#100d0e; color:#fff; font:inherit; }
+.portfolio-review-queue { display:grid; gap:10px; }
+.portfolio-review-row { display:flex; align-items:center; justify-content:space-between; gap:18px; padding:16px; border:1px solid rgba(255,255,255,.09); border-left:3px solid #b3202e; border-radius:10px; background:linear-gradient(100deg,#171214,#0d0b0c); }
+.portfolio-review-row-main { display:grid; gap:5px; min-width:0; }
+.portfolio-review-row-owner { color:#ff626d; font-weight:750; }
+.portfolio-review-row-main strong { color:#fff; font-size:16px; overflow-wrap:anywhere; }
+.portfolio-review-row-meta,.portfolio-review-missing,.portfolio-review-reason-preview { color:#b9aeb0; font-size:15px; overflow-wrap:anywhere; }
+.portfolio-review-missing { color:#ff858d; }
+.portfolio-review-reason-preview { color:#e5b8bc; }
+.portfolio-review-row-side { display:flex; align-items:flex-end; flex-direction:column; gap:10px; flex-shrink:0; }
+.portfolio-review-queue-status { display:inline-flex; align-items:center; min-height:30px; padding:4px 10px; border:1px solid rgba(232,51,63,.4); border-radius:999px; color:#ff7b84; font-weight:700; white-space:nowrap; }
+.portfolio-review-queue-status.is-approved { border-color:rgba(255,255,255,.24); color:#fff; }
+.portfolio-review-queue-status.is-incomplete { background:rgba(232,51,63,.12); }
+.portfolio-review-open { min-height:42px; border-color:rgba(232,51,63,.48); color:#fff; }
+.portfolio-review-open:hover { background:#b3202e; border-color:#e8333f; }
+@media(max-width:1050px) { .portfolio-review-overview { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media(max-width:650px) { .portfolio-review-overview { grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; } .portfolio-review-stat { padding:13px; } .portfolio-review-stat strong { font-size:24px; } .portfolio-review-list-panel { padding:14px; } .portfolio-review-toolbar { grid-template-columns:1fr; } .portfolio-review-row { align-items:stretch; flex-direction:column; } .portfolio-review-row-side { align-items:flex-start; flex-direction:row; flex-wrap:wrap; } .portfolio-review-open { width:100%; } }
