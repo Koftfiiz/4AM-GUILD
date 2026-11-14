@@ -1674,7 +1674,7 @@ function renderManualMemberManagement() {
     );
   });
 
-  const memberRows = allVisibleMembers.map(member => {
+  const memberRows = allVisibleMembers.map((member, index) => {
     const cls = getClassInfo(member.game_class);
     const isAccount = member._recordType === "account";
     const name = member.character_name || (isAccount ? getMemberName(member) : "");
@@ -1691,6 +1691,7 @@ function renderManualMemberManagement() {
          <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>`;
 
     return `<tr>
+      <td class="manual-member-number" style="text-align:center;font-weight:700;">${index + 1}</td>
       <td><strong>${escapeHTML(name)}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")} · ${identityNote}</small></td>
       <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class || "ยังไม่ระบุ")}</span></td>
       <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
@@ -1703,7 +1704,7 @@ function renderManualMemberManagement() {
   list.innerHTML = `
     <div class="manual-member-table-wrap">
       <table class="manual-member-table">
-        <thead><tr><th>สมาชิก</th><th>Class</th><th>ตำแหน่งกิลด์</th><th>สถานะ</th><th>ออนไลน์</th><th>จัดการ</th></tr></thead>
+        <thead><tr><th style="text-align:center;">ลำดับ</th><th>สมาชิก</th><th>Class</th><th>ตำแหน่งกิลด์</th><th>สถานะ</th><th>ออนไลน์</th><th>จัดการ</th></tr></thead>
         <tbody>${memberRows}</tbody>
       </table>
     </div>`;
