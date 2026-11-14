@@ -2608,7 +2608,7 @@ async function openPortfolioDetail(portfolioId) {
   const body = $("portfolio-detail-body");
   const owner = allMembers.find(member => member.user_id === portfolio.member_id);
   const images = portfolio.portfolio_images || [];
-  const title = portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : (/^build\\b/i.test(portfolio.title || "") ? portfolio.title : "Build " + (portfolio.title || "Untitled"));
+  const title = portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : (/^build\b/i.test(portfolio.title || "") ? portfolio.title : "Build " + (portfolio.title || "Untitled"));
   const sectionLabels = { cultivation:"คัมภีร์หู่เฉียน", hero_skills:"ขั้นสกิลเหล่าผู้กล้า / อัลติ", stats:"Stats ตัวละคร", inner_power:"กำลังภายใน", affixes:"ออฟสร้าง", weapons:"ศาสตราวุธ" };
   const imageCards = await Promise.all(images.map(async image => {
     const url = await getPortfolioImageUrl(image.cover_image_url || image.image_url);
