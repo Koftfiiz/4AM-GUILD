@@ -6000,23 +6000,40 @@ async function clearAllFeedbackNotifications() {
     button.disabled = true;
     button.textContent = "กำลังล้าง...";
   }
-  const { error } = await supabaseClient.from("guild_notifications")
-    .delete()
-    .eq("recipient_user_id", currentUser.id);
-  if (error) {
+  try {
+    // Request the deleted IDs back: Supabase can return no error when RLS
+    // silently prevents a DELETE, so never clear the UI cache optimistically.
+    const { data: deletedRows, error: deleteError } = await supabaseClient
+      .from("guild_notifications")
+      .delete()
+      .eq("recipient_user_id", currentUser.id)
+      .select("id");
+    if (deleteError) throw deleteError;
+
+    // Verify against the database before showing the empty state. This also
+    // catches partial deletes and missing DELETE policies.
+    const { data: remainingRows, error: verifyError } = await supabaseClient
+      .from("guild_notifications")
+      .select("id")
+      .eq("recipient_user_id", currentUser.id)
+      .limit(1);
+    if (verifyError) throw verifyError;
+    if (remainingRows?.length) {
+      await loadFeedbackNotifications();
+      alert("ล้างการแจ้งเตือนไม่สำเร็จ: ฐานข้อมูลยังมีรายการคงเหลือ กรุณาตรวจสอบสิทธิ์ DELETE (RLS) ของตาราง guild_notifications");
+      return;
+    }
+    feedbackNotificationsCache = [];
+    renderFeedbackNotifications();
+  } catch (error) {
     console.error("Clear guild notifications:", error);
-    alert("ไม่สามารถล้างการแจ้งเตือนได้: " + error.message);
+    await loadFeedbackNotifications();
+    alert("ไม่สามารถล้างการแจ้งเตือนได้: " + (error?.message || "Unknown error"));
+  } finally {
     if (button) {
       button.disabled = false;
       button.textContent = "ล้างทั้งหมด";
     }
-    return;
-  }
-  feedbackNotificationsCache = [];
-  renderFeedbackNotifications();
-  if (button) {
-    button.disabled = false;
-    button.textContent = "ล้างทั้งหมด";
   }
 }
 
@@ -6031,7 +6048,7 @@ function subscribeToFeedbackRealtime() {
       if (!$("page-feedback")?.classList.contains("hidden")) loadGuildFeedback();
     })
     .on("postgres_changes", {
-      event: "INSERT", schema: "public", table: "guild_notifications",
+      event: "*", schema: "public", table: "guild_notifications",
       filter: "recipient_user_id=eq." + currentUser.id
     }, loadFeedbackNotifications)
     .subscribe();
