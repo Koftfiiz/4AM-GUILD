@@ -1635,31 +1635,11 @@ function renderManualMemberManagement() {
   const list = $("manual-member-list");
   const summary = $("manual-member-summary");
   if (!list) return;
+
   const linkedCount = allMembers.length;
   // A linked Manual row is represented by its real guild_members account row.
   // Keep the source record for administration, but do not render/count it twice.
-  const guildPositionOrder = new Map(
-    GUILD_POSITIONS.map((position, index) => [position, index])
-  );
-  const unlinkedManualMembers = manualGuildMembers
-    .filter(member => !member.linked_user_id)
-    .sort((a, b) => {
-      const rankA = guildPositionOrder.has(a.guild_position)
-        ? guildPositionOrder.get(a.guild_position)
-        : Number.MAX_SAFE_INTEGER;
-      const rankB = guildPositionOrder.has(b.guild_position)
-        ? guildPositionOrder.get(b.guild_position)
-        : Number.MAX_SAFE_INTEGER;
-
-      // Highest guild position first; unassigned/unknown positions go last.
-      if (rankA !== rankB) return rankA - rankB;
-
-      // Keep members within the same position in Thai character-name order.
-      return String(a.character_name || "").localeCompare(
-        String(b.character_name || ""),
-        "th"
-      );
-    });
+  const unlinkedManualMembers = manualGuildMembers.filter(member => !member.linked_user_id);
   const manualCount = unlinkedManualMembers.length;
   const activeCount =
     allMembers.filter(member => member.active).length +
@@ -1671,33 +1651,52 @@ function renderManualMemberManagement() {
     return;
   }
 
-  const accountRows = allMembers.map(member => {
+  // Sort every visible row together, regardless of whether the member has
+  // linked a website account. GUILD_POSITIONS defines highest-to-lowest order.
+  const guildPositionOrder = new Map(
+    GUILD_POSITIONS.map((position, index) => [position, index])
+  );
+  const allVisibleMembers = [
+    ...allMembers.map(member => ({ ...member, _recordType: "account" })),
+    ...unlinkedManualMembers.map(member => ({ ...member, _recordType: "manual" }))
+  ].sort((a, b) => {
+    const rankA = guildPositionOrder.has(a.guild_position)
+      ? guildPositionOrder.get(a.guild_position)
+      : Number.MAX_SAFE_INTEGER;
+    const rankB = guildPositionOrder.has(b.guild_position)
+      ? guildPositionOrder.get(b.guild_position)
+      : Number.MAX_SAFE_INTEGER;
+
+    if (rankA !== rankB) return rankA - rankB;
+    return String(a.character_name || "").localeCompare(
+      String(b.character_name || ""),
+      "th"
+    );
+  });
+
+  const memberRows = allVisibleMembers.map(member => {
     const cls = getClassInfo(member.game_class);
+    const isAccount = member._recordType === "account";
+    const name = member.character_name || (isAccount ? getMemberName(member) : "");
+    const identityNote = isAccount
+      ? "บัญชีเชื่อมต่อแล้ว"
+      : "ยังไม่มีบัญชีเข้าใช้งาน";
+    const presence = isAccount
+      ? renderGuildPresenceStatus(member.user_id)
+      : renderGuildPresenceStatus(null);
+    const actions = isAccount
+      ? `<button type="button" class="btn btn-outline btn-sm" data-account-edit="${escapeHTML(member.user_id)}">แก้ไข</button>
+         <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-account-toggle="${escapeHTML(member.user_id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>`
+      : `<button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button>
+         <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>`;
+
     return `<tr>
-      <td><strong>${escapeHTML(member.character_name || getMemberName(member))}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")} · บัญชีเชื่อมต่อแล้ว</small></td>
+      <td><strong>${escapeHTML(name)}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")} · ${identityNote}</small></td>
       <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class || "ยังไม่ระบุ")}</span></td>
       <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
       <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
-      <td>${renderGuildPresenceStatus(member.user_id)}</td>
-      <td><div class="manual-member-actions">
-        <button type="button" class="btn btn-outline btn-sm" data-account-edit="${escapeHTML(member.user_id)}">แก้ไข</button>
-        <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-account-toggle="${escapeHTML(member.user_id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
-      </div></td>
-    </tr>`;
-  }).join("");
-
-  const manualRows = unlinkedManualMembers.map(member => {
-    const cls = getClassInfo(member.game_class);
-    return `<tr>
-      <td><strong>${escapeHTML(member.character_name)}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")} · ยังไม่มีบัญชีเข้าใช้งาน</small></td>
-      <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class)}</span></td>
-      <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
-      <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
-      <td>${renderGuildPresenceStatus(null)}</td>
-      <td><div class="manual-member-actions">
-        <button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button>
-        <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>
-      </div></td>
+      <td>${presence}</td>
+      <td><div class="manual-member-actions">${actions}</div></td>
     </tr>`;
   }).join("");
 
@@ -1705,7 +1704,7 @@ function renderManualMemberManagement() {
     <div class="manual-member-table-wrap">
       <table class="manual-member-table">
         <thead><tr><th>สมาชิก</th><th>Class</th><th>ตำแหน่งกิลด์</th><th>สถานะ</th><th>ออนไลน์</th><th>จัดการ</th></tr></thead>
-        <tbody>${accountRows}${manualRows}</tbody>
+        <tbody>${memberRows}</tbody>
       </table>
     </div>`;
 }
