@@ -1553,9 +1553,28 @@ function renderManualMemberManagement() {
   const linkedCount = allMembers.length;
   // A linked Manual row is represented by its real guild_members account row.
   // Keep the source record for administration, but do not render/count it twice.
-  const unlinkedManualMembers = manualGuildMembers.filter(
-    member => !member.linked_user_id
+  const guildPositionOrder = new Map(
+    GUILD_POSITIONS.map((position, index) => [position, index])
   );
+  const unlinkedManualMembers = manualGuildMembers
+    .filter(member => !member.linked_user_id)
+    .sort((a, b) => {
+      const rankA = guildPositionOrder.has(a.guild_position)
+        ? guildPositionOrder.get(a.guild_position)
+        : Number.MAX_SAFE_INTEGER;
+      const rankB = guildPositionOrder.has(b.guild_position)
+        ? guildPositionOrder.get(b.guild_position)
+        : Number.MAX_SAFE_INTEGER;
+
+      // Highest guild position first; unassigned/unknown positions go last.
+      if (rankA !== rankB) return rankA - rankB;
+
+      // Keep members within the same position in Thai character-name order.
+      return String(a.character_name || "").localeCompare(
+        String(b.character_name || ""),
+        "th"
+      );
+    });
   const manualCount = unlinkedManualMembers.length;
   const activeCount =
     allMembers.filter(member => member.active).length +
