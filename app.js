@@ -3747,37 +3747,12 @@ async function deleteWarEvent(eventId,button){
   }
   if(!window.confirm(`ยืนยันลบวอร์ "${event.event_name}" (${getWarEventStage(event).toUpperCase()}) ใช่หรือไม่?\\n\\nระบบจะลบข้อมูลปาร์ตี้ สมาชิกในปาร์ตี้ การสมัคร ประวัติการจัดตี้ และกิจกรรมที่ผูกกับวอร์นี้ทั้งหมด ไม่สามารถกู้คืนได้`))return;
   if(button){button.disabled=true;button.textContent="กำลังลบ...";}
-  const removeRows=async(table,column,value)=>{
-    const result=await supabaseClient.from(table).delete().eq(column,value);
-    if(result.error)throw new Error(`ลบข้อมูลจากตาราง ${table} ไม่สำเร็จ: ${result.error.message}`);
-  };
   try{
-    // Delete dependent rows from the deepest child tables upward, scoped to this event only.
-    const partiesResult=await supabaseClient.from("war_parties").select("id").eq("event_id",eventId);
-    if(partiesResult.error)throw new Error("อ่านรายการปาร์ตี้ไม่สำเร็จ: "+partiesResult.error.message);
-    const partyIds=(partiesResult.data||[]).map(row=>row.id);
-
-    const rewardsResult=await supabaseClient.from("reward_events").select("id").eq("war_event_id",eventId);
-    if(rewardsResult.error)throw new Error("อ่านกิจกรรมรางวัลไม่สำเร็จ: "+rewardsResult.error.message);
-    const rewardIds=(rewardsResult.data||[]).map(row=>row.id);
-
-    if(rewardIds.length){
-      const rewardSignups=await supabaseClient.from("reward_event_signups").delete().in("event_id",rewardIds);
-      if(rewardSignups.error)throw new Error("ลบผู้สมัครกิจกรรมรางวัลไม่สำเร็จ: "+rewardSignups.error.message);
-      await removeRows("reward_events","war_event_id",eventId);
-    }
-    await removeRows("duck_race_events","source_war_event_id",eventId);
-    await removeRows("war_attendance_records","war_event_id",eventId);
-    await removeRows("war_event_roster_audit","event_id",eventId);
-    await removeRows("war_event_roster_snapshots","event_id",eventId);
-    await removeRows("war_leave_requests","event_id",eventId);
-    await removeRows("war_signups","event_id",eventId);
-    if(partyIds.length){
-      const partyMembers=await supabaseClient.from("war_party_members").delete().in("party_id",partyIds);
-      if(partyMembers.error)throw new Error("ลบสมาชิกในปาร์ตี้ไม่สำเร็จ: "+partyMembers.error.message);
-    }
-    await removeRows("war_parties","event_id",eventId);
-    await removeRows("war_events","id",eventId);
+    // Perform the complete deletion in one database transaction through the secured RPC.
+    const { error: deleteError } = await supabaseClient.rpc("delete_war_event_secure", {
+      p_event_id: eventId
+    });
+    if(deleteError)throw new Error(deleteError.message);
 
     const check=await supabaseClient.from("war_events").select("id").eq("id",eventId).maybeSingle();
     if(check.error)throw check.error;
