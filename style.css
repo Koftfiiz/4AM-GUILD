@@ -6573,3 +6573,38 @@ body select:disabled {
 
 /* Date/time picker escapes scrollable panels and anchors to the clicked field. */
 .global-date-time-popover{position:fixed!important;z-index:10000!important;max-height:min(78vh,560px);overflow-y:auto;overscroll-behavior:contain}
+
+
+/* Discord member picker inside Manual Member form */
+.discord-member-selection{display:grid;gap:10px;padding:13px;border:1px solid rgba(205,105,113,.24);border-radius:11px;background:rgba(5,4,6,.34)}
+.discord-member-selected{display:flex;align-items:center;gap:11px;min-height:48px;color:#f8e8e8}
+.discord-member-selected>img{width:42px;height:42px;border-radius:50%;object-fit:cover;border:1px solid rgba(205,105,113,.45)}
+.discord-member-selected.is-empty{color:#b8a5a8;font-size:14px}
+.discord-member-selected-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:rgba(88,101,242,.14);color:#8d96ff;font-size:22px}
+.discord-member-selected-copy{display:grid;gap:2px;min-width:0;flex:1}
+.discord-member-selected-copy strong{color:#fff;font-size:14px;overflow-wrap:anywhere}
+.discord-member-selected-copy small{color:#b9a6aa;font-size:12px;overflow-wrap:anywhere}
+.discord-member-selected-check{color:#82dfa2;font-size:20px;font-weight:900}
+.discord-member-selection-actions{display:flex;gap:8px;flex-wrap:wrap}
+.discord-member-picker{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:18px}
+.discord-member-picker.hidden{display:none!important}
+.discord-member-picker-backdrop{position:absolute;inset:0;border:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px)}
+.discord-member-picker-panel{position:relative;z-index:1;width:min(620px,100%);max-height:min(82vh,760px);display:flex;flex-direction:column;gap:14px;padding:22px;border:1px solid rgba(196,62,76,.5);border-radius:16px;background:linear-gradient(150deg,#211216,#0d090b);box-shadow:0 28px 100px rgba(0,0,0,.8)}
+.discord-member-picker-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.discord-member-picker-heading h3{margin:5px 0;color:#fff;font-size:20px}
+.discord-member-picker-heading p{margin:0;color:#bdaaad;font-size:13px}
+.discord-member-picker-search{width:100%;min-height:44px;padding:10px 13px;border:1px solid rgba(205,105,113,.32);border-radius:9px;background:rgba(0,0,0,.35);color:#fff;outline:none}
+.discord-member-picker-search:focus{border-color:#e36a75;box-shadow:0 0 0 3px rgba(196,48,65,.16)}
+.discord-member-picker-status{margin:0;color:#bdaaad;font-size:13px}
+.discord-member-picker-list{min-height:100px;overflow:auto;display:grid;gap:7px;padding-right:3px}
+.discord-member-option{display:flex;align-items:center;gap:11px;width:100%;padding:9px 11px;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:rgba(255,255,255,.025);color:#f7eaea;text-align:left}
+.discord-member-option:hover{border-color:rgba(220,90,105,.55);background:rgba(160,35,50,.14)}
+.discord-member-option-avatar img,.discord-member-option-avatar-fallback{display:grid;place-items:center;width:40px;height:40px;border-radius:50%;object-fit:cover;background:rgba(88,101,242,.16);color:#9da4ff}
+.discord-member-option-copy{display:grid;gap:2px;min-width:0;flex:1}
+.discord-member-option-copy strong{font-size:14px;overflow-wrap:anywhere}
+.discord-member-option-copy small{font-size:12px;color:#b9a6aa;overflow-wrap:anywhere}
+.discord-member-option-select{color:#f18b96;font-size:13px;font-weight:800}
+.discord-member-picker-loading,.discord-member-picker-empty,.discord-member-picker-error{padding:24px 12px;text-align:center;color:#c4afb2;font-size:14px}
+.discord-member-picker-error{color:#f2a0a8}
+.discord-member-picker-footer{display:flex;justify-content:flex-end;padding-top:8px;border-top:1px solid rgba(255,255,255,.07)}
+@media(max-width:620px){.discord-member-picker-panel{padding:16px;max-height:88vh}.manual-member-modal-panel .manual-member-form{grid-template-columns:1fr}.manual-member-field-wide{grid-column:auto}}
