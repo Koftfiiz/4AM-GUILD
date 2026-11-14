@@ -2493,6 +2493,14 @@ async function savePortfolioCrop() {
   finally { button.disabled=false; button.textContent="ใช้ภาพนี้เป็นหน้าปก"; }
 }
 
+function setPortfolioTitleFieldVisibility(portfolioType = $("portfolio-type")?.value || "pvp") {
+  const titleField = $("portfolio-title")?.closest(".portfolio-field");
+  const isCultivationSkills = portfolioType === "cultivation_skills";
+  titleField?.classList.toggle("hidden", isCultivationSkills);
+  const titleInput = $("portfolio-title");
+  if (titleInput) titleInput.required = !isCultivationSkills;
+}
+
 function resetPortfolioForm() {
   const form = $("portfolio-create-form");
   if (form) form.reset();
@@ -2504,6 +2512,7 @@ function resetPortfolioForm() {
   $("portfolio-type-step")?.classList.remove("hidden");
   $("portfolio-create-form")?.classList.add("hidden");
   $("portfolio-type").value = "pvp";
+  setPortfolioTitleFieldVisibility("pvp");
   window.editingPortfolioId = null;
   window.portfolioOriginalImages = [];
   renderPortfolioClassChoices();
@@ -2675,7 +2684,7 @@ async function renderPortfolios() {
           <div class="portfolio-card-owner">${escapeHTML(ownerName)}</div>
           <span class="portfolio-type-chip">${portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : portfolio.portfolio_type === "pve" ? "PvE Build" : "PvP Build"}</span>
           <div class="portfolio-card-tags">${classTags || '<span class="portfolio-card-tag">Unassigned</span>'}</div>
-          <h3>${escapeHTML(portfolio.portfolio_type === "cultivation_skills" ? (portfolio.title || "Untitled") : (/^build\b/i.test(portfolio.title||"")?(portfolio.title||"Untitled"):"Build "+(portfolio.title||"Untitled")))}</h3>
+          <h3>${escapeHTML(portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : (/^build\b/i.test(portfolio.title||"")?(portfolio.title||"Untitled"):"Build "+(portfolio.title||"Untitled")))}</h3>
           <p>${escapeHTML(portfolio.description || "")}</p>
           <div class="portfolio-card-footer">
             <small>${images.length} รูป · ${formatDate(portfolio.created_at)}</small>
@@ -2827,17 +2836,18 @@ async function createPortfolio({ title, description = "", gameClasses = [], port
 
 async function handlePortfolioCreate(event) {
   event.preventDefault();
-  const title = $("portfolio-title")?.value.trim();
+  const portfolioType = $("portfolio-type")?.value || "pvp";
+  const isCultivationSkills = portfolioType === "cultivation_skills";
+  const title = isCultivationSkills ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : ($("portfolio-title")?.value.trim() || "");
   const description = $("portfolio-description")?.value.trim() || "";
   const files = window.portfolioDraftFiles || [];
   const selectedClasses = [...document.querySelectorAll(".portfolio-class-tag.is-selected")]
     .map((button) => button.dataset.class);
-  const portfolioType = $("portfolio-type")?.value || "pvp";
   const status = $("portfolio-form-status");
   const submit = $("portfolio-create-submit");
   const editingId = window.editingPortfolioId || null;
 
-  if (!title) {
+  if (!isCultivationSkills && !title) {
     if (status) status.textContent = "กรุณากรอกชื่อผลงาน";
     $("portfolio-title")?.focus();
     return;
@@ -2942,10 +2952,11 @@ async function startPortfolioEdit(portfolioId) {
   $("portfolio-title").value = portfolio.title || "";
   $("portfolio-description").value = portfolio.description || "";
   $("portfolio-type").value = portfolio.portfolio_type || "pvp";
+  setPortfolioTitleFieldVisibility($("portfolio-type").value);
   document.querySelectorAll("[data-portfolio-type]").forEach(button => button.classList.toggle("is-selected", button.dataset.portfolioType === $("portfolio-type").value));
   $("portfolio-type-step")?.classList.add("hidden");
   $("portfolio-create-form")?.classList.remove("hidden");
-  $("portfolio-title-label").textContent = $("portfolio-type").value === "cultivation_skills" ? "ชื่อแฟ้มคัมภีร์ / ขั้นสกิล" : "ชื่อ Build";
+  $("portfolio-title-label").textContent = "ชื่อ Build";
   renderPortfolioClassChoices();
   const selected = new Set(getPortfolioClasses(portfolio.game_class));
   document.querySelectorAll(".portfolio-class-tag").forEach((button) => {
@@ -3066,7 +3077,8 @@ function registerPortfolioEvents() {
     $("portfolio-type-step")?.classList.add("hidden");
     $("portfolio-create-form")?.classList.remove("hidden");
     const isSpecial = choice.dataset.portfolioType === "cultivation_skills";
-    $("portfolio-title-label").textContent = isSpecial ? "ชื่อแฟ้มคัมภีร์ / ขั้นสกิล" : "ชื่อ Build";
+    setPortfolioTitleFieldVisibility(choice.dataset.portfolioType);
+    $("portfolio-title-label").textContent = "ชื่อ Build";
     $("portfolio-form-heading")?.querySelector("h3")?.replaceChildren(document.createTextNode(isSpecial ? "สร้างแฟ้มคัมภีร์หู่เฉียน / ขั้นสกิล" : choice.dataset.portfolioType === "pve" ? "สร้างแฟ้ม PvE Build" : "สร้างแฟ้ม PvP Build"));
     renderPortfolioSelectedFiles();
   });
