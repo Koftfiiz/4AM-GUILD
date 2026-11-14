@@ -2856,7 +2856,8 @@ async function handlePortfolioCreate(event) {
     if (status) status.textContent = "กรุณาเก็บรูปภาพไว้อย่างน้อย 1 รูป";
     return;
   }
-  if (!files[0].existing && !files[0].cropBlob) {
+  // Cultivation manuals/skills use the uploaded image as-is; do not interrupt saving with the cover crop editor.
+  if (!isCultivationSkills && !files[0].existing && !files[0].cropBlob) {
     if (status) status.textContent = "กรุณาจัดตำแหน่งและ Crop ภาพหน้าปกก่อนบันทึก";
     await openPortfolioCropEditor(0);
     return;
