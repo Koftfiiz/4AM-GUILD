@@ -1136,7 +1136,7 @@ async function loadMembers() {
 
   const [accountsResult, manualResult] = await Promise.all([
     supabaseClient.from("guild_members").select("*").order("created_at", { ascending: true }),
-    supabaseClient.from("guild_manual_members").select("*").eq("active", true).order("character_name", { ascending: true })
+    supabaseClient.from("guild_manual_members").select("*").eq("active", true).is("linked_user_id", null).order("character_name", { ascending: true })
   ]);
 
   if (accountsResult.error) {
