@@ -6775,6 +6775,24 @@ if (document.readyState === "loading") {
 // AUTH SESSION INITIALIZATION
 // ==========================================
 
+let authAppBootPromise = null;
+
+async function bootAuthenticatedApplication() {
+  if (!currentUser) return;
+
+  if (authAppBootPromise) {
+    return authAppBootPromise;
+  }
+
+  authAppBootPromise = loadApplication();
+
+  try {
+    await authAppBootPromise;
+  } finally {
+    authAppBootPromise = null;
+  }
+}
+
 async function initializeAuth() {
   try {
     const { data, error } = await supabaseClient.auth.getSession();
@@ -6783,7 +6801,7 @@ async function initializeAuth() {
 
     if (data.session?.user) {
       currentUser = data.session.user;
-      await loadApplication();
+      await bootAuthenticatedApplication();
     } else {
       $("login-screen")?.classList.remove("hidden");
       $("app-layout")?.classList.add("hidden");
@@ -6802,6 +6820,25 @@ async function initializeAuth() {
 supabaseClient.auth.onAuthStateChange((event, session) => {
   if (event === "SIGNED_IN" && session?.user) {
     currentUser = session.user;
+
+    // OAuth may finish after initializeAuth() has already checked for a session.
+    // Defer Supabase work outside the auth callback to avoid holding its internal lock.
+    window.setTimeout(() => {
+      const appLayout = $("app-layout");
+      const appIsVisible = appLayout && !appLayout.classList.contains("hidden");
+
+      if (currentUser?.id !== session.user.id || (appIsVisible && currentMember)) {
+        return;
+      }
+
+      bootAuthenticatedApplication().catch(error => {
+        console.error("Post-login application startup failed:", error);
+        setConnectionStatus(
+          "ไม่สามารถตรวจสอบบัญชี Discord ได้: " + (error?.message || "Unknown error"),
+          false
+        );
+      });
+    }, 0);
   }
 
   if (event === "SIGNED_OUT") {
