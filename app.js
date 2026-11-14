@@ -4981,14 +4981,28 @@ function renderClassLegend() {
   const container = $("class-legend");
   if (!container) return;
 
+  // Count active guild members per class (not portfolios), so the number
+  // reflects how many characters can be found when that class is selected.
+  const activeMembers = (allMembers || []).filter(member => member.active !== false);
+  const totalCount = activeMembers.length;
+  const classCounts = new Map();
+  activeMembers.forEach(member => {
+    const className = getMemberClass(member).trim().toLowerCase();
+    if (className) classCounts.set(className, (classCounts.get(className) || 0) + 1);
+  });
+
   container.innerHTML = `
-    <button type="button" class="class-item class-filter-all ${portfolioClassFilter === "all" ? "is-active" : ""}" data-portfolio-class-filter="all" aria-pressed="${portfolioClassFilter === "all"}"><strong>All Classes</strong></button>
-    ${CLASS_DATA.map((item) => `
-      <button type="button" class="class-item ${portfolioClassFilter === item.name ? "is-active" : ""}" data-portfolio-class-filter="${escapeHTML(item.name)}" style="--class-color:${item.color}" aria-pressed="${portfolioClassFilter === item.name}">
-        <img class="class-icon-image" src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
-        <strong>${escapeHTML(item.name)}</strong>
-      </button>
-    `).join("")}
+    <button type="button" class="class-item class-filter-all ${portfolioClassFilter === "all" ? "is-active" : ""}" data-portfolio-class-filter="all" aria-pressed="${portfolioClassFilter === "all"}"><strong>All Classes</strong><span class="class-item-count">${totalCount}</span></button>
+    ${CLASS_DATA.map((item) => {
+      const count = classCounts.get(item.name.toLowerCase()) || 0;
+      return `
+        <button type="button" class="class-item ${portfolioClassFilter === item.name ? "is-active" : ""}" data-portfolio-class-filter="${escapeHTML(item.name)}" style="--class-color:${item.color}" aria-pressed="${portfolioClassFilter === item.name}">
+          <img class="class-icon-image" src="${escapeHTML(item.iconPath)}" alt="" loading="lazy">
+          <strong>${escapeHTML(item.name)}</strong>
+          <span class="class-item-count">${count}</span>
+        </button>
+      `;
+    }).join("")}
   `;
 }
 
