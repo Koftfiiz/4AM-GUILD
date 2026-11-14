@@ -548,7 +548,10 @@ async function loadApplication() {
 
   } catch (error) {
     console.error("Application loading error:", error);
-    setConnectionStatus("เชื่อมต่อแล้ว แต่มีข้อผิดพลาด", false);
+    setConnectionStatus(
+      "ไม่สามารถตรวจสอบบัญชี Discord ได้: " + (error?.message || "Unknown error"),
+      false
+    );
   }
 }
 
@@ -596,11 +599,14 @@ function getDiscordOAuthIdentity() {
 // The database RPC may link a pre-approved Manual record by exact Discord User ID;
 // it never grants a management role or bypasses the member active-status check.
 async function syncOwnDiscordOAuthIdentity() {
-  if (!currentUser) return;
+  if (!currentUser) {
+    throw new Error("ไม่พบข้อมูลผู้ใช้ที่เข้าสู่ระบบ");
+  }
 
   const { error } = await supabaseClient.rpc("sync_my_discord_account");
   if (error) {
-    console.warn("Discord identity sync is not installed yet:", error.message);
+    console.error("Discord identity sync failed:", error);
+    throw new Error(error.message || "ไม่สามารถบันทึกข้อมูล Discord OAuth ได้");
   }
 }
 
