@@ -3926,8 +3926,8 @@ function renderRaid(containerId,raidName,parties=[],options={}){
  const container=$(containerId);if(!container)return;const canArrange=options.editable===true;
  container.innerHTML=Array.from({length:5},(_,i)=>{const n=i+1,p=parties.find(x=>Number(x.party_number)===n),members=p?.war_party_members||[],partyMemberIds=members.map(slot=>slot.member_id).filter(Boolean);
  return `<article class="party-card" data-party-card data-raid="${raidName}"><div class="party-header"><div class="party-heading-fields"><h3>${raidName}${n}</h3>${p?.party_name&&p.party_name!==`${raidName}${n}`?`<small class="war-party-role-label">${escapeHTML(p.party_name)}</small>`:""}</div></div><div class="party-slots">${Array.from({length:6},(_,j)=>{const pos=j+1,slot=members.find(x=>Number(x.position)===pos),member=allMembers.find(x=>x.user_id===slot?.member_id);
- if(slot&&member){const info=getClassInfo(getMemberClass(member));return `<button class="party-slot party-slot-filled war-member-slot" type="button" data-war-manage-slot data-assignment-id="${escapeHTML(slot.id)}" data-party-id="${escapeHTML(p.id)}" data-position="${pos}" style="--class-color:${info?.color||"#aaa"}" ${canArrange?"":"disabled"}><img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath||"")}" alt="${escapeHTML(info?.name||"")}"><span class="war-member-identity"><strong class="slot-member-name">${escapeHTML(getMemberName(member))}</strong><small class="war-member-class">${escapeHTML(info?.name||getMemberClass(member))}</small></span><span class="war-member-skills" aria-label="Skill ของสมาชิก">${getMemberSkillIconsMarkup(member.user_id)}</span><span class="war-member-slot-edit">${canArrange?"MANAGE":""}</span></button>`;}
- return `<div class="party-slot ${canArrange&&p?"party-slot-editor":""}">${canArrange&&p?`<button class="war-slot-add-button" type="button" data-war-add-slot data-party-id="${escapeHTML(p.id)}" data-position="${pos}">＋ ADD</button>`:'<span class="slot-empty">Empty Slot</span>'}</div>`;
+ if(slot&&member){const info=getClassInfo(getMemberClass(member));return `<button class="party-slot party-slot-filled war-member-slot" type="button" data-war-manage-slot data-assignment-id="${escapeHTML(slot.id)}" data-party-id="${escapeHTML(p.id)}" data-position="${pos}" ${canArrange?'draggable="true"':""} style="--class-color:${info?.color||"#aaa"}" ${canArrange?"":"disabled"}><img class="war-slot-class-icon" src="${escapeHTML(info?.iconPath||"")}" alt="${escapeHTML(info?.name||"")}"><span class="war-member-identity"><strong class="slot-member-name">${escapeHTML(getMemberName(member))}</strong><small class="war-member-class">${escapeHTML(info?.name||getMemberClass(member))}</small></span><span class="war-member-skills" aria-label="Skill ของสมาชิก">${getMemberSkillIconsMarkup(member.user_id)}</span><span class="war-member-slot-edit">${canArrange?"MANAGE":""}</span></button>`;}
+ return `<div class="party-slot ${canArrange&&p?"party-slot-editor":""}" ${canArrange&&p?`data-war-drop-slot data-party-id="${escapeHTML(p.id)}" data-position="${pos}"`:""}>${canArrange&&p?`<button class="war-slot-add-button" type="button" data-war-add-slot data-party-id="${escapeHTML(p.id)}" data-position="${pos}">＋ ADD</button>`:'<span class="slot-empty">Empty Slot</span>'}</div>`;
  }).join("")}</div></article>`;}).join("");
 }
 
@@ -3942,7 +3942,7 @@ function renderWarAssignmentToolbar(raidCount=2){
 }
 function applyWarAssignmentMemberFilters(){
  const q=warAssignmentSearch.trim().toLowerCase(),members=getWarAssignmentRosterMembers().filter(m=>{const st=warMemberStatus(m.user_id);if(warAssignmentFilter==="leave"&&!st.leave)return false;if(warAssignmentFilter==="reserve"&&!st.reserve)return false;if(warAssignmentFilter==="absent"&&!st.absent)return false;if(["A","B","C","D"].includes(warAssignmentFilter)&&st.raid!==warAssignmentFilter)return false;if(warAssignmentClassFilter!=="all"&&getMemberClass(m).toLowerCase()!==warAssignmentClassFilter.toLowerCase())return false;return !q||getMemberName(m).toLowerCase().includes(q)||String(m.game_uid||"").includes(q);});
- const out=$("war-assignment-results");if(out){out.innerHTML=members.length?members.slice(0,40).map(m=>{const info=getClassInfo(getMemberClass(m)),st=warMemberStatus(m.user_id);return `<button class="war-assignment-member-pill" data-war-pool-member="${escapeHTML(m.user_id)}" type="button" style="--class-color:${info?.color||"#aaa"}"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span>${escapeHTML(getMemberName(m))}</span><small>${st.addedByManagement?"เพิ่มโดยฝ่ายบริหาร":st.leave?"ลาวอร์":st.absent?"ขาดวอร์":st.reserve?"สำรอง":st.raid?"RAID "+st.raid:"ยังไม่จัดตี้"}</small></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่ตรงกับตัวกรอง</p>';if(members.length>40)out.insertAdjacentHTML("beforeend",`<small class="war-assignment-more">แสดง 40 จาก ${members.length} คน · ใช้ช่องค้นหาเพื่อจำกัดผลลัพธ์</small>`);}
+ const out=$("war-assignment-results");if(out){out.innerHTML=members.length?members.slice(0,40).map(m=>{const info=getClassInfo(getMemberClass(m)),st=warMemberStatus(m.user_id);return `<button class="war-assignment-member-pill" data-war-pool-member="${escapeHTML(m.user_id)}" ${isManagement()?'draggable="true"':""} type="button" style="--class-color:${info?.color||"#aaa"}"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span>${escapeHTML(getMemberName(m))}</span><small>${st.addedByManagement?"เพิ่มโดยฝ่ายบริหาร":st.leave?"ลาวอร์":st.absent?"ขาดวอร์":st.reserve?"สำรอง":st.raid?"RAID "+st.raid:"ยังไม่จัดตี้"}</small></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่ตรงกับตัวกรอง</p>';if(members.length>40)out.insertAdjacentHTML("beforeend",`<small class="war-assignment-more">แสดง 40 จาก ${members.length} คน · ใช้ช่องค้นหาเพื่อจำกัดผลลัพธ์</small>`);}
  document.querySelectorAll("[data-war-filter]").forEach(b=>b.classList.toggle("is-active",b.dataset.warFilter===warAssignmentFilter));document.querySelectorAll("[data-war-class-filter]").forEach(b=>b.classList.toggle("is-active",b.dataset.warClassFilter===warAssignmentClassFilter));
  document.querySelectorAll("[data-raid-section]").forEach(s=>s.classList.toggle("hidden",["leave","reserve","absent"].includes(warAssignmentFilter)||(warAssignmentFilter!=="all"&&s.dataset.raidSection!==warAssignmentFilter)));
 }
@@ -3991,21 +3991,31 @@ function renderWarAssignmentModalMembers(){
  const members=allMembers.filter(m=>m.active===true&&!assigned.has(m.user_id)).filter(m=>!reserveOnly||warMemberStatus(m.user_id).reserve).filter(m=>cls==="all"||getMemberClass(m).toLowerCase()===cls.toLowerCase()).filter(m=>!q||getMemberName(m).toLowerCase().includes(q)||String(m.game_uid||"").includes(q)).sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));
  list.innerHTML=members.length?members.map(m=>{const info=getClassInfo(getMemberClass(m));return `<button class="war-modal-member-option" data-war-modal-assign="${escapeHTML(m.user_id)}" style="--class-color:${info?.color||"#aaa"}" type="button"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span><strong>${escapeHTML(getMemberName(m))}</strong><small>${escapeHTML(getMemberClass(m))} · UID ${escapeHTML(m.game_uid||"—")}</small></span><b>ADD</b></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่สามารถเพิ่มได้</p>';
 }
+async function persistWarMemberToPartySlot(memberId,slot){
+ const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);
+ if(!isManagement()||!event||!slot)return;
+ const party=currentWarParties.find(x=>x.id===slot.partyId);if(!party)return;
+ if(getAssignedWarMemberIds(slot.assignmentId).has(memberId))throw new Error("สมาชิกคนนี้ถูกจัดลงปาร์ตี้อื่นในวอร์รอบนี้แล้ว");
+ const snapshot=warAssignmentRosterSnapshot.find(x=>x.member_id===memberId);
+ const signupClosed=Boolean(event.signup_closes_at)&&Date.now()>=new Date(event.signup_closes_at).getTime();
+ if(signupClosed&&(!snapshot||["absent","leave"].includes(snapshot.roster_status))){
+  const reason=prompt("สมาชิกคนนี้ไม่ได้ลงชื่อทันเวลา/แจ้งลาไว้ กรุณาระบุเหตุผลที่ฝ่ายบริหารเพิ่มเข้าวอร์:");
+  if(reason===null)return false;
+  if(!reason.trim())throw new Error("กรุณาระบุเหตุผลในการเพิ่มสมาชิก");
+  const add=await supabaseClient.rpc("add_member_to_war_event_roster",{p_event_id:currentWarAssignmentEventId,p_member_id:memberId,p_reason:reason.trim()});
+  if(add.error)throw add.error;
+ }
+ const result=slot.assignmentId
+  ?await supabaseClient.from("war_party_members").update({member_id:memberId}).eq("id",slot.assignmentId).select().single()
+  :await supabaseClient.from("war_party_members").insert({party_id:slot.partyId,member_id:memberId,position:slot.position}).select().single();
+ if(result.error)throw result.error;
+ await loadSelectedWarEvent(currentWarAssignmentEventId);
+ return true;
+}
 async function assignWarMemberToSlot(id){
- const slot=warAssignmentModalSlot;if(!slot)return;const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event)return;const party=currentWarParties.find(x=>x.id===slot.partyId);if(!party)return;
- if(getAssignedWarMemberIds(slot.assignmentId).has(id)){alert("สมาชิกคนนี้ถูกจัดลงปาร์ตี้อื่นในวอร์รอบนี้แล้ว");return;}
- try{
-  const snapshot=warAssignmentRosterSnapshot.find(x=>x.member_id===id);
-  const signupClosed=Boolean(event.signup_closes_at)&&Date.now()>=new Date(event.signup_closes_at).getTime();
-  if(signupClosed&&(!snapshot||["absent","leave"].includes(snapshot.roster_status))){
-   const reason=prompt("สมาชิกคนนี้ไม่ได้ลงชื่อทันเวลา/แจ้งลาไว้ กรุณาระบุเหตุผลที่ฝ่ายบริหารเพิ่มเข้าวอร์:");
-   if(reason===null)return;
-   if(!reason.trim()){alert("กรุณาระบุเหตุผลในการเพิ่มสมาชิก");return;}
-   const add=await supabaseClient.rpc("add_member_to_war_event_roster",{p_event_id:currentWarAssignmentEventId,p_member_id:id,p_reason:reason.trim()});
-   if(add.error)throw add.error;
-  }
-  const r=slot.assignmentId?await supabaseClient.from("war_party_members").update({member_id:id}).eq("id",slot.assignmentId).select().single():await supabaseClient.from("war_party_members").insert({party_id:slot.partyId,member_id:id,position:slot.position}).select().single();if(r.error)throw r.error;await loadSelectedWarEvent(currentWarAssignmentEventId);closeWarAssignmentModal();
- }catch(e){console.error(e);const status=$("war-modal-status");if(status)status.textContent="บันทึกไม่สำเร็จ: "+(e.message||"กรุณาลองใหม่");}
+ const slot=warAssignmentModalSlot;if(!slot)return;
+ try{const saved=await persistWarMemberToPartySlot(id,slot);if(saved)closeWarAssignmentModal();}
+ catch(e){console.error(e);const status=$("war-modal-status");if(status)status.textContent="บันทึกไม่สำเร็จ: "+(e.message||"กรุณาลองใหม่");}
 }
 async function removeWarPartyMember(id,button){
  const event=allWarEvents.find(x=>x.id===currentWarAssignmentEventId);if(!isManagement()||!event||!id)return;if(button){button.disabled=true;button.textContent="กำลังนำออก...";}
@@ -5048,6 +5058,38 @@ function registerWarCreationEvents(){
  document.body.addEventListener("click",event=>{if(event.target.closest("[data-war-skill-edit-close]"))$("war-skill-edit-modal")?.remove();});
 
  $("war-raid-boards")?.addEventListener("click",e=>{const add=e.target.closest("[data-war-add-slot]"),manage=e.target.closest("[data-war-manage-slot]");if(add)openWarAssignmentModal(add.dataset.partyId,Number(add.dataset.position));else if(manage)openWarAssignmentModal(manage.dataset.partyId,Number(manage.dataset.position),manage.dataset.assignmentId);});
+ const warDragState={};
+ const getWarDragPayload=e=>{try{return JSON.parse(e.dataTransfer?.getData("application/x-4am-war-member")||"{}");}catch{return {};}};
+ const startWarDrag=(e,source)=>{if(!isManagement()||isRolePreviewActive())return;e.dataTransfer.effectAllowed="move";e.dataTransfer.setData("application/x-4am-war-member",JSON.stringify(source));e.currentTarget.classList.add("is-war-dragging");};
+ $("war-assignment-toolbar")?.addEventListener("dragstart",e=>{const pill=e.target.closest("[data-war-pool-member]");if(!pill)return;startWarDrag(e,{type:"pool",memberId:pill.dataset.warPoolMember});});
+ $("war-raid-boards")?.addEventListener("dragstart",e=>{const slot=e.target.closest("[data-war-manage-slot]");if(!slot||!slot.dataset.assignmentId)return;startWarDrag(e,{type:"assigned",assignmentId:slot.dataset.assignmentId,memberId:currentWarPartyAssignments.find(x=>x.id===slot.dataset.assignmentId)?.member_id});});
+ document.addEventListener("dragend",e=>{e.target.closest?.(".is-war-dragging")?.classList.remove("is-war-dragging");document.querySelectorAll(".is-war-drop-active").forEach(el=>el.classList.remove("is-war-drop-active"));});
+ $("war-raid-boards")?.addEventListener("dragover",e=>{const target=e.target.closest("[data-war-drop-slot]");if(!target||!isManagement()||isRolePreviewActive())return;e.preventDefault();e.dataTransfer.dropEffect="move";target.classList.add("is-war-drop-active");});
+ $("war-raid-boards")?.addEventListener("dragleave",e=>{const target=e.target.closest("[data-war-drop-slot]");if(target&&!target.contains(e.relatedTarget))target.classList.remove("is-war-drop-active");});
+ $("war-raid-boards")?.addEventListener("drop",async e=>{
+  const target=e.target.closest("[data-war-drop-slot]");if(!target)return;e.preventDefault();target.classList.remove("is-war-drop-active");
+  if(!isManagement()||isRolePreviewActive())return;
+  const payload=getWarDragPayload(e),partyId=target.dataset.partyId,position=Number(target.dataset.position),party=currentWarParties.find(x=>x.id===partyId);
+  if(!party||!position||!payload.memberId)return;
+  const slots=party.war_party_members||[];
+  if(slots.some(x=>Number(x.position)===position)){alert("ช่องนี้มีสมาชิกอยู่แล้ว");return;}
+  if(payload.type==="pool"){
+   if(getAssignedWarMemberIds().has(payload.memberId)){alert("สมาชิกคนนี้ถูกจัดลงปาร์ตี้แล้ว");return;}
+   try{const saved=await persistWarMemberToPartySlot(payload.memberId,{partyId,position});if(saved){target.classList.add("is-war-drop-saved");setTimeout(()=>target.classList.remove("is-war-drop-saved"),650);}}
+   catch(error){console.error("War drag assignment failed:",error);alert("จัดสมาชิกไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่"));}
+   return;
+  }
+  if(payload.type==="assigned"){
+   const assignment=currentWarPartyAssignments.find(x=>x.id===payload.assignmentId);if(!assignment||assignment.member_id!==payload.memberId)return;
+   if(assignment.party_id===partyId&&Number(assignment.position)===position)return;
+   try{
+    const result=await supabaseClient.from("war_party_members").update({party_id:partyId,position}).eq("id",assignment.id);
+    if(result.error)throw result.error;
+    await loadSelectedWarEvent(currentWarAssignmentEventId);
+   }catch(error){console.error("War drag move failed:",error);alert("ย้ายสมาชิกไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่"));}
+  }
+ });
+
  $("war-assignment-toolbar")?.addEventListener("click",e=>{const f=e.target.closest("[data-war-filter]"),c=e.target.closest("[data-war-class-filter]"),pool=e.target.closest("[data-war-pool-member]");if(f){warAssignmentFilter=f.dataset.warFilter||"all";applyWarAssignmentMemberFilters();}if(c){warAssignmentClassFilter=c.dataset.warClassFilter||"all";applyWarAssignmentMemberFilters();}if(pool){const p=currentWarParties.find(x=>x.raid===warAssignmentFilter&&(x.war_party_members||[]).length<6)||currentWarParties.find(x=>(x.war_party_members||[]).length<6);if(!p){alert("ไม่พบ Party ที่ว่าง");return;}const used=new Set((p.war_party_members||[]).map(x=>Number(x.position))),pos=[1,2,3,4,5,6].find(x=>!used.has(x));if(pos){openWarAssignmentModal(p.id,pos);const picked=allMembers.find(m=>m.user_id===pool.dataset.warPoolMember);const search=$("war-modal-member-search");if(picked&&search){search.value=getMemberName(picked);renderWarAssignmentModalMembers();}}}});
  $("war-assignment-toolbar")?.addEventListener("input",e=>{if(e.target.id==="war-assignment-search"){warAssignmentSearch=e.target.value;applyWarAssignmentMemberFilters();}});
  document.body.addEventListener("click",e=>{if(e.target.closest("[data-war-modal-close]")){closeWarAssignmentModal();return;}const tab=e.target.closest("[data-war-modal-tab]");if(tab){const modal=$("war-assignment-modal"),skillsPanel=$("war-modal-skills-panel"),membersPanel=$("war-modal-members-panel"),active=tab.dataset.warModalTab;if(modal)modal.dataset.activeTab=active;modal?.querySelectorAll("[data-war-modal-tab]").forEach(b=>{const selected=b===tab;b.classList.toggle("is-active",selected);b.setAttribute("aria-selected",String(selected));});if(skillsPanel)skillsPanel.hidden=active!=="skills";if(membersPanel)membersPanel.hidden=active!=="members";if(active==="members")renderWarAssignmentModalMembers();return;}const uploadToggle=e.target.closest("[data-war-skill-upload-toggle]");if(uploadToggle){const form=$("war-member-skill-create-form");if(form)form.hidden=!form.hidden;return;}const add=e.target.closest("[data-war-modal-assign]"),remove=e.target.closest("[data-war-modal-remove]"),saveSkills=e.target.closest("[data-war-save-member-skills]"),cls=e.target.closest("[data-war-modal-class]"),reserveTab=e.target.closest("[data-war-modal-reserve]");if(reserveTab){const modal=$("war-assignment-modal");if(modal){modal.dataset.reserveOnly=modal.dataset.reserveOnly==="true"?"false":"true";reserveTab.classList.toggle("is-active",modal.dataset.reserveOnly==="true");modal.querySelector("[data-war-modal-class=\"all\"]")?.classList.toggle("is-active",modal.dataset.reserveOnly!=="true");renderWarAssignmentModalMembers();}return;}if(saveSkills){saveWarMemberSkills(saveSkills.dataset.warSaveMemberSkills,saveSkills);return;}if(add){assignWarMemberToSlot(add.dataset.warModalAssign);return;}if(remove&&warAssignmentModalSlot?.assignmentId){removeWarPartyMember(warAssignmentModalSlot.assignmentId,remove);return;}if(cls){const modal=$("war-assignment-modal");if(modal)modal.dataset.classFilter=cls.dataset.warModalClass||"all";modal?.querySelectorAll("[data-war-modal-class]").forEach(b=>b.classList.toggle("is-active",b===cls));renderWarAssignmentModalMembers();}});
