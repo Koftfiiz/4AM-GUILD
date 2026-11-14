@@ -495,6 +495,9 @@ async function loadApplication() {
   setConnectionStatus("เชื่อมต่อกับ Supabase แล้ว", true);
 
   try {
+    // Sync Discord OAuth identity before checking guild_members.
+    // The database RPC can auto-match a pre-approved Manual member by exact Discord User ID.
+    await syncOwnDiscordOAuthIdentity();
     await loadCurrentMember();
     await loadAppearanceSettings();
 
@@ -518,9 +521,8 @@ async function loadApplication() {
 
     updateUserChip();
 
-    // Save Discord identity only after an active guild profile has passed the
-    // existing membership gate. OAuth login alone never grants app access.
-    await syncOwnDiscordOAuthIdentity();
+    // OAuth identity has already been synchronized before membership lookup.
+    // OAuth login alone never grants app access; loadCurrentMember remains the access gate.
     await loadDiscordAccount();
 
     await Promise.allSettled([
@@ -593,7 +595,7 @@ function getDiscordOAuthIdentity() {
 // Persist the signed-in member's own Discord OAuth identity through a
 // SECURITY DEFINER RPC. This never grants guild membership or changes roles.
 async function syncOwnDiscordOAuthIdentity() {
-  if (!currentUser || !currentMember || currentMember.active !== true) return;
+  if (!currentUser) return;
   const { discordId } = getDiscordOAuthIdentity();
   if (!discordId) {
     console.warn("Discord OAuth identity did not include a Discord user ID.");
