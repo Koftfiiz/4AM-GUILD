@@ -3745,20 +3745,49 @@ async function deleteWarEvent(eventId,button){
     alert("ไม่พบ War Event นี้ในรายการปัจจุบัน กรุณารีเฟรชหน้าแล้วลองอีกครั้ง");
     return;
   }
-  if(!window.confirm(`ยืนยันลบวอร์ "${event.event_name}" (${getWarEventStage(event).toUpperCase()}) ใช่หรือไม่?\\n\\nการลบนี้จะลบรายการวอร์ ปาร์ตี้ และรายชื่อสมาชิกที่ผูกกับวอร์นี้ทั้งหมด ไม่สามารถกู้คืนได้`))return;
+  if(!window.confirm(`ยืนยันลบวอร์ "${event.event_name}" (${getWarEventStage(event).toUpperCase()}) ใช่หรือไม่?\\n\\nระบบจะลบข้อมูลปาร์ตี้ สมาชิกในปาร์ตี้ การสมัคร ประวัติการจัดตี้ และกิจกรรมที่ผูกกับวอร์นี้ทั้งหมด ไม่สามารถกู้คืนได้`))return;
   if(button){button.disabled=true;button.textContent="กำลังลบ...";}
+  const removeRows=async(table,column,value)=>{
+    const result=await supabaseClient.from(table).delete().eq(column,value);
+    if(result.error)throw new Error(`ลบข้อมูลจากตาราง ${table} ไม่สำเร็จ: ${result.error.message}`);
+  };
   try{
-    const {error}=await supabaseClient.from("war_events").delete().eq("id",eventId);
-    if(error)throw error;
+    // Delete dependent rows from the deepest child tables upward, scoped to this event only.
+    const partiesResult=await supabaseClient.from("war_parties").select("id").eq("event_id",eventId);
+    if(partiesResult.error)throw new Error("อ่านรายการปาร์ตี้ไม่สำเร็จ: "+partiesResult.error.message);
+    const partyIds=(partiesResult.data||[]).map(row=>row.id);
+
+    const rewardsResult=await supabaseClient.from("reward_events").select("id").eq("war_event_id",eventId);
+    if(rewardsResult.error)throw new Error("อ่านกิจกรรมรางวัลไม่สำเร็จ: "+rewardsResult.error.message);
+    const rewardIds=(rewardsResult.data||[]).map(row=>row.id);
+
+    if(rewardIds.length){
+      const rewardSignups=await supabaseClient.from("reward_event_signups").delete().in("event_id",rewardIds);
+      if(rewardSignups.error)throw new Error("ลบผู้สมัครกิจกรรมรางวัลไม่สำเร็จ: "+rewardSignups.error.message);
+      await removeRows("reward_events","war_event_id",eventId);
+    }
+    await removeRows("duck_race_events","source_war_event_id",eventId);
+    await removeRows("war_attendance_records","war_event_id",eventId);
+    await removeRows("war_event_roster_audit","event_id",eventId);
+    await removeRows("war_event_roster_snapshots","event_id",eventId);
+    await removeRows("war_leave_requests","event_id",eventId);
+    await removeRows("war_signups","event_id",eventId);
+    if(partyIds.length){
+      const partyMembers=await supabaseClient.from("war_party_members").delete().in("party_id",partyIds);
+      if(partyMembers.error)throw new Error("ลบสมาชิกในปาร์ตี้ไม่สำเร็จ: "+partyMembers.error.message);
+    }
+    await removeRows("war_parties","event_id",eventId);
+    await removeRows("war_events","id",eventId);
+
     const check=await supabaseClient.from("war_events").select("id").eq("id",eventId).maybeSingle();
     if(check.error)throw check.error;
-    if(check.data)throw new Error("รายการยังอยู่ในฐานข้อมูลหลังสั่งลบ กรุณาตรวจสอบสิทธิ์ DELETE (RLS) ของตาราง war_events");
+    if(check.data)throw new Error("รายการยังอยู่ในฐานข้อมูลหลังสั่งลบ กรุณาตรวจสอบสิทธิ์ DELETE (RLS) ของตารางที่เกี่ยวข้อง");
     if(selectedWarEventId===eventId)selectedWarEventId=null;
     if(warAttendanceEventId===eventId)warAttendanceEventId=null;
     await loadWarEvents();
     if($("war-attendance-content"))await loadWarAttendance();
-    if(selectedWarEventId)renderWarLayout(selectedWarEventId);
-    else renderWarLayout();
+    renderWarLayout(selectedWarEventId||undefined);
+    alert("ลบ War Event เรียบร้อยแล้ว");
   }catch(error){
     console.error("War event deletion failed:",error);
     alert("ลบวอร์ไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));
@@ -4617,14 +4646,21 @@ function registerWarCreationEvents(){
  $("war-assignment-toolbar")?.addEventListener("input",e=>{if(e.target.id==="war-assignment-search"){warAssignmentSearch=e.target.value;applyWarAssignmentMemberFilters();}});
  document.body.addEventListener("click",e=>{if(e.target.closest("[data-war-modal-close]")){closeWarAssignmentModal();return;}const tab=e.target.closest("[data-war-modal-tab]");if(tab){const modal=$("war-assignment-modal"),skillsPanel=$("war-modal-skills-panel"),membersPanel=$("war-modal-members-panel"),active=tab.dataset.warModalTab;if(modal)modal.dataset.activeTab=active;modal?.querySelectorAll("[data-war-modal-tab]").forEach(b=>{const selected=b===tab;b.classList.toggle("is-active",selected);b.setAttribute("aria-selected",String(selected));});if(skillsPanel)skillsPanel.hidden=active!=="skills";if(membersPanel)membersPanel.hidden=active!=="members";if(active==="members")renderWarAssignmentModalMembers();return;}const uploadToggle=e.target.closest("[data-war-skill-upload-toggle]");if(uploadToggle){const form=$("war-member-skill-create-form");if(form)form.hidden=!form.hidden;return;}const add=e.target.closest("[data-war-modal-assign]"),remove=e.target.closest("[data-war-modal-remove]"),saveSkills=e.target.closest("[data-war-save-member-skills]"),cls=e.target.closest("[data-war-modal-class]"),reserveTab=e.target.closest("[data-war-modal-reserve]");if(reserveTab){const modal=$("war-assignment-modal");if(modal){modal.dataset.reserveOnly=modal.dataset.reserveOnly==="true"?"false":"true";reserveTab.classList.toggle("is-active",modal.dataset.reserveOnly==="true");modal.querySelector("[data-war-modal-class=\"all\"]")?.classList.toggle("is-active",modal.dataset.reserveOnly!=="true");renderWarAssignmentModalMembers();}return;}if(saveSkills){saveWarMemberSkills(saveSkills.dataset.warSaveMemberSkills,saveSkills);return;}if(add){assignWarMemberToSlot(add.dataset.warModalAssign);return;}if(remove&&warAssignmentModalSlot?.assignmentId){removeWarPartyMember(warAssignmentModalSlot.assignmentId,remove);return;}if(cls){const modal=$("war-assignment-modal");if(modal)modal.dataset.classFilter=cls.dataset.warModalClass||"all";modal?.querySelectorAll("[data-war-modal-class]").forEach(b=>b.classList.toggle("is-active",b===cls));renderWarAssignmentModalMembers();}});
  document.body.addEventListener("input",e=>{if(e.target.id==="war-modal-member-search")renderWarAssignmentModalMembers();});
-  $("war-events")?.addEventListener("click",event=>{
-    const deleteButton=event.target.closest("[data-war-delete]");
-    if(deleteButton){
+  // Capture delete clicks at document level so card re-renders or nested handlers
+  // cannot prevent the destructive action from reaching its handler.
+  if(!document.documentElement.dataset.warDeleteHandlerBound){
+    document.documentElement.dataset.warDeleteHandlerBound="true";
+    document.addEventListener("click",event=>{
+      const target=event.target instanceof Element?event.target:null;
+      const deleteButton=target?.closest("[data-war-delete]");
+      if(!deleteButton)return;
       event.preventDefault();
       event.stopPropagation();
+      event.stopImmediatePropagation();
       void deleteWarEvent(deleteButton.dataset.warDelete,deleteButton);
-      return;
-    }
+    },true);
+  }
+  $("war-events")?.addEventListener("click",event=>{
     const button=event.target.closest("[data-war-open]");
     if(!button||!isManagement())return;
     renderWarLayout(button.dataset.warOpen);
