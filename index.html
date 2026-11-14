@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=feedback-delete-position-20261114-r2">
+  <link rel="stylesheet" href="style.css?v=bond-partner-ui-20261115-r1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
@@ -40,7 +40,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=feedback-delete-position-20261114-r2";
+          app.src = "app.js?v=bond-partner-ui-20261115-r1";
           app.onload = () => {
             const tracker = document.createElement("script");
             tracker.src = "portfolio-tracker.js?v=portfolio-tracker-20261114-r2";
@@ -752,6 +752,7 @@
 
         <section id="portfolio-member-directory" class="panel portfolio-member-directory">
           <div class="portfolio-section-heading"><div><span class="panel-kicker">4AM CHARACTER DIRECTORY</span><h3>แฟ้มผลงานสมาชิก</h3><p>เลือกสมาชิกเพื่อเปิดดูคอลเลกชันแฟ้มผลงานและ Build ของตัวละคร</p></div></div>
+          <section id="portfolio-own-bond-profile" class="portfolio-own-bond-profile hidden" aria-label="สายใยผูกพันของคุณ"></section>
           <label class="portfolio-member-search-wrap"><span aria-hidden="true">⌕</span><input id="portfolio-member-search" type="search" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น หรือคลาส..."></label>
           <div id="portfolio-member-grid" class="portfolio-member-grid"><p class="muted">กำลังโหลดรายชื่อสมาชิก...</p></div>
         </section>
@@ -1284,11 +1285,17 @@
       <!-- Global overlays: keep outside page/section containers that may be hidden. -->
       <input id="portfolio-member-cover-input" type="file" accept="image/*" hidden>
           <section id="bond-profile-modal" class="bond-profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="bond-profile-title">
+            <button type="button" class="bond-profile-backdrop" aria-label="ปิดหน้าต่าง" data-bond-close></button>
             <form id="bond-profile-form" class="bond-profile-dialog">
-              <div class="bond-profile-heading"><div><span class="panel-kicker">MEMBER PROFILE</span><h3 id="bond-profile-title">Bond Profile</h3><p>จัดการรูปปกการ์ดสมาชิกและรายชื่อสายใยผูกพันธ์</p></div><button type="button" id="bond-profile-close" class="portfolio-crop-close" aria-label="ปิด">×</button></div>
+              <div class="bond-profile-heading"><div><span class="panel-kicker">YOUR CHARACTER CONNECTIONS</span><h3 id="bond-profile-title">สายใยผูกพัน</h3><p>เลือกสมาชิกที่คุณมีสายใยผูกพันด้วย ไม่ต้องรออีกฝ่ายยืนยัน</p></div><button type="button" id="bond-profile-close" class="portfolio-crop-close" aria-label="ปิด">×</button></div>
               <div class="bond-profile-cover-row"><div class="bond-profile-cover-preview"><img id="bond-profile-current-cover" alt="รูปปกการ์ดสมาชิก"><div><strong>รูปปกการ์ดสมาชิก</strong><small>รูปแนวนอน 16:9 · ปรับตำแหน่งและซูมได้</small></div></div><button type="button" id="bond-profile-cover-button" class="btn btn-outline">เปลี่ยนรูปปก</button></div>
-              <label class="portfolio-field"><span>รายชื่อสายใยผูกพันธ์</span><textarea id="bond-profile-names" rows="5" maxlength="3000" placeholder="กรอกชื่อเพื่อนที่มีค่าสนิทถึง 3,000 คนละ 1 บรรทัด"></textarea><small class="portfolio-field-hint">กรอกชื่อเพื่อนในกิลด์ที่มีสายใยผูกพันธ์ · แยกชื่อด้วยการขึ้นบรรทัดใหม่</small></label>
-              <div class="portfolio-form-actions"><button type="button" id="bond-profile-cancel" class="btn btn-outline">ยกเลิก</button><button type="submit" id="bond-profile-save" class="btn btn-primary">บันทึกโปรไฟล์</button></div>
+              <div class="bond-picker-section">
+                <div class="bond-picker-section-heading"><div><strong>สมาชิกสายใยที่เลือก</strong><small>เลือกแล้ว <b id="bond-profile-selected-count">0</b> คน</small></div><span class="bond-picker-hint">กดชื่อเพื่อนเพื่อเพิ่ม / นำออก</span></div>
+                <div id="bond-profile-selected" class="bond-profile-selected"><span class="bond-picker-empty">ยังไม่ได้เลือกสายใย</span></div>
+              </div>
+              <label class="bond-profile-search-wrap"><span aria-hidden="true">⌕</span><input id="bond-profile-search" type="search" autocomplete="off" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น หรือคลาส..."></label>
+              <div id="bond-profile-member-list" class="bond-profile-member-list"><div class="bond-picker-empty">กำลังโหลดรายชื่อสมาชิก...</div></div>
+              <div class="bond-profile-footer"><button type="button" id="bond-profile-cancel" class="btn btn-outline">ยกเลิก</button><button type="submit" id="bond-profile-save" class="btn btn-primary">บันทึกสายใย</button></div>
             </form>
           </section>
           <div id="portfolio-crop-modal" class="portfolio-crop-modal hidden" role="dialog" aria-modal="true" aria-labelledby="portfolio-crop-title">
