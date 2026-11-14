@@ -6439,6 +6439,12 @@ body select:disabled {
 .portfolio-image-caption input{width:100%;min-width:0;padding:7px 8px;border:1px solid rgba(205,160,120,.25);border-radius:5px;background:#10090c;color:#f3ebe6;font:inherit;font-size:12px}
 
 
+/* Clipboard paste and drag-and-drop affordance for portfolio upload zones */
+.portfolio-upload-zone{transition:border-color .18s ease,box-shadow .18s ease,background .18s ease}
+.portfolio-upload-zone:focus-visible,.portfolio-upload-zone.is-paste-target{outline:none;border-color:rgba(255,75,88,.78);box-shadow:0 0 0 2px rgba(239,68,78,.14),0 0 24px rgba(239,68,78,.09)}
+.portfolio-paste-hint{display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-top:5px!important;color:#d0a0a4!important;font-size:12px!important}
+.portfolio-paste-hint kbd{display:inline-grid;place-items:center;min-width:21px;padding:2px 5px;border:1px solid rgba(255,100,110,.3);border-radius:4px;background:rgba(255,255,255,.045);color:#ffe4e5;font:600 11px/1.4 inherit}
+.portfolio-upload-zone.is-paste-target{background:linear-gradient(145deg,rgba(60,18,24,.96),rgba(15,10,12,.98))}
 /* 4AM Portfolio Build uploader — clean black/red zone layout */
 .portfolio-build-upload-pickers{display:none!important}
 #portfolio-image-preview{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;min-width:0}
