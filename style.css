@@ -7006,3 +7006,7 @@ body select:disabled {
   font-size: 20px;
   font-weight: 800;
 }
+#page-portfolio :is(.portfolio-card-owner, .portfolio-field, .portfolio-member-detail-class, .portfolio-member-bonds strong, .portfolio-member-bonds span, .portfolio-example-screen, .portfolio-example-upload strong, .portfolio-example-skill-stack > div > span, .portfolio-example-skill-stack strong, .portfolio-own-bond-count, .bond-picker-hint, .bond-picker-section-heading strong, .bond-selected-chip, .bond-picker-empty, .bond-member-option-copy strong, .bond-member-option-action) {
+  font-size: 15px !important;
+}
+
