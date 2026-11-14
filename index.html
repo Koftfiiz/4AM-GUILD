@@ -40,7 +40,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=portfolio-profile-avatar-cover-20261114-r2";
+          app.src = "app.js?v=portfolio-special-title-auto-20261114-r1";
           app.onload = () => {
             const tracker = document.createElement("script");
             tracker.src = "portfolio-tracker.js?v=portfolio-tracker-20261114-r2";
@@ -735,7 +735,7 @@
                 <h3>สร้างแฟ้มผลงานใหม่</h3>
                 <p>ผลงานนี้จะถูกบันทึกไว้ในบัญชีและตัวละครของคุณ</p>
               </div>
-              <label class="portfolio-field">
+              <label class="portfolio-field" id="portfolio-title-field">
                 <span id="portfolio-title-label">ชื่อ Build <i>*</i></span>
                 <input id="portfolio-title" name="title" type="text" maxlength="100" placeholder="เช่น ดินไฟ, DPS, Support" required>
                 <small class="portfolio-field-hint">ชื่อบนการ์ดจะแสดงเป็น “Build ตามด้วยชื่อที่กรอก”</small>
