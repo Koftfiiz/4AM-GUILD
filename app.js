@@ -3331,7 +3331,7 @@ function registerPortfolioEvents() {
   $("bond-profile-search")?.addEventListener("input", renderBondMemberPicker);
   $("bond-profile-member-list")?.addEventListener("click", event => { const button=event.target.closest("[data-bond-toggle]"); if(!button)return; const id=button.dataset.bondToggle; if(bondSelectedMemberIds.has(id))bondSelectedMemberIds.delete(id);else bondSelectedMemberIds.add(id);renderBondMemberPicker(); });
   $("bond-profile-selected")?.addEventListener("click", event => { const button=event.target.closest("[data-bond-toggle]");if(!button)return;bondSelectedMemberIds.delete(button.dataset.bondToggle);renderBondMemberPicker(); });
-  $("bond-profile-modal")?.addEventListener("click", event => { if(event.target===$("bond-profile-modal"))closeBondProfileEditor(); });
+  $("bond-profile-modal")?.addEventListener("click", event => { if(event.target===$("bond-profile-modal") || event.target.closest("[data-bond-close]"))closeBondProfileEditor(); });
   $("bond-profile-cover-button")?.addEventListener("click", openPortfolioMemberCoverPicker);
   $("portfolio-member-cover-input")?.addEventListener("change",event=>{
     const file=event.target.files?.[0];event.target.value="";
