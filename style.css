@@ -6762,3 +6762,67 @@ body select:disabled {
 .portfolio-example-footnote{margin:16px 0 0;color:#8e8588;font-size:11px;line-height:1.6}
 @media(max-width:1050px){.portfolio-example-grid{grid-template-columns:1fr}.portfolio-example-description{min-height:0}.portfolio-example-uploads{max-width:520px}}
 @media(max-width:600px){.portfolio-example-zone{padding:15px}.portfolio-example-heading{flex-direction:column}.portfolio-example-demo-badge{align-self:flex-start}.portfolio-example-card{padding:13px}.portfolio-example-uploads{gap:5px}.portfolio-example-screen{min-height:56px}}
+
+
+/* 4AM GUILD Bond Partner UX — member picker drawer */
+.portfolio-own-bond-profile{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:0 0 18px;padding:20px 22px;border:1px solid rgba(232,65,82,.28);border-radius:16px;background:linear-gradient(120deg,rgba(106,19,31,.2),rgba(17,15,17,.96) 58%);box-shadow:0 12px 32px rgba(0,0,0,.16)}
+.portfolio-own-bond-profile.hidden{display:none!important}
+.portfolio-own-bond-copy{min-width:0;display:grid;gap:7px}
+.portfolio-own-bond-title-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.portfolio-own-bond-title-row h3{margin:0;color:#fff;font-size:18px}
+.portfolio-own-bond-copy>p{margin:0;color:#a99da0;font-size:12px;line-height:1.55}
+.portfolio-own-bond-count{padding:3px 9px;border-radius:99px;background:rgba(226,57,75,.14);color:#ff8791;font-size:11px;font-weight:800}
+.portfolio-own-bond-selected{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-top:2px}
+.portfolio-own-bond-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border:1px solid rgba(238,87,102,.2);border-radius:99px;background:rgba(198,44,60,.1);color:#f2dfe1;font-size:11px}
+.portfolio-own-bond-chip i{width:6px;height:6px;border-radius:50%;background:#ee5868;box-shadow:0 0 9px rgba(238,88,104,.6)}
+.portfolio-own-bond-empty{color:#8e8588;font-size:12px}
+.portfolio-own-bond-manage{flex:0 0 auto;white-space:nowrap}
+.bond-profile-modal{position:fixed;inset:0;z-index:20000;display:block;padding:0;background:transparent;backdrop-filter:none}
+.bond-profile-modal.hidden{display:none!important}
+.bond-profile-backdrop{position:absolute;inset:0;width:100%;height:100%;border:0;background:rgba(0,0,0,.76);backdrop-filter:blur(7px);cursor:default}
+.bond-profile-dialog{position:absolute;top:0;right:0;width:min(540px,100%);height:100dvh;min-height:0;max-height:100dvh;display:flex;flex-direction:column;gap:14px;overflow:hidden;padding:24px;border:1px solid rgba(239,68,78,.3);border-right:0;border-radius:20px 0 0 20px;background:linear-gradient(155deg,#1b1114,#09090b 72%);box-shadow:-24px 0 80px rgba(0,0,0,.55)}
+.bond-profile-heading{flex:0 0 auto;margin:0}
+.bond-profile-heading h3{font-size:23px}
+.bond-profile-cover-row{flex:0 0 auto;margin:0;padding:11px 13px}
+.bond-profile-cover-preview img{width:92px}
+.bond-picker-section{flex:0 0 auto;display:grid;gap:9px;padding:13px;border:1px solid rgba(232,65,82,.2);border-radius:12px;background:rgba(255,255,255,.025)}
+.bond-picker-section-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bond-picker-section-heading>div{display:grid;gap:3px}
+.bond-picker-section-heading strong{color:#fff;font-size:13px}
+.bond-picker-section-heading small,.bond-picker-hint{color:#9f9295;font-size:11px}
+.bond-picker-section-heading small b{color:#ff8993}
+.bond-profile-selected{display:flex;flex-wrap:wrap;gap:7px;max-height:100px;overflow:auto}
+.bond-selected-chip{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid rgba(231,71,88,.42);border-radius:99px;background:rgba(170,32,49,.18);color:#ffe8ea;font-size:12px;cursor:pointer}
+.bond-selected-chip b{font-size:16px;line-height:1;color:#ff8993}
+.bond-picker-empty{display:block;padding:10px;color:#95898c;font-size:12px;text-align:center}
+.bond-profile-search-wrap{flex:0 0 auto;display:flex;align-items:center;gap:10px;min-height:44px;padding:0 13px;border:1px solid rgba(205,105,113,.28);border-radius:10px;background:rgba(0,0,0,.34);color:#ff8a95}
+.bond-profile-search-wrap input{width:100%;min-width:0;border:0;outline:0;background:transparent;color:#fff;font:inherit;font-size:13px}
+.bond-profile-search-wrap input::placeholder{color:#827679}
+.bond-profile-member-list{flex:1 1 auto;min-height:100px;overflow:auto;display:grid;align-content:start;gap:7px;padding:1px 3px 8px 0;overscroll-behavior:contain}
+.bond-member-option{display:flex;align-items:center;gap:11px;width:100%;min-height:58px;padding:9px 11px;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:rgba(255,255,255,.025);color:#f7eaea;text-align:left;cursor:pointer;transition:border-color .16s ease,background .16s ease}
+.bond-member-option:hover,.bond-member-option.is-selected{border-color:rgba(226,70,87,.5);background:rgba(150,29,44,.14)}
+.bond-member-avatar{display:grid;place-items:center;flex:0 0 38px;width:38px;height:38px;border-radius:50%;overflow:hidden;background:rgba(215,55,73,.13);color:#ff8a95}
+.bond-member-avatar img{width:100%;height:100%;object-fit:contain}
+.bond-member-option-copy{display:grid;gap:3px;min-width:0;flex:1}
+.bond-member-option-copy strong{color:#fff;font-size:13px;overflow-wrap:anywhere}
+.bond-member-option-copy small{color:#a99da0;font-size:11px;overflow-wrap:anywhere}
+.bond-member-option-action{flex:0 0 auto;color:#ff8a95;font-size:11px;font-weight:800}
+.bond-member-option.is-selected .bond-member-option-action{color:#8cdda7}
+.bond-profile-footer{flex:0 0 auto;display:flex;justify-content:flex-end;gap:9px;padding-top:13px;border-top:1px solid rgba(255,255,255,.08);background:linear-gradient(180deg,transparent,#0b090b 25%)}
+.war-member-bond-line{grid-column:1/-1;display:flex;align-items:center;gap:6px;min-width:0;padding:3px 8px 4px 43px;flex-wrap:wrap}
+.war-bond-label{color:#ff8993;font-size:9px;font-weight:900;letter-spacing:.4px;text-transform:uppercase}
+.war-bond-partner-list{display:flex;gap:4px;flex-wrap:wrap;min-width:0}
+.war-bond-partner{display:inline-flex;align-items:center;gap:3px;padding:2px 6px;border-radius:99px;font-size:9px;line-height:1.4}
+.war-bond-partner.is-in-party{border:1px solid rgba(98,205,139,.3);background:rgba(55,150,91,.13);color:#a3edbb}
+.war-bond-partner.is-outside-party{border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.035);color:#aaa0a2}
+.war-bond-party-count{color:#91878a;font-size:9px;white-space:nowrap}
+@media(max-width:650px){
+ .portfolio-own-bond-profile{align-items:flex-start;flex-direction:column;padding:16px;gap:13px}
+ .portfolio-own-bond-manage{width:100%}
+ .bond-profile-dialog{top:auto;right:0;bottom:0;left:0;width:100%;height:min(90dvh,850px);max-height:90dvh;padding:17px 16px max(14px,env(safe-area-inset-bottom));border:1px solid rgba(239,68,78,.3);border-bottom:0;border-radius:20px 20px 0 0}
+ .bond-profile-heading h3{font-size:20px}
+ .bond-profile-cover-row{align-items:center;flex-direction:row}
+ .bond-profile-cover-preview img{width:78px}
+ .bond-picker-hint{display:none}
+ .war-member-bond-line{padding-left:8px}
+}
