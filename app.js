@@ -5182,9 +5182,10 @@ function systemRoleLabel(role) {
 function renderSystemRoleSummary(members) {
   const counts = {
     total: members.length,
+    leaders: members.filter(m => String(m.role || "").toLowerCase() === "leader").length,
     management: members.filter(m => String(m.role || "").toLowerCase() === "management").length,
     admins: members.filter(m => String(m.role || "").toLowerCase() === "admin").length,
-    leaders: members.filter(m => String(m.role || "").toLowerCase() === "leader").length,
+    members: members.filter(m => String(m.role || "member").toLowerCase() === "member").length,
     pending: members.filter(m => m.active === false).length
   };
 
@@ -5193,9 +5194,10 @@ function renderSystemRoleSummary(members) {
     if (element) element.textContent = String(value);
   };
   set("system-role-total", counts.total);
+  set("system-role-leaders", counts.leaders);
   set("system-role-management", counts.management);
   set("system-role-admin", counts.admins);
-  set("system-role-leaders", counts.leaders);
+  set("system-role-members", counts.members);
   set("system-role-pending", counts.pending);
 }
 
