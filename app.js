@@ -6744,8 +6744,10 @@ function syncManagementMenuVisibility() {
   const devMenuItems = document.querySelectorAll("[data-developer-only]");
   const developerAllowed = isDeveloper() && (!isRolePreviewActive() || rolePreviewRole === "developer");
   devMenuItems.forEach((item) => {
-    item.classList.toggle("is-role-hidden", !developerAllowed);
-    item.setAttribute("aria-hidden", String(!developerAllowed));
+    const ownerOnly = item.hasAttribute("data-owner-only");
+    const allowed = ownerOnly ? (isDeveloper() && !isRolePreviewActive()) : developerAllowed;
+    item.classList.toggle("is-role-hidden", !allowed);
+    item.setAttribute("aria-hidden", String(!allowed));
   });
 }
 
@@ -6767,6 +6769,9 @@ function openGuildPage(pageName) {
   }
   if (pageName === "member-management" && !isManagement()) pageName = "members";
   if (pageName === "system-management" && !isDeveloper()) {
+    pageName = "dashboard";
+  }
+  if (pageName === "appearance" && (!isDeveloper() || isRolePreviewActive())) {
     pageName = "dashboard";
   }
   if (pageName === "portfolio-review-center" && !isManagement()) pageName = "portfolio";
