@@ -6736,7 +6736,7 @@ function openGuildPage(pageName) {
 
 async function copyGameUID(button) {
   const uid = String(button?.dataset.gameUid || "");
-  if (!/^[0-9]{10}$/.test(uid)) return;
+  if (!/^[0-9]{1,12}$/.test(uid)) return;
 
   try {
     await navigator.clipboard.writeText(uid);
