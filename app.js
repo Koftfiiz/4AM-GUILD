@@ -4627,7 +4627,7 @@ async function loadWarSignups(){
     return;
   }
   const {data:signups,error:signupError}=await supabaseClient.from("war_signups")
-    .select("id,event_id,member_id,raid,status,queue_position,created_at")
+    .select("id,event_id,member_id,raid,status,queue_position,available_rounds,created_at")
     .in("event_id",events.map(event=>event.id)).neq("status","cancelled")
     .order("queue_position",{ascending:true});
   if(signupError){box.innerHTML='<div class="system-role-error">'+escapeHTML(signupError.message)+'</div>';return;}
@@ -4663,7 +4663,9 @@ async function loadWarSignups(){
     const capacity=rows.length+"/80";
     let action="";
     if(own){
-      action='<div class="war-signup-own-status"><strong>คุณลงชื่อแล้ว · คิวที่ '+(own.queue_position||"—")+'</strong><span>'+(Number(own.queue_position)<=60?"ตัวจริง":"ตัวสำรอง")+'</span></div>';
+      const ownRounds=Array.isArray(own.available_rounds)?own.available_rounds.map(Number):[1,2];
+      const ownAvailability=ownRounds.length===2?"พร้อมทั้งสองรอบ":ownRounds.includes(1)?"พร้อมเฉพาะ Round 1":"พร้อมเฉพาะ Round 2";
+      action='<div class="war-signup-own-status"><strong>คุณลงชื่อแล้ว · คิวที่ '+(own.queue_position||"—")+'</strong><span>'+(Number(own.queue_position)<=60?"ตัวจริง":"ตัวสำรอง")+'</span>'+(Number(own.queue_position)>60?'<small>'+ownAvailability+'</small>':"")+'</div>';
     }else if(state==="open"&&rows.length<80){
       action='<button class="btn btn-primary btn-sm" type="button" data-war-signup-join="'+escapeHTML(event.id)+'">เข้าร่วมวอร์</button>';
     }else if(state==="open"&&rows.length>=80){
@@ -4781,7 +4783,9 @@ function renderWarSignupRoster(signups,members,leaveRows,attendanceRows){
       const member=memberMap.get(row.member_id)||{};
       const className=getMemberClass(member),info=getClassInfo(className);
       const icon=info?.iconPath?'<img class="war-roster-class-icon" src="'+escapeHTML(info.iconPath)+'" alt="'+escapeHTML(className)+'" loading="lazy">':'<span class="war-roster-class-fallback">✦</span>';
-      return '<div class="war-roster-row"><span class="war-roster-number">#'+Number(row.queue_position||0)+'</span>'+icon+'<strong>'+escapeHTML(getMemberName(member))+'</strong><span class="war-roster-row-note">'+kind+'</span></div>';
+      const rounds=Array.isArray(row.available_rounds)?row.available_rounds.map(Number):[1,2];
+      const availability=kind==="ตัวสำรอง"?(rounds.length===2?" · ทั้งสองรอบ":rounds.includes(1)?" · R1 เท่านั้น":" · R2 เท่านั้น"):"";
+      return '<div class="war-roster-row"><span class="war-roster-number">#'+Number(row.queue_position||0)+'</span>'+icon+'<strong>'+escapeHTML(getMemberName(member))+'</strong><span class="war-roster-row-note">'+kind+availability+'</span></div>';
     }).join("")+'</div>';
   };
   const leaveList=(leaveRows||[]).map(row=>({row,member:memberMap.get(row.member_id)})).filter(x=>x.member);
@@ -4905,12 +4909,29 @@ function registerWarLeaveEvents(){
 
 async function joinWarSignup(eventId,button){
   if(!currentUser||!eventId||!button)return;
+  const selected=window.prompt(
+    "หากคุณได้เป็นตัวสำรอง คุณสามารถเข้าร่วมวอร์รอบใดได้บ้าง?\n\nพิมพ์ 12 = ได้ทั้ง Round 1 และ Round 2\nพิมพ์ 1 = ได้เฉพาะ Round 1\nพิมพ์ 2 = ได้เฉพาะ Round 2\n\nข้อมูลนี้จะใช้เมื่อคุณอยู่ในรายชื่อตัวสำรองเท่านั้น",
+    "12"
+  );
+  if(selected===null)return;
+  const choice=String(selected).trim();
+  const availableRounds=choice==="12"?[1,2]:choice==="1"?[1]:choice==="2"?[2]:null;
+  if(!availableRounds){
+    alert("ตัวเลือกไม่ถูกต้อง กรุณาพิมพ์ 12, 1 หรือ 2");
+    return;
+  }
   button.disabled=true;button.textContent="กำลังลงชื่อ...";
   try{
-    const {data,error}=await supabaseClient.rpc("join_war_signup",{p_event_id:eventId});
+    const {data,error}=await supabaseClient.rpc("join_war_signup",{
+      p_event_id:eventId,
+      p_available_rounds:availableRounds
+    });
     if(error)throw error;
     const result=Array.isArray(data)?data[0]:data;
-    alert("ลงชื่อวอร์เรียบร้อยแล้ว · คิวที่ "+(result?.queue_position??"—")+(result?.signup_status==="standby"?" (ตัวสำรอง)":" (ตัวจริง)"));
+    const availabilityLabel=choice==="12"?"พร้อมทั้งสองรอบ":choice==="1"?"พร้อมเฉพาะ Round 1":"พร้อมเฉพาะ Round 2";
+    alert("ลงชื่อวอร์เรียบร้อยแล้ว · คิวที่ "+(result?.queue_position??"—")+
+      (result?.signup_status==="standby"?" (ตัวสำรอง)":" (ตัวจริง)")+
+      "\nความพร้อมที่บันทึก: "+availabilityLabel);
     await loadWarSignups();
   }catch(error){
     console.error("War signup error:",error);
