@@ -70,6 +70,13 @@ let directoryMembers = [];
 let memberDirectoryClassFilter = "all";
 let memberDirectoryTypeFilter = "all";
 let manualMemberClassFilter = "all";
+let manualMemberRecordFilter = "all";
+let manualMemberActivityFilter = "all";
+let manualMemberDiscordFilter = "all";
+let manualMemberPositionFilter = "all";
+let manualMemberIncompleteOnly = false;
+let discordAccountDirectory = new Map();
+const MEMBER_ADMIN_FILTERS_KEY = "4am-guild-member-admin-filters-v1";
 let guildPresenceByUserId = new Map();
 let presenceHeartbeatTimer = null;
 let presenceRefreshTimer = null;
@@ -1776,6 +1783,10 @@ async function loadManualMemberManagement() {
   const list = $("manual-member-list");
   if (list) list.innerHTML = '<p class="muted">กำลังโหลดข้อมูลสมาชิก...</p>';
   await loadMembers();
+  discordAccountDirectory = new Map();
+  const discordResult = await supabaseClient.from("discord_accounts").select("user_id,discord_user_id,discord_username,discord_global_name,verified,guild_member_verified,verified_at,last_checked_at");
+  if (!discordResult.error) discordAccountDirectory = new Map((discordResult.data || []).map(row => [String(row.user_id), row]));
+  else console.info("Discord health details limited by current RLS permissions:", discordResult.error.message);
 
   const form = $("manual-member-form");
   const classSelect = form?.elements?.game_class;
@@ -1785,9 +1796,10 @@ async function loadManualMemberManagement() {
       `<option value="${escapeHTML(item.name)}">${escapeHTML(item.name)}</option>`
     ).join("");
   }
-  if (positionSelect && positionSelect.options.length <= 1) {
-    positionSelect.innerHTML = renderGuildPositionOptions();
-  }
+  if (positionSelect && positionSelect.options.length <= 1) positionSelect.innerHTML = renderGuildPositionOptions();
+  const positionFilter = $("manual-member-position-filter");
+  if (positionFilter && positionFilter.options.length <= 1) positionFilter.innerHTML = '<option value="all">ทุกตำแหน่ง</option>' + GUILD_POSITIONS.map(p => '<option value="' + escapeHTML(p) + '">' + escapeHTML(p) + '</option>').join("");
+  renderMemberAdminSavedFilters();
 
   const { data, error } = await supabaseClient
     .from("guild_manual_members")
@@ -1803,6 +1815,32 @@ async function loadManualMemberManagement() {
   manualGuildMembers = data || [];
   renderManualMemberManagement();
 }
+
+
+function getMemberAdminDiscordHealth(member) {
+  const uid = String(member?.user_id || member?.linked_user_id || "");
+  const account = uid ? discordAccountDirectory.get(uid) : null;
+  if (account?.verified === true && account?.guild_member_verified === true) return {key:"verified",label:"Verified",detail:"ยืนยันบัญชีและสมาชิก Discord Server แล้ว",tone:"good",account};
+  if (account || member?.discord_user_id) return {key:"pending",label:"รอตรวจสอบ",detail:account?"พบข้อมูลบัญชี แต่ยังยืนยันไม่ครบทุกขั้นตอน":"มีข้อมูล Discord ในรายการ แต่ยังไม่มีผลยืนยันจากบัญชี",tone:"pending",account:account||null};
+  return {key:"missing",label:"ยังไม่เชื่อมต่อ",detail:"ยังไม่พบข้อมูลบัญชี Discord ที่เชื่อมโยง",tone:"muted",account:null};
+}
+function getMemberAdminSavedFilters(){try{const x=JSON.parse(localStorage.getItem(MEMBER_ADMIN_FILTERS_KEY)||"[]");return Array.isArray(x)?x.filter(v=>v&&typeof v.name==="string"&&v.filters):[]}catch(_){return[]}}
+function renderMemberAdminSavedFilters(){const el=$("manual-member-saved-filters");if(!el)return;const old=el.value,items=getMemberAdminSavedFilters();el.innerHTML='<option value="">เลือกตัวกรองที่บันทึกไว้</option>'+items.map((x,i)=>'<option value="'+i+'">'+escapeHTML(x.name)+'</option>').join("");if(old&&items[Number(old)])el.value=old}
+function getMemberAdminFilterState(){return{search:String($("manual-member-search")?.value||""),record:manualMemberRecordFilter,activity:manualMemberActivityFilter,discord:manualMemberDiscordFilter,position:manualMemberPositionFilter,className:manualMemberClassFilter,incompleteOnly:manualMemberIncompleteOnly}}
+function setMemberAdminFilterState(f){f=f||{};if($("manual-member-search"))$("manual-member-search").value=f.search||"";manualMemberRecordFilter=f.record||"all";manualMemberActivityFilter=f.activity||"all";manualMemberDiscordFilter=f.discord||"all";manualMemberPositionFilter=f.position||"all";manualMemberClassFilter=f.className||"all";manualMemberIncompleteOnly=f.incompleteOnly===true;[["manual-member-record-filter",manualMemberRecordFilter],["manual-member-activity-filter",manualMemberActivityFilter],["manual-member-discord-filter",manualMemberDiscordFilter],["manual-member-position-filter",manualMemberPositionFilter]].forEach(([id,v])=>{if($(id))$(id).value=v});renderManualMemberManagement()}
+function openMemberAdminProfile(member){
+  if(!member||!isManagement())return;
+  const drawer=$("member-admin-profile-drawer"),content=$("member-admin-profile-content");if(!drawer||!content)return;
+  const isAccount=member._recordType==="account",discord=getMemberAdminDiscordHealth(member),avatar=member.discord_avatar_url||member.avatar_url||"";
+  const row=(label,value)=>'<div class="member-admin-profile-row"><span>'+label+'</span><strong>'+escapeHTML(value||"—")+'</strong></div>';
+  content.innerHTML='<div class="member-admin-profile-identity">'+(avatar?'<img src="'+escapeHTML(avatar)+'" alt="">':'<span class="member-admin-profile-avatar">◈</span>')+'<div><h4>'+escapeHTML(member.character_name||"ไม่ระบุชื่อ")+'</h4><span>'+escapeHTML(member.game_class||"ยังไม่ระบุ Class")+'</span></div></div>'+
+  '<section class="member-admin-profile-section"><h4>Character & Personal</h4>'+row("Character UID",member.game_uid)+row("Nickname",member.nickname)+row("อายุ",member.age?String(member.age):"")+row("Class",member.game_class)+row("ตำแหน่งกิลด์",member.guild_position)+'</section>'+
+  '<section class="member-admin-profile-section"><h4>Discord Account</h4><div class="member-admin-health-pill is-'+discord.tone+'">'+escapeHTML(discord.label)+'</div><p class="member-admin-health-detail">'+escapeHTML(discord.detail)+'</p>'+row("Username",member.discord_username||member.discord_name)+row("Global Name",member.discord_global_name)+row("Server Nickname",member.discord_server_nickname)+row("Discord User ID",member.discord_user_id||discord.account?.discord_user_id)+row("ตรวจสอบล่าสุด",discord.account?.last_checked_at?new Date(discord.account.last_checked_at).toLocaleString("th-TH"):"")+'</section>'+
+  '<section class="member-admin-profile-section"><h4>Account & Guild</h4>'+row("ประเภทบัญชี",isAccount?"ลงทะเบียนผ่านเว็บไซต์":"Manual")+row("สถานะสมาชิก",member.active===false?"Inactive":"Active")+row("Role",member.role||"member")+row("วันที่เพิ่ม",member.created_at?new Date(member.created_at).toLocaleString("th-TH"):"")+'</section>'+
+  '<div class="member-admin-profile-actions">'+(isAccount?'<button type="button" class="btn btn-primary" data-drawer-edit-account="'+escapeHTML(member.user_id)+'">แก้ไขข้อมูลสมาชิก</button>':'<button type="button" class="btn btn-primary" data-drawer-edit-manual="'+escapeHTML(member.id)+'">แก้ไขข้อมูลสมาชิก</button>')+'</div>';
+  $("member-admin-profile-title").textContent=member.character_name||"ข้อมูลสมาชิก";drawer.classList.remove("hidden");document.body.classList.add("member-admin-drawer-open");
+}
+function closeMemberAdminProfile(){$("member-admin-profile-drawer")?.classList.add("hidden");document.body.classList.remove("member-admin-drawer-open")}
 
 function renderManualMemberManagement() {
   const list = $("manual-member-list");
@@ -1888,14 +1926,26 @@ function renderManualMemberManagement() {
     );
   });
 
-  const searchInput = $("manual-member-search");
-  const searchQuery = String(searchInput?.value || "").trim().toLocaleLowerCase();
+  const searchInput = $("manual-member-search"), searchQuery = String(searchInput?.value || "").trim().toLocaleLowerCase();
   const filteredVisibleMembers = allVisibleMembers.filter(member => {
-    const searchableFields = [member.character_name, member.nickname, member.game_class, member.guild_position, member.game_uid, member.discord_name, member.discord_username, member.discord_global_name, member.discord_server_nickname, member.discord_user_id];
-    const matchesSearch = !searchQuery || searchableFields.some(value => String(value || "").toLocaleLowerCase().includes(searchQuery));
+    const health = getMemberAdminDiscordHealth(member);
+    const fields = [member.character_name,member.nickname,member.game_class,member.guild_position,member.game_uid,member.discord_name,member.discord_username,member.discord_global_name,member.discord_server_nickname,member.discord_user_id,member.user_id];
+    const matchesSearch = !searchQuery || fields.some(value => String(value || "").toLocaleLowerCase().includes(searchQuery));
     const matchesClass = manualMemberClassFilter === "all" || String(member.game_class || "").toLowerCase() === manualMemberClassFilter.toLowerCase();
-    return matchesSearch && matchesClass;
+    const matchesRecord = manualMemberRecordFilter === "all" || (manualMemberRecordFilter === "account" ? member._recordType === "account" : member._recordType === "manual");
+    const matchesActivity = manualMemberActivityFilter === "all" || (manualMemberActivityFilter === "active" ? member.active !== false : member.active === false);
+    const matchesDiscord = manualMemberDiscordFilter === "all" || health.key === manualMemberDiscordFilter;
+    const matchesPosition = manualMemberPositionFilter === "all" || String(member.guild_position || "") === manualMemberPositionFilter;
+    const matchesIncomplete = !manualMemberIncompleteOnly || !member.game_uid || !member.nickname || !member.guild_position;
+    return matchesSearch && matchesClass && matchesRecord && matchesActivity && matchesDiscord && matchesPosition && matchesIncomplete;
   });
+  const quality = $("manual-member-quality-strip");
+  if (quality) {
+    const count = key => allVisibleMembers.filter(member => getMemberAdminDiscordHealth(member).key === key).length;
+    const incomplete = allVisibleMembers.filter(member => !member.game_uid || !member.nickname || !member.guild_position).length;
+    quality.innerHTML = [{label:"สมาชิกทั้งหมด",value:allVisibleMembers.length,key:"all"},{label:"Discord Verified",value:count("verified"),key:"verified"},{label:"รอตรวจสอบ",value:count("pending"),key:"pending"},{label:"ยังไม่เชื่อม Discord",value:count("missing"),key:"missing"},{label:"ข้อมูลไม่ครบ",value:incomplete,key:"incomplete"}].map(x=>'<button type="button" class="member-admin-quality-card" data-quality-filter="'+x.key+'"><span>'+x.label+'</span><strong>'+x.value+'</strong></button>').join("");
+  }
+  const resultLabel = $("manual-member-filter-result"); if (resultLabel) resultLabel.textContent = "แสดง " + filteredVisibleMembers.length + " จาก " + allVisibleMembers.length + " รายชื่อ";
 
   const memberRows = filteredVisibleMembers.map((member, index) => {
     const cls = getClassInfo(member.game_class);
@@ -1907,17 +1957,17 @@ function renderManualMemberManagement() {
     const presence = isAccount
       ? renderGuildPresenceStatus(member.user_id)
       : renderGuildPresenceStatus(null);
+    const discordHealth = getMemberAdminDiscordHealth(member);
     const actions = isAccount
-      ? `<button type="button" class="btn btn-outline btn-sm" data-account-edit="${escapeHTML(member.user_id)}">แก้ไข</button>
-         <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-account-toggle="${escapeHTML(member.user_id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>`
-      : `<button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button>
-         <button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>`;
+      ? `<button type="button" class="btn btn-outline btn-sm" data-member-admin-view="${escapeHTML(member.user_id)}" data-member-admin-type="account">ดูข้อมูล</button><button type="button" class="btn btn-outline btn-sm" data-account-edit="${escapeHTML(member.user_id)}">แก้ไข</button><button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-account-toggle="${escapeHTML(member.user_id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>`
+      : `<button type="button" class="btn btn-outline btn-sm" data-member-admin-view="${escapeHTML(member.id)}" data-member-admin-type="manual">ดูข้อมูล</button><button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button><button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>`;
 
     return `<tr>
       <td class="manual-member-number" style="text-align:center;font-weight:700;">${index + 1}</td>
       <td><strong>${escapeHTML(name)}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")} · ${identityNote}</small></td>
       <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class || "ยังไม่ระบุ")}</span></td>
       <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
+      <td><span class="member-admin-health-pill is-${discordHealth.tone}">${escapeHTML(discordHealth.label)}</span></td>
       <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
       <td>${presence}</td>
       <td><div class="manual-member-actions">${actions}</div></td>
@@ -1928,7 +1978,7 @@ function renderManualMemberManagement() {
     ? `
       <div class="manual-member-table-wrap">
         <table class="manual-member-table">
-          <thead><tr><th style="text-align:center;">ลำดับ</th><th>สมาชิก</th><th>Class</th><th>ตำแหน่งกิลด์</th><th>สถานะ</th><th>ออนไลน์</th><th>จัดการ</th></tr></thead>
+          <thead><tr><th style="text-align:center;">ลำดับ</th><th>สมาชิก</th><th>Class</th><th>ตำแหน่งกิลด์</th><th>Discord Health</th><th>สถานะ</th><th>ออนไลน์</th><th>จัดการ</th></tr></thead>
           <tbody>${memberRows}</tbody>
         </table>
       </div>`
@@ -7722,10 +7772,21 @@ function registerAppEventListeners() {
       resetManualMemberForm();
     }
   });
-  $("manual-member-search")?.addEventListener("input", () => {
-    renderManualMemberManagement();
-  });
+  $("manual-member-search")?.addEventListener("input", renderManualMemberManagement);
+  $("manual-member-record-filter")?.addEventListener("change",e=>{manualMemberRecordFilter=e.target.value||"all";renderManualMemberManagement()});
+  $("manual-member-activity-filter")?.addEventListener("change",e=>{manualMemberActivityFilter=e.target.value||"all";renderManualMemberManagement()});
+  $("manual-member-discord-filter")?.addEventListener("change",e=>{manualMemberDiscordFilter=e.target.value||"all";renderManualMemberManagement()});
+  $("manual-member-position-filter")?.addEventListener("change",e=>{manualMemberPositionFilter=e.target.value||"all";renderManualMemberManagement()});
+  $("manual-member-saved-filters")?.addEventListener("change",e=>{const item=getMemberAdminSavedFilters()[Number(e.target.value)];if(item)setMemberAdminFilterState(item.filters)});
+  $("manual-member-save-filter")?.addEventListener("click",()=>{const name=window.prompt("ตั้งชื่อชุดตัวกรองนี้");if(!name||!name.trim())return;const items=getMemberAdminSavedFilters();items.push({name:name.trim().slice(0,40),filters:getMemberAdminFilterState()});try{localStorage.setItem(MEMBER_ADMIN_FILTERS_KEY,JSON.stringify(items.slice(-20)));renderMemberAdminSavedFilters();alert("บันทึกตัวกรองเรียบร้อยแล้ว")}catch(error){alert("บันทึกตัวกรองไม่สำเร็จ: "+(error.message||"พื้นที่จัดเก็บไม่พร้อมใช้งาน"))}});
+  $("manual-member-reset-filters")?.addEventListener("click",()=>setMemberAdminFilterState({}));
+  $("manual-member-quality-strip")?.addEventListener("click",event=>{const b=event.target.closest("[data-quality-filter]");if(!b)return;const key=b.dataset.qualityFilter;manualMemberIncompleteOnly=key==="incomplete";if(["verified","pending","missing"].includes(key))manualMemberDiscordFilter=key;else manualMemberDiscordFilter="all";if(key==="all"){manualMemberRecordFilter="all";manualMemberActivityFilter="all";manualMemberPositionFilter="all";manualMemberClassFilter="all";if($("manual-member-search"))$("manual-member-search").value=""}[["manual-member-record-filter",manualMemberRecordFilter],["manual-member-activity-filter",manualMemberActivityFilter],["manual-member-discord-filter",manualMemberDiscordFilter],["manual-member-position-filter",manualMemberPositionFilter]].forEach(([id,v])=>{if($(id))$(id).value=v});renderManualMemberManagement()});
+  $("member-admin-profile-drawer")?.addEventListener("click",event=>{if(event.target.closest("[data-member-admin-drawer-close]")){closeMemberAdminProfile();return}const a=event.target.closest("[data-drawer-edit-account]"),m=event.target.closest("[data-drawer-edit-manual]");if(a){closeMemberAdminProfile();editLinkedGuildMember(a.dataset.drawerEditAccount)}if(m){closeMemberAdminProfile();editManualGuildMember(m.dataset.drawerEditManual)}});
+  document.addEventListener("keydown",event=>{if(event.key==="Escape")closeMemberAdminProfile()});
   $("manual-member-list")?.addEventListener("click", event => {
+    const view=event.target.closest("[data-member-admin-view]");
+    if(view){const isAccount=view.dataset.memberAdminType==="account";const member=isAccount?allMembers.find(row=>String(row.user_id)===String(view.dataset.memberAdminView)):manualGuildMembers.find(row=>String(row.id)===String(view.dataset.memberAdminView));if(member){const linked=isAccount?manualGuildMembers.find(row=>String(row.linked_user_id)===String(member.user_id)):null;openMemberAdminProfile({...((linked)||{}),...member,_recordType:isAccount?"account":"manual"})}return}
+
     const edit = event.target.closest("[data-manual-edit]");
     const toggle = event.target.closest("[data-manual-toggle]");
     const accountEdit = event.target.closest("[data-account-edit]");
