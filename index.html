@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=war-attendance-font-15-20261115-r1">
+  <link rel="stylesheet" href="style.css?v=section-tabs-20261115-r1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
@@ -40,7 +40,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=war-attendance-font-15-20261115-r1";
+          app.src = "app.js?v=section-tabs-20261115-r1";
           app.onload = () => {
             const tracker = document.createElement("script");
             tracker.src = "portfolio-tracker.js?v=portfolio-typography-20261115-r1";
@@ -191,17 +191,10 @@
           <span>กฎกิลด์</span>
         </button>
 
-        <div class="nav-group">
-          <button class="nav-item nav-parent" type="button" data-toggle-submenu="members-submenu" aria-expanded="false">
-            <svg class="icon"><use href="#i-user"/></svg>
-            <span>สมาชิกกิลด์</span>
-            <span class="nav-chevron" aria-hidden="true">⌄</span>
-          </button>
-          <div class="nav-submenu" id="members-submenu">
-            <button class="nav-subitem" data-page="members"><span class="nav-subitem-dot"></span><span>รายชื่อสมาชิก</span></button>
-            <button class="nav-subitem management-only" data-page="member-management" data-management-only><span class="nav-subitem-dot"></span><span>จัดการรายชื่อสมาชิก</span></button>
-          </div>
-        </div>
+        <button class="nav-item" data-page="members">
+          <svg class="icon"><use href="#i-user"/></svg>
+          <span>สมาชิกกิลด์</span>
+        </button>
 
         <button class="nav-item" data-page="war-center"><svg class="icon"><use href="#i-swords"/></svg><span>Guild War</span></button>
 
@@ -210,29 +203,19 @@
           <span>ไกด์เกม</span>
         </button>
 
-        <div class="nav-group">
-          <button class="nav-item nav-parent" type="button" data-toggle-submenu="portfolio-submenu" aria-expanded="false">
-            <svg class="icon"><use href="#i-folder-image"/></svg><span>แฟ้มผลงาน</span><span class="nav-chevron" aria-hidden="true">⌄</span>
-          </button>
-          <div class="nav-submenu" id="portfolio-submenu">
-            <button class="nav-subitem" data-page="portfolio"><span class="nav-subitem-dot"></span><span>แฟ้มผลงานสมาชิก</span></button>
-            <button class="nav-subitem management-only" data-page="portfolio-review-center" data-management-only><span class="nav-subitem-dot"></span><span>ศูนย์ตรวจสอบแฟ้ม</span></button>
-          </div>
-        </div>
+        <button class="nav-item" data-page="portfolio">
+          <svg class="icon"><use href="#i-folder-image"/></svg>
+          <span>แฟ้มผลงาน</span>
+        </button>
 
-        <div class="nav-group">
-          <button class="nav-item nav-parent" type="button" data-toggle-submenu="guild-community-submenu" aria-expanded="false">
-            <svg class="icon"><use href="#i-party-popper"/></svg>
-            <span>Guild Community</span>
-            <span class="nav-chevron">⌄</span>
-          </button>
-          <div id="guild-community-submenu" class="nav-submenu">
-            <button class="nav-subitem" data-page="guild-news"><span class="nav-subitem-dot"></span><span>ข่าวสารกิลด์</span></button>
-            <button class="nav-subitem" data-page="guild-activities"><span class="nav-subitem-dot"></span><span>กิจกรรมกิลด์</span></button>
-            <button class="nav-subitem" data-page="community-board"><span class="nav-subitem-dot"></span><span>Community Board</span></button>
-            <button class="nav-subitem" data-page="duck-race"><span class="nav-subitem-dot"></span><span>Duck Race</span></button>
-          </div>
-        </div>
+        <button class="nav-item" data-page="community-board">
+          <svg class="icon"><use href="#i-party-popper"/></svg>
+          <span>Guild Community</span>
+        </button>
+        <button class="nav-item" data-page="duck-race">
+          <svg class="icon"><use href="#i-bolt"/></svg>
+          <span>Duck Race</span>
+        </button>
         
         <button class="nav-item" data-page="feedback">
           <svg class="icon"><use href="#i-megaphone"/></svg>
@@ -468,6 +451,8 @@
           <h1>รายชื่อสมาชิก</h1>
           <p>ทำความรู้จักสมาชิก 4AM GUILD พร้อม Class อาชีพและตำแหน่งภายในกิลด์</p>
         </div>
+        <nav class="section-tab-navigation" aria-label="เมนูย่อย"><button type="button" data-go-page="members">รายชื่อสมาชิก</button>
+<button type="button" data-go-page="member-management" data-management-only class="management-only is-role-hidden" aria-hidden="true">จัดการรายชื่อสมาชิก</button></nav>
 
         <section class="panel member-directory-panel">
           <div class="panel-heading">
@@ -495,6 +480,8 @@
           <h1>จัดการรายชื่อสมาชิก</h1>
           <p>เพิ่มและดูแลข้อมูลสมาชิกด้วยตนเอง โดยไม่จำเป็นต้องมีบัญชีเข้าใช้งานแอปก่อน</p>
         </div>
+        <nav class="section-tab-navigation" aria-label="เมนูย่อย"><button type="button" data-go-page="members">รายชื่อสมาชิก</button>
+<button type="button" data-go-page="member-management" data-management-only class="management-only is-role-hidden" aria-hidden="true">จัดการรายชื่อสมาชิก</button></nav>
 
         <section class="member-admin-overview">
           <div class="member-admin-stat">
@@ -692,6 +679,8 @@
           <h1>แฟ้มผลงานสมาชิก</h1>
           <p>คลังผลงานตัวละครและ Build ของสมาชิกกิลด์</p>
         </div>
+        <nav class="section-tab-navigation" aria-label="เมนูย่อย"><button type="button" data-go-page="portfolio">แฟ้มผลงานสมาชิก</button>
+<button type="button" data-go-page="portfolio-review-center" data-management-only class="management-only is-role-hidden" aria-hidden="true">ศูนย์ตรวจสอบแฟ้ม</button></nav>
 
           <section id="portfolio-own-bond-profile" class="portfolio-own-bond-profile hidden" aria-label="สายใยผูกพันของคุณ"></section>
         <section class="panel">
@@ -775,6 +764,8 @@
       </section>
       <section id="page-portfolio-review-center" class="page page-padded hidden">
         <div class="page-intro"><span class="section-kicker">4AM PORTFOLIO REVIEW CENTER</span><h1>ศูนย์ตรวจสอบแฟ้ม</h1><p>ภาพรวมความพร้อมและสถานะการตรวจแฟ้มผลงานสมาชิก</p></div>
+        <nav class="section-tab-navigation" aria-label="เมนูย่อย"><button type="button" data-go-page="portfolio">แฟ้มผลงานสมาชิก</button>
+<button type="button" data-go-page="portfolio-review-center" data-management-only class="management-only is-role-hidden" aria-hidden="true">ศูนย์ตรวจสอบแฟ้ม</button></nav>
         <section class="portfolio-review-overview" id="portfolio-review-overview">
           <div class="portfolio-review-stat"><span>สมาชิกทั้งหมด</span><strong data-review-stat="members">—</strong><small>สมาชิกที่ยังใช้งาน</small></div>
           <div class="portfolio-review-stat"><span>มีแฟ้มผลงาน</span><strong data-review-stat="with-portfolios">—</strong><small>สมาชิกที่มีแฟ้มอย่างน้อย 1 แฟ้ม</small></div>
@@ -947,6 +938,9 @@
           <h1 id="community-page-title">Community Board</h1>
           <p id="community-page-description">พื้นที่พูดคุย แสดงความคิดเห็น ของกิลด์ 4AM</p>
         </div>
+        <nav class="section-tab-navigation" aria-label="เมนูย่อย"><button type="button" data-go-page="guild-news">ข่าวสารกิลด์</button>
+<button type="button" data-go-page="guild-activities">กิจกรรมกิลด์</button>
+<button type="button" data-go-page="community-board">Community Board</button></nav>
         <section class="panel activities-panel">
           <div class="panel-heading activities-heading">
             <div>
