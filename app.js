@@ -1547,7 +1547,7 @@ function renderMembers(members) {
     const recordType = member.is_manual_record ? "manual" : "account";
     const avatarKey = member.user_id || member.id || name;
     const isOwn = Boolean(currentUser?.id && member.user_id && String(member.user_id) === String(currentUser.id));
-    const canEdit = member.is_manual_record ? canManageMemberProfiles() : (isOwn || canManageMemberProfiles());
+    const canEdit = !isRolePreviewActive() && (member.is_manual_record ? canManageMemberProfiles() : (isOwn || canManageMemberProfiles()));
     const editButton = canEdit ? `<button type="button" class="member-card-edit" data-member-card-edit="${escapeHTML(member.user_id || "")}" data-member-card-manual="${member.is_manual_record ? escapeHTML(member.id) : ""}" aria-label="แก้ไขข้อมูล ${escapeHTML(name)}" title="แก้ไขข้อมูลสมาชิก"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>` : "";
     return `
       <article class="member-card member-directory-card" data-member-kind="${recordType}" style="--member-class-color:${escapeHTML(classColor)}">
@@ -1582,12 +1582,16 @@ function openMemberCardEditor(member) {
   const cls = getClassInfo(member.game_class), preview = $("member-card-edit-class-icon");
   if (preview) { preview.src = cls?.iconPath || ""; preview.style.display = cls ? "" : "none"; }
   $("member-card-edit-status").textContent = "";
+  if (modal.parentElement !== document.body) document.body.appendChild(modal);
   modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("member-card-edit-open");
   window.setTimeout(() => form.elements.character_name.focus(), 60);
 }
 function closeMemberCardEditor() {
-  $("member-card-edit-modal")?.classList.add("hidden");
+  const modal = $("member-card-edit-modal");
+  modal?.classList.add("hidden");
+  modal?.setAttribute("aria-hidden", "true");
   document.body.classList.remove("member-card-edit-open");
 }
 async function saveMemberCardEditor(form) {
@@ -1635,7 +1639,9 @@ async function saveMemberCardEditor(form) {
 // ==========================================
 
 function closeDiscordMemberPicker() {
-  $("discord-member-picker")?.classList.add("hidden");
+  const picker = $("discord-member-picker");
+  picker?.classList.add("hidden");
+  picker?.setAttribute("aria-hidden", "true");
 }
 
 function setManualDiscordMember(member) {
@@ -1667,15 +1673,18 @@ function setManualDiscordMember(member) {
 }
 
 async function openDiscordMemberPicker() {
-  if (!isManagement()) return;
-  $("discord-member-picker")?.classList.remove("hidden");
+  if (!canManageMemberProfiles() || $("manual-member-type")?.value === "account") return;
+  const picker = $("discord-member-picker");
+  if (picker && picker.parentElement !== document.body) document.body.appendChild(picker);
+  picker?.classList.remove("hidden");
+  picker?.setAttribute("aria-hidden", "false");
   const search = $("discord-member-picker-search");
   if (search) { search.value = ""; search.focus(); }
   await loadDiscordGuildMembers(false);
 }
 
 async function loadDiscordGuildMembers(forceRefresh = false) {
-  if (!isManagement()) return;
+  if (!canManageMemberProfiles()) return;
   const status = $("discord-member-picker-status");
   const list = $("discord-member-picker-list");
   const refresh = $("discord-member-picker-refresh");
@@ -1743,13 +1752,18 @@ function renderGuildPositionOptions(selected = "") {
 function openManualMemberModal() {
   const modal = $("manual-member-modal");
   if (!modal) return;
+  // Reparent this overlay so it is not trapped inside a hidden page section.
+  if (modal.parentElement !== document.body) document.body.appendChild(modal);
   modal.classList.remove("hidden");
+  modal.setAttribute("aria-hidden", "false");
   document.body.classList.add("manual-member-modal-open");
   window.setTimeout(() => modal.querySelector('input[name="character_name"]')?.focus(), 80);
 }
 
 function closeManualMemberModal() {
-  $("manual-member-modal")?.classList.add("hidden");
+  const modal = $("manual-member-modal");
+  modal?.classList.add("hidden");
+  modal?.setAttribute("aria-hidden", "true");
   document.body.classList.remove("manual-member-modal-open");
 }
 
@@ -1757,6 +1771,11 @@ function resetManualMemberForm() {
   const form = $("manual-member-form");
   if (!form) return;
   form.reset();
+  $("manual-member-discord-select")?.classList.remove("hidden");
+  if ($("manual-member-discord-select")) $("manual-member-discord-select").disabled = false;
+  $("manual-member-discord-clear")?.classList.add("hidden");
+  if ($("manual-member-discord-clear")) $("manual-member-discord-clear").disabled = false;
+  $("manual-member-discord-lock-note")?.classList.add("hidden");
   $("manual-member-id").value = "";
   $("manual-member-type").value = "manual";
   $("manual-member-user-id").value = "";
@@ -2147,7 +2166,7 @@ function renderManualMemberManagement() {
 }
 
 async function saveManualGuildMember(form) {
-  if (!isManagement() || !form) return;
+  if (!canManageMemberProfiles() || !form) return;
   const formData = new FormData(form);
   const id = String(formData.get("id") || "");
   const requestedRecordType = String(formData.get("record_type") || "manual");
@@ -2218,6 +2237,8 @@ async function saveManualGuildMember(form) {
       if (!userId) throw new Error("ไม่พบ User ID ของบัญชีสมาชิก");
       const accountPayload = { ...payload };
       delete accountPayload.updated_at;
+      // Discord OAuth identity is canonical and cannot be changed from this profile editor.
+      delete accountPayload.discord_name;
       delete accountPayload.discord_user_id;
       delete accountPayload.discord_username;
       delete accountPayload.discord_global_name;
@@ -2261,7 +2282,7 @@ async function saveManualGuildMember(form) {
 
 function fillManualMemberForm(member, type = "manual") {
   const form = $("manual-member-form");
-  if (!member || !form) return;
+  if (!member || !form || (type === "account" && !canManageMemberProfiles())) return;
   $("manual-member-id").value = type === "manual" ? member.id : "";
   $("manual-member-type").value = type;
   $("manual-member-user-id").value = type === "account" ? member.user_id : "";
@@ -2279,6 +2300,26 @@ function fillManualMemberForm(member, type = "manual") {
     global_name: member.discord_global_name || "", nick: member.discord_server_nickname || "",
     avatar_url: member.discord_avatar_url || ""
   } : null);
+  const isLinkedAccount = type === "account";
+  const discordSelectButton = $("manual-member-discord-select");
+  const discordClearButton = $("manual-member-discord-clear");
+  const discordLockNote = $("manual-member-discord-lock-note");
+  if (discordSelectButton) {
+    discordSelectButton.classList.toggle("hidden", isLinkedAccount);
+    discordSelectButton.disabled = isLinkedAccount;
+  }
+  if (discordClearButton) {
+    discordClearButton.classList.toggle("hidden", isLinkedAccount || !member.discord_user_id);
+    discordClearButton.disabled = isLinkedAccount;
+  }
+  if (discordLockNote) discordLockNote.classList.toggle("hidden", !isLinkedAccount);
+  if (isLinkedAccount && !member.discord_user_id) {
+    const display = $("manual-member-discord-selected");
+    if (display) {
+      display.classList.add("is-empty");
+      display.innerHTML = '<span class="discord-member-selected-icon">◈</span><span>ไม่พบข้อมูล Discord ที่เชื่อมโยงกับบัญชีนี้</span>';
+    }
+  }
   form.elements.age.value = member.age || "";
   form.elements.guild_position.value = member.guild_position || "";
   form.elements.notes.value = member.notes || "";
@@ -2290,28 +2331,61 @@ function fillManualMemberForm(member, type = "manual") {
 }
 
 function editManualGuildMember(id) {
-  if (!isManagement()) return;
-  fillManualMemberForm(manualGuildMembers.find(item => item.id === id), "manual");
+  if (!canManageMemberProfiles()) return;
+  const member = manualGuildMembers.find(item => item.id === id);
+  if (!member) return;
+  fillManualMemberForm(member, "manual");
 }
 
-function editLinkedGuildMember(userId) {
+async function editLinkedGuildMember(userId) {
   if (!canManageMemberProfiles()) return;
   const account = allMembers.find(item => String(item.user_id) === String(userId));
   if (!account) return;
-  const linkedManual = manualGuildMembers.find(item =>
-    String(item.linked_user_id || "") === String(userId)
-  );
-  const memberForEdit = linkedManual ? {
-    ...linkedManual,
+  const linkedManual = manualGuildMembers.find(item => String(item.linked_user_id || "") === String(userId));
+
+  // discord_accounts is authoritative for registered users; the Manual row is only a fallback snapshot.
+  let discordRecord = discordAccountDirectory.get(String(userId)) || null;
+  if (!discordRecord) {
+    const { data, error } = await supabaseClient.from("discord_accounts")
+      .select("user_id,discord_user_id,discord_username,discord_global_name,verified,guild_member_verified,discord_connection_status")
+      .eq("user_id", userId).maybeSingle();
+    if (error) console.warn("Load linked Discord identity for member edit:", error.message);
+    if (data) {
+      discordRecord = data;
+      discordAccountDirectory.set(String(userId), data);
+    }
+  }
+
+  const discordUserId = String(discordRecord?.discord_user_id || linkedManual?.discord_user_id || "");
+  let botDiscordMember = discordUserId ? discordGuildMembersCache.find(item => String(item.id) === discordUserId) : null;
+  if (discordUserId && !botDiscordMember) {
+    await loadDiscordGuildMembers(false);
+    botDiscordMember = discordGuildMembersCache.find(item => String(item.id) === discordUserId) || null;
+  }
+
+  const storedUsername = String(discordRecord?.discord_username || "");
+  const username = botDiscordMember?.username ||
+    linkedManual?.discord_username ||
+    (storedUsername && !/^discord_\d+$/i.test(storedUsername) ? storedUsername : "") ||
+    account.discord_name || storedUsername;
+  const discordProfile = discordUserId ? {
+    id: discordUserId,
+    username,
+    global_name: botDiscordMember?.global_name || discordRecord?.discord_global_name || linkedManual?.discord_global_name || "",
+    nick: botDiscordMember?.nick || linkedManual?.discord_server_nickname || "",
+    avatar_url: botDiscordMember?.avatar_url || linkedManual?.discord_avatar_url || ""
+  } : null;
+
+  fillManualMemberForm({
+    ...(linkedManual || {}),
     ...account,
-    discord_name: linkedManual.discord_name || account.discord_name || "",
-    discord_user_id: linkedManual.discord_user_id || "",
-    discord_username: linkedManual.discord_username || "",
-    discord_global_name: linkedManual.discord_global_name || "",
-    discord_server_nickname: linkedManual.discord_server_nickname || "",
-    discord_avatar_url: linkedManual.discord_avatar_url || ""
-  } : account;
-  fillManualMemberForm(memberForEdit, "account");
+    discord_name: username || account.discord_name || "",
+    discord_user_id: discordProfile?.id || "",
+    discord_username: discordProfile?.username || "",
+    discord_global_name: discordProfile?.global_name || "",
+    discord_server_nickname: discordProfile?.nick || "",
+    discord_avatar_url: discordProfile?.avatar_url || ""
+  }, "account");
 }
 
 async function updateManualGuildMemberStatus(id) {
@@ -7911,10 +7985,10 @@ function registerAppEventListeners() {
     if (manualId) { if (isManagement()) editManualGuildMember(manualId); return; }
     const member = directoryMembers.find(row => !row.is_manual_record && String(row.user_id) === String(userId));
     if (!member) return;
-    if (String(currentUser?.id) === String(userId)) {
+    if (canManageMemberProfiles()) {
+      void editLinkedGuildMember(userId);
+    } else if (String(currentUser?.id) === String(userId)) {
       openMemberCardEditor(member);
-    } else if (canManageMemberProfiles()) {
-      editLinkedGuildMember(userId);
     } else {
       alert(isRolePreviewActive()
         ? "Role Preview เป็นโหมดอ่านอย่างเดียว กรุณาออกจาก Preview เพื่อแก้ไขข้อมูลสมาชิก"
@@ -7990,7 +8064,7 @@ function registerAppEventListeners() {
     const toggle = event.target.closest("[data-manual-toggle]");
     const accountEdit = event.target.closest("[data-account-edit]");
     const accountToggle = event.target.closest("[data-account-toggle]");
-    if (accountEdit) editLinkedGuildMember(accountEdit.dataset.accountEdit);
+    if (accountEdit) void editLinkedGuildMember(accountEdit.dataset.accountEdit);
     else if (accountToggle) updateLinkedGuildMemberStatus(accountToggle.dataset.accountToggle);
     else if (edit) editManualGuildMember(edit.dataset.manualEdit);
     else if (toggle) updateManualGuildMemberStatus(toggle.dataset.manualToggle);
