@@ -595,7 +595,7 @@ async function loadApplication() {
         );
         if (syncError || syncResult?.success === false) {
           console.warn("Discord status sync unavailable; keeping website access unchanged:", syncError || syncResult);
-        } else if (syncResult?.sync_status && syncResult.sync_status !== "guild_member_role") {
+        } else if (syncResult?.sync_status && syncResult.sync_status !== "connected_member") {
           console.info("Discord status requires Management attention:", syncResult.sync_status);
         }
         await loadCurrentMember();
@@ -1893,10 +1893,10 @@ function getMemberAdminDiscordHealth(member) {
   const account = uid ? discordAccountDirectory.get(uid) : null;
   const status = account?.discord_connection_status;
   if (account?.verified === true && status === "connected_member") return {key:"verified",label:"เชื่อมต่อปกติ",detail:"เชื่อมต่อ Discord Server และมี Role 4AM Guild Member",tone:"good",account};
-  if (status === "disconnected") return {key:"disconnected",label:"ออกจาก Discord Server",detail:"สมาชิกยังคงเข้าเว็บไซต์ได้ตามปกติ รอ Management ตรวจสอบสถานะในกิลด์เกม",tone:"pending",account};
-  if (status === "guest_role") return {key:"guest",label:"Role: 4AM Guest",detail:"Discord Role เปลี่ยนเป็น 4AM Guest แต่ระบบไม่ระงับสิทธิ์เว็บไซต์",tone:"pending",account};
-  if (status === "role_missing") return {key:"role_missing",label:"ไม่พบ Guild Member Role",detail:"ไม่พบ Role 4AM Guild Member แต่ระบบไม่ระงับสิทธิ์เว็บไซต์",tone:"pending",account};
-  if (status === "identity_mismatch") return {key:"identity_mismatch",label:"Discord ไม่ตรงบัญชี",detail:"Discord OAuth ไม่ตรงกับบัญชีที่ผูกไว้ กรุณาตรวจสอบ",tone:"pending",account};
+  if (status === "disconnected") return {key:"pending",label:"ออกจาก Discord Server",detail:"สมาชิกยังคงเข้าเว็บไซต์ได้ตามปกติ รอ Management ตรวจสอบสถานะในกิลด์เกม",tone:"pending",account};
+  if (status === "guest_role") return {key:"pending",label:"Role: 4AM Guest",detail:"Discord Role เปลี่ยนเป็น 4AM Guest แต่ระบบไม่ระงับสิทธิ์เว็บไซต์",tone:"pending",account};
+  if (status === "role_missing") return {key:"pending",label:"ไม่พบ Guild Member Role",detail:"ไม่พบ Role 4AM Guild Member แต่ระบบไม่ระงับสิทธิ์เว็บไซต์",tone:"pending",account};
+  if (status === "identity_mismatch") return {key:"pending",label:"Discord ไม่ตรงบัญชี",detail:"Discord OAuth ไม่ตรงกับบัญชีที่ผูกไว้ กรุณาตรวจสอบ",tone:"pending",account};
   if (account) return {key:"pending",label:"รอตรวจสอบ",detail:"พบข้อมูลบัญชี Discord แต่ยังไม่มีผลตรวจสอบล่าสุด",tone:"pending",account};
   if (member?._recordType === "account" || member?.linked_user_id) return {key:"unknown",label:"ตรวจสอบไม่ได้",detail:"สิทธิ์ฐานข้อมูลปัจจุบันไม่เปิดเผยผลตรวจสอบ Discord ของบัญชีนี้",tone:"muted",account:null};
   if (member?.discord_user_id) return {key:"pending",label:"รอสมาชิกยืนยัน",detail:"มีการกำหนด Discord Account ในรายชื่อ Manual แต่ยังไม่พบผลยืนยันจากบัญชีผู้ใช้",tone:"pending",account:null};
