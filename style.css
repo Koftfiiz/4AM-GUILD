@@ -7700,3 +7700,14 @@ body.member-admin-drawer-open{overflow:hidden}
 .war-record-image-open{display:block;padding:0;border:0;border-radius:6px;overflow:hidden;background:#080808;cursor:zoom-in}
 .war-record-image-open img{display:block;width:76px;height:58px;object-fit:cover;transition:opacity .18s ease,transform .18s ease}
 .war-record-image-open:hover img{opacity:.82;transform:scale(1.04)}
+
+
+/* Member edit overlays: keep dialogs above page sections and make modal scrolling reliable. */
+.manual-member-modal:not(.hidden){display:grid!important;z-index:10000}
+.discord-member-picker:not(.hidden){z-index:10010}
+.member-card-edit-modal:not(.hidden){display:grid!important;z-index:10000;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.member-card-edit-modal.hidden{display:none!important}
+.member-card-edit-dialog{max-height:min(90vh,760px);overflow-y:auto;overscroll-behavior:contain}
+body.member-card-edit-open{overflow-x:hidden;overflow-y:auto}
+.manual-member-discord-lock-note{display:block;margin-top:8px;color:#b7aeb1;font-size:15px;line-height:1.5}
+.manual-member-discord-lock-note.hidden{display:none!important}
