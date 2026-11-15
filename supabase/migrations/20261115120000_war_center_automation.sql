@@ -31,6 +31,11 @@ create unique index war_events_one_official_event_per_date
 on public.war_events(event_date)
 where registration_type = 'official';
 
+-- Cancellation is a retained event state, not a destructive delete.
+alter table public.war_events drop constraint if exists war_events_status_check;
+alter table public.war_events add constraint war_events_status_check
+check (status = any (array['open','closed','completed','cancelled']::text[]));
+
 create or replace function public.generate_upcoming_war_events()
 returns integer
 language plpgsql
