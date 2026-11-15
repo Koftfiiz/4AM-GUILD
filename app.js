@@ -588,26 +588,10 @@ async function loadApplication() {
     // Load an existing approved profile first. OAuth login itself never creates or links membership.
     await loadCurrentMember();
 
-    // Discord presence and roles are informational only. A Discord outage,
-    // leaving the server, or changing to 4AM Guest must never block website access.
-    // Management-controlled guild_members membership_status/active remain the access gate.
-    if (currentMember) {
-      try {
-        const { data: syncResult, error: syncError } = await supabaseClient.functions.invoke(
-          "register-guild-member",
-          { body: { action: "sync_membership" } }
-        );
-        if (syncError || syncResult?.success === false) {
-          console.warn("Discord status sync unavailable; keeping website access unchanged:", syncError || syncResult);
-        } else if (syncResult?.sync_status && syncResult.sync_status !== "connected_member") {
-          console.info("Discord status requires Management attention:", syncResult.sync_status);
-        }
-        await loadCurrentMember();
-      } catch (syncError) {
-        console.warn("Discord status sync failed; keeping website access unchanged:", syncError);
-      }
-    }
-
+    // TEMPORARILY PAUSED: automatic Discord role/membership synchronization.
+    // Website access is determined only by Management-controlled guild_members
+    // membership_status/active. Discord role checks will be reintroduced only
+    // after Management has agreed on the policy.
     if (!isDeveloper() && currentMember?.membership_status === "pending_review") {
       showMembershipStatusScreen("pending_review");
       return;
