@@ -152,7 +152,7 @@ begin
   if not found then raise exception 'ไม่พบ Event ลงชื่อวอร์นี้'; end if;
   if v_event.status='cancelled' then raise exception 'กิจกรรม Guild War นี้ถูกยกเลิกแล้ว'; end if;
 
-  v_config_match := regexp_match(coalesce(v_event.description,''), '\\[\\[WAR_CONFIG:(\\{.*?\\})\\]\\]');
+  v_config_match := regexp_match(coalesce(v_event.description,''), '\[\[WAR_CONFIG:(\{.*?\})\]\]');
   if v_config_match is not null then
     begin
       v_config := v_config_match[1]::jsonb;
