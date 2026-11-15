@@ -7152,3 +7152,49 @@ body select:disabled {
 #page-war-center .war-center-panel .btn-primary{background:#b51f32;border-color:#d83b4f}#page-war-center .war-center-panel .btn-primary:hover{background:#d12b40}
 @media(max-width:800px){.war-center-overview-grid,.war-center-management-grid{grid-template-columns:1fr 1fr}.war-center-hero{flex-direction:column}}
 @media(max-width:560px){.war-center-overview-grid,.war-center-management-grid{grid-template-columns:1fr}.war-center-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.war-center-tabs button{width:100%}.war-center-hero{padding:18px}.war-center-hero h2{font-size:22px}}
+
+
+/* PORTFOLIO REVIEW CENTER — RESPONSIVE MEMBER CARD GRID */
+#page-portfolio-review-center .portfolio-review-queue{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,360px),1fr));
+  align-items:start;
+  gap:14px;
+}
+#page-portfolio-review-center .portfolio-review-member-group{
+  min-width:0;
+  height:100%;
+}
+#page-portfolio-review-center .portfolio-review-member-header{
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+#page-portfolio-review-center .portfolio-review-member-identity{
+  flex:1 1 150px;
+}
+#page-portfolio-review-center .portfolio-review-member-summary{
+  justify-content:flex-start;
+  max-width:100%;
+}
+#page-portfolio-review-center .portfolio-review-member-files{
+  min-width:0;
+}
+#page-portfolio-review-center .portfolio-review-member-files .portfolio-review-row{
+  min-width:0;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+#page-portfolio-review-center .portfolio-review-member-files .portfolio-review-row-main{
+  flex:1 1 150px;
+}
+#page-portfolio-review-center .portfolio-review-member-files .portfolio-review-row-side{
+  flex:1 1 100%;
+  align-items:flex-start;
+  flex-direction:row;
+  flex-wrap:wrap;
+}
+@media(max-width:760px){
+  #page-portfolio-review-center .portfolio-review-queue{
+    grid-template-columns:1fr;
+  }
+}
