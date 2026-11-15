@@ -68,6 +68,7 @@ let bondSelectedMemberIds = new Set();
 let manualGuildMembers = [];
 let directoryMembers = [];
 let memberDirectoryClassFilter = "all";
+let memberDirectoryTypeFilter = "all";
 let manualMemberClassFilter = "all";
 let guildPresenceByUserId = new Map();
 let presenceHeartbeatTimer = null;
@@ -1433,11 +1434,11 @@ async function loadMembers() {
 function renderMembers(members) {
   const container = $("members-list");
   if (!container) return;
+  const source = Array.isArray(directoryMembers) ? directoryMembers : members;
   const classSummary = $("members-class-summary");
   if (classSummary) {
-    const countSource = directoryMembers.length ? directoryMembers : members;
     const counts = new Map();
-    countSource.forEach(member => {
+    source.forEach(member => {
       const name = String(getMemberClass(member) || "").trim().toLocaleLowerCase();
       if (name) counts.set(name, (counts.get(name) || 0) + 1);
     });
@@ -1447,50 +1448,42 @@ function renderMembers(members) {
     }).join("");
     classSummary.querySelectorAll("[data-member-class-filter]").forEach(button => button.classList.toggle("is-active", button.dataset.memberClassFilter === memberDirectoryClassFilter));
   }
+  const registeredCount = source.filter(member => !member.is_manual_record).length;
+  const manualCount = source.filter(member => member.is_manual_record).length;
+  const stats = $("member-directory-stats");
+  if (stats) stats.innerHTML = [
+    {label:"สมาชิกทั้งหมด",value:source.length,key:"all"},
+    {label:"ลงทะเบียนแล้ว",value:registeredCount,key:"account"},
+    {label:"Manual",value:manualCount,key:"manual"}
+  ].map(item => `<button type="button" class="member-directory-stat ${memberDirectoryTypeFilter===item.key?"is-active":""}" data-member-type-filter="${item.key}"><span>${item.label}</span><strong>${item.value}</strong></button>`).join("");
+  const typeFilter = $("member-type-filter");
+  if (typeFilter) typeFilter.value = memberDirectoryTypeFilter;
   if (!members.length) {
-    showEmpty(container, "ยังไม่มีรายชื่อสมาชิก", "เมื่อมีสมาชิกในกิลด์ รายชื่อจะแสดงที่นี่");
+    showEmpty(container, "ไม่พบสมาชิกที่ตรงกับเงื่อนไข", "ลองเปลี่ยนคำค้นหา หรือล้างตัวกรองเพื่อดูสมาชิกทั้งหมด");
     return;
   }
-
   container.innerHTML = members.map(member => {
-    const name = getMemberName(member);
-    const className = getMemberClass(member);
-    const classInfo = getClassInfo(className);
-    const classColor = classInfo?.color || "#a9a9a9";
+    const name = getMemberName(member), className = getMemberClass(member);
+    const classInfo = getClassInfo(className), classColor = classInfo?.color || "#8b8b8b";
     const guildPosition = member.guild_position || "ยังไม่ได้กำหนดตำแหน่ง";
     const gameUID = String(member.game_uid || "");
     const recordType = member.is_manual_record ? "manual" : "account";
     const avatarKey = member.user_id || member.id || name;
-
+    const isOwn = Boolean(currentUser?.id && member.user_id && String(member.user_id) === String(currentUser.id));
+    const canEdit = member.is_manual_record ? isManagement() : (isOwn || isManagement());
+    const editButton = canEdit ? `<button type="button" class="member-card-edit" data-member-card-edit="${escapeHTML(member.user_id || "")}" data-member-card-manual="${member.is_manual_record ? escapeHTML(member.id) : ""}" aria-label="แก้ไขข้อมูล ${escapeHTML(name)}" title="แก้ไขข้อมูลสมาชิก"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>` : "";
     return `
-      <article class="member-card member-directory-card" data-member-kind="${recordType}">
-        <div class="member-avatar">
-          <img class="member-avatar-image"
-            data-member-avatar-user-id="${escapeHTML(avatarKey)}"
-            src="${DEFAULT_AVATAR}" alt="รูปโปรไฟล์ ${escapeHTML(name)}"
-            loading="lazy" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'">
-        </div>
+      <article class="member-card member-directory-card" data-member-kind="${recordType}" style="--member-class-color:${escapeHTML(classColor)}">
+        ${editButton}
+        <div class="member-avatar"><img class="member-avatar-image" data-member-avatar-user-id="${escapeHTML(avatarKey)}" src="${DEFAULT_AVATAR}" alt="รูปโปรไฟล์ ${escapeHTML(name)}" loading="lazy" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'"></div>
         <div class="member-info">
           ${member.is_manual_record ? '<span class="member-record-status">รายชื่อ Manual</span>' : ""}
-          <div class="member-details">
-            <h4>${escapeHTML(name)}</h4>
-            <span class="member-guild-position-badge">${escapeHTML(guildPosition)}</span>
-            <small class="member-secondary-name">ชื่อเล่น: ${escapeHTML(member.nickname || "-")}</small>${member.discord_name ? `<small class="member-secondary-name">Discord: ${escapeHTML(member.discord_name)}</small>` : ""}
-          </div>
-          <div class="member-game-uid">
-            <span class="member-uid-label">UID ตัวละคร</span>
-            <strong>${escapeHTML(gameUID || "-")}</strong>
-            ${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">คัดลอก UID</button>` : ""}
-          </div>
+          <div class="member-details"><h4>${escapeHTML(name)}</h4><span class="member-guild-position-badge">${escapeHTML(guildPosition)}</span><small class="member-secondary-name">ชื่อเล่น: ${escapeHTML(member.nickname || "-")}</small>${member.discord_name ? `<small class="member-secondary-name">Discord: ${escapeHTML(member.discord_name)}</small>` : ""}</div>
+          <div class="member-game-uid"><span class="member-uid-label">UID ตัวละคร</span><strong>${escapeHTML(gameUID || "-")}</strong>${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">คัดลอก UID</button>` : ""}</div>
         </div>
-        <div class="member-class" style="--class-color:${classColor}">
-          ${classInfo?.iconPath ? `<img class="member-class-icon" src="${classInfo.iconPath}" alt="${escapeHTML(className)}" loading="lazy" onerror="this.style.display='none'">` : ""}
-          <span>${escapeHTML(className)}</span>
-        </div>
-      </article>
-    `;
+        <div class="member-class" style="--class-color:${escapeHTML(classColor)}">${classInfo?.iconPath ? `<img class="member-class-icon" src="${escapeHTML(classInfo.iconPath)}" alt="${escapeHTML(className)}" loading="lazy" onerror="this.style.display='none'">` : ""}<span>${escapeHTML(className)}</span></div>
+      </article>`;
   }).join("");
-
   members.forEach(async member => {
     if (member.is_manual_record) return;
     const key = String(member.user_id || member.id || getMemberName(member));
@@ -1499,6 +1492,66 @@ function renderMembers(members) {
     const avatarUrl = await resolveAvatarUrl(member);
     if (avatar.isConnected) avatar.src = avatarUrl || DEFAULT_AVATAR;
   });
+}
+
+function openMemberCardEditor(member) {
+  const modal = $("member-card-edit-modal"), form = $("member-card-edit-form");
+  if (!modal || !form || !member || member.is_manual_record || !member.user_id) return;
+  $("member-card-edit-user-id").value = member.user_id;
+  form.elements.character_name.value = member.character_name || "";
+  form.elements.nickname.value = member.nickname || "";
+  form.elements.age.value = member.age ?? "";
+  form.elements.game_class.value = member.game_class || "";
+  form.elements.game_uid.value = member.game_uid || "";
+  const cls = getClassInfo(member.game_class), preview = $("member-card-edit-class-icon");
+  if (preview) { preview.src = cls?.iconPath || ""; preview.style.display = cls ? "" : "none"; }
+  $("member-card-edit-status").textContent = "";
+  modal.classList.remove("hidden");
+  document.body.classList.add("member-card-edit-open");
+  window.setTimeout(() => form.elements.character_name.focus(), 60);
+}
+function closeMemberCardEditor() {
+  $("member-card-edit-modal")?.classList.add("hidden");
+  document.body.classList.remove("member-card-edit-open");
+}
+async function saveMemberCardEditor(form) {
+  if (!form || !currentUser) return;
+  const userId = String($("member-card-edit-user-id")?.value || "");
+  const target = directoryMembers.find(member => !member.is_manual_record && String(member.user_id) === userId);
+  if (!target) return;
+  const isOwn = userId === String(currentUser.id);
+  if (!isOwn && !isManagement()) { alert("ไม่มีสิทธิ์แก้ไขข้อมูลสมาชิกคนนี้"); return; }
+  if (isRolePreviewActive()) { alert("Role Preview เป็นโหมดอ่านอย่างเดียว"); return; }
+  const characterName = String(form.elements.character_name.value || "").trim();
+  const nickname = String(form.elements.nickname.value || "").trim();
+  const gameClass = String(form.elements.game_class.value || "").trim();
+  const gameUID = String(form.elements.game_uid.value || "").trim();
+  const ageRaw = String(form.elements.age.value || "").trim(), age = ageRaw ? Number(ageRaw) : null;
+  const status = $("member-card-edit-status");
+  if (!characterName || characterName.length > 40) { status.textContent = "กรุณากรอกชื่อตัวละครไม่เกิน 40 ตัวอักษร"; return; }
+  if (!nickname || nickname.length > 40) { status.textContent = "กรุณากรอกชื่อเล่นไม่เกิน 40 ตัวอักษร"; return; }
+  if (ageRaw && (!Number.isInteger(age) || age < 1 || age > 120)) { status.textContent = "อายุต้องเป็นตัวเลข 1–120 ปี"; return; }
+  if (!CLASS_DATA.some(item => item.name === gameClass)) { status.textContent = "กรุณาเลือกอาชีพจากรายการ"; return; }
+  if (!/^[0-9]{1,12}$/.test(gameUID)) { status.textContent = "UID ตัวละครต้องเป็นตัวเลข 1–12 หลัก"; return; }
+  const button = form.querySelector('button[type="submit"]');
+  if (button) { button.disabled = true; button.textContent = "กำลังบันทึก..."; }
+  status.textContent = "กำลังบันทึกข้อมูล...";
+  try {
+    const {data,error}=await supabaseClient.from("guild_members").update({character_name:characterName,nickname,age,game_class:gameClass,game_uid:gameUID}).eq("user_id",userId).select("user_id,character_name,nickname,age,game_class,game_uid").single();
+    if(error)throw error;
+    const patch={character_name:data.character_name,nickname:data.nickname,age:data.age,game_class:data.game_class,game_uid:data.game_uid};
+    const account=allMembers.find(item=>String(item.user_id)===userId); if(account)Object.assign(account,patch);
+    const row=directoryMembers.find(item=>!item.is_manual_record&&String(item.user_id)===userId); if(row)Object.assign(row,patch);
+    if(isOwn&&currentMember)Object.assign(currentMember,patch);
+    filterMembers();
+    if(isOwn){renderAccountDetails();updateUserChip();renderDashboardProfile();}
+    renderWarLayout();
+    status.textContent="บันทึกข้อมูลสมาชิกเรียบร้อยแล้ว";
+    window.setTimeout(closeMemberCardEditor,500);
+  } catch(error) {
+    console.error("Member card profile update:",error);
+    status.textContent="บันทึกไม่สำเร็จ: "+(error.message||"กรุณาลองอีกครั้ง");
+  } finally {if(button){button.disabled=false;button.textContent="บันทึกข้อมูล";}}
 }
 
 // ==========================================
@@ -2085,7 +2138,8 @@ function filterMembers() {
   const filtered = directoryMembers.filter(member => {
     const searchable = [getMemberName(member), member.nickname, member.discord_name, member.role, member.display_position, member.guild_position, getMemberClass(member), member.user_id, member.game_uid].join(" ").toLowerCase();
     const matchesClass = memberDirectoryClassFilter === "all" || getMemberClass(member).toLowerCase() === memberDirectoryClassFilter.toLowerCase();
-    return searchable.includes(search) && matchesClass;
+    const matchesType = memberDirectoryTypeFilter === "all" || (member.is_manual_record ? "manual" : "account") === memberDirectoryTypeFilter;
+    return searchable.includes(search) && matchesClass && matchesType;
   });
   renderMembers(filtered);
 }
@@ -7600,6 +7654,37 @@ function registerAppEventListeners() {
   $("logout-btn")?.addEventListener("click", logout);
 
   $("member-search")?.addEventListener("input", filterMembers);
+  $("member-type-filter")?.addEventListener("change", event => { memberDirectoryTypeFilter = event.target.value || "all"; filterMembers(); });
+  $("member-directory-stats")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-member-type-filter]");
+    if (!button) return;
+    memberDirectoryTypeFilter = button.dataset.memberTypeFilter || "all";
+    filterMembers();
+  });
+  $("members-list")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-member-card-edit]");
+    if (!button) return;
+    event.preventDefault();
+    if (isRolePreviewActive()) { alert("Role Preview เป็นโหมดอ่านอย่างเดียว"); return; }
+    const userId = button.dataset.memberCardEdit, manualId = button.dataset.memberCardManual;
+    if (manualId) { if (isManagement()) editManualGuildMember(manualId); return; }
+    const member = directoryMembers.find(row => !row.is_manual_record && String(row.user_id) === String(userId));
+    if (!member) return;
+    if (String(currentUser?.id) === String(userId)) openMemberCardEditor(member);
+    else if (isManagement()) editLinkedGuildMember(userId);
+  });
+  $("member-card-edit-modal")?.addEventListener("click", event => {
+    if (event.target.closest("[data-member-card-edit-close]")) closeMemberCardEditor();
+  });
+  $("member-card-edit-form")?.addEventListener("submit", event => { event.preventDefault(); void saveMemberCardEditor(event.currentTarget); });
+  $("member-card-edit-form")?.addEventListener("change", event => {
+    if (event.target.name !== "game_class") return;
+    const cls = getClassInfo(event.target.value), preview = $("member-card-edit-class-icon");
+    if (preview) { preview.src = cls?.iconPath || ""; preview.style.display = cls ? "" : "none"; }
+  });
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && !$("member-card-edit-modal")?.classList.contains("hidden")) closeMemberCardEditor();
+  });
   $("members-class-summary")?.addEventListener("click", event => {
     const button = event.target.closest("[data-member-class-filter]");
     if (!button) return;
