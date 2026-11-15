@@ -7,12 +7,12 @@
   --red: #b3202e;
   --red-bright: #e8333f;
   --red-line: rgba(178, 32, 46, .78);
-  --gold: #d8b06a;
-  --gold-light: #f3dcaa;
-  --cream: #f3e6d2;
+  --gold: #e8333f;
+  --gold-light: #ff6974;
+  --cream: #f3ebe6;
   --text: #f3ebe6;
   --muted: #a3929a;
-  --line: rgba(205, 160, 120, .22);
+  --line: rgba(178, 32, 46, .28);
   --green: #4cd37f;
   --discord: #6572f2;
   --font: "Noto Sans Thai", sans-serif;
