@@ -2357,35 +2357,51 @@ async function editLinkedGuildMember(userId) {
   }
 
   const discordUserId = String(discordRecord?.discord_user_id || linkedManual?.discord_user_id || "");
-  let botDiscordMember = discordUserId ? discordGuildMembersCache.find(item => String(item.id) === discordUserId) : null;
-  if (discordUserId && !botDiscordMember) {
-    await loadDiscordGuildMembers(false);
-    botDiscordMember = discordGuildMembersCache.find(item => String(item.id) === discordUserId) || null;
-  }
-
+  const botDiscordMember = discordUserId
+    ? discordGuildMembersCache.find(item => String(item.id) === discordUserId) || null
+    : null;
   const storedUsername = String(discordRecord?.discord_username || "");
   const username = botDiscordMember?.username ||
     linkedManual?.discord_username ||
-    (storedUsername && !/^discord_\d+$/i.test(storedUsername) ? storedUsername : "") ||
+    (storedUsername && !/^discord_\\d+$/i.test(storedUsername) ? storedUsername : "") ||
     account.discord_name || storedUsername;
-  const discordProfile = discordUserId ? {
+  const profile = {
     id: discordUserId,
     username,
     global_name: botDiscordMember?.global_name || discordRecord?.discord_global_name || linkedManual?.discord_global_name || "",
     nick: botDiscordMember?.nick || linkedManual?.discord_server_nickname || "",
     avatar_url: botDiscordMember?.avatar_url || linkedManual?.discord_avatar_url || ""
-  } : null;
+  };
 
+  // Open the editor immediately with the verified identity from the database.
+  // Fetch the Bot directory afterward to enrich it with the current Discord avatar.
   fillManualMemberForm({
     ...(linkedManual || {}),
     ...account,
     discord_name: username || account.discord_name || "",
-    discord_user_id: discordProfile?.id || "",
-    discord_username: discordProfile?.username || "",
-    discord_global_name: discordProfile?.global_name || "",
-    discord_server_nickname: discordProfile?.nick || "",
-    discord_avatar_url: discordProfile?.avatar_url || ""
+    discord_user_id: discordUserId,
+    discord_username: profile.username,
+    discord_global_name: profile.global_name,
+    discord_server_nickname: profile.nick,
+    discord_avatar_url: profile.avatar_url
   }, "account");
+
+  if (discordUserId && !botDiscordMember) {
+    await loadDiscordGuildMembers(false);
+    const refreshedBotMember = discordGuildMembersCache.find(item => String(item.id) === discordUserId);
+    const stillEditingThisAccount =
+      String($("manual-member-user-id")?.value || "") === String(userId) &&
+      $("manual-member-type")?.value === "account";
+    if (refreshedBotMember && stillEditingThisAccount) {
+      setManualDiscordMember({
+        id: discordUserId,
+        username: refreshedBotMember.username || profile.username,
+        global_name: refreshedBotMember.global_name || profile.global_name,
+        nick: refreshedBotMember.nick || profile.nick,
+        avatar_url: refreshedBotMember.avatar_url || profile.avatar_url
+      });
+    }
+  }
 }
 
 async function updateManualGuildMemberStatus(id) {
