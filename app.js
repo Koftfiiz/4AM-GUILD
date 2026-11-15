@@ -1477,11 +1477,10 @@ function renderMembers(members) {
         ${editButton}
         <div class="member-avatar"><img class="member-avatar-image" data-member-avatar-user-id="${escapeHTML(avatarKey)}" src="${DEFAULT_AVATAR}" alt="รูปโปรไฟล์ ${escapeHTML(name)}" loading="lazy" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'"></div>
         <div class="member-info">
-          ${member.is_manual_record ? '<span class="member-record-status">รายชื่อ Manual</span>' : ""}
           <div class="member-details"><h4>${escapeHTML(name)}</h4><span class="member-guild-position-badge">${escapeHTML(guildPosition)}</span><small class="member-secondary-name">ชื่อเล่น: ${escapeHTML(member.nickname || "-")}</small>${member.discord_name ? `<small class="member-secondary-name">Discord: ${escapeHTML(member.discord_name)}</small>` : ""}</div>
           <div class="member-game-uid"><span class="member-uid-label">UID ตัวละคร</span><strong>${escapeHTML(gameUID || "-")}</strong>${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">คัดลอก UID</button>` : ""}</div>
         </div>
-        <div class="member-class" style="--class-color:${escapeHTML(classColor)}">${classInfo?.iconPath ? `<img class="member-class-icon" src="${escapeHTML(classInfo.iconPath)}" alt="${escapeHTML(className)}" loading="lazy" onerror="this.style.display='none'">` : ""}<span>${escapeHTML(className)}</span></div>
+        <div class="member-class" style="--class-color:${escapeHTML(classColor)}">${classInfo?.iconPath ? `<img class="member-class-icon" src="${escapeHTML(classInfo.iconPath)}" alt="${escapeHTML(className)}" loading="lazy" onerror="this.style.display='none'">` : ""}<span>${escapeHTML(className)}</span>${member.is_manual_record ? '<span class="member-record-status">Manual</span>' : ""}</div>
       </article>`;
   }).join("");
   members.forEach(async member => {
