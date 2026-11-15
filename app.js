@@ -4699,7 +4699,7 @@ async function loadWarSignups(){
     const attendanceRows=attendanceByEvent.get(event.id)||[];
     const state=warSignupEventState(event,now);
     const own=rows.find(row=>row.member_id===currentUser.id);
-    const stateLabel=state==="cancelled"?"ยกเลิกแล้ว":state==="scheduled"?"รอเปิดรับสมัคร":state==="open"?"เปิดรับสมัคร":state==="closed"?"ปิดรับสมัคร":"ข้อมูลเวลาไม่ถูกต้อง";
+    const stateLabel=state==="cancelled"?"ยกเลิกแล้ว":state==="scheduled"?"ยังไม่เปิดรับสมัคร":state==="open"?"เปิดรับสมัคร":state==="closed"?"ปิดรับสมัคร":"ข้อมูลเวลาไม่ถูกต้อง";
     const stateClass=state==="open"?"is-open":state==="closed"?"is-closed":state==="cancelled"?"is-cancelled":"is-scheduled";
     const typeLabel=event.registration_type==="practice"?"ซ้อมวอร์":"วอร์จริง";
     const eventConfig=getWarEventConfig(event);
