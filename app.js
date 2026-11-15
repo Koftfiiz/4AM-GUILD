@@ -4963,26 +4963,41 @@ function registerWarLeaveEvents(){
 
 async function joinWarSignup(eventId,button){
   if(!currentUser||!eventId||!button)return;
-  const selected=window.prompt(
-    "หากคุณได้เป็นตัวสำรอง คุณสามารถเข้าร่วมวอร์รอบใดได้บ้าง?\n\nพิมพ์ 12 = ได้ทั้ง Round 1 และ Round 2\nพิมพ์ 1 = ได้เฉพาะ Round 1\nพิมพ์ 2 = ได้เฉพาะ Round 2\n\nข้อมูลนี้จะใช้เมื่อคุณอยู่ในรายชื่อตัวสำรองเท่านั้น",
-    "12"
-  );
-  if(selected===null)return;
-  const choice=String(selected).trim();
-  const availableRounds=choice==="12"?[1,2]:choice==="1"?[1]:choice==="2"?[2]:null;
-  if(!availableRounds){
-    alert("ตัวเลือกไม่ถูกต้อง กรุณาพิมพ์ 12, 1 หรือ 2");
-    return;
-  }
-  button.disabled=true;button.textContent="กำลังลงชื่อ...";
   try{
+    let event=allWarEvents.find(item=>item.id===eventId);
+    if(!event){
+      const lookup=await supabaseClient.from("war_events")
+        .select("id,event_name,event_date,start_time,registration_type,description,status")
+        .eq("id",eventId).maybeSingle();
+      if(lookup.error)throw lookup.error;
+      event=lookup.data;
+    }
+    if(!event)throw new Error("ไม่พบกิจกรรม Guild War ที่เลือก");
+    if(event.status==="cancelled")throw new Error("กิจกรรม Guild War นี้ถูกยกเลิกแล้ว");
+    const config=getWarEventConfig(event);
+    const roundCount=config.rounds?.length||2;
+    let choice="1";
+    if(roundCount>1){
+      const selected=window.prompt(
+        "หากคุณได้เป็นตัวสำรอง คุณสามารถเข้าร่วมวอร์รอบใดได้บ้าง?\n\nพิมพ์ 12 = ได้ทั้ง Round 1 และ Round 2\nพิมพ์ 1 = ได้เฉพาะ Round 1\nพิมพ์ 2 = ได้เฉพาะ Round 2\n\nข้อมูลนี้จะใช้เมื่อคุณอยู่ในรายชื่อตัวสำรองเท่านั้น",
+        "12"
+      );
+      if(selected===null)return;
+      choice=String(selected).trim();
+    }
+    const availableRounds=roundCount===1?[1]:choice==="12"?[1,2]:choice==="1"?[1]:choice==="2"?[2]:null;
+    if(!availableRounds||availableRounds.some(round=>round>roundCount)){
+      alert(roundCount===1?"กิจกรรมนี้มีเพียง Round 1":"ตัวเลือกไม่ถูกต้อง กรุณาพิมพ์ 12, 1 หรือ 2");
+      return;
+    }
+    button.disabled=true;button.textContent="กำลังลงชื่อ...";
     const {data,error}=await supabaseClient.rpc("join_war_signup",{
       p_event_id:eventId,
       p_available_rounds:availableRounds
     });
     if(error)throw error;
     const result=Array.isArray(data)?data[0]:data;
-    const availabilityLabel=choice==="12"?"พร้อมทั้งสองรอบ":choice==="1"?"พร้อมเฉพาะ Round 1":"พร้อมเฉพาะ Round 2";
+    const availabilityLabel=roundCount===1?"พร้อม Round 1":choice==="12"?"พร้อมทั้งสองรอบ":choice==="1"?"พร้อมเฉพาะ Round 1":"พร้อมเฉพาะ Round 2";
     alert("ลงชื่อวอร์เรียบร้อยแล้ว · คิวที่ "+(result?.queue_position??"—")+
       (result?.signup_status==="standby"?" (ตัวสำรอง)":" (ตัวจริง)")+
       "\nความพร้อมที่บันทึก: "+availabilityLabel);
