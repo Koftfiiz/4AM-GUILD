@@ -7539,3 +7539,37 @@ body select:disabled {
   background:transparent!important;
   object-fit:contain!important;
 }
+
+/* MEMBER DIRECTORY — CLASS-CODED CARDS + INLINE EDIT */
+#page-members .member-directory-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:0 0 16px}
+#page-members .member-directory-stat{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:58px;padding:10px 14px;border:1px solid rgba(255,255,255,.10);border-radius:10px;background:rgba(255,255,255,.025);color:#d8d8dc;text-align:left;cursor:pointer;transition:border-color .18s ease,background .18s ease,transform .18s ease}
+#page-members .member-directory-stat span{font-size:15px;color:#b8b8c0}
+#page-members .member-directory-stat strong{font-size:22px;color:#fff;font-variant-numeric:tabular-nums}
+#page-members .member-directory-stat.is-active{border-color:#e13b50;background:rgba(190,25,48,.12)}
+#page-members .member-directory-toolbar{display:grid;grid-template-columns:minmax(0,1fr) minmax(170px,220px);gap:10px}
+#page-members .member-directory-toolbar input,#page-members .member-directory-toolbar select{min-height:46px;font-size:15px}
+#page-members .members-list>.member-directory-card{position:relative;border:1px solid color-mix(in srgb,var(--member-class-color,#888) 68%,transparent);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--member-class-color,#888) 12%,transparent),0 8px 24px rgba(0,0,0,.18);transition:border-color .18s ease,box-shadow .18s ease,transform .18s ease}
+#page-members .members-list>.member-directory-card:hover{border-color:var(--member-class-color,#888);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--member-class-color,#888) 24%,transparent),0 0 18px color-mix(in srgb,var(--member-class-color,#888) 16%,transparent);transform:translateY(-2px)}
+#page-members .member-directory-card .member-class{color:var(--member-class-color,#ddd)}
+#page-members .member-directory-card .member-class-icon{filter:drop-shadow(0 0 7px color-mix(in srgb,var(--member-class-color,#888) 40%,transparent))}
+#page-members .member-card-edit{position:absolute;top:10px;right:10px;z-index:2;display:grid;place-items:center;width:36px;height:36px;border:1px solid rgba(255,255,255,.15);border-radius:9px;background:rgba(8,8,11,.88);color:#f3f3f5;cursor:pointer;transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease}
+#page-members .member-card-edit svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+#page-members .member-card-edit:hover{border-color:#e13b50;background:#b51f35;color:#fff;transform:translateY(-1px)}
+#page-members .member-directory-card .member-class{padding-right:42px}
+.member-card-edit-modal{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:18px}
+.member-card-edit-modal.hidden{display:none}
+.member-card-edit-backdrop{position:absolute;inset:0;border:0;background:rgba(0,0,0,.78);backdrop-filter:blur(7px)}
+.member-card-edit-dialog{position:relative;z-index:1;width:min(100%,520px);max-height:min(90vh,760px);overflow:auto;display:grid;gap:13px;padding:24px;border:1px solid rgba(225,55,78,.42);border-radius:16px;background:#111115;box-shadow:0 24px 80px rgba(0,0,0,.55)}
+.member-card-edit-heading{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;margin-bottom:4px}
+.member-card-edit-heading h3{margin:5px 0;color:#fff;font-size:22px}
+.member-card-edit-heading p{margin:0;color:#aaa;font-size:15px}
+.member-card-edit-close{width:36px;height:36px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:#1b1b20;color:#fff;font-size:24px;cursor:pointer}
+.member-card-edit-dialog label{display:grid;gap:6px;color:#ddd;font-size:15px}
+.member-card-edit-dialog input,.member-card-edit-dialog select{width:100%;min-height:44px;padding:10px 12px;border:1px solid rgba(255,255,255,.14);border-radius:8px;background:#09090c;color:#fff;font:inherit;font-size:15px}
+.member-card-edit-class{display:flex;align-items:center;gap:10px}
+.member-card-edit-class img{width:32px;height:32px;object-fit:contain}
+.member-card-edit-class select{flex:1}
+.member-card-edit-status{min-height:22px;margin:0;color:#ff7c8c;font-size:15px}
+.member-card-edit-actions{display:flex;justify-content:flex-end;gap:10px;padding-top:4px}
+body.member-card-edit-open{overflow:hidden}
+@media(max-width:600px){#page-members .member-directory-stats{gap:7px}#page-members .member-directory-stat{min-height:54px;padding:8px;display:grid;gap:2px}#page-members .member-directory-stat strong{font-size:20px}#page-members .member-directory-toolbar{grid-template-columns:1fr}.member-card-edit-dialog{padding:19px}.member-card-edit-actions{flex-direction:column-reverse}.member-card-edit-actions .btn{width:100%}}
