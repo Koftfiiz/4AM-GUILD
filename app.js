@@ -2818,11 +2818,14 @@ let portfolioCropIndex = null;
 let portfolioCropSourceUrl = null;
 let portfolioMemberCoverMode = false;
 let portfolioMemberCoverMemberId = null;
+let portfolioMemberCoverCropMode = "free";
 function closePortfolioCropEditor() {
   if (portfolioCropper) { portfolioCropper.destroy(); portfolioCropper = null; }
   if (portfolioCropSourceUrl?.startsWith("blob:")) URL.revokeObjectURL(portfolioCropSourceUrl);
   portfolioCropSourceUrl = null; portfolioCropIndex = null;
   portfolioMemberCoverMode = false; portfolioMemberCoverMemberId = null;
+  portfolioMemberCoverCropMode = "free";
+  $("portfolio-member-cover-crop-modes")?.classList.add("hidden");
   $("portfolio-crop-title").textContent = "จัดตำแหน่งภาพหน้าปก";
   $("portfolio-crop-save").textContent = "ใช้ภาพนี้เป็นหน้าปก";
   $("portfolio-crop-modal")?.classList.add("hidden");
@@ -2887,47 +2890,66 @@ function openPortfolioMemberCoverPicker() {
   const input=$("portfolio-member-cover-input");
   if(input)input.click();
 }
+function initializePortfolioMemberCoverCropper() {
+  const image=$("portfolio-crop-image");
+  if(!image||!portfolioCropSourceUrl)return;
+  if(portfolioCropper){portfolioCropper.destroy();portfolioCropper=null;}
+  const isCardFit=portfolioMemberCoverCropMode==="fit";
+  portfolioCropper=new Cropper(image,{
+    aspectRatio:isCardFit?16/10:NaN,
+    viewMode:1,
+    dragMode:isCardFit?"move":"crop",
+    autoCropArea:isCardFit?.92:.72,
+    responsive:true,
+    restore:false,
+    background:false,
+    guides:true,
+    center:true,
+    highlight:true,
+    cropBoxMovable:true,
+    cropBoxResizable:!isCardFit,
+    minCropBoxWidth:48,
+    minCropBoxHeight:48,
+    zoomOnWheel:true,
+    zoomOnTouch:true,
+    wheelZoomRatio:.08,
+    zoomRatio:.08,
+    toggleDragModeOnDblclick:false,
+    ready(){
+      const zoom=$("portfolio-crop-zoom");
+      if(zoom){zoom.min=".5";zoom.max="3";zoom.step=".01";zoom.value="1";}
+      const zoomValue=$("portfolio-crop-zoom-value");
+      if(zoomValue)zoomValue.textContent="100%";
+    }
+  });
+}
+function setPortfolioMemberCoverCropMode(mode) {
+  if(!portfolioMemberCoverMode||!["free","fit"].includes(mode)||mode===portfolioMemberCoverCropMode)return;
+  portfolioMemberCoverCropMode=mode;
+  document.querySelectorAll("[data-member-cover-crop-mode]").forEach(button=>{
+    const active=button.dataset.memberCoverCropMode===mode;
+    button.classList.toggle("is-active",active);
+    button.setAttribute("aria-pressed",String(active));
+  });
+  initializePortfolioMemberCoverCropper();
+}
 async function openPortfolioMemberCoverCrop(file) {
   if(typeof window.Cropper!=="function"){alert("โหลดเครื่องมือ Crop ภาพไม่สำเร็จ กรุณารีเฟรชหน้าเว็บ");return;}
   closePortfolioCropEditor();
   portfolioMemberCoverMode=true;
   portfolioMemberCoverMemberId=currentUser.id;
+  portfolioMemberCoverCropMode="free";
   portfolioCropSourceUrl=URL.createObjectURL(file);
   $("portfolio-crop-title").textContent="เปลี่ยนรูปหน้าปกการ์ดสมาชิก";
   $("portfolio-crop-save").textContent="บันทึกรูปหน้าปก";
+  $("portfolio-member-cover-crop-modes")?.classList.remove("hidden");
+  document.querySelectorAll("[data-member-cover-crop-mode]").forEach(button=>{
+    const active=button.dataset.memberCoverCropMode==="free";
+    button.classList.toggle("is-active",active);
+    button.setAttribute("aria-pressed",String(active));
+  });
   const image=$("portfolio-crop-image");
-  image.onload=()=>{
-    // Freeform crop: no forced landscape ratio. Start with a smaller selection
-    // so portrait photos retain room around the head and shoulders.
-    portfolioCropper=new Cropper(image,{
-      aspectRatio:NaN,
-      viewMode:1,
-      dragMode:"crop",
-      autoCropArea:.72,
-      responsive:true,
-      restore:false,
-      background:false,
-      guides:true,
-      center:true,
-      highlight:true,
-      cropBoxMovable:true,
-      cropBoxResizable:true,
-      minCropBoxWidth:48,
-      minCropBoxHeight:48,
-      zoomOnWheel:true,
-      zoomOnTouch:true,
-      wheelZoomRatio:.08,
-      zoomRatio:.08,
-      toggleDragModeOnDblclick:false,
-      ready(){
-        const zoom=$("portfolio-crop-zoom");
-        if(zoom){zoom.min=".5";zoom.max="3";zoom.step=".01";zoom.value="1";}
-        const zoomValue=$("portfolio-crop-zoom-value");
-        if(zoomValue)zoomValue.textContent="100%";
-      }
-    });
-  };
-  // The crop dialog is a global overlay outside the portfolio page; explicitly reveal it.
+  image.onload=()=>initializePortfolioMemberCoverCropper();
   $("portfolio-crop-modal")?.classList.remove("hidden");
   image.src=portfolioCropSourceUrl;
 }
@@ -2938,13 +2960,13 @@ async function savePortfolioCrop() {
     const button=$("portfolio-crop-save"); button.disabled=true; button.textContent="กำลังบันทึก...";
     try {
       if (!currentUser || portfolioMemberCoverMemberId !== currentUser.id) throw new Error("คุณแก้ไขรูปหน้าปกได้เฉพาะการ์ดของตัวเอง");
-      const cropData=portfolioCropper.getData(true);const cropScale=Math.min(1,2400/Math.max(cropData.width,cropData.height));const canvas=portfolioCropper.getCroppedCanvas({width:Math.max(1,Math.round(cropData.width*cropScale)),height:Math.max(1,Math.round(cropData.height*cropScale)),imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"});
+      const cropData=portfolioCropper.getData(true);const cropScale=Math.min(1,2400/Math.max(cropData.width,cropData.height));const canvas=portfolioMemberCoverCropMode==="fit"?portfolioCropper.getCroppedCanvas({width:1600,height:1000,minWidth:800,minHeight:500,imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"}):portfolioCropper.getCroppedCanvas({width:Math.max(1,Math.round(cropData.width*cropScale)),height:Math.max(1,Math.round(cropData.height*cropScale)),imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"});
       const blob=await new Promise((resolve,reject)=>canvas.toBlob(v=>v?resolve(v):reject(new Error("ไม่สามารถสร้างภาพหน้าปกได้")),"image/webp",.9));
       const path=`${currentUser.id}/portfolio-cover-${Date.now()}.webp`;
       const {error:uploadError}=await supabaseClient.storage.from(AVATAR_BUCKET).upload(path,blob,{cacheControl:"3600",upsert:false,contentType:"image/webp"});
       if(uploadError)throw uploadError;
       const oldPath=allMembers.find(m=>m.user_id===currentUser.id)?.member_cover_url||null;
-      const cropSettings=portfolioCropper.getData(true);
+      const cropSettings={...portfolioCropper.getData(true),mode:portfolioMemberCoverCropMode,aspectRatio:portfolioMemberCoverCropMode==="fit"?"16:10":null};
       const {error:updateError}=await supabaseClient.from("guild_members").update({member_cover_url:path,member_cover_crop_settings:cropSettings}).eq("user_id",currentUser.id);
       if(updateError){await supabaseClient.storage.from(AVATAR_BUCKET).remove([path]);throw updateError;}
       allMembers=allMembers.map(m=>m.user_id===currentUser.id?{...m,member_cover_url:path,member_cover_crop_settings:cropSettings}:m);
@@ -3097,7 +3119,7 @@ async function renderPortfolioMemberDirectory() {
     const bondNames = getMemberSelectedBondNames(m.user_id);
     return `<article class="portfolio-member-card" style="--class-color:${color}">
       <button type="button" class="portfolio-member-open" data-portfolio-member-id="${escapeHTML(m.user_id)}">
-        <div class="portfolio-member-cover ${m.member_cover_url?"has-custom-cover":""}"><img src="${escapeHTML(src)}" alt="รูปหน้าปก ${escapeHTML(getMemberName(m))}" loading="lazy"><span class="portfolio-member-count">${ps.length} แฟ้ม</span></div>
+        <div class="portfolio-member-cover ${m.member_cover_url?"has-custom-cover":""} ${m.member_cover_crop_settings?.mode==="fit"?"has-fixed-cover-crop":""}"><img src="${escapeHTML(src)}" alt="รูปหน้าปก ${escapeHTML(getMemberName(m))}" loading="lazy"><span class="portfolio-member-count">${ps.length} แฟ้ม</span></div>
         <div class="portfolio-member-card-content"><div class="portfolio-member-class">${ci?.iconPath?`<img src="${escapeHTML(ci.iconPath)}" alt="">`:""}<span>${escapeHTML(cn||"ยังไม่ระบุคลาส")}</span></div>
         <h3>${escapeHTML(getMemberName(m))}</h3>
         <div class="portfolio-member-bonds"><strong>สายใยผูกพันธ์</strong><span>${bondNames.length ? escapeHTML(bondNames.join(" · ")) : "ยังไม่ได้ระบุรายชื่อ"}</span></div>
@@ -3771,6 +3793,7 @@ function registerPortfolioEvents() {
   });
   $("portfolio-crop-close")?.addEventListener("click",closePortfolioCropEditor);
   $("portfolio-crop-cancel")?.addEventListener("click",closePortfolioCropEditor);
+  document.querySelectorAll("[data-member-cover-crop-mode]").forEach(button=>button.addEventListener("click",()=>setPortfolioMemberCoverCropMode(button.dataset.memberCoverCropMode)));
   $("portfolio-crop-save")?.addEventListener("click",()=>{void savePortfolioCrop();});
   $("portfolio-crop-rotate-left")?.addEventListener("click",()=>portfolioCropper?.rotate(-90));
   $("portfolio-crop-rotate-right")?.addEventListener("click",()=>portfolioCropper?.rotate(90));
