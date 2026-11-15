@@ -7102,3 +7102,8 @@ body select:disabled {
 /* PARTY MANAGEMENT reserve filter: keep its count beside the label. */
 .war-assignment-modal-panel-reference .war-modal-class-tabs button[data-war-modal-reserve]{display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:6px;white-space:nowrap;min-width:74px;padding:4px 10px;}
 .war-assignment-modal-panel-reference .war-modal-class-tabs button[data-war-modal-reserve] span{display:inline-flex;align-items:center;justify-content:center;line-height:1;}
+
+
+/* War Attendance Center: minimum readable text size */
+#page-war-attendance-stats :where(p,span,label,small,strong,em,a,button,input,select,option,td,th,caption,li,.muted,.section-kicker,.panel-kicker,.empty-state){font-size:15px!important}
+#page-war-attendance-stats :where(input,select,button){line-height:1.45}
