@@ -7078,16 +7078,20 @@ function openGuildPage(pageName) {
   if (warPage && warSubmenu) warSubmenu.classList.add("is-open");
 
   const portfolioPages = ["portfolio", "portfolio-review-center"];
-  const portfolioParent = document.querySelector('[data-toggle-submenu="portfolio-submenu"]');
-  const portfolioSubmenu = $("portfolio-submenu");
-  portfolioParent?.classList.toggle("active", portfolioPages.includes(pageName));
-  if (portfolioPages.includes(pageName) && portfolioSubmenu) portfolioSubmenu.classList.add("is-open");
+  document.querySelectorAll('.sidebar [data-page="portfolio"]').forEach(button => button.classList.toggle("active", portfolioPages.includes(pageName)));
 
-  const guildCommunityPage = ["community-board", "guild-news", "guild-activities", "duck-race"].includes(pageName);
-  const guildCommunityParent = document.querySelector('[data-toggle-submenu="guild-community-submenu"]');
-  const guildCommunitySubmenu = $("guild-community-submenu");
-  guildCommunityParent?.classList.toggle("active", guildCommunityPage);
-  if (guildCommunityPage && guildCommunitySubmenu) guildCommunitySubmenu.classList.add("is-open");
+  const guildCommunityPages = ["community-board", "guild-news", "guild-activities"];
+  document.querySelectorAll('.sidebar [data-page="community-board"]').forEach(button => button.classList.toggle("active", guildCommunityPages.includes(pageName)));
+
+  const memberPages = ["members", "member-management"];
+  document.querySelectorAll('.sidebar [data-page="members"]').forEach(button => button.classList.toggle("active", memberPages.includes(pageName)));
+
+  document.querySelectorAll(".section-tab-navigation [data-go-page]").forEach(button => {
+    const active = button.dataset.goPage === pageName;
+    button.classList.toggle("is-active", active);
+    if (active) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
 
   document.title = `${PAGE_TITLES[pageName] || "4AM GUILD"} | 4AM GUILD`;
 
@@ -7098,12 +7102,6 @@ function openGuildPage(pageName) {
   if (pageName === "member-management" && isManagement()) loadManualMemberManagement();
   if (pageName === "system-management") loadSystemRoleMembers();
   if (pageName === "discord-integration") loadDiscordIntegrationSettings();
-
-  const memberPages = ["members", "member-management"];
-  const memberParent = document.querySelector('[data-toggle-submenu="members-submenu"]');
-  const memberSubmenu = $("members-submenu");
-  memberParent?.classList.toggle("active", memberPages.includes(pageName));
-  if (memberPages.includes(pageName) && memberSubmenu) memberSubmenu.classList.add("is-open");
 
   if (pageName === "dashboard") {
     loadDashboardAnnouncement();
