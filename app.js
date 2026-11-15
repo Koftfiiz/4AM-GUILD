@@ -215,6 +215,19 @@ function isManagement() {
   return ["developer", "leader", "management"].includes(getEffectiveSystemRole());
 }
 
+// Permission for editing another member's profile.
+// The real Developer identity is always recognized outside Role Preview,
+// even if the cached member row is stale. Leader and Management require an
+// active guild membership. Role Preview remains intentionally read-only.
+function canManageMemberProfiles() {
+  if (isRolePreviewActive()) return false;
+  if (isDeveloper()) return true;
+  const role = String(currentMember?.role || "").toLowerCase();
+  return currentMember?.active === true &&
+    currentMember?.membership_status === "active" &&
+    ["leader", "management"].includes(role);
+}
+
 function applyRolePreviewState() {
   const active = isRolePreviewActive();
   const labels = { member: "Member", admin: "HR", management: "Management", leader: "Leader", developer: "Developer" };
@@ -1534,7 +1547,7 @@ function renderMembers(members) {
     const recordType = member.is_manual_record ? "manual" : "account";
     const avatarKey = member.user_id || member.id || name;
     const isOwn = Boolean(currentUser?.id && member.user_id && String(member.user_id) === String(currentUser.id));
-    const canEdit = member.is_manual_record ? isManagement() : (isOwn || isManagement());
+    const canEdit = member.is_manual_record ? canManageMemberProfiles() : (isOwn || canManageMemberProfiles());
     const editButton = canEdit ? `<button type="button" class="member-card-edit" data-member-card-edit="${escapeHTML(member.user_id || "")}" data-member-card-manual="${member.is_manual_record ? escapeHTML(member.id) : ""}" aria-label="แก้ไขข้อมูล ${escapeHTML(name)}" title="แก้ไขข้อมูลสมาชิก"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>` : "";
     return `
       <article class="member-card member-directory-card" data-member-kind="${recordType}" style="--member-class-color:${escapeHTML(classColor)}">
@@ -1583,7 +1596,7 @@ async function saveMemberCardEditor(form) {
   const target = directoryMembers.find(member => !member.is_manual_record && String(member.user_id) === userId);
   if (!target) return;
   const isOwn = userId === String(currentUser.id);
-  if (!isOwn && !isManagement()) { alert("ไม่มีสิทธิ์แก้ไขข้อมูลสมาชิกคนนี้"); return; }
+  if (!isOwn && !canManageMemberProfiles()) { alert("ไม่มีสิทธิ์แก้ไขข้อมูลสมาชิกคนนี้"); return; }
   if (isRolePreviewActive()) { alert("Role Preview เป็นโหมดอ่านอย่างเดียว"); return; }
   const characterName = String(form.elements.character_name.value || "").trim();
   const nickname = String(form.elements.nickname.value || "").trim();
@@ -2282,7 +2295,7 @@ function editManualGuildMember(id) {
 }
 
 function editLinkedGuildMember(userId) {
-  if (!isManagement()) return;
+  if (!canManageMemberProfiles()) return;
   const account = allMembers.find(item => String(item.user_id) === String(userId));
   if (!account) return;
   const linkedManual = manualGuildMembers.find(item =>
@@ -7867,8 +7880,15 @@ function registerAppEventListeners() {
     if (manualId) { if (isManagement()) editManualGuildMember(manualId); return; }
     const member = directoryMembers.find(row => !row.is_manual_record && String(row.user_id) === String(userId));
     if (!member) return;
-    if (String(currentUser?.id) === String(userId)) openMemberCardEditor(member);
-    else if (isManagement()) editLinkedGuildMember(userId);
+    if (String(currentUser?.id) === String(userId)) {
+      openMemberCardEditor(member);
+    } else if (canManageMemberProfiles()) {
+      editLinkedGuildMember(userId);
+    } else {
+      alert(isRolePreviewActive()
+        ? "Role Preview เป็นโหมดอ่านอย่างเดียว กรุณาออกจาก Preview เพื่อแก้ไขข้อมูลสมาชิก"
+        : "ไม่มีสิทธิ์แก้ไขข้อมูลสมาชิกคนนี้");
+    }
   });
   $("member-card-edit-modal")?.addEventListener("click", event => {
     if (event.target.closest("[data-member-card-edit-close]")) closeMemberCardEditor();
