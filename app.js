@@ -2625,13 +2625,31 @@ async function openPortfolioMemberCoverCrop(file) {
   $("portfolio-crop-save").textContent="บันทึกรูปหน้าปก";
   const image=$("portfolio-crop-image");
   image.onload=()=>{
+    // Freeform crop: no forced landscape ratio. Start with a smaller selection
+    // so portrait photos retain room around the head and shoulders.
     portfolioCropper=new Cropper(image,{
-      aspectRatio:NaN,viewMode:1,dragMode:"crop",autoCropArea:.92,responsive:true,
-      restore:false,background:false,guides:true,center:true,cropBoxMovable:true,cropBoxResizable:true,
+      aspectRatio:NaN,
+      viewMode:1,
+      dragMode:"crop",
+      autoCropArea:.72,
+      responsive:true,
+      restore:false,
+      background:false,
+      guides:true,
+      center:true,
+      highlight:true,
+      cropBoxMovable:true,
+      cropBoxResizable:true,
+      minCropBoxWidth:48,
+      minCropBoxHeight:48,
+      zoomOnWheel:true,
+      zoomOnTouch:true,
+      wheelZoomRatio:.08,
+      zoomRatio:.08,
       toggleDragModeOnDblclick:false,
       ready(){
         const zoom=$("portfolio-crop-zoom");
-        if(zoom)zoom.value="1";
+        if(zoom){zoom.min=".5";zoom.max="3";zoom.step=".01";zoom.value="1";}
         const zoomValue=$("portfolio-crop-zoom-value");
         if(zoomValue)zoomValue.textContent="100%";
       }
@@ -3484,8 +3502,17 @@ function registerPortfolioEvents() {
   $("portfolio-crop-save")?.addEventListener("click",()=>{void savePortfolioCrop();});
   $("portfolio-crop-rotate-left")?.addEventListener("click",()=>portfolioCropper?.rotate(-90));
   $("portfolio-crop-rotate-right")?.addEventListener("click",()=>portfolioCropper?.rotate(90));
-  $("portfolio-crop-reset")?.addEventListener("click",()=>{portfolioCropper?.reset();$("portfolio-crop-zoom").value="1";$("portfolio-crop-zoom-value").textContent="100%";});
-  $("portfolio-crop-zoom")?.addEventListener("input",event=>{const v=Number(event.target.value);portfolioCropper?.zoomTo(v);$("portfolio-crop-zoom-value").textContent=`${Math.round(v*100)}%`;});
+  $("portfolio-crop-reset")?.addEventListener("click",()=>{
+    portfolioCropper?.reset();
+    const zoom=$("portfolio-crop-zoom");if(zoom)zoom.value="1";
+    const output=$("portfolio-crop-zoom-value");if(output)output.textContent="100%";
+  });
+  $("portfolio-crop-zoom")?.addEventListener("input",event=>{
+    const v=Math.max(.5,Math.min(3,Number(event.target.value)||1));
+    if(portfolioCropper)portfolioCropper.zoomTo(v);
+    const output=$("portfolio-crop-zoom-value");
+    if(output)output.textContent=`${Math.round(v*100)}%`;
+  });
   $("portfolio-crop-modal")?.addEventListener("click",event=>{if(event.target.id==="portfolio-crop-modal")closePortfolioCropEditor();});
 
   const portfolioImagePreview = $("portfolio-image-preview");
