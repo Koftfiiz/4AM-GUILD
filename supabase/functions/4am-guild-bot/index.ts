@@ -268,7 +268,7 @@ Deno.serve(async (request: Request) => {
     if (!actor || !["developer", "leader", "management"].includes(String(actor.role).toLowerCase())) {
       return jsonResponse({ type: 4, data: { content: "คำสั่งนี้สงวนสิทธิ์สำหรับ Management ขึ้นไป และต้องเชื่อม Discord กับบัญชี 4AM GUILD แล้ว", flags: 64 } });
     }
-    const eventId = option(interaction.data.options || [], "event_id");
+    const eventId = getOption(interaction.data.options || [], "event_id");
     if (!/^[0-9a-f-]{36}$/i.test(eventId)) return jsonResponse({ type: 4, data: { content: "กรุณาระบุ Event ID ที่ถูกต้อง", flags: 64 } });
     try {
       const data = await getRoster(eventId);
