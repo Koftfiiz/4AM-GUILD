@@ -559,12 +559,24 @@
 
         <section class="panel manual-member-list-panel">
           <div class="panel-heading"><div><span class="panel-kicker">MEMBER RECORDS</span><h3>จัดการสมาชิกแบบ Manual</h3><p>แก้ไขข้อมูล เปลี่ยนสถานะ หรือเอารายชื่อออกจาก Directory</p></div></div>
+          <div class="manual-member-quality-strip" id="manual-member-quality-strip" aria-live="polite"></div>
           <div class="manual-member-class-summary-heading">จำนวนสมาชิกแยกตามอาชีพ</div>
           <div id="manual-member-class-summary" class="manual-member-class-summary" aria-label="จำนวนสมาชิกแยกตามอาชีพ"></div>
-          <div class="manual-member-search-wrap">
-            <span class="manual-member-search-icon" aria-hidden="true">⌕</span>
-            <input id="manual-member-search" type="search" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น UID, Class หรือ Discord..." autocomplete="off" aria-label="ค้นหารายชื่อสมาชิกแบบ Manual">
+          <div class="member-admin-filter-toolbar">
+            <label class="manual-member-search-wrap"><span class="manual-member-search-icon" aria-hidden="true">⌕</span><input id="manual-member-search" type="search" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น UID, Discord ID หรือ Username..." autocomplete="off" aria-label="ค้นหาสมาชิก"></label>
+            <div class="member-admin-filter-grid">
+              <label><span>ประเภทบัญชี</span><select id="manual-member-record-filter"><option value="all">ทุกประเภท</option><option value="account">ลงทะเบียนแล้ว</option><option value="manual">Manual</option></select></label>
+              <label><span>สถานะสมาชิก</span><select id="manual-member-activity-filter"><option value="all">ทุกสถานะ</option><option value="active">Active</option><option value="inactive">Inactive</option></select></label>
+              <label><span>Discord</span><select id="manual-member-discord-filter"><option value="all">ทุกสถานะ Discord</option><option value="verified">Verified</option><option value="pending">รอตรวจสอบ</option><option value="missing">ยังไม่เชื่อมต่อ</option></select></label>
+              <label><span>ตำแหน่งกิลด์</span><select id="manual-member-position-filter"><option value="all">ทุกตำแหน่ง</option></select></label>
+            </div>
+            <div class="member-admin-filter-actions">
+              <label class="member-admin-saved-filter"><span>ตัวกรองที่บันทึก</span><select id="manual-member-saved-filters"><option value="">เลือกตัวกรองที่บันทึกไว้</option></select></label>
+              <button type="button" id="manual-member-save-filter" class="btn btn-outline">บันทึกตัวกรอง</button>
+              <button type="button" id="manual-member-reset-filters" class="btn btn-outline">ล้างตัวกรอง</button>
+            </div>
           </div>
+          <div id="manual-member-filter-result" class="manual-member-filter-result" aria-live="polite"></div>
           <div id="manual-member-list"><p class="muted">กำลังโหลดข้อมูลสมาชิก...</p></div>
         </section>
       </section>
@@ -1256,6 +1268,11 @@
       </section>
       <!-- Global overlays: keep outside page/section containers that may be hidden. -->
       <input id="portfolio-member-cover-input" type="file" accept="image/*" hidden>
+      <div id="member-admin-profile-drawer" class="member-admin-profile-drawer hidden" role="dialog" aria-modal="true" aria-labelledby="member-admin-profile-title">
+        <button type="button" class="member-admin-profile-backdrop" data-member-admin-drawer-close aria-label="ปิดรายละเอียดสมาชิก"></button>
+        <aside class="member-admin-profile-panel"><div class="member-admin-profile-heading"><div><span class="panel-kicker">4AM GUILD · MEMBER RECORD</span><h3 id="member-admin-profile-title">ข้อมูลสมาชิก</h3></div><button type="button" class="member-admin-profile-close" data-member-admin-drawer-close aria-label="ปิด">×</button></div><div id="member-admin-profile-content"></div></aside>
+      </div>
+
       <div id="member-card-edit-modal" class="member-card-edit-modal hidden" role="dialog" aria-modal="true" aria-labelledby="member-card-edit-title">
         <button type="button" class="member-card-edit-backdrop" data-member-card-edit-close aria-label="ปิดหน้าต่าง"></button>
         <form id="member-card-edit-form" class="member-card-edit-dialog">
