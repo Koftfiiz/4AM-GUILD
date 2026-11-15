@@ -2896,7 +2896,7 @@ function initializePortfolioMemberCoverCropper() {
   if(portfolioCropper){portfolioCropper.destroy();portfolioCropper=null;}
   const isCardFit=portfolioMemberCoverCropMode==="fit";
   portfolioCropper=new Cropper(image,{
-    aspectRatio:isCardFit?16/10:NaN,
+    aspectRatio:isCardFit?4/3:NaN,
     viewMode:1,
     dragMode:isCardFit?"move":"crop",
     autoCropArea:isCardFit?.92:.72,
@@ -2960,13 +2960,13 @@ async function savePortfolioCrop() {
     const button=$("portfolio-crop-save"); button.disabled=true; button.textContent="กำลังบันทึก...";
     try {
       if (!currentUser || portfolioMemberCoverMemberId !== currentUser.id) throw new Error("คุณแก้ไขรูปหน้าปกได้เฉพาะการ์ดของตัวเอง");
-      const cropData=portfolioCropper.getData(true);const cropScale=Math.min(1,2400/Math.max(cropData.width,cropData.height));const canvas=portfolioMemberCoverCropMode==="fit"?portfolioCropper.getCroppedCanvas({width:1600,height:1000,minWidth:800,minHeight:500,imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"}):portfolioCropper.getCroppedCanvas({width:Math.max(1,Math.round(cropData.width*cropScale)),height:Math.max(1,Math.round(cropData.height*cropScale)),imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"});
+      const cropData=portfolioCropper.getData(true);const cropScale=Math.min(1,2400/Math.max(cropData.width,cropData.height));const canvas=portfolioMemberCoverCropMode==="fit"?portfolioCropper.getCroppedCanvas({width:1600,height:1200,minWidth:800,minHeight:600,imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"}):portfolioCropper.getCroppedCanvas({width:Math.max(1,Math.round(cropData.width*cropScale)),height:Math.max(1,Math.round(cropData.height*cropScale)),imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"});
       const blob=await new Promise((resolve,reject)=>canvas.toBlob(v=>v?resolve(v):reject(new Error("ไม่สามารถสร้างภาพหน้าปกได้")),"image/webp",.9));
       const path=`${currentUser.id}/portfolio-cover-${Date.now()}.webp`;
       const {error:uploadError}=await supabaseClient.storage.from(AVATAR_BUCKET).upload(path,blob,{cacheControl:"3600",upsert:false,contentType:"image/webp"});
       if(uploadError)throw uploadError;
       const oldPath=allMembers.find(m=>m.user_id===currentUser.id)?.member_cover_url||null;
-      const cropSettings={...portfolioCropper.getData(true),mode:portfolioMemberCoverCropMode,aspectRatio:portfolioMemberCoverCropMode==="fit"?"16:10":null};
+      const cropSettings={...portfolioCropper.getData(true),mode:portfolioMemberCoverCropMode,aspectRatio:portfolioMemberCoverCropMode==="fit"?"4:3":null};
       const {error:updateError}=await supabaseClient.from("guild_members").update({member_cover_url:path,member_cover_crop_settings:cropSettings}).eq("user_id",currentUser.id);
       if(updateError){await supabaseClient.storage.from(AVATAR_BUCKET).remove([path]);throw updateError;}
       allMembers=allMembers.map(m=>m.user_id===currentUser.id?{...m,member_cover_url:path,member_cover_crop_settings:cropSettings}:m);
@@ -4823,7 +4823,15 @@ async function renderWarMatchRecords(){
  const stats=$("war-record-opponent-stats");if(stats){const names=Object.keys(g).sort((a,b)=>a.localeCompare(b,"th"));stats.innerHTML=names.length?'<div class="war-record-table-wrap"><table class="war-record-table"><thead><tr><th>กิลด์</th><th>แข่ง</th><th>4AM ชนะ</th><th>4AM แพ้</th><th>ชนะ %</th><th>แพ้ %</th></tr></thead><tbody>'+names.map(k=>{const x=g[k],t=x.w+x.l;return "<tr><td>"+escapeHTML(k)+"</td><td>"+t+"</td><td>"+x.w+"</td><td>"+x.l+"</td><td>"+(x.w/t*100).toFixed(1)+"%</td><td>"+(x.l/t*100).toFixed(1)+"%</td></tr>";}).join("")+"</tbody></table></div>":'<div class="empty-state"><h3>ยังไม่มีผลวอร์</h3></div>';}
  const box=$("war-record-history");if(!box)return;if(!r.length){box.innerHTML='<div class="empty-state"><h3>ยังไม่มีประวัติผลวอร์</h3></div>';return;}
  const urls=await Promise.all(r.map(async x=>Promise.all((x.image_paths||[]).map(async path=>{const z=await supabaseClient.storage.from(WAR_RECORD_BUCKET).createSignedUrl(path,3600);return z.error?"":z.data.signedUrl;}))));
- box.innerHTML='<div class="war-record-table-wrap"><table class="war-record-table"><thead><tr><th>วันที่</th><th>คู่แข่ง</th><th>ผล</th><th>รูป</th><th>จัดการ</th></tr></thead><tbody>'+r.map((x,i)=>'<tr><td>'+formatWarRecordDate(x.war_date)+'</td><td>'+escapeHTML(x.opponent_guild)+'</td><td><span class="war-record-result '+x.result+'">'+(x.result==="win"?"4AM ชนะ":"4AM แพ้")+'</span></td><td><div class="war-record-images">'+urls[i].filter(Boolean).map((u,j)=>'<a href="'+escapeHTML(u)+'" target="_blank" rel="noopener"><img src="'+escapeHTML(u)+'" alt="หลักฐาน '+(j+1)+'"></a>').join("")+'</div></td><td><div class="war-record-row-actions"><button class="btn btn-outline btn-sm" type="button" data-war-record-edit="'+escapeHTML(x.id)+'">แก้ไข</button><button class="btn btn-danger btn-sm" type="button" data-war-record-delete="'+escapeHTML(x.id)+'">ลบ</button></div></td></tr>').join("")+'</tbody></table></div>';
+ const warLightboxImages=[];
+ const imageButtons=urls.map((list,i)=>list.filter(Boolean).map((url,j)=>{
+   const index=warLightboxImages.push({url,label:"ผลวอร์ · "+(r[i].opponent_guild||"คู่แข่ง")+" · "+formatWarRecordDate(r[i].war_date)+" · หลักฐาน "+(j+1)})-1;
+   return '<button type="button" class="war-record-image-open" data-war-record-lightbox-index="'+index+'" aria-label="ดูภาพหลักฐานผลวอร์แบบเต็มหน้าจอ"><img src="'+escapeHTML(url)+'" alt="หลักฐานผลวอร์ '+(j+1)+'" loading="lazy"></button>';
+ }));
+ window.portfolioLightboxImages=warLightboxImages;
+ window.portfolioLightboxIndex=0;
+ box.innerHTML='<div class="war-record-table-wrap"><table class="war-record-table"><thead><tr><th>วันที่</th><th>คู่แข่ง</th><th>ผล</th><th>รูป</th><th>จัดการ</th></tr></thead><tbody>'+r.map((x,i)=>'<tr><td>'+formatWarRecordDate(x.war_date)+'</td><td>'+escapeHTML(x.opponent_guild)+'</td><td><span class="war-record-result '+x.result+'">'+(x.result==="win"?"4AM ชนะ":"4AM แพ้")+'</span></td><td><div class="war-record-images">'+imageButtons[i].join("")+'</div></td><td><div class="war-record-row-actions"><button class="btn btn-outline btn-sm" type="button" data-war-record-edit="'+escapeHTML(x.id)+'">แก้ไข</button><button class="btn btn-danger btn-sm" type="button" data-war-record-delete="'+escapeHTML(x.id)+'">ลบ</button></div></td></tr>').join("")+'</tbody></table></div>';
+ box.querySelectorAll("[data-war-record-lightbox-index]").forEach(button=>button.addEventListener("click",()=>openPortfolioLightbox(Number(button.dataset.warRecordLightboxIndex))));
 }
 function resetWarRecordEditor(){ $("war-record-form")?.reset();$("war-record-edit-id").value="";$("war-record-existing-images").innerHTML="";$("war-record-images").required=true;$("war-record-submit").textContent="ยืนยันและบันทึกผลวอร์";$("war-record-cancel-edit")?.classList.add("hidden");$("war-record-message")?.classList.add("hidden");}
 async function startEditWarMatchRecord(id){if(!isManagement())return;const x=warMatchRecords.find(r=>r.id===id);if(!x)return;$("war-record-edit-id").value=x.id;$("war-record-opponent").value=x.opponent_guild||"";$("war-record-date").value=x.war_date||"";$("war-record-result").value=x.result||"";$("war-record-images").value="";$("war-record-images").required=false;$("war-record-submit").textContent="บันทึกการแก้ไขผลวอร์";$("war-record-cancel-edit").classList.remove("hidden");const links=await Promise.all((x.image_paths||[]).map(async path=>{const q=await supabaseClient.storage.from(WAR_RECORD_BUCKET).createSignedUrl(path,3600);return q.error?"":'<a href="'+escapeHTML(q.data.signedUrl)+'" target="_blank" rel="noopener">ดูรูปเดิม</a>';}));$("war-record-existing-images").innerHTML=links.filter(Boolean).join(" · ")||"ไม่มีรูปเดิม";$("war-record-form").scrollIntoView({behavior:"smooth",block:"center"});}
