@@ -7677,3 +7677,19 @@ body.member-admin-drawer-open{overflow:hidden}
 .member-pending-review-main small{color:#a1a1aa;font-size:15px;overflow-wrap:anywhere}
 .member-pending-review-actions{display:flex;gap:8px;flex-shrink:0}
 @media(max-width:680px){.member-pending-review-heading{display:grid}.member-pending-review-item{align-items:stretch;flex-direction:column}.member-pending-review-actions{display:grid;grid-template-columns:1fr 1fr}.member-pending-review-actions button{width:100%}}
+
+
+/* Member cover crop modes and consistent card-fit canvas */
+.portfolio-member-cover-crop-modes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 12px}
+.portfolio-member-cover-crop-modes.hidden{display:none}
+.portfolio-cover-crop-mode{display:grid;gap:4px;min-width:0;padding:12px 14px;border:1px solid rgba(255,255,255,.13);border-radius:9px;background:#111114;color:#f4eeee;text-align:left;cursor:pointer;transition:border-color .18s ease,background .18s ease}
+.portfolio-cover-crop-mode strong{font-size:15px;color:#fff}
+.portfolio-cover-crop-mode span{font-size:15px;color:#bdb4b7}
+.portfolio-cover-crop-mode:hover,.portfolio-cover-crop-mode.is-active{border-color:#e53950;background:rgba(180,28,48,.18)}
+.portfolio-cover-crop-mode.is-active strong{color:#ff7c89}
+.portfolio-member-cover{height:auto!important;min-height:0!important;max-height:none!important;aspect-ratio:16/10!important}
+.portfolio-member-cover.has-fixed-cover-crop img{object-fit:cover!important;object-position:center center!important;transform:none!important}
+.portfolio-member-card:hover .portfolio-member-cover.has-fixed-cover-crop img{transform:none!important}
+@media(max-width:650px){.portfolio-member-cover{height:auto!important;min-height:0!important;aspect-ratio:16/10!important}}
+@media(max-width:380px){.portfolio-member-cover{height:auto!important;min-height:0!important;aspect-ratio:16/10!important}}
+@media(max-width:520px){.portfolio-member-cover-crop-modes{grid-template-columns:1fr}}
