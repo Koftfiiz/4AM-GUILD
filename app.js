@@ -1786,8 +1786,31 @@ function renderManualMemberManagement() {
   const guildPositionOrder = new Map(
     GUILD_POSITIONS.map((position, index) => [position, index])
   );
+  // When a Manual member links their Discord login, the original Manual row
+  // remains the source of the full Discord profile. Merge those fields into the
+  // account-backed row for management display/editing without changing DB data.
+  const linkedManualByUserId = new Map(
+    manualGuildMembers
+      .filter(member => member.linked_user_id)
+      .map(member => [String(member.linked_user_id), member])
+  );
+  const accountRowsWithDiscord = allMembers.map(member => {
+    const linkedManual = linkedManualByUserId.get(String(member.user_id));
+    if (!linkedManual) return { ...member, _recordType: "account" };
+    return {
+      ...linkedManual,
+      ...member,
+      discord_name: linkedManual.discord_name || member.discord_name || "",
+      discord_user_id: linkedManual.discord_user_id || "",
+      discord_username: linkedManual.discord_username || "",
+      discord_global_name: linkedManual.discord_global_name || "",
+      discord_server_nickname: linkedManual.discord_server_nickname || "",
+      discord_avatar_url: linkedManual.discord_avatar_url || "",
+      _recordType: "account"
+    };
+  });
   const allVisibleMembers = [
-    ...allMembers.map(member => ({ ...member, _recordType: "account" })),
+    ...accountRowsWithDiscord,
     ...unlinkedManualMembers.map(member => ({ ...member, _recordType: "manual" }))
   ].sort((a, b) => {
     const rankA = guildPositionOrder.has(a.guild_position)
@@ -2001,7 +2024,22 @@ function editManualGuildMember(id) {
 
 function editLinkedGuildMember(userId) {
   if (!isManagement()) return;
-  fillManualMemberForm(allMembers.find(item => item.user_id === userId), "account");
+  const account = allMembers.find(item => String(item.user_id) === String(userId));
+  if (!account) return;
+  const linkedManual = manualGuildMembers.find(item =>
+    String(item.linked_user_id || "") === String(userId)
+  );
+  const memberForEdit = linkedManual ? {
+    ...linkedManual,
+    ...account,
+    discord_name: linkedManual.discord_name || account.discord_name || "",
+    discord_user_id: linkedManual.discord_user_id || "",
+    discord_username: linkedManual.discord_username || "",
+    discord_global_name: linkedManual.discord_global_name || "",
+    discord_server_nickname: linkedManual.discord_server_nickname || "",
+    discord_avatar_url: linkedManual.discord_avatar_url || ""
+  } : account;
+  fillManualMemberForm(memberForEdit, "account");
 }
 
 async function updateManualGuildMemberStatus(id) {
