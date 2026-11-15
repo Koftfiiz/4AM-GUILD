@@ -7098,3 +7098,7 @@ body select:disabled {
 
 /* Guild War: highlight the unassigned pool as a drop target when returning an assigned member. */
 #page-war .war-assignment-results.is-war-drop-active{outline:2px dashed rgba(235,72,92,.9);outline-offset:5px;background:rgba(150,25,45,.16);border-radius:7px;min-height:54px;}
+
+/* PARTY MANAGEMENT reserve filter: keep its count beside the label. */
+.war-assignment-modal-panel-reference .war-modal-class-tabs button[data-war-modal-reserve]{display:inline-flex;flex-direction:row;align-items:center;justify-content:center;gap:6px;white-space:nowrap;min-width:74px;padding:4px 10px;}
+.war-assignment-modal-panel-reference .war-modal-class-tabs button[data-war-modal-reserve] span{display:inline-flex;align-items:center;justify-content:center;line-height:1;}
