@@ -272,7 +272,7 @@ Deno.serve(async (request: Request) => {
     if (!/^[0-9a-f-]{36}$/i.test(eventId)) return jsonResponse({ type: 4, data: { content: "กรุณาระบุ Event ID ที่ถูกต้อง", flags: 64 } });
     try {
       const data = await getRoster(eventId);
-      return jsonResponse({ type: 4, data: buildMessage(data));
+      return jsonResponse({ type: 4, data: buildMessage(data) });
     } catch (e) {
       return jsonResponse({ type: 4, data: { content: e instanceof Error ? e.message : "เปิดระบบเช็กชื่อไม่สำเร็จ", flags: 64 } });
     }
@@ -297,7 +297,7 @@ Deno.serve(async (request: Request) => {
       }, { onConflict: "event_id,round_number,member_id" });
       if (saved.error) throw saved.error;
       const refreshed = await getRoster(eventId);
-      return jsonResponse({ type: 7, data: buildMessage(refreshed));
+      return jsonResponse({ type: 7, data: buildMessage(refreshed) });
     } catch (e) {
       return jsonResponse({ type: 4, data: { content: e instanceof Error ? e.message : "บันทึกการยืนยันไม่สำเร็จ", flags: 64 } });
     }
