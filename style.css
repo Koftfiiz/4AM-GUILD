@@ -7693,3 +7693,10 @@ body.member-admin-drawer-open{overflow:hidden}
 @media(max-width:650px){.portfolio-member-cover{height:auto!important;min-height:0!important;aspect-ratio:16/10!important}}
 @media(max-width:380px){.portfolio-member-cover{height:auto!important;min-height:0!important;aspect-ratio:16/10!important}}
 @media(max-width:520px){.portfolio-member-cover-crop-modes{grid-template-columns:1fr}}
+
+
+/* Card Fit Crop: exact card ratio fills the cover frame; Free Crop keeps full-image contain behavior. */
+.portfolio-member-cover.has-fixed-cover-crop img{object-fit:cover!important;object-position:center center;background:transparent}
+.war-record-image-open{display:block;padding:0;border:0;border-radius:6px;overflow:hidden;background:#080808;cursor:zoom-in}
+.war-record-image-open img{display:block;width:76px;height:58px;object-fit:cover;transition:opacity .18s ease,transform .18s ease}
+.war-record-image-open:hover img{opacity:.82;transform:scale(1.04)}
