@@ -132,6 +132,7 @@ const PAGE_TITLES = {
   dashboard: "ภาพรวมกิลด์",
   members: "รายชื่อสมาชิก",
   "member-management": "จัดการรายชื่อสมาชิก",
+  "war-center": "Guild War",
   war: "จัดตี้วอร์",
   "war-attendance": "ประกาศรายชื่อวอร์",
   "war-signup": "ลงชื่อวอร์",
@@ -6999,6 +7000,26 @@ function getLastGuildPage() {
   }
 }
 
+function loadWarCenterTab(tab = "overview") {
+  const valid = ["overview","party","roster","signup","leave","match-records","attendance-report"];
+  const active = valid.includes(tab) ? tab : "overview";
+  window.activeWarCenterTab = active;
+  const panels = {overview:"war-center-overview",party:"page-war",roster:"page-war-attendance",signup:"page-war-signup",leave:"page-war-leave","match-records":"page-war-stats","attendance-report":"page-war-attendance-stats"};
+  Object.values(panels).forEach(id => $(id)?.classList.add("hidden"));
+  $(panels[active])?.classList.remove("hidden");
+  document.querySelectorAll("[data-war-center-tab]").forEach(button => {
+    const selected = button.dataset.warCenterTab === active;
+    button.classList.toggle("is-active", selected);
+    if (button.closest(".war-center-tabs")) button.setAttribute("aria-current", selected ? "page" : "false");
+  });
+  if(active==="party"&&isManagement())loadWarEvents();
+  if(active==="roster")loadWarAttendance();
+  if(active==="signup")loadWarSignups();
+  if(active==="leave")loadWarLeavePage();
+  if(active==="match-records"&&isManagement())loadWarMatchRecords();
+  if(active==="attendance-report"&&isManagement())loadWarAttendanceStatistics();
+}
+
 function openGuildPage(pageName) {
   if (["war","war-stats","war-attendance-stats"].includes(pageName) && !isManagement()) {
     pageName = "war-attendance";
@@ -7014,6 +7035,10 @@ function openGuildPage(pageName) {
   if (pageName === "discord-integration" && (!isDeveloper() || isRolePreviewActive())) {
     pageName = "dashboard";
   }
+
+  const warTabs = {war:"party","war-attendance":"roster","war-signup":"signup","war-leave":"leave","war-stats":"match-records","war-attendance-stats":"attendance-report"};
+  if(warTabs[pageName]){window.activeWarCenterTab=warTabs[pageName];pageName="war-center";}
+  else if(pageName==="war-center"){window.activeWarCenterTab="overview";}
 
   // Remember the current section so a hard refresh returns to the same page.
   try {
@@ -7042,11 +7067,13 @@ function openGuildPage(pageName) {
     if(addDescription)addDescription.textContent=copy[6];
   }
 
+  document.querySelectorAll("[data-war-center-tab]").forEach(button => button.addEventListener("click", () => loadWarCenterTab(button.dataset.warCenterTab)));
+
   document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
     button.classList.toggle("active", button.dataset.page === pageName);
   });
 
-  const warPage = ["war", "war-attendance", "war-signup", "war-leave", "war-stats", "war-attendance-stats"].includes(pageName);
+  const warPage = pageName === "war-center";
   const warParent = document.querySelector('[data-toggle-submenu="war-submenu"]');
   const warSubmenu = $("war-submenu");
   warParent?.classList.toggle("active", warPage);
@@ -7091,12 +7118,7 @@ function openGuildPage(pageName) {
   if (pageName === "appearance") renderAppearancePage();
 
   if (pageName === "portfolio" || pageName === "portfolio-review-center") loadPortfolios();
-  if (pageName === "war") loadWarEvents();
-  if (pageName === "war-attendance") loadWarAttendance();
-  if (pageName === "war-signup") loadWarSignups();
-  if (pageName === "war-leave") loadWarLeavePage();
-  if (pageName === "war-stats") loadWarMatchRecords();
-  if (pageName === "war-attendance-stats") loadWarAttendanceStatistics();
+  if (pageName === "war-center") loadWarCenterTab(window.activeWarCenterTab || "overview");
   if (pageName === "rules") loadGuildRules();
   if (["community-board", "guild-news", "guild-activities"].includes(pageName)) {
     subscribeToGuildActivityRealtime();
