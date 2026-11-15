@@ -582,6 +582,15 @@ async function loadApplication() {
     // Load an existing approved profile first. OAuth login itself never creates or links membership.
     await loadCurrentMember();
 
+    if (currentMember?.membership_status === "pending_review") {
+      showMembershipStatusScreen("pending_review");
+      return;
+    }
+    if (currentMember && (currentMember.active !== true || ["suspended","former_member"].includes(currentMember.membership_status))) {
+      showMembershipStatusScreen(currentMember.membership_status || "suspended");
+      return;
+    }
+
     // If no profile exists, perform a read-only exact Discord ID lookup.
     // A matching Manual record must be explicitly confirmed by the member before linking.
     if (!currentMember) {
@@ -772,19 +781,25 @@ async function confirmManualMemberLink(manualMemberId) {
   showMessage("manual-member-link-message", "กำลังยืนยันตัวละครและเชื่อมบัญชี Discord...", "info");
 
   try {
-    const { error } = await supabaseClient.rpc("confirm_my_manual_member", {
-      p_manual_member_id: manualMemberId
+    const { data, error } = await supabaseClient.functions.invoke("register-guild-member", {
+      body: { action: "link_manual", manual_member_id: manualMemberId }
     });
-    if (error) throw error;
-
-    showMessage("manual-member-link-message", "ยืนยันสำเร็จ กำลังเข้าสู่ Dashboard...", "success");
+    if (error) {
+      let message = error.message;
+      try {
+        const response = error.context;
+        if (response && typeof response.json === "function") {
+          const result = await response.json();
+          message = result.message || message;
+        }
+      } catch (_) {}
+      throw new Error(message);
+    }
+    if (!data?.success) throw new Error(data?.message || "ไม่สามารถส่งคำขอเชื่อมบัญชีได้");
     $("manual-member-link-screen")?.remove();
     await loadCurrentMember();
-
-    if (!currentMember) {
-      throw new Error("เชื่อมบัญชีแล้ว แต่ไม่พบโปรไฟล์สมาชิก กรุณาติดต่อผู้ดูแล");
-    }
-    await loadApplication();
+    if (!currentMember) throw new Error("ส่งคำขอแล้ว แต่ไม่พบข้อมูลสมาชิก กรุณาเข้าสู่ระบบใหม่");
+    showMembershipStatusScreen("pending_review");
   } catch (error) {
     console.error("Manual member confirmation failed:", error);
     showMessage("manual-member-link-message", error.message || "ไม่สามารถยืนยันการเชื่อมบัญชีได้");
@@ -797,6 +812,40 @@ async function confirmManualMemberLink(manualMemberId) {
 // ==========================================
 // CHARACTER REGISTRATION
 // ==========================================
+
+function showMembershipStatusScreen(status = "pending_review") {
+  const loginScreen = $("login-screen");
+  if (!loginScreen) return;
+  $("app-layout")?.classList.add("hidden");
+  loginScreen.classList.remove("hidden");
+  $("login-form")?.closest(".login-card")?.classList.add("hidden");
+  $("registration-screen")?.remove();
+  $("manual-member-link-screen")?.remove();
+
+  let screen = $("membership-status-screen");
+  if (!screen) {
+    screen = document.createElement("div");
+    screen.id = "membership-status-screen";
+    screen.className = "login-card membership-status-card";
+    loginScreen.appendChild(screen);
+  }
+  const isPending = status === "pending_review";
+  const title = isPending ? "APPLICATION UNDER REVIEW" : "MEMBERSHIP ACCESS RESTRICTED";
+  const description = isPending
+    ? "ระบบได้รับข้อมูลและยืนยันบัญชี Discord ของคุณแล้ว ขณะนี้กำลังรอฝ่ายจัดการตรวจสอบและอนุมัติ คุณยังไม่สามารถเข้าใช้งานหน้าเว็บไซต์ได้"
+    : status === "former_member"
+      ? "บัญชีนี้ถูกกำหนดเป็นอดีตสมาชิก จึงไม่สามารถเข้าใช้งานเว็บไซต์ได้ หากคิดว่าเกิดข้อผิดพลาด กรุณาติดต่อฝ่ายจัดการกิลด์"
+      : "บัญชีสมาชิกนี้ถูกระงับการใช้งานเว็บไซต์ กรุณาติดต่อฝ่ายจัดการกิลด์";
+  screen.innerHTML = `
+    <div class="login-logo registration-guild-logo"><img src="/assets/4am-guild-logo.png?v=20261111b" alt="4AM GUILD Logo" onerror="this.style.display='none'"></div>
+    <div class="membership-status-icon ${isPending ? "is-pending" : "is-blocked"}">${isPending ? "◷" : "!"}</div>
+    <h2>${title}</h2>
+    <p class="login-description">${description}</p>
+    ${isPending ? '<div class="membership-review-steps"><span class="is-done">01 · Discord OAuth verified</span><span class="is-done">02 · Guild role verified</span><span class="is-current">03 · Waiting for management approval</span></div>' : ""}
+    <button type="button" id="membership-status-logout" class="btn btn-outline registration-logout">LOG OUT / ออกจากระบบ</button>
+  `;
+  $("membership-status-logout")?.addEventListener("click", logout);
+}
 
 function showRegistrationScreen(errorMessage = "") {
   const loginScreen = $("login-screen");
@@ -1129,7 +1178,7 @@ async function registerGuildMember(event) {
 
     showMessage(
       "registration-message",
-      "ลงทะเบียนสำเร็จ กำลังเข้าสู่ Dashboard...",
+      "ส่งคำขอสมัครสมาชิกสำเร็จ กำลังเปิดหน้าสถานะการตรวจสอบ...",
       "success"
     );
 
@@ -1844,10 +1893,57 @@ function openMemberAdminProfile(member){
 }
 function closeMemberAdminProfile(){$("member-admin-profile-drawer")?.classList.add("hidden");document.body.classList.remove("member-admin-drawer-open")}
 
+async function reviewPendingGuildMember(userId, decision, reason = "") {
+  if (!isManagement() || !userId || !["approve","reject"].includes(decision)) return;
+  try {
+    const { error } = await supabaseClient.rpc("review_pending_guild_member", {
+      p_target_user_id: userId,
+      p_decision: decision,
+      p_reason: reason || null
+    });
+    if (error) throw error;
+    await loadManualMemberManagement();
+    alert(decision === "approve" ? "อนุมัติสมาชิกเรียบร้อยแล้ว" : "บันทึกผลไม่อนุมัติเรียบร้อยแล้ว");
+  } catch (error) {
+    console.error("Pending member review failed:", error);
+    alert("ดำเนินการไม่สำเร็จ: " + (error?.message || "Unknown error"));
+  }
+}
+
 function renderManualMemberManagement() {
   const list = $("manual-member-list");
   const summary = $("manual-member-summary");
   if (!list) return;
+
+  let pendingPanel = $("member-pending-review-panel");
+  if (!pendingPanel) {
+    pendingPanel = document.createElement("section");
+    pendingPanel.id = "member-pending-review-panel";
+    pendingPanel.className = "member-pending-review-panel";
+    list.parentElement?.insertBefore(pendingPanel, list);
+  }
+  const pendingMembers = allMembers.filter(member => member.membership_status === "pending_review");
+  pendingPanel.innerHTML = pendingMembers.length ? `
+    <div class="member-pending-review-heading">
+      <div><span class="member-pending-review-eyebrow">MEMBERSHIP CONTROL</span><h3>คำขอสมัครสมาชิกที่รออนุมัติ</h3><p>ผู้สมัครผ่านการตรวจสอบ Discord Server และ Role แล้ว แต่ยังไม่มีสิทธิ์เข้าเว็บไซต์จนกว่าจะได้รับอนุมัติ</p></div>
+      <strong>${pendingMembers.length} รายการ</strong>
+    </div>
+    <div class="member-pending-review-list">${pendingMembers.map(member => `
+      <article class="member-pending-review-item">
+        <div class="member-pending-review-main"><strong>${escapeHTML(member.character_name || "ไม่ระบุชื่อตัวละคร")}</strong><span>${escapeHTML(member.game_class || "-")} · ${escapeHTML(member.nickname || "-")}</span><small>Discord: ${escapeHTML(member.discord_name || "-")} · UID: ${escapeHTML(member.game_uid || "-")}</small></div>
+        <div class="member-pending-review-actions"><button type="button" class="btn btn-primary btn-sm" data-review-member="${escapeHTML(member.user_id)}" data-review-decision="approve">อนุมัติ</button><button type="button" class="btn btn-outline btn-sm" data-review-member="${escapeHTML(member.user_id)}" data-review-decision="reject">ไม่อนุมัติ</button></div>
+      </article>`).join("")}</div>` : "";
+  pendingPanel.classList.toggle("hidden", pendingMembers.length === 0);
+  pendingPanel.querySelectorAll("[data-review-member]").forEach(button => {
+    button.addEventListener("click", () => {
+      const decision = button.dataset.reviewDecision;
+      const userId = button.dataset.reviewMember;
+      const reason = decision === "reject" ? window.prompt("ระบุเหตุผลที่ไม่อนุมัติ (ไม่บังคับ):") : "";
+      if (decision === "reject" && reason === null) return;
+      const message = decision === "approve" ? "ยืนยันอนุมัติสมาชิกคนนี้หรือไม่?" : "ยืนยันไม่อนุมัติคำขอนี้หรือไม่?";
+      if (window.confirm(message)) void reviewPendingGuildMember(userId, decision, reason || "");
+    });
+  });
 
   const linkedCount = allMembers.length;
   // A linked Manual row is represented by its real guild_members account row.
