@@ -534,6 +534,8 @@ async function logout(event) {
 
     $("app-layout")?.classList.add("hidden");
     $("registration-screen")?.remove();
+    $("manual-member-link-screen")?.remove();
+    $("membership-status-screen")?.remove();
     $("login-screen")?.classList.remove("hidden");
 
     // Restore the original Discord login card hidden by showRegistrationScreen().
