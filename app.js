@@ -3942,7 +3942,7 @@ function renderWarAssignmentToolbar(raidCount=2){
  const root=$("war-assignment-toolbar");if(!root)return;const active=getWarAssignmentRosterMembers(),reserve=warAssignmentRosterSnapshot.length?warAssignmentRosterSnapshot.filter(x=>x.roster_status==="reserve"&&!currentWarPartyAssignments.some(a=>a.member_id===x.member_id)).length:warAssignmentSignups.filter(x=>Number(x.queue_position)>=61).length;
  const teams=["A","B","C","D"].slice(0,raidCount).map(x=>`<button class="war-filter-chip" data-war-filter="${x}" type="button">Raid ${x}</button>`).join("");
  const classes=CLASS_DATA.map(info=>{const count=active.filter(x=>getMemberClass(x).toLowerCase()===info.name.toLowerCase()).length;return `<button class="war-class-filter" data-war-class-filter="${escapeHTML(info.name)}" type="button" title="${escapeHTML(info.name)}"><img src="${escapeHTML(info.iconPath)}" alt=""><span>${count}</span></button>`;}).join("");
- root.innerHTML=`<div class="war-assignment-filter-row"><div class="war-filter-group"><button class="war-filter-chip is-active" data-war-filter="all" type="button">All Raid</button>${teams}<button class="war-filter-chip" data-war-filter="reserve" type="button">สำรอง · ${reserve}</button><button class="war-filter-chip" data-war-filter="leave" type="button">ลาวอร์ · ${(warAssignmentRosterSnapshot.length?warAssignmentRosterSnapshot.filter(x=>x.roster_status==="leave").length:warAssignmentLeaves.filter(x=>x.status!=="rejected").length)}</button><button class="war-filter-chip" data-war-filter="absent" type="button">ขาดวอร์ · ${warAssignmentAbsentees.length}</button></div></div><div class="war-assignment-search-row"><label class="war-assignment-search"><span>⌕</span><input id="war-assignment-search" type="search" placeholder="ค้นหาชื่อตัวละคร หรือ UID..." value="${escapeHTML(warAssignmentSearch)}"></label><button class="war-count-chip" data-war-filter="all" type="button">TOTAL <strong>${active.length}</strong></button><button class="war-count-chip is-reserve" data-war-filter="reserve" type="button">RESERVE <strong>${reserve}</strong></button></div><div class="war-assignment-class-row"><span class="war-filter-caption">FILTER BY CLASS</span><button class="war-class-filter is-active" data-war-class-filter="all" type="button">ALL</button>${classes}</div><div class="war-assignment-results" id="war-assignment-results"></div>`;
+ root.innerHTML=`<div class="war-assignment-filter-row"><div class="war-filter-group"><button class="war-filter-chip is-active" data-war-filter="all" type="button">All Raid</button>${teams}<button class="war-filter-chip" data-war-filter="reserve" type="button">สำรอง · ${reserve}</button><button class="war-filter-chip" data-war-filter="leave" type="button">ลาวอร์ · ${(warAssignmentRosterSnapshot.length?warAssignmentRosterSnapshot.filter(x=>x.roster_status==="leave").length:warAssignmentLeaves.filter(x=>x.status!=="rejected").length)}</button><button class="war-filter-chip" data-war-filter="absent" type="button">ขาดวอร์ · ${warAssignmentAbsentees.length}</button></div></div><div class="war-assignment-search-row"><label class="war-assignment-search"><span>⌕</span><input id="war-assignment-search" type="search" placeholder="ค้นหาชื่อตัวละคร หรือ UID..." value="${escapeHTML(warAssignmentSearch)}"></label><button class="war-count-chip" data-war-filter="all" type="button">TOTAL <strong>${active.length}</strong></button><button class="war-count-chip is-reserve" data-war-filter="reserve" type="button">RESERVE <strong>${reserve}</strong></button></div><div class="war-assignment-class-row"><span class="war-filter-caption">FILTER BY CLASS</span><button class="war-class-filter is-active" data-war-class-filter="all" type="button">ALL</button>${classes}</div><div class="war-assignment-results" id="war-assignment-results" aria-label="ลากสมาชิกจากตี้มาวางที่นี่เพื่อนำออกจากตี้"></div>`;
  applyWarAssignmentMemberFilters();
 }
 function applyWarAssignmentMemberFilters(){
@@ -5116,6 +5116,37 @@ function registerWarCreationEvents(){
     if(result.error)throw result.error;
     await loadSelectedWarEvent(currentWarAssignmentEventId);
    }catch(error){console.error("War drag move failed:",error);alert("ย้ายสมาชิกไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่"));}
+  }
+ });
+ // Return an assigned member to the unassigned pool by dropping it over the member list.
+ const warPoolDropZone=$("war-assignment-toolbar");
+ warPoolDropZone?.addEventListener("dragover",e=>{
+  const zone=e.target.closest("#war-assignment-results");
+  if(!zone||!isManagement()||isRolePreviewActive())return;
+  const payload=getWarDragPayload(e);
+  if(payload.type!=="assigned")return;
+  e.preventDefault();e.dataTransfer.dropEffect="move";zone.classList.add("is-war-drop-active");
+ });
+ warPoolDropZone?.addEventListener("dragleave",e=>{
+  const zone=e.target.closest("#war-assignment-results");
+  if(zone&&!zone.contains(e.relatedTarget))zone.classList.remove("is-war-drop-active");
+ });
+ warPoolDropZone?.addEventListener("drop",async e=>{
+  const zone=e.target.closest("#war-assignment-results");
+  if(!zone)return;
+  const payload=getWarDragPayload(e);
+  if(payload.type!=="assigned")return;
+  e.preventDefault();e.stopPropagation();zone.classList.remove("is-war-drop-active");
+  if(!isManagement()||isRolePreviewActive()||!payload.assignmentId||!payload.memberId)return;
+  const assignment=currentWarPartyAssignments.find(x=>x.id===payload.assignmentId);
+  if(!assignment||assignment.member_id!==payload.memberId)return;
+  try{
+   const result=await supabaseClient.from("war_party_members").delete().eq("id",assignment.id);
+   if(result.error)throw result.error;
+   await loadSelectedWarEvent(currentWarAssignmentEventId);
+  }catch(error){
+   console.error("War drag unassign failed:",error);
+   alert("นำสมาชิกออกจากตี้ไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่"));
   }
  });
 
