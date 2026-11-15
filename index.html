@@ -1304,6 +1304,10 @@
           <div id="portfolio-crop-modal" class="portfolio-crop-modal hidden" role="dialog" aria-modal="true" aria-labelledby="portfolio-crop-title">
             <div class="portfolio-crop-dialog">
               <div class="portfolio-crop-heading"><div><span class="panel-kicker">COVER IMAGE EDITOR</span><h3 id="portfolio-crop-title">จัดตำแหน่งภาพหน้าปก</h3><p>ลากกรอบเพื่อเลือกพื้นที่ภาพได้อย่างอิสระ · ปรับขนาดและสัดส่วนได้ตามต้องการ · ซูม/หมุนภาพได้</p></div><button type="button" id="portfolio-crop-close" class="portfolio-crop-close" aria-label="ปิด">×</button></div>
+              <div id="portfolio-member-cover-crop-modes" class="portfolio-member-cover-crop-modes hidden" role="group" aria-label="รูปแบบการครอปหน้าปก">
+                <button type="button" class="portfolio-cover-crop-mode is-active" data-member-cover-crop-mode="free" aria-pressed="true"><strong>Free Crop</strong><span>ครอปอิสระ</span></button>
+                <button type="button" class="portfolio-cover-crop-mode" data-member-cover-crop-mode="fit" aria-pressed="false"><strong>Card Fit Crop</strong><span>ล็อกสัดส่วน 16:10 ให้เต็มการ์ด</span></button>
+              </div>
               <div class="portfolio-crop-workspace"><img id="portfolio-crop-image" alt="ภาพสำหรับจัดหน้าปก"></div>
               <div class="portfolio-crop-tools">
                 <label class="portfolio-crop-zoom"><span>ซูม</span><input id="portfolio-crop-zoom" type="range" min="0.5" max="3" step="0.01" value="1" aria-label="ปรับระดับการซูม"><output id="portfolio-crop-zoom-value">100%</output></label>
