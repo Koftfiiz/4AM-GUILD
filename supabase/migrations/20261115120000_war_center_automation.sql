@@ -138,20 +138,38 @@ declare
   v_existing public.war_signups%rowtype;
   v_rounds smallint[];
   v_deadline timestamptz;
+  v_round_count integer := 2;
+  v_config_match text[];
+  v_config jsonb;
+  v_allowed_rounds smallint[];
 begin
   if auth.uid() is null then raise exception 'Authentication required'; end if;
   if not exists (select 1 from public.guild_members gm where gm.user_id=auth.uid() and gm.active=true) then
     raise exception 'Active guild membership required';
   end if;
-  if p_available_rounds is null or cardinality(p_available_rounds) not between 1 and 2
-     or not (p_available_rounds <@ array[1,2]::smallint[]) then
-    raise exception 'กรุณาเลือกความพร้อม Round 1, Round 2 หรือทั้งสองรอบ';
-  end if;
-  select array_agg(distinct x order by x) into v_rounds from unnest(p_available_rounds) as x;
 
   select * into v_event from public.war_events where id=p_event_id for update;
   if not found then raise exception 'ไม่พบ Event ลงชื่อวอร์นี้'; end if;
   if v_event.status='cancelled' then raise exception 'กิจกรรม Guild War นี้ถูกยกเลิกแล้ว'; end if;
+
+  v_config_match := regexp_match(coalesce(v_event.description,''), '\\[\\[WAR_CONFIG:(\\{.*?\\})\\]\\]');
+  if v_config_match is not null then
+    begin
+      v_config := v_config_match[1]::jsonb;
+      if jsonb_typeof(v_config->'rounds')='array' then
+        v_round_count := greatest(1,least(2,jsonb_array_length(v_config->'rounds')));
+      end if;
+    exception when others then
+      v_round_count := 2;
+    end;
+  end if;
+  v_allowed_rounds := case when v_round_count=1 then array[1]::smallint[] else array[1,2]::smallint[] end;
+
+  if p_available_rounds is null or cardinality(p_available_rounds) not between 1 and v_round_count
+     or not (p_available_rounds <@ v_allowed_rounds) then
+    raise exception 'รอบวอร์นี้เปิดแข่ง % รอบ กรุณาเลือกความพร้อมให้ตรงกับรอบที่มีจริง', v_round_count;
+  end if;
+  select array_agg(distinct x order by x) into v_rounds from unnest(p_available_rounds) as x;
 
   if v_event.registration_type='official' then
     v_deadline := ((v_event.event_date::timestamp + time '14:00') at time zone 'Asia/Bangkok');
