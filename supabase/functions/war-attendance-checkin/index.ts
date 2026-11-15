@@ -72,22 +72,30 @@ Deno.serve(async req => {
     return { event: eventQ.data, roster, reserves, checkins: checkinsQ.data || [] };
   }
   function buildMessage(data: any) {
-    const { event, roster, checkins } = data;
+    const { event, roster, reserves, checkins } = data;
     const checkMap = new Map(checkins.map((x: any) => [x.round_number + ":" + x.member_id, x]));
     const fields: any[] = [];
+    const displayName = (x: any) => String(x.member.character_name || x.member.nickname || "สมาชิก");
+    const list = (items: any[], reserve = false) => items.map((x: any) => {
+      const place = reserve ? "สำรอง" : (x.raid + x.party_number);
+      return displayName(x) + " (" + place + ")";
+    }).join("\n").slice(0, 1020) || "—";
     for (const round of [1, 2]) {
-      const done = roster.filter((x: any) => checkMap.has(round + ":" + x.member_id));
-      const pending = roster.filter((x: any) => !checkMap.has(round + ":" + x.member_id));
-      const list = (items: any[]) => items.map((x: any) => String(x.member.character_name || x.member.nickname || "สมาชิก") + " (" + x.raid + x.party_number + ")").join("\n").slice(0, 1020) || "—";
-      fields.push({ name: "รอบ " + round + " · ยืนยันแล้ว " + done.length + "/" + roster.length, value: list(done), inline: false });
-      fields.push({ name: "รอบ " + round + " · ยังไม่ยืนยัน " + pending.length, value: list(pending), inline: false });
+      const mainDone = roster.filter((x: any) => checkMap.has(round + ":" + x.member_id));
+      const mainPending = roster.filter((x: any) => !checkMap.has(round + ":" + x.member_id));
+      const reserveDone = reserves.filter((x: any) => checkMap.has(round + ":" + x.member_id));
+      const reservePending = reserves.filter((x: any) => !checkMap.has(round + ":" + x.member_id));
+      fields.push({ name: "ROUND 0" + round + " · ตัวจริงยืนยันแล้ว " + mainDone.length + "/" + roster.length, value: list(mainDone), inline: false });
+      fields.push({ name: "ROUND 0" + round + " · ตัวจริงยังไม่ยืนยัน " + mainPending.length, value: list(mainPending), inline: false });
+      fields.push({ name: "ROUND 0" + round + " · ตัวสำรองยืนยันแล้ว " + reserveDone.length + "/" + reserves.length, value: list(reserveDone, true), inline: false });
+      fields.push({ name: "ROUND 0" + round + " · ตัวสำรองยังไม่ยืนยัน " + reservePending.length, value: list(reservePending, true), inline: false });
     }
     return {
       content: "📋 **4AM GUILD — WAR CHECK-IN**\nกิจกรรม: **" + event.event_name + "** · " + event.event_date + "\nสมาชิกกดยืนยันแยกตามรอบ กรุณาตรวจสอบว่ากดยืนยันครบตามความพร้อมจริง",
-      embeds: [{ color: 0xD92D45, title: "WAR READINESS", description: "รายชื่ออ้างอิงจากสมาชิกที่ Management จัดลงตี้บนเว็บไซต์ · การกดยืนยันไม่ใช่การยืนยันว่าเข้าตี้ในเกมแล้ว", fields, footer: { text: "4AM GUILD · Discord Check-in" } }],
+      embeds: [{ color: 0xD92D45, title: "WAR READINESS", description: "รายชื่ออ้างอิงจาก Planned Roster และรายชื่อสำรองที่ลงชื่อไว้บนเว็บไซต์ · การกดยืนยันไม่ใช่การยืนยันว่าเข้าตี้ในเกมแล้ว", fields, footer: { text: "4AM GUILD · Discord Check-in" } }],
       components: [{ type: 1, components: [
-        { type: 2, style: 3, label: "✓ ยืนยัน Round 01", custom_id: "war_checkin:" + event.id + ":1 },
-        { type: 2, style: 3, label: "✓ ยืนยัน Round 02", custom_id: "war_checkin:" + event.id + ":2 }
+        { type: 2, style: 3, label: "✓ ยืนยัน Round 01", custom_id: "war_checkin:" + event.id + ":1" },
+        { type: 2, style: 3, label: "✓ ยืนยัน Round 02", custom_id: "war_checkin:" + event.id + ":2" }
       ] }]
     };
   }
