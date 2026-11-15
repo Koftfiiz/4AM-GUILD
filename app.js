@@ -7067,8 +7067,6 @@ function openGuildPage(pageName) {
     if(addDescription)addDescription.textContent=copy[6];
   }
 
-  document.querySelectorAll("[data-war-center-tab]").forEach(button => button.addEventListener("click", () => loadWarCenterTab(button.dataset.warCenterTab)));
-
   document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
     button.classList.toggle("active", button.dataset.page === pageName);
   });
@@ -7582,6 +7580,8 @@ function registerAppEventListeners() {
   $("connect-discord")?.addEventListener("click", connectDiscord);
   registerAppearanceEvents();
   registerDiscordIntegrationEvents();
+
+  document.querySelectorAll("[data-war-center-tab]").forEach(button => button.addEventListener("click", () => loadWarCenterTab(button.dataset.warCenterTab)));
 
   document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
     button.addEventListener("click", () => {
