@@ -1937,8 +1937,6 @@ function openMemberAdminProfile(member){
   '<section class="member-admin-profile-section"><h4>Discord Account</h4><div class="member-admin-health-pill is-'+discord.tone+'">'+escapeHTML(discord.label)+'</div><p class="member-admin-health-detail">'+escapeHTML(discord.detail)+'</p>'+row("Username",member.discord_username||member.discord_name)+row("Global Name",member.discord_global_name)+row("Server Nickname",member.discord_server_nickname)+row("Discord User ID",member.discord_user_id||discord.account?.discord_user_id)+row("ตรวจสอบล่าสุด",discord.account?.last_checked_at?new Date(discord.account.last_checked_at).toLocaleString("th-TH"):"")+'</section>'+
   '<section class="member-admin-profile-section"><h4>Account & Guild</h4>'+row("ประเภทบัญชี",isAccount?"ลงทะเบียนผ่านเว็บไซต์":"Manual")+row("สถานะสมาชิก",member.membership_status|| (member.active===false?"suspended":"active"))+row("Role",member.role||"member")+row("วันที่เพิ่ม",member.created_at?new Date(member.created_at).toLocaleString("th-TH"):"")+'</section>'+
   '<div class="member-admin-profile-actions">'+(isAccount?'<button type="button" class="btn btn-primary" data-drawer-edit-account="'+escapeHTML(member.user_id)+'">แก้ไขข้อมูลสมาชิก</button>':'<button type="button" class="btn btn-primary" data-drawer-edit-manual="'+escapeHTML(member.id)+'">แก้ไขข้อมูลสมาชิก</button>')+(isAccount?(member.active===true?'<button type="button" class="btn btn-outline" data-member-lifecycle="former_member" data-member-id="'+escapeHTML(member.user_id)+'">ยืนยันออกจากกิลด์เกม</button>':'<button type="button" class="btn btn-outline" data-member-lifecycle="active" data-member-id="'+escapeHTML(member.user_id)+'">คืนสถานะสมาชิกและสิทธิ์</button>'):'')+'</div>';
-  $("member-admin-profile-title").textContent=member.character_name||"ข้อมูลสมาชิก";drawer.classList.remove("hidden");document.body.classList.add("member-admin-drawer-open");
-}
   content.querySelector("[data-member-lifecycle]")?.addEventListener("click", async event => {
     const button = event.currentTarget;
     const status = button.dataset.memberLifecycle;
@@ -1955,6 +1953,8 @@ function openMemberAdminProfile(member){
     button.disabled = true;
     await setGuildMemberLifecycleStatus(userId, status, reason);
   });
+  $("member-admin-profile-title").textContent=member.character_name||"ข้อมูลสมาชิก";drawer.classList.remove("hidden");document.body.classList.add("member-admin-drawer-open");
+}
 function closeMemberAdminProfile(){$("member-admin-profile-drawer")?.classList.add("hidden");document.body.classList.remove("member-admin-drawer-open")}
 
 async function reviewPendingGuildMember(userId, decision, reason = "") {
