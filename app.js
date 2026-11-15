@@ -2626,7 +2626,7 @@ async function openPortfolioMemberCoverCrop(file) {
   const image=$("portfolio-crop-image");
   image.onload=()=>{
     portfolioCropper=new Cropper(image,{
-      aspectRatio:16/9,viewMode:1,dragMode:"move",autoCropArea:.92,responsive:true,
+      aspectRatio:NaN,viewMode:1,dragMode:"crop",autoCropArea:.92,responsive:true,
       restore:false,background:false,guides:true,center:true,cropBoxMovable:true,cropBoxResizable:true,
       toggleDragModeOnDblclick:false,
       ready(){
@@ -2648,7 +2648,7 @@ async function savePortfolioCrop() {
     const button=$("portfolio-crop-save"); button.disabled=true; button.textContent="กำลังบันทึก...";
     try {
       if (!currentUser || portfolioMemberCoverMemberId !== currentUser.id) throw new Error("คุณแก้ไขรูปหน้าปกได้เฉพาะการ์ดของตัวเอง");
-      const canvas=portfolioCropper.getCroppedCanvas({width:1600,height:900,minWidth:800,minHeight:450,imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"});
+      const cropData=portfolioCropper.getData(true);const cropScale=Math.min(1,2400/Math.max(cropData.width,cropData.height));const canvas=portfolioCropper.getCroppedCanvas({width:Math.max(1,Math.round(cropData.width*cropScale)),height:Math.max(1,Math.round(cropData.height*cropScale)),imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"});
       const blob=await new Promise((resolve,reject)=>canvas.toBlob(v=>v?resolve(v):reject(new Error("ไม่สามารถสร้างภาพหน้าปกได้")),"image/webp",.9));
       const path=`${currentUser.id}/portfolio-cover-${Date.now()}.webp`;
       const {error:uploadError}=await supabaseClient.storage.from(AVATAR_BUCKET).upload(path,blob,{cacheControl:"3600",upsert:false,contentType:"image/webp"});
@@ -2802,12 +2802,12 @@ async function renderPortfolioMemberDirectory() {
     const cn=getMemberClass(m),ci=getClassInfo(cn),color=ci?.color||"#aaa";
     // Use each member's profile avatar as the portfolio directory cover.
     // Fall back to the guild logo only when the member has no usable avatar.
-    let src=await resolveAvatarUrl(m);
+    let src=m.member_cover_url?await resolveAvatarUrl({...m,avatar_url:m.member_cover_url}):await resolveAvatarUrl(m);
     if(!src||src===DEFAULT_AVATAR)src="/assets/4am-guild-logo.png?v=20261111b";
     const bondNames = getMemberSelectedBondNames(m.user_id);
     return `<article class="portfolio-member-card" style="--class-color:${color}">
       <button type="button" class="portfolio-member-open" data-portfolio-member-id="${escapeHTML(m.user_id)}">
-        <div class="portfolio-member-cover"><img src="${escapeHTML(src)}" alt="รูปหน้าปก ${escapeHTML(getMemberName(m))}" loading="lazy"><span class="portfolio-member-count">${ps.length} แฟ้ม</span></div>
+        <div class="portfolio-member-cover ${m.member_cover_url?"has-custom-cover":""}"><img src="${escapeHTML(src)}" alt="รูปหน้าปก ${escapeHTML(getMemberName(m))}" loading="lazy"><span class="portfolio-member-count">${ps.length} แฟ้ม</span></div>
         <div class="portfolio-member-card-content"><div class="portfolio-member-class">${ci?.iconPath?`<img src="${escapeHTML(ci.iconPath)}" alt="">`:""}<span>${escapeHTML(cn||"ยังไม่ระบุคลาส")}</span></div>
         <h3>${escapeHTML(getMemberName(m))}</h3>
         <div class="portfolio-member-bonds"><strong>สายใยผูกพันธ์</strong><span>${bondNames.length ? escapeHTML(bondNames.join(" · ")) : "ยังไม่ได้ระบุรายชื่อ"}</span></div>
