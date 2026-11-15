@@ -2139,8 +2139,8 @@ function renderManualMemberManagement() {
       : renderGuildPresenceStatus(null);
     const discordHealth = getMemberAdminDiscordHealth(member);
     const actions = isAccount
-      ? `<button type="button" class="btn btn-outline btn-sm" data-member-admin-view="${escapeHTML(member.user_id)}" data-member-admin-type="account">ดูข้อมูล</button><button type="button" class="btn btn-outline btn-sm" data-account-edit="${escapeHTML(member.user_id)}">แก้ไข</button><button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-account-toggle="${escapeHTML(member.user_id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>`
-      : `<button type="button" class="btn btn-outline btn-sm" data-member-admin-view="${escapeHTML(member.id)}" data-member-admin-type="manual">ดูข้อมูล</button><button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button><button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button>`;
+      ? `<button type="button" class="btn btn-outline btn-sm" data-member-admin-view="${escapeHTML(member.user_id)}" data-member-admin-type="account">ดูข้อมูล</button><button type="button" class="btn btn-outline btn-sm" data-account-edit="${escapeHTML(member.user_id)}">แก้ไข</button><button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-account-toggle="${escapeHTML(member.user_id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button><button type="button" class="member-row-remove" data-member-remove-account="${escapeHTML(member.user_id)}" aria-label="นำบัญชีสมาชิกออกจากกิลด์" title="นำบัญชีสมาชิกออกจากกิลด์">−</button>`
+      : `<button type="button" class="btn btn-outline btn-sm" data-member-admin-view="${escapeHTML(member.id)}" data-member-admin-type="manual">ดูข้อมูล</button><button type="button" class="btn btn-outline btn-sm" data-manual-edit="${escapeHTML(member.id)}">แก้ไข</button><button type="button" class="btn btn-sm manual-member-toggle-btn ${member.active ? "is-suspend" : "is-activate"}" data-manual-toggle="${escapeHTML(member.id)}">${member.active ? "ระงับ" : "เปิดใช้งาน"}</button><button type="button" class="member-row-remove" data-member-remove-manual="${escapeHTML(member.id)}" aria-label="ลบรายชื่อ Manual" title="ลบรายชื่อ Manual">−</button>`;
 
     return `<tr>
       <td class="manual-member-number" style="text-align:center;font-weight:700;">${index + 1}</td>
@@ -2414,6 +2414,35 @@ async function updateManualGuildMemberStatus(id) {
   if (error) { alert("เปลี่ยนสถานะไม่สำเร็จ: " + error.message); return; }
   Object.assign(member, data);
   renderManualMemberManagement();
+  await loadMembers();
+}
+
+async function removeGuildMemberRecord(recordType, recordId) {
+  if (!isManagement()) return;
+  if (recordType === "manual") {
+    const member = manualGuildMembers.find(item => String(item.id) === String(recordId));
+    if (!member || member.linked_user_id || member.discord_user_id) {
+      alert("ลบไม่ได้: รายชื่อนี้เชื่อมโยงกับบัญชีหรือ Discord อยู่");
+      return;
+    }
+    const name = member.character_name || "สมาชิก Manual";
+    if (!window.confirm(`ยืนยันลบรายชื่อ Manual “${name}” หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้`)) return;
+    const { error } = await supabaseClient.from("guild_manual_members").delete().eq("id", recordId).is("linked_user_id", null).is("discord_user_id", null);
+    if (error) { alert("ลบรายชื่อไม่สำเร็จ: " + error.message); return; }
+    await loadMembers();
+    return;
+  }
+  const member = allMembers.find(item => String(item.user_id) === String(recordId));
+  if (!member || String(member.user_id) === "378b09df-16a0-4d01-8908-2604c2c210a9") {
+    alert("ไม่สามารถนำบัญชี Developer หลักออกจากกิลด์ได้");
+    return;
+  }
+  const name = member.character_name || getMemberName(member);
+  if (!window.confirm(`ยืนยันนำ “${name}” ออกจากรายชื่อสมาชิกกิลด์หรือไม่? บัญชีเว็บไซต์และข้อมูล Auth จะไม่ถูกลบ แต่จะระงับสถานะสมาชิกกิลด์`)) return;
+  const { error } = await supabaseClient.from("guild_members")
+    .update({ active: false, membership_status: "suspended" })
+    .eq("user_id", recordId);
+  if (error) { alert("นำสมาชิกออกจากกิลด์ไม่สำเร็จ: " + error.message); return; }
   await loadMembers();
 }
 
@@ -8080,7 +8109,11 @@ function registerAppEventListeners() {
     const toggle = event.target.closest("[data-manual-toggle]");
     const accountEdit = event.target.closest("[data-account-edit]");
     const accountToggle = event.target.closest("[data-account-toggle]");
-    if (accountEdit) void editLinkedGuildMember(accountEdit.dataset.accountEdit);
+    const removeManual = event.target.closest("[data-member-remove-manual]");
+    const removeAccount = event.target.closest("[data-member-remove-account]");
+    if (removeManual) void removeGuildMemberRecord("manual", removeManual.dataset.memberRemoveManual);
+    else if (removeAccount) void removeGuildMemberRecord("account", removeAccount.dataset.memberRemoveAccount);
+    else if (accountEdit) void editLinkedGuildMember(accountEdit.dataset.accountEdit);
     else if (accountToggle) updateLinkedGuildMemberStatus(accountToggle.dataset.accountToggle);
     else if (edit) editManualGuildMember(edit.dataset.manualEdit);
     else if (toggle) updateManualGuildMemberStatus(toggle.dataset.manualToggle);
