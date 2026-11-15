@@ -7107,3 +7107,26 @@ body select:disabled {
 /* War Attendance Center: minimum readable text size */
 #page-war-attendance-stats :where(p,span,label,small,strong,em,a,button,input,select,option,td,th,caption,li,.muted,.section-kicker,.panel-kicker,.empty-state){font-size:15px!important}
 #page-war-attendance-stats :where(input,select,button){line-height:1.45}
+
+/* 4AM Guild War Attendance Center V2 */
+#page-war-attendance-stats .war-attendance-stats-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:16px 0 20px}
+#page-war-attendance-stats .war-attendance-stats-toolbar select{min-width:240px;min-height:44px;padding:8px 12px;border:1px solid rgba(232,51,63,.35);border-radius:9px;background:#100d0e;color:#fff}
+#page-war-attendance-stats .war-attendance-report-status{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 16px;margin:0 0 18px;border:1px solid rgba(232,51,63,.24);border-radius:11px;background:linear-gradient(110deg,#171214,#0b0a0b)}
+#page-war-attendance-stats .war-attendance-report-status>span{color:#c9bec0;font-weight:700}
+#page-war-attendance-stats .war-attendance-report-status strong{color:#ff7c86}
+#page-war-attendance-stats .war-attendance-report-status strong.is-finalized{color:#fff}
+#page-war-attendance-stats .war-attendance-report-status small{flex-basis:100%;color:#aaa}
+#page-war-attendance-stats .war-attendance-round-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+#page-war-attendance-stats .war-attendance-round-panel{min-width:0;padding:15px;border:1px solid rgba(232,51,63,.22);border-radius:12px;background:linear-gradient(145deg,#151112,#090909)}
+#page-war-attendance-stats .war-attendance-round-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+#page-war-attendance-stats .war-attendance-round-heading h3{margin:4px 0;color:#fff;font-size:19px}
+#page-war-attendance-stats .war-attendance-round-count,#page-war-attendance-stats .war-attendance-class{color:#aaa}
+#page-war-attendance-stats .war-attendance-member-table select{min-width:150px;min-height:40px;padding:7px 9px;border:1px solid rgba(232,51,63,.3);border-radius:8px;background:#100d0e;color:#fff}
+#page-war-attendance-stats .war-attendance-member-table td:first-child{min-width:145px}
+#page-war-attendance-stats .war-attendance-class{display:block;margin-top:3px}
+#page-war-attendance-stats .war-attendance-save-hint{margin:16px 0 0;padding:12px;border-left:3px solid #b3202e;background:rgba(179,32,46,.08);color:#c8bfc1}
+#page-war-attendance-stats .war-attendance-save-row{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;margin-top:18px}
+#page-war-attendance-stats :where(p,span,label,small,strong,em,a,button,input,select,option,td,th,caption,li,.muted,.section-kicker,.panel-kicker,.empty-state){font-size:15px!important}
+#page-war-attendance-stats :where(input,select,button){line-height:1.45}
+@media(max-width:900px){#page-war-attendance-stats .war-attendance-round-grid{grid-template-columns:1fr}}
+@media(max-width:560px){#page-war-attendance-stats .war-attendance-stats-toolbar{align-items:stretch;flex-direction:column}#page-war-attendance-stats .war-attendance-stats-toolbar select,#page-war-attendance-stats .war-attendance-stats-toolbar button{width:100%}#page-war-attendance-stats .war-attendance-round-panel{padding:11px}#page-war-attendance-stats .war-attendance-save-row>*{width:100%}}
