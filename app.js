@@ -195,7 +195,11 @@ function roleLabel(role) {
 
 // ตรวจสอบ Developer จากสิทธิ์จริงเสมอ ไม่ใช้ Role ที่กำลัง Preview
 function isDeveloper() {
-  return String(currentMember?.role || "").toLowerCase() === "developer";
+  // The project owner is a permanent Developer allowlist entry.
+  // This identity bypasses membership lifecycle gates even if a member row is
+  // temporarily stale, pending, inactive, or has an unexpected Discord state.
+  return String(currentUser?.id || "") === "378b09df-16a0-4d01-8908-2604c2c210a9" ||
+    String(currentMember?.role || "").toLowerCase() === "developer";
 }
 
 function isRolePreviewActive() {
@@ -203,7 +207,7 @@ function isRolePreviewActive() {
 }
 
 function getEffectiveSystemRole() {
-  return rolePreviewRole || String(currentMember?.role || "member").toLowerCase();
+  return rolePreviewRole || (isDeveloper() ? "developer" : String(currentMember?.role || "member").toLowerCase());
 }
 
 // สิทธิ์สำหรับแสดงผล UI ใช้ Role จำลองได้ แต่การทำรายการจริงถูกบล็อกใน Preview
@@ -604,11 +608,11 @@ async function loadApplication() {
       }
     }
 
-    if (currentMember?.membership_status === "pending_review") {
+    if (!isDeveloper() && currentMember?.membership_status === "pending_review") {
       showMembershipStatusScreen("pending_review");
       return;
     }
-    if (currentMember && (currentMember.active !== true || ["suspended","former_member"].includes(currentMember.membership_status))) {
+    if (!isDeveloper() && currentMember && (currentMember.active !== true || ["suspended","former_member"].includes(currentMember.membership_status))) {
       showMembershipStatusScreen(currentMember.membership_status || "suspended");
       return;
     }
@@ -635,7 +639,7 @@ async function loadApplication() {
     await loadAppearanceSettings();
 
     // สมาชิกที่ถูกปิดใช้งาน ไม่สามารถเข้าใช้งานได้
-    if (currentMember.active !== true) {
+    if (!isDeveloper() && currentMember.active !== true) {
       showRegistrationScreen(
         "บัญชีสมาชิกนี้ถูกระงับการใช้งาน กรุณาติดต่อผู้ดูแลกิลด์"
       );
