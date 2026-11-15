@@ -4483,23 +4483,95 @@ async function saveWarMatchRecord(form){
  }catch(e){if(newPaths.length)await supabaseClient.storage.from(WAR_RECORD_BUCKET).remove(newPaths);showWarRecordMessage("บันทึกไม่สำเร็จ: "+e.message,true);}finally{btn.disabled=false;btn.textContent=editId?"บันทึกการแก้ไขผลวอร์":"ยืนยันและบันทึกผลวอร์";}
 }
 
-async function loadWarAttendanceStatistics(){if(!isManagement())return;const s=$("war-attendance-stats-event"),ev=allWarEvents.filter(x=>x.is_published);if(s)s.innerHTML=ev.length?ev.map(x=>'<option value="'+escapeHTML(x.id)+'">'+escapeHTML(x.event_name)+" · "+formatDate(x.event_date)+"</option>").join(""):'<option value="">ยังไม่มีวอร์ที่ Publish</option>';warAttendanceEditEventId=ev[0]?.id||null;await loadWarAttendanceEditor();await loadWarAttendanceMemberSummary();}
-async function loadWarAttendanceEditor(){const box=$("war-attendance-stats-editor"),btn=$("war-attendance-stats-save");if(!box||!isManagement())return;const id=$("war-attendance-stats-event")?.value||warAttendanceEditEventId;if(!id){box.innerHTML='<div class="empty-state"><h3>ยังไม่มีรอบวอร์ที่เผยแพร่</h3></div>';if(btn)btn.disabled=true;return;}warAttendanceEditEventId=id;const [m,a]=await Promise.all([supabaseClient.from("guild_members").select("user_id,character_name,nickname,active").eq("active",true).order("character_name"),supabaseClient.from("war_attendance_records").select("member_id,attendance_status").eq("war_event_id",id)]);if(m.error||a.error){box.innerHTML='<div class="system-role-error">'+escapeHTML((m.error||a.error).message)+'<br>กรุณาติดตั้ง SQL ระบบสถิติการเข้าร่วมวอร์</div>';if(btn)btn.disabled=true;return;}const old=new Map((a.data||[]).map(x=>[x.member_id,x.attendance_status])),members=m.data||[];box.innerHTML=members.length?'<div class="war-attendance-table-wrap"><table class="war-record-table war-attendance-member-table"><thead><tr><th>สมาชิก</th><th>สถานะ</th></tr></thead><tbody>'+members.map(x=>{const v=old.get(x.user_id)||"present";return '<tr><td>'+escapeHTML(getMemberName(x))+'</td><td><select data-attendance-member="'+escapeHTML(x.user_id)+'"><option value="present" '+(v==="present"?"selected":"")+' >มาตรงเวลา</option><option value="late" '+(v==="late"?"selected":"")+' >มาสาย</option><option value="leave" '+(v==="leave"?"selected":"")+' >ลา</option><option value="absent" '+(v==="absent"?"selected":"")+' >ขาด</option></select></td></tr>';}).join("")+"</tbody></table></div>":'<div class="empty-state"><h3>ไม่พบสมาชิก Active</h3></div>';if(btn)btn.disabled=!members.length;}
-async function saveWarAttendanceStatistics(){if(!isManagement()||!warAttendanceEditEventId)return;const sels=Array.from($("war-attendance-stats-editor")?.querySelectorAll("[data-attendance-member]")||[]),btn=$("war-attendance-stats-save");if(!sels.length)return;btn.disabled=true;const rows=sels.map(x=>({war_event_id:warAttendanceEditEventId,member_id:x.dataset.attendanceMember,attendance_status:x.value,recorded_by:currentUser.id,updated_at:new Date().toISOString()}));try{const q=await supabaseClient.from("war_attendance_records").upsert(rows,{onConflict:"war_event_id,member_id"});if(q.error)throw q.error;await loadWarAttendanceMemberSummary();alert("บันทึกสถิติการเข้าร่วมวอร์เรียบร้อยแล้ว");}catch(e){alert("บันทึกไม่สำเร็จ: "+e.message);}finally{btn.disabled=false;btn.textContent="บันทึกสถานะการเข้าร่วม";}}
-async function loadWarAttendanceMemberSummary(){
- const box=$("war-attendance-member-summary");if(!box||!isManagement())return;
- const q=await supabaseClient.from("war_attendance_records").select("member_id,attendance_status");
- if(q.error){box.textContent=q.error.message;return;}
- const map=new Map(),totals={present:0,late:0,leave:0,absent:0,total:0};
- (q.data||[]).forEach(x=>{
-  if(!map.has(x.member_id))map.set(x.member_id,{present:0,late:0,leave:0,absent:0,total:0});
-  const z=map.get(x.member_id);if(Object.prototype.hasOwnProperty.call(z,x.attendance_status)){z[x.attendance_status]++;totals[x.attendance_status]++;z.total++;totals.total++;}
- });
- const expected=totals.present+totals.late+totals.absent,attended=totals.present+totals.late,rate=expected?(attended/expected*100).toFixed(1):"0.0";
- const ms=allMembers.filter(x=>x.active===true).sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));
- box.innerHTML='<div class="attendance-overview-grid"><div><span>บันทึกสถานะทั้งหมด</span><strong>'+totals.total+'</strong></div><div><span>มาตรงเวลา</span><strong>'+totals.present+'</strong></div><div><span>มาสาย</span><strong>'+totals.late+'</strong></div><div><span>ขาด</span><strong>'+totals.absent+'</strong></div><div><span>ลา</span><strong>'+totals.leave+'</strong></div><div><span>อัตราเข้าร่วมจริง</span><strong>'+rate+'%</strong></div></div>'+
- (ms.length?'<div class="war-record-table-wrap"><table class="war-record-table"><thead><tr><th>สมาชิก</th><th>ตรงเวลา</th><th>สาย</th><th>ลา</th><th>ขาด</th><th>บันทึก</th><th>อัตราเข้าร่วม</th></tr></thead><tbody>'+ms.map(x=>{const z=map.get(x.user_id)||{present:0,late:0,leave:0,absent:0,total:0},e=z.present+z.late+z.absent,p=e?((z.present+z.late)/e*100).toFixed(1):"—";return "<tr><td>"+escapeHTML(getMemberName(x))+"</td><td>"+z.present+"</td><td>"+z.late+"</td><td>"+z.leave+"</td><td>"+z.absent+"</td><td>"+z.total+"</td><td>"+p+(p==="—"?"":"%")+"</td></tr>";}).join("")+"</tbody></table></div>":'<div class="empty-state">ยังไม่มีสมาชิก</div>');
+
+async function loadWarAttendanceStatistics(){
+  if(!isManagement()||isRolePreviewActive())return;
+  const select=$("war-attendance-stats-event");
+  const events=(allWarEvents||[]).filter(x=>x.is_published);
+  if(select)select.innerHTML=events.length?events.map(x=>'<option value="'+escapeHTML(x.id)+'">'+escapeHTML(x.event_name)+' · '+formatDate(x.event_date)+'</option>').join(""):'<option value="">ยังไม่มีวอร์ที่ Publish</option>';
+  warAttendanceEditEventId=events[0]?.id||null;
+  await loadWarAttendanceEditor();
+  await loadWarAttendanceMemberSummary();
 }
+async function loadWarAttendanceEditor(){
+  const box=$("war-attendance-stats-editor"),save=$("war-attendance-stats-save"),finalize=$("war-attendance-stats-finalize");
+  if(!box||!isManagement()||isRolePreviewActive())return;
+  const id=$("war-attendance-stats-event")?.value||warAttendanceEditEventId;
+  if(!id){box.innerHTML='<div class="empty-state"><h3>ยังไม่มีวอร์ที่เผยแพร่</h3><p>เมื่อมีการ Publish กิจกรรมวอร์ รายชื่อจะปรากฏที่นี่</p></div>';if(save)save.disabled=true;if(finalize)finalize.disabled=true;return;}
+  warAttendanceEditEventId=id;
+  box.innerHTML='<p class="muted">กำลังโหลด Planned Roster และรายงานหลังวอร์...</p>';
+  const [partyResult,recordResult,reportResult,memberResult]=await Promise.all([
+    supabaseClient.from("war_parties").select("id,raid,party_number,war_party_members(member_id,position)").eq("event_id",id).order("party_number",{ascending:true}),
+    supabaseClient.from("war_attendance_round_records").select("*").eq("event_id",id),
+    supabaseClient.from("war_attendance_reports").select("*").eq("event_id",id).maybeSingle(),
+    supabaseClient.from("guild_members").select("user_id,character_name,nickname,game_class,active").eq("active",true).order("character_name")
+  ]);
+  const failure=partyResult.error||recordResult.error||reportResult.error||memberResult.error;
+  if(failure){box.innerHTML='<div class="system-role-error">โหลดข้อมูลไม่สำเร็จ: '+escapeHTML(failure.message)+'<br>ตรวจสอบสิทธิ์ RLS และโครงสร้างตารางที่ติดตั้ง</div>';if(save)save.disabled=true;if(finalize)finalize.disabled=true;return;}
+  const parties=partyResult.data||[],members=memberResult.data||[],memberMap=new Map(members.map(m=>[m.user_id,m]));
+  const planned=[...new Set(parties.flatMap(p=>(p.war_party_members||[]).map(x=>x.member_id)))].map(id=>memberMap.get(id)).filter(Boolean).sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));
+  const recordMap=new Map((recordResult.data||[]).map(r=>[r.round_number+":"+r.member_id,r]));
+  const report=reportResult.data;
+  const statusOptions=[["attended","เข้าร่วมวอร์"],["emergency_leave","ลากะทันหัน"],["absent","ขาดวอร์"]];
+  const roundMarkup=round=>'<section class="war-attendance-round-panel"><div class="war-attendance-round-heading"><div><span class="panel-kicker">WAR ROUND 0'+round+'</span><h3>Round 0'+round+'</h3></div><span class="war-attendance-round-count">'+planned.length+' คนใน Planned Roster</span></div>'+
+    (planned.length?'<div class="war-record-table-wrap"><table class="war-record-table war-attendance-member-table"><thead><tr><th>สมาชิก / Planned Roster</th><th>สถานะจริง</th></tr></thead><tbody>'+planned.map(m=>{const r=recordMap.get(round+":"+m.user_id),v=r?.attendance_status||"";return '<tr><td><strong>'+escapeHTML(getMemberName(m))+'</strong><small class="war-attendance-class">'+escapeHTML(m.game_class||"ไม่ระบุอาชีพ")+'</small></td><td><select data-attendance-round="'+round+'" data-attendance-member="'+escapeHTML(m.user_id)+'"><option value="">รอระบุสถานะ</option>'+statusOptions.map(([value,label])=>'<option value="'+value+'" '+(v===value?"selected":"")+'>'+label+'</option>').join("")+'</select></td></tr>';}).join("")+'</tbody></table></div>':'<div class="empty-state"><h3>ยังไม่มีสมาชิกใน Planned Roster</h3><p>กรุณาจัดตี้และ Publish รายชื่อก่อน</p></div>')+'</section>';
+  box.innerHTML='<div class="war-attendance-report-status"><span>สถานะรายงาน</span><strong class="'+(report?.report_status==="finalized"?"is-finalized":"is-draft")+'">'+(report?.report_status==="finalized"?"FINALIZED":"DRAFT / ยังไม่ปิดรายงาน")+'</strong><small>Planned Roster จะไม่ถูกเขียนทับจากผลการเข้าร่วมจริง</small></div>'+
+    '<div class="war-attendance-round-grid">'+roundMarkup(1)+roundMarkup(2)+'</div>'+
+    '<p class="war-attendance-save-hint">บันทึกแบบร่างได้หลายครั้ง · ต้องระบุสถานะให้ครบทั้งสองรอบก่อนปิดรายงาน · หลังปิดรายงาน การแก้ไขต้องดำเนินการโดยผู้มีสิทธิ์และมีประวัติ Audit</p>';
+  const locked=report?.report_status==="finalized";
+  if(save){save.disabled=!planned.length||locked;save.textContent=locked?"รายงานปิดแล้ว":"บันทึกแบบร่าง";}
+  if(finalize){finalize.disabled=!planned.length||locked;finalize.textContent=locked?"ปิดรายงานแล้ว":"ยืนยันปิดรายงานทั้ง 2 รอบ";}
+}
+async function saveWarAttendanceStatistics(){
+  if(!isManagement()||isRolePreviewActive()||!warAttendanceEditEventId)return;
+  const box=$("war-attendance-stats-editor"),btn=$("war-attendance-stats-save");
+  const controls=Array.from(box?.querySelectorAll("[data-attendance-round][data-attendance-member]")||[]);
+  if(!controls.length)return;
+  const incomplete=controls.filter(x=>!x.value);
+  if(incomplete.length){alert("กรุณาระบุสถานะให้ครบทั้งสองรอบก่อนบันทึกแบบร่าง");return;}
+  if(btn){btn.disabled=true;btn.textContent="กำลังบันทึก...";}
+  try{
+    const rows=controls.map(x=>({event_id:warAttendanceEditEventId,round_number:Number(x.dataset.attendanceRound),member_id:x.dataset.attendanceMember,attendance_status:x.value,recorded_by:currentUser.id,updated_at:new Date().toISOString()}));
+    const q=await supabaseClient.from("war_attendance_round_records").upsert(rows,{onConflict:"event_id,round_number,member_id"});
+    if(q.error)throw q.error;
+    const report=await supabaseClient.from("war_attendance_reports").upsert({event_id:warAttendanceEditEventId,report_status:"draft",updated_by:currentUser.id,updated_at:new Date().toISOString()},{onConflict:"event_id"});
+    if(report.error)throw report.error;
+    alert("บันทึก Post-War Report แบบร่างเรียบร้อยแล้ว");
+    await loadWarAttendanceEditor();
+    await loadWarAttendanceMemberSummary();
+  }catch(e){alert("บันทึกแบบร่างไม่สำเร็จ: "+e.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent="บันทึกแบบร่าง";}}
+}
+async function finalizeWarAttendanceStatistics(){
+  if(!isManagement()||isRolePreviewActive()||!warAttendanceEditEventId)return;
+  if(!confirm("ยืนยันปิดรายงาน Guild War ทั้ง Round 01 และ Round 02 ใช่หรือไม่? เมื่อปิดแล้วจะไม่สามารถแก้ไขผ่านหน้าปกติได้"))return;
+  const btn=$("war-attendance-stats-finalize");if(btn){btn.disabled=true;btn.textContent="กำลังตรวจสอบ...";}
+  try{
+    const {error}=await supabaseClient.rpc("finalize_war_attendance_report",{p_event_id:warAttendanceEditEventId});
+    if(error)throw error;
+    alert("ปิดรายงานทั้งสองรอบเรียบร้อยแล้ว");
+    await loadWarAttendanceEditor();
+    await loadWarAttendanceMemberSummary();
+  }catch(e){alert("ปิดรายงานไม่สำเร็จ: "+e.message);}
+  finally{if(btn){btn.disabled=false;btn.textContent="ยืนยันปิดรายงานทั้ง 2 รอบ";}}
+}
+async function loadWarAttendanceMemberSummary(){
+  const box=$("war-attendance-member-summary");if(!box||!isManagement()||isRolePreviewActive())return;
+  const [recordsResult,membersResult]=await Promise.all([
+    supabaseClient.from("war_attendance_round_records").select("member_id,round_number,attendance_status,event_id,war_attendance_reports!inner(report_status)").eq("war_attendance_reports.report_status","finalized"),
+    supabaseClient.from("guild_members").select("user_id,character_name,nickname,game_class,active").eq("active",true).order("character_name")
+  ]);
+  const failure=recordsResult.error||membersResult.error;
+  if(failure){box.innerHTML='<div class="system-role-error">'+escapeHTML(failure.message)+'</div>';return;}
+  const records=recordsResult.data||[],members=membersResult.data||[];
+  const totals={attended:0,emergency_leave:0,absent:0};
+  const map=new Map();
+  records.forEach(r=>{if(!map.has(r.member_id))map.set(r.member_id,{attended:0,emergency_leave:0,absent:0,total:0});const x=map.get(r.member_id);if(Object.prototype.hasOwnProperty.call(x,r.attendance_status)){x[r.attendance_status]++;x.total++;totals[r.attendance_status]++;}});
+  const expected=totals.attended+totals.absent,rate=expected?(totals.attended/expected*100).toFixed(1):"0.0";
+  box.innerHTML='<div class="attendance-overview-grid"><div><span>บันทึกจากรายงานที่ปิดแล้ว</span><strong>'+records.length+'</strong></div><div><span>เข้าร่วมจริง</span><strong>'+totals.attended+'</strong></div><div><span>ลากะทันหัน</span><strong>'+totals.emergency_leave+'</strong></div><div><span>ขาดวอร์</span><strong>'+totals.absent+'</strong></div><div><span>อัตราเข้าร่วมจริง</span><strong>'+rate+'%</strong></div></div>'+
+    (members.length?'<div class="war-record-table-wrap"><table class="war-record-table"><thead><tr><th>สมาชิก</th><th>เข้าร่วม</th><th>ลากะทันหัน</th><th>ขาด</th><th>บันทึก</th></tr></thead><tbody>'+members.map(m=>{const x=map.get(m.user_id)||{attended:0,emergency_leave:0,absent:0,total:0};return '<tr><td>'+escapeHTML(getMemberName(m))+'</td><td>'+x.attended+'</td><td>'+x.emergency_leave+'</td><td>'+x.absent+'</td><td>'+x.total+'</td></tr>';}).join("")+'</tbody></table></div>':'<div class="empty-state">ยังไม่มีสมาชิก</div>');
+}
+
 function warSignupDateTime(value){
   if(!value)return "—";
   const date=new Date(value);if(Number.isNaN(date.getTime()))return "—";
@@ -5052,7 +5124,7 @@ function registerWarRecordAndAttendanceEvents(){
   $("war-record-cancel-edit")?.addEventListener("click",resetWarRecordEditor);
   $("war-record-history")?.addEventListener("click",e=>{const ed=e.target.closest("[data-war-record-edit]"),del=e.target.closest("[data-war-record-delete]");if(ed)startEditWarMatchRecord(ed.dataset.warRecordEdit);if(del)deleteWarMatchRecord(del.dataset.warRecordDelete,del);});
   $("war-record-form")?.addEventListener("submit",async e=>{e.preventDefault();await saveWarMatchRecord(e.currentTarget);});
-  $("war-attendance-stats-load")?.addEventListener("click",loadWarAttendanceEditor);$("war-attendance-stats-event")?.addEventListener("change",loadWarAttendanceEditor);$("war-attendance-stats-save")?.addEventListener("click",saveWarAttendanceStatistics);
+  $("war-attendance-stats-load")?.addEventListener("click",loadWarAttendanceEditor);$("war-attendance-stats-event")?.addEventListener("change",loadWarAttendanceEditor);$("war-attendance-stats-save")?.addEventListener("click",saveWarAttendanceStatistics);$("war-attendance-stats-finalize")?.addEventListener("click",finalizeWarAttendanceStatistics);
 }
 function subscribeToWarRealtime() {
   if (warRealtimeChannel) {
