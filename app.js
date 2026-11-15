@@ -7344,8 +7344,13 @@ const DISCORD_EVENT_ROUTE_DEFINITIONS = [
   ["feedback_submitted", "แจ้งปัญหา / Feedback"],
   ["duck_race_results", "ผลการแข่งขัน Duck Race"],
   ["member_joined", "สมาชิกใหม่ / เพิ่มสมาชิก"],
+  ["war_signup_opened", "เปิดรับสมัคร Guild War อัตโนมัติ"],
   ["war_signup_submitted", "ลงชื่อเข้าร่วม Guild War"],
+  ["war_signup_closed", "ปิดรับสมัคร Guild War อัตโนมัติ"],
   ["war_leave_submitted", "แจ้งลาวอร์"],
+  ["war_roster_published", "ประกาศรายชื่อและจัดตี้วอร์"],
+  ["war_checkin_opened", "เปิดเช็กชื่อ Guild War"],
+  ["war_attendance_finalized", "สรุปรายงานหลังวอร์"],
   ["portfolio_published", "โพสต์แฟ้มผลงาน"]
 ];
 
@@ -7537,7 +7542,7 @@ async function sendDiscordIntegrationTest() {
     const { data, error } = await supabaseClient.functions.invoke("discord-integration-test", { body: {} });
     if (error) throw error;
     if (!data?.success) throw new Error(data?.message || "ส่งข้อความทดสอบไม่สำเร็จ");
-    showMessage("discord-integration-message", "ส่งข้อความทดสอบไปยังห้องทดสอบบอทสำเร็จ", "success");
+    showMessage("discord-integration-message", data.message || ("ส่งข้อความทดสอบไปยังห้องทดสอบบอทสำเร็จ" + (data.channel_name ? " (#" + data.channel_name + ")" : "")), "success");
   } catch (error) {
     console.error("Discord integration test:", error);
     showMessage("discord-integration-message", "ทดสอบไม่สำเร็จ: " + (error.message || "ตรวจสอบ Edge Function และ Bot Token"));
