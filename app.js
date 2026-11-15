@@ -3910,9 +3910,16 @@ function openWarSkillEditor(skillId){
 }
 async function saveWarSkillEdit(event){
  event.preventDefault();if(!isManagement())return;
- const form=event.currentTarget,skillId=form.dataset.skillId,skill=warSkillCatalog.find(item=>item.id===skillId);
- const name=$("war-skill-edit-name")?.value.trim(),file=$("war-skill-edit-icon")?.files?.[0],status=$("war-skill-edit-status"),button=$("war-skill-edit-submit");
- if(!skill||!name){if(status)status.textContent="กรุณากรอกชื่อ Skill";return;}
+ // This submit handler is delegated from document.body, so currentTarget is BODY.
+ // Read the actual submitted form and its own named fields to avoid false empty-name validation.
+ const form=event.target instanceof HTMLFormElement?event.target:null;
+ if(!form||form.id!=="war-skill-edit-form")return;
+ const skillId=form.dataset.skillId,skill=warSkillCatalog.find(item=>item.id===skillId);
+ const name=String(form.elements.namedItem("skill-name")?.value||"").trim();
+ const file=form.elements.namedItem("skill-icon")?.files?.[0]||null;
+ const status=form.querySelector("#war-skill-edit-status"),button=form.querySelector("#war-skill-edit-submit");
+ if(!skill){if(status)status.textContent="ไม่พบ Skill ที่ต้องการแก้ไข กรุณาปิดหน้าต่างแล้วเปิดใหม่";return;}
+ if(!name){if(status)status.textContent="กรุณากรอกชื่อ Skill";form.querySelector("#war-skill-edit-name")?.focus();return;}
  if(file&&(!file.type.startsWith("image/")||file.size>3*1024*1024)){if(status)status.textContent="ไฟล์ต้องเป็นรูปภาพและมีขนาดไม่เกิน 3 MB";return;}
  if(button){button.disabled=true;button.textContent="กำลังบันทึก...";}
  let newPath=null;
@@ -4323,36 +4330,23 @@ function getThaiFontCss() {
   }
   return thaiFontCssPromise;
 }
-function deliverWarPng(blob, filename, downloadWindow) {
-  const url = URL.createObjectURL(blob);
-  try {
-    if (downloadWindow && !downloadWindow.closed) {
-      const doc = downloadWindow.document;
-      doc.open();
-      doc.write('<!doctype html><html lang="th"><meta charset="utf-8"><title>4AM GUILD · Download</title><body style="margin:0;background:#080608;color:#fff;font:16px sans-serif;display:grid;place-items:center;min-height:100vh"><main style="padding:28px;text-align:center"><h2>เตรียมรูปภาพเรียบร้อยแล้ว</h2><p>หากยังไม่เริ่มดาวน์โหลด กดปุ่มด้านล่างได้เลย</p><a id="war-png-download" style="display:inline-block;padding:12px 22px;border-radius:9px;background:#b51d34;color:white;text-decoration:none;font-weight:700">ดาวน์โหลดรูปภาพ</a></main></body></html>');
-      doc.close();
-      const link = doc.getElementById("war-png-download");
-      link.href = url; link.download = filename; link.click();
-      link.textContent = "ดาวน์โหลดอีกครั้ง";
-      window.setTimeout(() => URL.revokeObjectURL(url), 60000);
-      return;
-    }
-    const link = document.createElement("a");
-    link.href = url; link.download = filename;
-    document.body.appendChild(link); link.click(); link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 60000);
-  } catch (error) {
-    URL.revokeObjectURL(url);
-    if (downloadWindow && !downloadWindow.closed) downloadWindow.close();
-    throw error;
-  }
+function deliverWarPng(blob, filename) {
+  const url=URL.createObjectURL(blob);
+  const link=document.createElement("a");
+  link.href=url;
+  link.download=filename;
+  link.style.display="none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  // Keep the Blob URL alive long enough for the browser download manager to read it.
+  window.setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
 
 async function exportWarImage(raidFilter = null,eventId = selectedWarEventId){
   const event=allWarEvents.find(item=>item.id===eventId);
   if(!event){alert("ไม่พบกิจกรรมวอร์ที่ต้องการบันทึกภาพ กรุณาปิดหน้าต่างจัดตี้แล้วเปิดใหม่อีกครั้ง");return;}
   if(!event.is_draft_confirmed){alert("กรุณายืนยันการสร้างตี้วอร์ก่อน จึงจะสามารถบันทึกเป็นรูปภาพได้");return;}
-  const downloadWindow=window.open("about:blank","_blank");
   const config=getWarEventConfig(event),width=1600,allRaidNames=["A","B","C","D"].slice(0,config.raidCount);
   const raidNames=raidFilter?allRaidNames.filter(raid=>raid===raidFilter):allRaidNames;
   if(raidFilter&&!raidNames.length)return;
@@ -4442,7 +4436,7 @@ async function exportWarImage(raidFilter = null,eventId = selectedWarEventId){
       const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
       if(!png)throw Error("PNG export failed");
       const filename=raidFilter?`4AM-War-Raid-${raidFilter}-${event.event_date}.png`:`4AM-War-${event.event_date}.png`;
-      deliverWarPng(png,filename,downloadWindow);
+      deliverWarPng(png,filename);
     }finally{URL.revokeObjectURL(svgUrl);}
   }catch(error){
     console.error("War image export failed:",error);
