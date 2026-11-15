@@ -56,14 +56,20 @@ Deno.serve(async req => {
     const rows = (partiesQ.data || []).flatMap((party: any) => (party.war_party_members || []).map((slot: any) => ({ member_id: slot.member_id, raid: party.raid, party_number: party.party_number })));
     const ids = [...new Set(rows.map((x: any) => x.member_id))];
     if (!ids.length) throw new Error("กิจกรรมนี้ยังไม่มีรายชื่อสมาชิกที่จัดลงตี้");
-    const [membersQ, checkinsQ] = await Promise.all([
+    const [membersQ, reservesQ, checkinsQ] = await Promise.all([
       db.from("guild_members").select("user_id,character_name,nickname,active").in("user_id", ids).eq("active", true),
+      db.from("war_signups").select("member_id,queue_position,status").eq("event_id", eventId).eq("status", "standby").order("queue_position"),
       db.from("war_round_checkins").select("member_id,round_number,checked_in_at").eq("event_id", eventId)
     ]);
-    if (membersQ.error || checkinsQ.error) throw new Error("โหลดข้อมูลสมาชิกหรือเช็กชื่อไม่สำเร็จ กรุณาตรวจสอบ SQL WAR_ATTENDANCE_CENTER_V2");
+    if (membersQ.error || reservesQ.error || checkinsQ.error) throw new Error("โหลดข้อมูลสมาชิก ตัวสำรอง หรือเช็กชื่อไม่สำเร็จ กรุณาตรวจสอบ SQL WAR_ATTENDANCE_CENTER_V2");
+    const reserveIds = (reservesQ.data || []).map((x: any) => x.member_id);
+    const reserveMembersQ = reserveIds.length ? await db.from("guild_members").select("user_id,character_name,nickname,active").in("user_id", reserveIds).eq("active", true) : { data: [], error: null };
+    if (reserveMembersQ.error) throw reserveMembersQ.error;
     const members = new Map((membersQ.data || []).map((m: any) => [m.user_id, m]));
+    const reserveMembers = new Map((reserveMembersQ.data || []).map((m: any) => [m.user_id, m]));
     const roster = rows.filter((x: any) => members.has(x.member_id)).map((x: any) => ({ ...x, member: members.get(x.member_id) }));
-    return { event: eventQ.data, roster, checkins: checkinsQ.data || [] };
+    const reserves = (reservesQ.data || []).filter((x: any) => reserveMembers.has(x.member_id)).map((x: any) => ({ ...x, member: reserveMembers.get(x.member_id) }));
+    return { event: eventQ.data, roster, reserves, checkins: checkinsQ.data || [] };
   }
   function buildMessage(data: any) {
     const { event, roster, checkins } = data;
@@ -112,7 +118,8 @@ Deno.serve(async req => {
     try {
       const data = await getRoster(eventId);
       const rosterMember = data.roster.find((x: any) => x.member_id === actor.user_id);
-      if (!rosterMember) return response(4, { content: "คุณไม่มีรายชื่ออยู่ในตี้วอร์ของกิจกรรมนี้ จึงไม่สามารถกดยืนยันรอบนี้ได้", flags: 64 });
+      const reserveMember = data.reserves.find((x: any) => x.member_id === actor.user_id);
+      if (!rosterMember && !reserveMember) return response(4, { content: "คุณไม่มีรายชื่อเป็นตัวจริงหรือตัวสำรองของกิจกรรมนี้ จึงไม่สามารถกดยืนยันรอบนี้ได้", flags: 64 });
       const saved = await db.from("war_round_checkins").upsert({
         event_id: eventId, round_number: round, member_id: actor.user_id,
         discord_user_id: discordId, checked_in_at: new Date().toISOString()
