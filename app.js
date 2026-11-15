@@ -8321,3 +8321,5 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     applyRolePreviewState();
   }
 });
+
+// Sync deployment revision for the member cover crop and war-record lightbox UI updates.
