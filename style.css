@@ -7095,3 +7095,6 @@ body select:disabled {
   #page-members .member-class-filter img,
   #page-member-management .manual-member-class-filter img { width:23px; height:23px; flex-basis:23px; }
 }
+
+/* Guild War: highlight the unassigned pool as a drop target when returning an assigned member. */
+#page-war .war-assignment-results.is-war-drop-active{outline:2px dashed rgba(235,72,92,.9);outline-offset:5px;background:rgba(150,25,45,.16);border-radius:7px;min-height:54px;}
