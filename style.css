@@ -7573,3 +7573,10 @@ body select:disabled {
 .member-card-edit-actions{display:flex;justify-content:flex-end;gap:10px;padding-top:4px}
 body.member-card-edit-open{overflow:hidden}
 @media(max-width:600px){#page-members .member-directory-stats{gap:7px}#page-members .member-directory-stat{min-height:54px;padding:8px;display:grid;gap:2px}#page-members .member-directory-stat strong{font-size:20px}#page-members .member-directory-toolbar{grid-template-columns:1fr}.member-card-edit-dialog{padding:19px}.member-card-edit-actions{flex-direction:column-reverse}.member-card-edit-actions .btn{width:100%}}
+
+
+/* Member directory: keep Manual marker inline with the class, not as an extra info row */
+#page-members .member-directory-card .member-class{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:7px;max-width:100%;white-space:normal}
+#page-members .member-directory-card .member-class .member-record-status{position:static;display:inline-flex;align-items:center;justify-content:center;width:auto;max-width:100%;margin:0;padding:3px 8px;border:1px solid rgba(225,59,80,.42);border-radius:999px;background:rgba(170,28,48,.16);color:#ff9aa7;font-size:15px;font-weight:750;line-height:1.35;letter-spacing:0;white-space:nowrap}
+#page-members .member-directory-card .member-class-icon{flex:0 0 28px;width:28px;height:28px;object-fit:contain}
+@media(max-width:600px){#page-members .member-directory-card .member-class{gap:5px}#page-members .member-directory-card .member-class .member-record-status{padding:3px 7px}}
