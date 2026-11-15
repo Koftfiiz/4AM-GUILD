@@ -596,7 +596,7 @@ async function loadApplication() {
       showMembershipStatusScreen("pending_review");
       return;
     }
-    if (!isDeveloper() && currentMember && (currentMember.active !== true || ["suspended","former_member"].includes(currentMember.membership_status))) {
+    if (!isDeveloper() && currentMember && (currentMember.active !== true || currentMember.membership_status === "suspended")) {
       showMembershipStatusScreen(currentMember.membership_status || "suspended");
       return;
     }
@@ -843,9 +843,7 @@ function showMembershipStatusScreen(status = "pending_review") {
   const title = isPending ? "APPLICATION UNDER REVIEW" : "MEMBERSHIP ACCESS RESTRICTED";
   const description = isPending
     ? "ระบบได้รับข้อมูลและยืนยันบัญชี Discord ของคุณแล้ว ขณะนี้กำลังรอฝ่ายจัดการตรวจสอบและอนุมัติ คุณยังไม่สามารถเข้าใช้งานหน้าเว็บไซต์ได้"
-    : status === "former_member"
-      ? "บัญชีนี้ถูกกำหนดเป็นอดีตสมาชิก จึงไม่สามารถเข้าใช้งานเว็บไซต์ได้ หากคิดว่าเกิดข้อผิดพลาด กรุณาติดต่อฝ่ายจัดการกิลด์"
-      : "บัญชีสมาชิกนี้ถูกระงับการใช้งานเว็บไซต์ กรุณาติดต่อฝ่ายจัดการกิลด์";
+    : "บัญชีสมาชิกนี้ถูกระงับการใช้งานเว็บไซต์ กรุณาติดต่อฝ่ายจัดการกิลด์";
   screen.innerHTML = `
     <div class="login-logo registration-guild-logo"><img src="/assets/4am-guild-logo.png?v=20261111b" alt="4AM GUILD Logo" onerror="this.style.display='none'"></div>
     <div class="membership-status-icon ${isPending ? "is-pending" : "is-blocked"}">${isPending ? "◷" : "!"}</div>
@@ -1895,7 +1893,7 @@ function renderMemberAdminSavedFilters(){const el=$("manual-member-saved-filters
 function getMemberAdminFilterState(){return{search:String($("manual-member-search")?.value||""),record:manualMemberRecordFilter,activity:manualMemberActivityFilter,discord:manualMemberDiscordFilter,position:manualMemberPositionFilter,className:manualMemberClassFilter,incompleteOnly:manualMemberIncompleteOnly}}
 function setMemberAdminFilterState(f){f=f||{};if($("manual-member-search"))$("manual-member-search").value=f.search||"";manualMemberRecordFilter=f.record||"all";manualMemberActivityFilter=f.activity||"all";manualMemberDiscordFilter=f.discord||"all";manualMemberPositionFilter=f.position||"all";manualMemberClassFilter=f.className||"all";manualMemberIncompleteOnly=f.incompleteOnly===true;[["manual-member-record-filter",manualMemberRecordFilter],["manual-member-activity-filter",manualMemberActivityFilter],["manual-member-discord-filter",manualMemberDiscordFilter],["manual-member-position-filter",manualMemberPositionFilter]].forEach(([id,v])=>{if($(id))$(id).value=v});renderManualMemberManagement()}
 async function setGuildMemberLifecycleStatus(userId, status, reason = "") {
-  if (!isManagement() || !userId || !["active", "former_member"].includes(status)) return;
+  if (!isManagement() || !userId || !["active", "suspended"].includes(status)) return;
   try {
     const { error } = await supabaseClient.rpc("set_guild_member_lifecycle_status", {
       p_target_user_id: userId,
@@ -1906,9 +1904,9 @@ async function setGuildMemberLifecycleStatus(userId, status, reason = "") {
     await loadManualMemberManagement();
     const refreshed = allMembers.find(item => String(item.user_id) === String(userId));
     if (refreshed) openMemberAdminProfile(refreshed);
-    alert(status === "former_member"
-      ? "บันทึกสถานะ Former Member แล้ว และระงับสิทธิ์เข้าเว็บไซต์เรียบร้อย"
-      : "คืนสถานะสมาชิกและสิทธิ์เข้าเว็บไซต์เรียบร้อย");
+    alert(status === "suspended"
+      ? "ระงับบัญชีเว็บไซต์เรียบร้อยแล้ว"
+      : "คืนสิทธิ์เข้าเว็บไซต์เรียบร้อยแล้ว");
   } catch (error) {
     console.error("Guild member lifecycle update failed:", error);
     alert("เปลี่ยนสถานะสมาชิกไม่สำเร็จ: " + (error?.message || "Unknown error"));
@@ -1924,19 +1922,19 @@ function openMemberAdminProfile(member){
   '<section class="member-admin-profile-section"><h4>Character & Personal</h4>'+row("Character UID",member.game_uid)+row("Nickname",member.nickname)+row("อายุ",member.age?String(member.age):"")+row("Class",member.game_class)+row("ตำแหน่งกิลด์",member.guild_position)+'</section>'+
   '<section class="member-admin-profile-section"><h4>Discord Account</h4><div class="member-admin-health-pill is-'+discord.tone+'">'+escapeHTML(discord.label)+'</div><p class="member-admin-health-detail">'+escapeHTML(discord.detail)+'</p>'+row("Username",member.discord_username||member.discord_name)+row("Global Name",member.discord_global_name)+row("Server Nickname",member.discord_server_nickname)+row("Discord User ID",member.discord_user_id||discord.account?.discord_user_id)+row("ตรวจสอบล่าสุด",discord.account?.last_checked_at?new Date(discord.account.last_checked_at).toLocaleString("th-TH"):"")+'</section>'+
   '<section class="member-admin-profile-section"><h4>Account & Guild</h4>'+row("ประเภทบัญชี",isAccount?"ลงทะเบียนผ่านเว็บไซต์":"Manual")+row("สถานะสมาชิก",member.membership_status|| (member.active===false?"suspended":"active"))+row("Role",member.role||"member")+row("วันที่เพิ่ม",member.created_at?new Date(member.created_at).toLocaleString("th-TH"):"")+'</section>'+
-  '<div class="member-admin-profile-actions">'+(isAccount?'<button type="button" class="btn btn-primary" data-drawer-edit-account="'+escapeHTML(member.user_id)+'">แก้ไขข้อมูลสมาชิก</button>':'<button type="button" class="btn btn-primary" data-drawer-edit-manual="'+escapeHTML(member.id)+'">แก้ไขข้อมูลสมาชิก</button>')+(isAccount&&member.membership_status!=="pending_review"?(member.active===true?'<button type="button" class="btn btn-outline" data-member-lifecycle="former_member" data-member-id="'+escapeHTML(member.user_id)+'">ยืนยันออกจากกิลด์เกม</button>':'<button type="button" class="btn btn-outline" data-member-lifecycle="active" data-member-id="'+escapeHTML(member.user_id)+'">คืนสถานะสมาชิกและสิทธิ์</button>'):'')+'</div>';
+  '<div class="member-admin-profile-actions">'+(isAccount?'<button type="button" class="btn btn-primary" data-drawer-edit-account="'+escapeHTML(member.user_id)+'">แก้ไขข้อมูลสมาชิก</button>':'<button type="button" class="btn btn-primary" data-drawer-edit-manual="'+escapeHTML(member.id)+'">แก้ไขข้อมูลสมาชิก</button>')+(isAccount&&member.membership_status!=="pending_review"?(member.active===true?'<button type="button" class="btn btn-outline" data-member-lifecycle="suspended" data-member-id="'+escapeHTML(member.user_id)+'">ระงับบัญชีเว็บไซต์</button>':'<button type="button" class="btn btn-outline" data-member-lifecycle="active" data-member-id="'+escapeHTML(member.user_id)+'">คืนสิทธิ์เข้าเว็บไซต์</button>'):'')+'</div>';
   content.querySelector("[data-member-lifecycle]")?.addEventListener("click", async event => {
     const button = event.currentTarget;
     const status = button.dataset.memberLifecycle;
     const userId = button.dataset.memberId;
     let reason = "";
-    if (status === "former_member") {
-      reason = window.prompt("ยืนยันว่า Management ตรวจสอบแล้วว่าสมาชิกออกจากกิลด์เกมจริง กรุณาระบุเหตุผลหรือข้อมูลยืนยัน:");
+    if (status === "suspended") {
+      reason = window.prompt("ระบุเหตุผลในการระงับบัญชีเว็บไซต์:");
       if (!reason || !reason.trim()) return;
     }
-    const message = status === "former_member"
-      ? "ยืนยันเปลี่ยนสถานะเป็น Former Member และระงับสิทธิ์เข้าเว็บไซต์หรือไม่? ข้อมูลและผลงานเดิมจะยังถูกเก็บไว้"
-      : "ยืนยันคืนสถานะสมาชิกและเปิดสิทธิ์เข้าเว็บไซต์หรือไม่?";
+    const message = status === "suspended"
+      ? "ยืนยันระงับบัญชีเว็บไซต์นี้หรือไม่? ข้อมูลสมาชิกและผลงานเดิมจะยังถูกเก็บไว้"
+      : "ยืนยันคืนสิทธิ์เข้าเว็บไซต์หรือไม่?";
     if (!window.confirm(message)) return;
     button.disabled = true;
     await setGuildMemberLifecycleStatus(userId, status, reason);
