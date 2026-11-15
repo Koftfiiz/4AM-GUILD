@@ -7426,3 +7426,57 @@ body select:disabled {
   .war-assignment-modal-panel-reference .war-member-skill-icon-choice img{width:36px;height:36px}
   .war-assignment-modal-panel-reference .war-member-skill-create-form{padding:13px}
 }
+
+
+/* 4AM GUILD War signup and leave refinements */
+#page-war-signup .war-signup-card{
+  border:1px solid rgba(225,55,76,.3);
+  background:linear-gradient(145deg,#171012 0%,#0b090a 100%);
+}
+#page-war-signup .war-signup-card-heading h3{
+  display:flex;align-items:center;flex-wrap:wrap;gap:9px;
+}
+#page-war-signup .war-signup-type{
+  display:inline-flex;align-items:center;min-height:27px;padding:4px 10px;
+  border:1px solid rgba(231,65,86,.42);border-radius:7px;
+  color:#ff9aa7;background:rgba(190,35,57,.14);
+  font-size:15px;font-weight:800;line-height:1.2;
+}
+#page-war-signup .war-signup-badges{justify-content:flex-end}
+#page-war-leave .war-leave-deadline-banner{
+  display:flex;flex-direction:column;gap:5px;
+  margin:4px 0 20px;padding:16px 18px;
+  border:1px solid rgba(231,61,82,.48);border-left:4px solid #e23d53;
+  border-radius:10px;background:linear-gradient(105deg,rgba(120,20,37,.26),rgba(20,12,15,.92));
+  color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.2);
+}
+#page-war-leave .war-leave-deadline-banner strong{color:#ff8796;font-size:16px;font-weight:850}
+#page-war-leave .war-leave-deadline-banner span{color:#f4e8ea;font-size:16px;line-height:1.55}
+#page-war-leave .war-leave-deadline-banner.is-closed{border-color:rgba(180,180,180,.3);border-left-color:#8f8f8f;background:rgba(80,80,80,.12)}
+#page-war-leave .war-leave-deadline-banner.is-closed strong{color:#ddd}
+#page-war-leave .war-leave-own-status{display:flex;flex-direction:column;gap:5px}
+#page-war-leave .war-leave-own-status :where(strong,span){font-size:15px}
+.war-assignment-modal-panel-reference .war-member-skill-icon-grid{
+  grid-template-columns:repeat(auto-fill,minmax(62px,1fr));
+  gap:7px;padding:13px;
+}
+.war-assignment-modal-panel-reference .war-member-skill-icon-choice{
+  min-height:56px;padding:3px;border:0;background:transparent;border-radius:12px;
+}
+.war-assignment-modal-panel-reference .war-member-skill-icon-choice img{
+  width:50px;height:50px;padding:0;border:0;border-radius:12px;
+  background:transparent;box-shadow:none;object-fit:contain;
+}
+.war-assignment-modal-panel-reference .war-member-skill-icon-choice:has(input:checked){
+  background:rgba(190,35,57,.18);
+  box-shadow:0 0 0 1px rgba(225,58,78,.34);
+}
+.war-assignment-modal-panel-reference .war-member-skill-icon-choice:has(input:checked) img{
+  border:0;box-shadow:none;transform:scale(1.05);
+}
+@media(max-width:640px){
+  .war-assignment-modal-panel-reference .war-member-skill-icon-grid{
+    grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:6px;padding:10px;
+  }
+  .war-assignment-modal-panel-reference .war-member-skill-icon-choice img{width:46px;height:46px}
+}
