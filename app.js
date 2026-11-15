@@ -582,6 +582,28 @@ async function loadApplication() {
     // Load an existing approved profile first. OAuth login itself never creates or links membership.
     await loadCurrentMember();
 
+    // Re-check the live Discord Server membership and required role on every login.
+    // The server verifies the OAuth user and never trusts role IDs supplied by the browser.
+    if (currentMember) {
+      const { data: syncResult, error: syncError } = await supabaseClient.functions.invoke(
+        "register-guild-member",
+        { body: { action: "sync_membership" } }
+      );
+      if (syncError) {
+        let message = syncError.message;
+        try {
+          const response = syncError.context;
+          if (response && typeof response.json === "function") {
+            const result = await response.json();
+            message = result.message || message;
+          }
+        } catch (_) {}
+        throw new Error("ตรวจสอบ Discord Role ไม่สำเร็จ: " + message);
+      }
+      if (!syncResult?.success) throw new Error(syncResult?.message || "ไม่สามารถยืนยันสิทธิ์ Discord ได้");
+      await loadCurrentMember();
+    }
+
     if (currentMember?.membership_status === "pending_review") {
       showMembershipStatusScreen("pending_review");
       return;
