@@ -7599,32 +7599,37 @@ body.member-card-edit-open{overflow:hidden}
 #page-member-management .member-admin-filter-actions{display:flex;align-items:end;gap:9px;flex-wrap:wrap}
 #page-member-management .member-admin-saved-filter{flex:1 1 240px}
 #page-member-management .member-admin-filter-result{margin:2px 0 10px;color:#a9a9b2;font-size:15px}
-#page-member-management .member-admin-health-pill{display:inline-flex;align-items:center;justify-content:center;max-width:max-content;padding:5px 9px;border:1px solid rgba(255,255,255,.12);border-radius:999px;font-size:15px;font-weight:700;white-space:nowrap}
-#page-member-management .member-admin-health-pill.is-good{border-color:rgba(52,190,126,.35);background:rgba(35,150,95,.12);color:#76e0ae}
-#page-member-management .member-admin-health-pill.is-pending{border-color:rgba(230,155,65,.35);background:rgba(190,115,25,.12);color:#f1bd72}
-#page-member-management .member-admin-health-pill.is-muted{border-color:rgba(160,160,170,.22);background:rgba(120,120,130,.1);color:#c2c2ca}
+.member-admin-health-pill{display:inline-flex;align-items:center;justify-content:center;max-width:max-content;padding:5px 9px;border:1px solid rgba(255,255,255,.12);border-radius:999px;font-size:15px;font-weight:700;white-space:nowrap}
+.member-admin-health-pill.is-good{border-color:rgba(52,190,126,.35);background:rgba(35,150,95,.12);color:#76e0ae}
+.member-admin-health-pill.is-pending{border-color:rgba(230,155,65,.35);background:rgba(190,115,25,.12);color:#f1bd72}
+.member-admin-health-pill.is-muted{border-color:rgba(160,160,170,.22);background:rgba(120,120,130,.1);color:#c2c2ca}
 #page-member-management .manual-member-table{min-width:1050px}
 #page-member-management .manual-member-table th,#page-member-management .manual-member-table td{font-size:15px}
-#page-member-management .member-admin-profile-drawer{position:fixed;inset:0;z-index:1200;display:flex;justify-content:flex-end}
-#page-member-management .member-admin-profile-drawer.hidden{display:none}
-#page-member-management .member-admin-profile-backdrop{position:absolute;inset:0;width:100%;height:100%;border:0;background:rgba(0,0,0,.68);backdrop-filter:blur(3px)}
-#page-member-management .member-admin-profile-panel{position:relative;z-index:1;width:min(560px,100%);height:100%;overflow:auto;padding:26px;background:#111115;border-left:1px solid rgba(225,59,80,.35);box-shadow:-20px 0 60px rgba(0,0,0,.45);animation:memberAdminDrawerIn .22s ease-out}
-#page-member-management .member-admin-profile-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px}
-#page-member-management .member-admin-profile-heading h3{margin:6px 0 0;color:#fff;font-size:23px}
-#page-member-management .member-admin-profile-close{width:40px;height:40px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#1c1c22;color:#fff;font-size:26px;cursor:pointer}
-#page-member-management .member-admin-profile-identity{display:flex;align-items:center;gap:15px;padding:16px;border:1px solid rgba(225,59,80,.25);border-radius:14px;background:rgba(95,18,30,.18)}
-#page-member-management .member-admin-profile-identity img,#page-member-management .member-admin-profile-avatar{display:grid;place-items:center;width:64px;height:64px;flex:0 0 64px;border-radius:14px;object-fit:cover;background:#24242b;color:#ff7180;font-size:28px}
-#page-member-management .member-admin-profile-identity h4{margin:0 0 5px;color:#fff;font-size:20px;overflow-wrap:anywhere}
-#page-member-management .member-admin-profile-identity span{color:#ff8a96;font-size:15px}
-#page-member-management .member-admin-profile-section{margin-top:18px;padding:16px;border:1px solid rgba(255,255,255,.09);border-radius:13px;background:#17171c}
-#page-member-management .member-admin-profile-section h4{margin:0 0 12px;color:#ff7180;font-size:16px}
-#page-member-management .member-admin-profile-row{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:15px}
-#page-member-management .member-admin-profile-row:last-child{border-bottom:0}
-#page-member-management .member-admin-profile-row span{color:#a9a9b2}
-#page-member-management .member-admin-profile-row strong{max-width:65%;color:#f1f1f3;text-align:right;overflow-wrap:anywhere}
+.member-admin-profile-drawer{position:fixed;inset:0;z-index:1200;display:flex;justify-content:flex-end}
+.member-admin-profile-drawer.hidden{display:none}
+.member-admin-profile-backdrop{position:absolute;inset:0;width:100%;height:100%;border:0;background:rgba(0,0,0,.68);backdrop-filter:blur(3px)}
+.member-admin-profile-panel{position:relative;z-index:1;width:min(560px,100%);height:100%;overflow:auto;padding:26px;background:#111115;border-left:1px solid rgba(225,59,80,.35);box-shadow:-20px 0 60px rgba(0,0,0,.45);animation:memberAdminDrawerIn .22s ease-out}
+.member-admin-profile-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:24px}
+.member-admin-profile-heading h3{margin:6px 0 0;color:#fff;font-size:23px}
+.member-admin-profile-close{width:40px;height:40px;border:1px solid rgba(255,255,255,.14);border-radius:10px;background:#1c1c22;color:#fff;font-size:26px;cursor:pointer}
+.member-admin-profile-identity{display:flex;align-items:center;gap:15px;padding:16px;border:1px solid rgba(225,59,80,.25);border-radius:14px;background:rgba(95,18,30,.18)}
+.member-admin-profile-identity img,.member-admin-profile-avatar{display:grid;place-items:center;width:64px;height:64px;flex:0 0 64px;border-radius:14px;object-fit:cover;background:#24242b;color:#ff7180;font-size:28px}
+.member-admin-profile-identity h4{margin:0 0 5px;color:#fff;font-size:20px;overflow-wrap:anywhere}
+.member-admin-profile-identity span{color:#ff8a96;font-size:15px}
+.member-admin-profile-section{margin-top:18px;padding:16px;border:1px solid rgba(255,255,255,.09);border-radius:13px;background:#17171c}
+.member-admin-profile-section h4{margin:0 0 12px;color:#ff7180;font-size:16px}
+.member-admin-profile-row{display:flex;justify-content:space-between;gap:16px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.06);font-size:15px}
+.member-admin-profile-row:last-child{border-bottom:0}
+.member-admin-profile-row span{color:#a9a9b2}
+.member-admin-profile-row strong{max-width:65%;color:#f1f1f3;text-align:right;overflow-wrap:anywhere}
 #page-member-management .member-admin-health-detail{margin:9px 0;color:#b8b8c0;font-size:15px;line-height:1.55}
-#page-member-management .member-admin-profile-actions{display:flex;gap:10px;margin-top:18px}
+.member-admin-profile-actions{display:flex;gap:10px;margin-top:18px}
 body.member-admin-drawer-open{overflow:hidden}
 @keyframes memberAdminDrawerIn{from{transform:translateX(24px);opacity:.6}to{transform:translateX(0);opacity:1}}
 @media(max-width:900px){#page-member-management .member-admin-quality-strip{grid-template-columns:repeat(3,minmax(0,1fr))}#page-member-management .member-admin-filter-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:560px){#page-member-management .member-admin-quality-strip{grid-template-columns:repeat(2,minmax(0,1fr))}#page-member-management .member-admin-filter-grid{grid-template-columns:1fr}#page-member-management .member-admin-filter-actions{align-items:stretch;flex-direction:column}#page-member-management .member-admin-filter-actions .btn{width:100%}#page-member-management .member-admin-profile-panel{padding:18px}}
+@media(max-width:560px){#page-member-management .member-admin-quality-strip{grid-template-columns:repeat(2,minmax(0,1fr))}#page-member-management .member-admin-filter-grid{grid-template-columns:1fr}#page-member-management .member-admin-filter-actions{align-items:stretch;flex-direction:column}#page-member-management .member-admin-filter-actions .btn{width:100%}.member-admin-profile-panel{padding:18px}}
+
+.member-admin-health-pill.is-unknown{border-color:rgba(160,160,170,.22);background:rgba(120,120,130,.1);color:#c2c2ca}
+#page-member-management .member-admin-quality-strip{grid-template-columns:repeat(6,minmax(0,1fr))}
+@media(max-width:900px){#page-member-management .member-admin-quality-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){#page-member-management .member-admin-quality-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}
