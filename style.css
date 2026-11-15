@@ -7491,3 +7491,18 @@ body select:disabled {
 .portfolio-member-cover.has-custom-cover{background:#08080a}
 .portfolio-member-cover.has-custom-cover img{object-fit:contain;transform:none!important;background:#08080a}
 .portfolio-member-card:hover .portfolio-member-cover.has-custom-cover img{transform:none!important}
+
+
+/* Member cover cropper: full freeform workspace and portrait-safe card rendering */
+.portfolio-crop-dialog{border-color:rgba(225,45,65,.48);background:linear-gradient(145deg,#190d11,#090909 78%)}
+.portfolio-crop-heading h3{color:#fff}
+.portfolio-crop-heading p,.portfolio-crop-footer>span{color:#c5b8bb}
+.portfolio-crop-close{border-color:rgba(225,45,65,.4)}
+.portfolio-crop-workspace{height:min(62vh,640px);min-height:300px;background:#050505;border-color:rgba(225,45,65,.24);touch-action:pan-y}
+.portfolio-crop-zoom{color:#f0e8ea}
+.portfolio-crop-zoom input{accent-color:#e53950}
+.portfolio-crop-zoom output{color:#ff6678}
+.portfolio-member-cover.has-custom-cover{background:#080808}
+.portfolio-member-cover.has-custom-cover img{object-fit:contain;object-position:center center}
+.portfolio-member-cover.has-custom-cover:after{background:linear-gradient(180deg,transparent 70%,rgba(5,4,7,.52))}
+@media(max-width:600px){.portfolio-crop-workspace{height:54vh;min-height:260px}}
