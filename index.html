@@ -463,9 +463,11 @@
             </div>
             <button id="refresh-members" class="btn btn-outline" type="button">↻ รีเฟรช</button>
           </div>
+          <div id="member-directory-stats" class="member-directory-stats" aria-label="สรุปจำนวนสมาชิก"></div>
           <div id="members-class-summary" class="member-class-count-grid" aria-label="จำนวนสมาชิกแยกตามอาชีพ"></div>
-          <div class="member-toolbar">
-            <input id="member-search" type="search" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น Class หรือตำแหน่งกิลด์..." autocomplete="off">
+          <div class="member-toolbar member-directory-toolbar">
+            <input id="member-search" type="search" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น Discord Class หรือ UID..." autocomplete="off">
+            <select id="member-type-filter" aria-label="กรองประเภทสมาชิก"><option value="all">สมาชิกทั้งหมด</option><option value="account">ลงทะเบียนแล้ว</option><option value="manual">รายชื่อ Manual</option></select>
           </div>
           <div id="members-list" class="members-list">
             <p class="muted">กำลังโหลดรายชื่อสมาชิก...</p>
@@ -1254,6 +1256,20 @@
       </section>
       <!-- Global overlays: keep outside page/section containers that may be hidden. -->
       <input id="portfolio-member-cover-input" type="file" accept="image/*" hidden>
+      <div id="member-card-edit-modal" class="member-card-edit-modal hidden" role="dialog" aria-modal="true" aria-labelledby="member-card-edit-title">
+        <button type="button" class="member-card-edit-backdrop" data-member-card-edit-close aria-label="ปิดหน้าต่าง"></button>
+        <form id="member-card-edit-form" class="member-card-edit-dialog">
+          <input type="hidden" id="member-card-edit-user-id">
+          <div class="member-card-edit-heading"><div><span class="panel-kicker">4AM GUILD · MEMBER PROFILE</span><h3 id="member-card-edit-title">แก้ไขข้อมูลสมาชิก</h3><p>แก้ไขข้อมูลตัวละครของคุณได้จากหน้านี้โดยตรง</p></div><button type="button" class="member-card-edit-close" data-member-card-edit-close aria-label="ปิด">×</button></div>
+          <label>ชื่อตัวละคร<input name="character_name" type="text" maxlength="40" required></label>
+          <label>ชื่อเล่น<input name="nickname" type="text" maxlength="40" required></label>
+          <label>อายุ<input name="age" type="number" min="1" max="120" step="1" placeholder="ไม่ระบุก็ได้"></label>
+          <label>Class อาชีพ<span class="member-card-edit-class"><img id="member-card-edit-class-icon" alt=""><select name="game_class" required><option value="Ironclad">Ironclad</option><option value="Bloodstrom">Bloodstrom</option><option value="Celestune">Celestune</option><option value="Numina">Numina</option><option value="Sylph">Sylph</option><option value="Nightwaker">Nightwaker</option><option value="Dragonsvelte">Dragonsvelte</option><option value="Mystech">Mystech</option></select></span></label>
+          <label>UID ตัวละคร<input name="game_uid" type="text" inputmode="numeric" pattern="[0-9]{1,12}" maxlength="12" required></label>
+          <p id="member-card-edit-status" class="member-card-edit-status" aria-live="polite"></p>
+          <div class="member-card-edit-actions"><button type="button" class="btn btn-outline" data-member-card-edit-close>ยกเลิก</button><button type="submit" class="btn btn-primary">บันทึกข้อมูล</button></div>
+        </form>
+      </div>
           <section id="bond-profile-modal" class="bond-profile-modal hidden" role="dialog" aria-modal="true" aria-labelledby="bond-profile-title">
             <button type="button" class="bond-profile-backdrop" aria-label="ปิดหน้าต่าง" data-bond-close></button>
             <form id="bond-profile-form" class="bond-profile-dialog">
