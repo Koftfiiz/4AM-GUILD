@@ -2053,7 +2053,7 @@ function renderManualMemberManagement() {
     const matchesSearch = !searchQuery || fields.some(value => String(value || "").toLocaleLowerCase().includes(searchQuery));
     const matchesClass = manualMemberClassFilter === "all" || String(member.game_class || "").toLowerCase() === manualMemberClassFilter.toLowerCase();
     const matchesRecord = manualMemberRecordFilter === "all" || (manualMemberRecordFilter === "account" ? member._recordType === "account" : member._recordType === "manual");
-    const matchesActivity = manualMemberActivityFilter === "all" || (manualMemberActivityFilter === "active" ? member.active !== false : member.active === false);
+    const matchesActivity = manualMemberActivityFilter === "all" || (manualMemberActivityFilter === "pending_review" ? member.membership_status === "pending_review" : manualMemberActivityFilter === "active" ? member.active !== false : member.active === false);
     const matchesDiscord = manualMemberDiscordFilter === "all" || health.key === manualMemberDiscordFilter;
     const matchesPosition = manualMemberPositionFilter === "all" || String(member.guild_position || "") === manualMemberPositionFilter;
     const matchesIncomplete = !manualMemberIncompleteOnly || !member.game_uid || !member.nickname || !member.guild_position;
