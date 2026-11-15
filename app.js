@@ -5118,6 +5118,10 @@ async function createWarSignupEvent(form){
   const description=$("war-signup-description").value.trim(),editId=$("war-signup-edit-id").value;
   const openDate=parseDisplayDateTime(opens),closeDate=parseDisplayDateTime(closes),showError=t=>{message.textContent=t;message.className="message error";};
   if(!name||!date||!startTime||!opens||!closes){showError("กรุณากรอกข้อมูลที่จำเป็นให้ครบ");return;}
+  if(type==="official"&&!editId){
+    showError("วอร์จริงสร้างโดยระบบอัตโนมัติแล้ว ไม่ต้องสร้าง Event เอง");
+    return;
+  }
   if(type==="official"){
     const selectedDate=new Date(date+"T12:00:00");
     if(selectedDate.getDay()!==6){showError("วอร์จริงเลือกได้เฉพาะวันเสาร์ตามตารางกิลด์");return;}
