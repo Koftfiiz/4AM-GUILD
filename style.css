@@ -7652,3 +7652,27 @@ body.member-admin-drawer-open{overflow:hidden}
 #page-member-management .manual-member-quality-card:focus-visible{outline:2px solid var(--quality-accent,#ff7180);outline-offset:2px}
 @media(max-width:1100px){#page-member-management .manual-member-quality-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:560px){#page-member-management .manual-member-quality-strip{grid-template-columns:repeat(2,minmax(0,1fr))}#page-member-management .manual-member-quality-card{min-height:84px;padding:12px}}
+
+
+/* Phase 3 — membership onboarding and approval */
+.membership-status-card{text-align:center}
+.membership-status-icon{width:64px;height:64px;margin:0 auto 16px;border-radius:20px;display:grid;place-items:center;font-size:32px;font-weight:800;background:#3a2e16;color:#fbbf24}
+.membership-status-icon.is-blocked{background:#3a2025;color:#fb7185}
+.membership-review-steps{display:grid;gap:9px;text-align:left;margin:22px 0;padding:16px;border:1px solid #303038;border-radius:14px;background:#17171c}
+.membership-review-steps span{font-size:15px;color:#a1a1aa;padding:8px 10px;border-radius:8px}
+.membership-review-steps .is-done{color:#34d399;background:rgba(52,211,153,.08)}
+.membership-review-steps .is-current{color:#fbbf24;background:rgba(251,191,36,.08)}
+.member-pending-review-panel{margin:0 0 18px;padding:18px;border:1px solid #49313a;border-radius:16px;background:linear-gradient(145deg,#21171c,#17171c)}
+.member-pending-review-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.member-pending-review-heading h3{margin:4px 0 6px;color:#f3f4f6;font-size:18px}
+.member-pending-review-heading p{margin:0;color:#b8b8c0;font-size:15px;line-height:1.5}
+.member-pending-review-heading>strong{white-space:nowrap;color:#fbbf24;background:rgba(251,191,36,.1);padding:7px 11px;border-radius:999px;font-size:15px}
+.member-pending-review-eyebrow{color:#fb7185;font-size:15px;font-weight:800;letter-spacing:.08em}
+.member-pending-review-list{display:grid;gap:10px}
+.member-pending-review-item{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:13px 14px;border:1px solid #34343c;border-radius:12px;background:#111115}
+.member-pending-review-main{display:grid;gap:4px;min-width:0}
+.member-pending-review-main strong{color:#f3f4f6;font-size:16px}
+.member-pending-review-main span{color:#d1d1d6;font-size:15px}
+.member-pending-review-main small{color:#a1a1aa;font-size:15px;overflow-wrap:anywhere}
+.member-pending-review-actions{display:flex;gap:8px;flex-shrink:0}
+@media(max-width:680px){.member-pending-review-heading{display:grid}.member-pending-review-item{align-items:stretch;flex-direction:column}.member-pending-review-actions{display:grid;grid-template-columns:1fr 1fr}.member-pending-review-actions button{width:100%}}
