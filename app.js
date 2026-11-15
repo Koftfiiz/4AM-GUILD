@@ -2363,7 +2363,7 @@ async function editLinkedGuildMember(userId) {
   const storedUsername = String(discordRecord?.discord_username || "");
   const username = botDiscordMember?.username ||
     linkedManual?.discord_username ||
-    (storedUsername && !/^discord_\\d+$/i.test(storedUsername) ? storedUsername : "") ||
+    (storedUsername && !/^discord_[0-9]+$/i.test(storedUsername) ? storedUsername : "") ||
     account.discord_name || storedUsername;
   const profile = {
     id: discordUserId,
