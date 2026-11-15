@@ -7480,3 +7480,14 @@ body select:disabled {
   }
   .war-assignment-modal-panel-reference .war-member-skill-icon-choice img{width:46px;height:46px}
 }
+
+
+/* Member cover editor: unrestricted crop ratio and saved crop display */
+.portfolio-crop-dialog .portfolio-crop-heading p{color:#d3bfc3}
+.portfolio-crop-dialog .portfolio-crop-zoom input{accent-color:#e13b50}
+.portfolio-crop-dialog .portfolio-crop-zoom output{color:#ff8b99}
+.portfolio-crop-dialog .portfolio-crop-tool-buttons .btn{border-color:rgba(224,59,80,.35);color:#f1dfe2;background:rgba(160,28,47,.12)}
+.portfolio-crop-dialog .portfolio-crop-footer .btn-primary{background:#d92d45;border-color:#d92d45;color:#fff}
+.portfolio-member-cover.has-custom-cover{background:#08080a}
+.portfolio-member-cover.has-custom-cover img{object-fit:contain;transform:none!important;background:#08080a}
+.portfolio-member-card:hover .portfolio-member-cover.has-custom-cover img{transform:none!important}
