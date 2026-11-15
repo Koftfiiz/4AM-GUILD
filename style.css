@@ -7506,3 +7506,36 @@ body select:disabled {
 .portfolio-member-cover.has-custom-cover img{object-fit:contain;object-position:center center}
 .portfolio-member-cover.has-custom-cover:after{background:linear-gradient(180deg,transparent 70%,rgba(5,4,7,.52))}
 @media(max-width:600px){.portfolio-crop-workspace{height:54vh;min-height:260px}}
+
+
+/* Guild War · Party Management skill icons: clean, larger, tighter black/red treatment */
+#page-war .war-member-skills{
+  gap:3px!important;
+  max-width:190px!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+}
+#page-war .war-member-skill-icon{
+  width:36px!important;
+  height:36px!important;
+  flex:0 0 36px!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  object-fit:contain!important;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));
+}
+#page-war .war-member-skill-choice-list{gap:5px!important}
+#page-war .war-member-skill-choice{gap:5px!important}
+#page-war .war-member-skill-choice img{
+  width:24px!important;
+  height:24px!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  object-fit:contain!important;
+}
