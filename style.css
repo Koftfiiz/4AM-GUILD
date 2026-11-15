@@ -7263,3 +7263,25 @@ body select:disabled {
   font-size: 25px;
   line-height: 1;
 }
+
+
+/* Guild War automatic workflow indicators */
+.war-signup-auto-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 6px 12px;
+  border: 1px solid rgba(239, 68, 68, .35);
+  border-radius: 8px;
+  color: #f87171;
+  background: rgba(239, 68, 68, .08);
+  font-size: 15px;
+  font-weight: 700;
+}
+.war-leave-deadline-note {
+  margin: 8px 0 0;
+  color: var(--muted, #a1a1aa);
+  font-size: 15px;
+  line-height: 1.55;
+}
