@@ -3732,7 +3732,7 @@ function addWarRaidExportButton(raidName){
  button.className="btn btn-outline btn-sm war-raid-image-button";
  button.textContent="บันทึกเป็นรูปภาพ";
  button.setAttribute("aria-label",`บันทึก Raid ${raidName} เป็นรูปภาพ`);
- button.addEventListener("click",()=>exportWarImage(raidName));
+ button.addEventListener("click",()=>exportWarImage(raidName,currentWarAssignmentEventId));
  header.appendChild(button);
 }
 function getAssignedWarMemberIds(exceptAssignmentId = null) {
@@ -4280,9 +4280,10 @@ function deliverWarPng(blob, filename, downloadWindow) {
   }
 }
 
-async function exportWarImage(raidFilter = null){
-  const event=allWarEvents.find(item=>item.id===selectedWarEventId);
-  if(!event||!event.is_draft_confirmed)return;
+async function exportWarImage(raidFilter = null,eventId = selectedWarEventId){
+  const event=allWarEvents.find(item=>item.id===eventId);
+  if(!event){alert("ไม่พบกิจกรรมวอร์ที่ต้องการบันทึกภาพ กรุณาปิดหน้าต่างจัดตี้แล้วเปิดใหม่อีกครั้ง");return;}
+  if(!event.is_draft_confirmed){alert("กรุณายืนยันการสร้างตี้วอร์ก่อน จึงจะสามารถบันทึกเป็นรูปภาพได้");return;}
   const downloadWindow=window.open("about:blank","_blank");
   const config=getWarEventConfig(event),width=1600,allRaidNames=["A","B","C","D"].slice(0,config.raidCount);
   const raidNames=raidFilter?allRaidNames.filter(raid=>raid===raidFilter):allRaidNames;
