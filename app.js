@@ -5261,12 +5261,14 @@ function registerWarCreationEvents(){
  document.body.addEventListener("click",event=>{if(event.target.closest("[data-war-skill-edit-close]"))$("war-skill-edit-modal")?.remove();});
 
  $("war-raid-boards")?.addEventListener("click",e=>{const add=e.target.closest("[data-war-add-slot]"),manage=e.target.closest("[data-war-manage-slot]");if(add)openWarAssignmentModal(add.dataset.partyId,Number(add.dataset.position));else if(manage)openWarAssignmentModal(manage.dataset.partyId,Number(manage.dataset.position),manage.dataset.assignmentId);});
- const warDragState={};
- const getWarDragPayload=e=>{try{const transfer=e.dataTransfer;const raw=transfer?.getData("application/x-4am-war-member")||transfer?.getData("text/plain")||"";const payload=JSON.parse(raw);return payload&&typeof payload==="object"?payload:{};}catch{return {};}};
- const startWarDrag=(e,source)=>{if(!isManagement()||isRolePreviewActive()||!e.dataTransfer)return;e.dataTransfer.effectAllowed="move";const payload=JSON.stringify(source);try{e.dataTransfer.setData("application/x-4am-war-member",payload);}catch(error){console.debug("Custom drag type unavailable; using text/plain fallback.",error);}e.dataTransfer.setData("text/plain",payload);e.target.closest("[draggable=\"true\"]")?.classList.add("is-war-dragging");};
+ // Keep a local payload as a reliable fallback: browsers (notably Firefox) hide
+ // DataTransfer.getData() during dragover, so drop zones must not depend on it.
+ let activeWarDragPayload=null;
+ const getWarDragPayload=e=>{try{const transfer=e?.dataTransfer;const raw=transfer?.getData("application/x-4am-war-member")||transfer?.getData("text/plain")||"";if(raw){const payload=JSON.parse(raw);if(payload&&typeof payload==="object")return payload;}}catch{}return activeWarDragPayload||{};};
+ const startWarDrag=(e,source)=>{if(!isManagement()||isRolePreviewActive()||!e.dataTransfer)return;activeWarDragPayload=source;e.dataTransfer.effectAllowed="move";const payload=JSON.stringify(source);try{e.dataTransfer.setData("application/x-4am-war-member",payload);}catch(error){console.debug("Custom drag type unavailable; using text/plain fallback.",error);}try{e.dataTransfer.setData("text/plain",payload);}catch(error){console.debug("Plain-text drag payload unavailable; using in-memory fallback.",error);}e.target.closest("[draggable=\"true\"]")?.classList.add("is-war-dragging");};
  $("war-assignment-toolbar")?.addEventListener("dragstart",e=>{const pill=e.target.closest("[data-war-pool-member]");if(!pill)return;startWarDrag(e,{type:"pool",memberId:pill.dataset.warPoolMember});});
  $("war-raid-boards")?.addEventListener("dragstart",e=>{const slot=e.target.closest("[data-war-manage-slot]");if(!slot||!slot.dataset.assignmentId)return;startWarDrag(e,{type:"assigned",assignmentId:slot.dataset.assignmentId,memberId:currentWarPartyAssignments.find(x=>x.id===slot.dataset.assignmentId)?.member_id});});
- document.addEventListener("dragend",e=>{document.querySelectorAll(".is-war-dragging,.is-war-drop-active").forEach(el=>el.classList.remove("is-war-dragging","is-war-drop-active"));});
+ document.addEventListener("dragend",e=>{activeWarDragPayload=null;document.querySelectorAll(".is-war-dragging,.is-war-drop-active").forEach(el=>el.classList.remove("is-war-dragging","is-war-drop-active"));});
  $("war-raid-boards")?.addEventListener("dragover",e=>{const target=e.target.closest("[data-war-drop-slot]");if(!target||!isManagement()||isRolePreviewActive())return;e.preventDefault();e.dataTransfer.dropEffect="move";target.classList.add("is-war-drop-active");});
  $("war-raid-boards")?.addEventListener("dragleave",e=>{const target=e.target.closest("[data-war-drop-slot]");if(target&&!target.contains(e.relatedTarget))target.classList.remove("is-war-drop-active");});
  $("war-raid-boards")?.addEventListener("drop",async e=>{
@@ -5297,9 +5299,9 @@ function registerWarCreationEvents(){
  warPoolDropZone?.addEventListener("dragover",e=>{
   const zone=e.target.closest("#war-assignment-results");
   if(!zone||!isManagement()||isRolePreviewActive())return;
-  const payload=getWarDragPayload(e);
+  const payload=activeWarDragPayload||getWarDragPayload(e);
   if(payload.type!=="assigned")return;
-  e.preventDefault();e.dataTransfer.dropEffect="move";zone.classList.add("is-war-drop-active");
+  e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect="move";zone.classList.add("is-war-drop-active");
  });
  warPoolDropZone?.addEventListener("dragleave",e=>{
   const zone=e.target.closest("#war-assignment-results");
