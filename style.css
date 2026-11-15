@@ -7711,3 +7711,31 @@ body.member-admin-drawer-open{overflow:hidden}
 body.member-card-edit-open{overflow-x:hidden;overflow-y:auto}
 .manual-member-discord-lock-note{display:block;margin-top:8px;color:#b7aeb1;font-size:15px;line-height:1.5}
 .manual-member-discord-lock-note.hidden{display:none!important}
+
+
+/* Member management: minimal minus control, no surrounding frame */
+.manual-member-actions .member-row-remove {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  min-width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #ff5968;
+  font-size: 27px;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+  transition: color .18s ease, transform .18s ease;
+}
+.manual-member-actions .member-row-remove:hover {
+  color: #ff8993;
+  transform: scale(1.16);
+}
+.manual-member-actions .member-row-remove:focus-visible {
+  outline: 2px solid #ff5968;
+  outline-offset: 2px;
+}
