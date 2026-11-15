@@ -203,33 +203,7 @@
           </div>
         </div>
 
-        <div class="nav-group">
-          <button class="nav-item nav-parent" type="button" data-toggle-submenu="war-submenu" aria-expanded="true">
-            <svg class="icon"><use href="#i-swords"/></svg>
-            <span>Guild War</span>
-            <span class="nav-chevron" aria-hidden="true">⌄</span>
-          </button>
-          <div class="nav-submenu is-open" id="war-submenu">
-            <button class="nav-subitem management-only" data-page="war" data-management-only>
-              <span class="nav-subitem-dot"></span>
-              <span>จัดตี้วอร์</span>
-            </button>
-            <button class="nav-subitem" data-page="war-attendance">
-              <span class="nav-subitem-dot"></span>
-              <span>ประกาศรายชื่อวอร์</span>
-            </button>
-            <button class="nav-subitem" data-page="war-signup"><span class="nav-subitem-dot"></span><span>ลงชื่อวอร์</span></button>
-            <button class="nav-subitem" data-page="war-leave"><span class="nav-subitem-dot"></span><span>แจ้งลาวอร์</span></button>
-            <button class="nav-subitem management-only" data-page="war-stats" data-management-only>
-              <span class="nav-subitem-dot"></span>
-              <span>สถิติกิลด์วอร์</span>
-            </button>
-            <button class="nav-subitem management-only" data-page="war-attendance-stats" data-management-only>
-              <span class="nav-subitem-dot"></span>
-              <span>สถิติการเข้าร่วมวอร์</span>
-            </button>
-          </div>
-        </div>
+        <button class="nav-item" data-page="war-center"><svg class="icon"><use href="#i-swords"/></svg><span>Guild War</span></button>
 
         <button class="nav-item" data-page="guides">
           <svg class="icon"><use href="#i-book-open"/></svg>
@@ -607,7 +581,18 @@
       </section>
 
       <!-- ============ GUILD WAR ============ -->
-      <section id="page-war" class="page page-padded hidden">
+      
+
+      <!-- ============ WAR ATTENDANCE ============ -->
+      
+
+
+
+
+
+
+      <!-- ============ PORTFOLIO ============ -->
+      <section id="page-war-center" class="page page-padded hidden"><div class="page-intro war-center-page-intro"><span class="section-kicker">WAR OPERATIONS CENTER</span><h1>Guild War</h1><p>ศูนย์กลางการดำเนินงาน Guild War ของ 4AM</p></div><nav class="war-center-tabs" aria-label="เมนูศูนย์กลางกิลด์วอร์"><button type="button" data-war-center-tab="overview" class="is-active">ภาพรวม</button><button type="button" data-war-center-tab="signup">ลงชื่อวอร์</button><button type="button" data-war-center-tab="roster">ประกาศรายชื่อ</button><button type="button" data-war-center-tab="leave">แจ้งลาวอร์</button><button type="button" data-war-center-tab="party" class="management-only" data-management-only>จัดตี้วอร์</button><button type="button" data-war-center-tab="match-records" class="management-only" data-management-only>ผลการแข่งขัน</button><button type="button" data-war-center-tab="attendance-report" class="management-only" data-management-only>รายงานหลังวอร์</button></nav><section id="war-center-overview" class="war-center-panel"><div class="war-center-hero"><div><span class="panel-kicker">4AM GUILD · WAR OPERATIONS</span><h2>ศูนย์กลางกิลด์วอร์</h2><p>ติดตามการลงชื่อ รายชื่อกำลังพล การจัดปาร์ตี้ และรายงานวอร์จากศูนย์กลางเดียว</p></div><div class="war-center-live"><span class="war-center-live-dot"></span> เชื่อมต่อข้อมูลกิลด์</div></div><div class="war-center-overview-grid"><button type="button" class="war-center-action-card" data-war-center-tab="signup"><span class="war-center-card-index">01</span><strong>ลงชื่อเข้าร่วมวอร์</strong><span>ตรวจสอบกิจกรรมและสถานะการลงทะเบียนของคุณ</span><b>เปิดหน้าลงชื่อ <span>↗</span></b></button><button type="button" class="war-center-action-card" data-war-center-tab="roster"><span class="war-center-card-index">02</span><strong>ประกาศรายชื่อวอร์</strong><span>ตรวจสอบรายชื่อ Raid และ Party ที่ประกาศแล้ว</span><b>ดูรายชื่อวอร์ <span>↗</span></b></button><button type="button" class="war-center-action-card" data-war-center-tab="leave"><span class="war-center-card-index">03</span><strong>แจ้งลาวอร์</strong><span>ส่งคำแจ้งลาและติดตามผลการพิจารณา</span><b>จัดการคำแจ้งลา <span>↗</span></b></button></div><div class="war-center-management-block management-only" data-management-only><div class="war-center-section-heading"><div><span class="panel-kicker">MANAGEMENT WORKSPACE</span><h3>เครื่องมือฝ่ายจัดการ</h3><p>เข้าถึงงานเตรียมวอร์ ระหว่างวอร์ และสรุปผลหลังวอร์</p></div></div><div class="war-center-management-grid"><button type="button" data-war-center-tab="party"><strong>จัดตี้และกำลังพล</strong><span>จัดสมาชิกลง Raid A/B และ Party A1–B5</span><b>เปิดการจัดตี้ ↗</b></button><button type="button" data-war-center-tab="match-records"><strong>ผลการแข่งขัน</strong><span>บันทึกผลวอร์และประวัติการแข่งขัน</span><b>จัดการผลวอร์ ↗</b></button><button type="button" data-war-center-tab="attendance-report"><strong>รายงานหลังวอร์</strong><span>บันทึกตัวจริง ตัวสำรอง และการเข้าร่วมแยก 2 รอบ</span><b>เปิดรายงาน ↗</b></button></div></div><div class="war-center-workflow-note"><span class="war-center-note-mark">!</span><div><strong>ข้อมูลวอร์ใช้ชุดข้อมูลเดียวกัน</strong><p>การจัดตี้ การประกาศรายชื่อ การลงชื่อ และการรายงานผลยังใช้ Workflow เดิมร่วมกัน เพื่อรักษาประวัติและความถูกต้องของข้อมูล</p></div></div></section><section id="page-war" class="war-center-panel hidden">
         <div class="page-intro"><span class="section-kicker">BATTLE MANAGEMENT</span><h1>จัดตี้วอร์</h1><p>สร้างตี้วอร์ จัดสมาชิกเข้าปาร์ตี้ และเผยแพร่รายชื่อตี้วอร์ให้สมาชิกกิลด์</p></div>
         <div class="war-create-toolbar"><div><span class="panel-kicker">WAR MANAGEMENT</span><h2>รายการ Guild War</h2><p>เลือกวอร์ที่มีอยู่เพื่อจัดการ หรือสร้างตี้วอร์ใหม่</p></div><div class="war-toolbar-actions"><button id="war-skill-library-toggle" class="btn btn-outline" type="button">คลัง Skill</button></div></div>
         <button id="war-create-open" class="guild-add-entry-card" type="button" aria-expanded="false"><span class="guild-add-entry-icon" aria-hidden="true">+</span><span class="guild-add-entry-copy"><strong>CREATE WAR EVENT</strong><small>สร้างกิจกรรม Guild War ใหม่ เพื่อจัด Raid และแบ่งสมาชิกเข้าปาร์ตี้</small></span><span class="guild-add-entry-arrow" aria-hidden="true">↗</span></button>
@@ -632,11 +617,8 @@
           <div id="war-summary" class="war-summary"></div><div class="war-roster-toolbar"><p id="war-edit-notice" class="war-edit-notice">เลือกสมาชิกและจัดลง Party ผ่านหน้าต่างจัดการ · กรอบสมาชิกใช้สีประจำ Class</p></div><div id="war-assignment-toolbar" class="war-assignment-toolbar"></div><div id="war-raid-boards"></div>
           <div class="war-final-actions"><button id="war-confirm-draft" class="btn btn-primary" type="button">ยืนยันการสร้างตี้วอร์</button><button id="war-publish-event" class="btn btn-primary hidden" type="button">Publish</button><button id="war-export-image" class="btn btn-outline hidden" type="button">บันทึกเป็นไฟล์รูปภาพ</button><button id="war-sync-discord" class="btn btn-outline hidden" type="button" disabled title="Discord Bot integration ยังไม่เปิดใช้งาน">Sync with Discord Bot</button></div></section>
       </section>
-
-      <!-- ============ WAR ATTENDANCE ============ -->
-      <section id="page-war-attendance" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">GUILD WAR ROSTER</span><h1>ประกาศรายชื่อวอร์</h1><p>ตรวจสอบรายชื่อและปาร์ตี้ของ Guild War</p></div><section class="panel"><div class="panel-heading"><div><span class="panel-kicker">PUBLISHED WAR ROSTER</span><h3>รายชื่อสมาชิกในแต่ละ Raid</h3></div></div><div id="war-attendance-content"><div class="empty-state"><span>◷</span><h3>กำลังโหลดรายการวอร์</h3><p>รายชื่อปาร์ตี้วอร์จะแสดงที่นี่เมื่อจัดตี้กิลด์วอร์เสร็จแล้ว</p></div></div></section></section>
-
-<section id="page-war-signup" class="page page-padded hidden">
+<section id="page-war-attendance" class="war-center-panel hidden"><div class="page-intro"><span class="section-kicker">GUILD WAR ROSTER</span><h1>ประกาศรายชื่อวอร์</h1><p>ตรวจสอบรายชื่อและปาร์ตี้ของ Guild War</p></div><section class="panel"><div class="panel-heading"><div><span class="panel-kicker">PUBLISHED WAR ROSTER</span><h3>รายชื่อสมาชิกในแต่ละ Raid</h3></div></div><div id="war-attendance-content"><div class="empty-state"><span>◷</span><h3>กำลังโหลดรายการวอร์</h3><p>รายชื่อปาร์ตี้วอร์จะแสดงที่นี่เมื่อจัดตี้กิลด์วอร์เสร็จแล้ว</p></div></div></section></section>
+<section id="page-war-signup" class="war-center-panel hidden">
   <div class="page-intro"><span class="section-kicker">WAR REGISTRATION</span><h1>ลงชื่อวอร์</h1><p>ลงทะเบียนเข้าร่วมกิจกรรม Guild War ที่กำลังจะมาถึง</p></div>
   <section id="war-signup-management" class="panel war-signup-management hidden">
     <div class="panel-heading"><div><span class="panel-kicker">MANAGEMENT CONTROL</span><h3>จัดการ Event ลงชื่อวอร์</h3></div></div>
@@ -669,8 +651,7 @@
   </section>
   <section class="panel"><div class="panel-heading"><div><h3>กิจกรรมวอร์</h3><small class="muted">Event ที่กำลังจะเปิดรับสมัคร กำลังเปิดรับสมัคร และปิดรับสมัครแล้ว</small></div><button id="war-signup-refresh" class="btn btn-outline btn-sm" type="button">รีเฟรช</button></div><div id="war-signup-content"><p class="muted">กำลังโหลด...</p></div></section>
 </section>
-
-<section id="page-war-leave" class="page page-padded hidden">
+<section id="page-war-leave" class="war-center-panel hidden">
   <div class="page-intro"><span class="section-kicker">WAR LEAVE NOTICE</span><h1>แจ้งลาวอร์</h1><p>แจ้งไม่สามารถเข้าร่วม Guild War ในรอบที่เลือก เพื่อให้ฝ่ายจัดการสรุปรายชื่อกำลังพลได้ถูกต้อง</p></div>
   <section class="panel war-leave-submit-panel">
     <div class="panel-heading"><div><span class="panel-kicker">MEMBER LEAVE FORM</span><h3>ส่งคำแจ้งลาวอร์</h3></div></div>
@@ -691,11 +672,11 @@
     <div id="war-leave-management-list"><p class="muted">กำลังโหลด...</p></div>
   </section>
 </section>
-<section id="page-war-stats" class="page page-padded hidden"><div class="page-intro"><span class="section-kicker">WAR PERFORMANCE</span><h1>สถิติกิลด์วอร์</h1><p>บันทึกผลการแข่งขันย้อนหลัง พร้อมสรุปสถิติแพ้ชนะรายกิลด์และภาพรวมทั้งหมด</p></div>
+<section id="page-war-stats" class="war-center-panel hidden"><div class="page-intro"><span class="section-kicker">WAR PERFORMANCE</span><h1>สถิติกิลด์วอร์</h1><p>บันทึกผลการแข่งขันย้อนหลัง พร้อมสรุปสถิติแพ้ชนะรายกิลด์และภาพรวมทั้งหมด</p></div>
 <section class="panel"><div class="panel-heading"><h3>บันทึกผลวอร์</h3></div><form id="war-record-form" class="war-record-form"><div class="war-record-form-grid"><div class="form-group"><label for="war-record-opponent">ชื่อกิลด์คู่แข่ง</label><input id="war-record-opponent" maxlength="80" required></div><div class="form-group"><label for="war-record-date">วันที่วอร์</label><input id="war-record-date" type="date" lang="en-GB" required></div><div class="form-group"><label for="war-record-result">ผลการแข่งขัน</label><select id="war-record-result" required><option value="">เลือกผลวอร์</option><option value="win">4AM ชนะ</option><option value="loss">4AM แพ้</option></select></div></div><div class="form-group"><label for="war-record-images">รูปภาพผลวอร์ในเกม (เลือกได้หลายรูป)</label><input id="war-record-images" type="file" accept="image/*" multiple required><small>สูงสุด 10 รูป ขนาดไม่เกิน 10 MB ต่อรูป</small></div><input type="hidden" id="war-record-edit-id" value=""><div id="war-record-existing-images" class="war-record-existing-images"></div><div id="war-record-message" class="message hidden"></div><div class="war-record-submit-row"><span>กดยืนยันเพื่อบันทึกผลวอร์เป็น Record</span><div class="war-record-form-buttons"><button id="war-record-submit" class="btn btn-primary" type="submit">ยืนยันและบันทึกผลวอร์</button><button id="war-record-cancel-edit" class="btn btn-outline hidden" type="button">ยกเลิกการแก้ไข</button></div></div></form></section>
 <section class="war-record-overview"><div class="war-record-stat-card"><span>แข่งทั้งหมด</span><strong id="war-record-total">0</strong></div><div class="war-record-stat-card is-win"><span>4AM ชนะ</span><strong id="war-record-wins">0</strong><small id="war-record-win-rate">0% Win Rate</small></div><div class="war-record-stat-card is-loss"><span>4AM แพ้</span><strong id="war-record-losses">0</strong><small id="war-record-loss-rate">0% Loss Rate</small></div><div class="war-record-stat-card"><span>กิลด์คู่แข่ง</span><strong id="war-record-opponent-count">0</strong><small>Unique Opponents</small></div></section>
 <section class="panel"><div class="panel-heading"><h3>สถิติแยกตามกิลด์คู่แข่ง</h3></div><div id="war-record-opponent-stats"></div></section><section class="panel"><div class="panel-heading"><h3>ประวัติผลวอร์ทั้งหมด</h3></div><div id="war-record-history"></div></section></section>
-<section id="page-war-attendance-stats" class="page page-padded hidden">
+<section id="page-war-attendance-stats" class="war-center-panel hidden">
   <div class="page-intro"><span class="section-kicker">GUILD WAR ATTENDANCE</span><h1>สถิติการเข้าร่วมวอร์</h1><p>ศูนย์จัดการผลหลังวอร์ · บันทึก Planned Roster และ Actual Attendance แยก Round 01 / Round 02</p></div>
   <section class="panel">
     <div class="panel-heading"><div><span class="panel-kicker">POST-WAR MANAGEMENT CENTER</span><h3>รายงานผลการเข้าร่วมวอร์</h3></div></div>
@@ -704,8 +685,7 @@
     <div class="war-attendance-save-row"><button id="war-attendance-stats-save" class="btn btn-outline" type="button" disabled>บันทึกแบบร่าง</button><button id="war-attendance-stats-finalize" class="btn btn-primary" type="button" disabled>ยืนยันปิดรายงานทั้ง 2 รอบ</button></div>
   </section>
   <section class="panel"><div class="panel-heading"><div><span class="panel-kicker">FINALIZED REPORTS ONLY</span><h3>สถิติการเข้าร่วมของสมาชิก</h3></div></div><p class="muted">คำนวณจากรายงานที่ปิดแล้วเท่านั้น เพื่อไม่ให้ข้อมูลแบบร่างปะปนกับสถิติจริง</p><div id="war-attendance-member-summary"></div></section>
-</section>
-      <!-- ============ PORTFOLIO ============ -->
+</section></section>
       <section id="page-portfolio" class="page page-padded hidden">
         <div class="page-intro">
           <span class="section-kicker">CHARACTER PORTFOLIO</span>
