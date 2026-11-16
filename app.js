@@ -1299,7 +1299,7 @@ function startDashboardGalleryAutoplay(){
       const next=(dashboardGalleryActiveIndex+1)%dashboardGalleryImages.length;
       dashboardGalleryActiveIndex=next;
       updateDashboardGalleryActiveState();
-      root.querySelector(`[data-gallery-slide="${next}"]`)?.scrollIntoView({behavior:"smooth",block:"nearest",inline:"center"});
+      centerDashboardGallerySlide(next,"smooth");
     }
   },4800);
 }
@@ -8478,7 +8478,7 @@ function registerAppEventListeners() {
     if(!dashboardGalleryImages.length)return;
     dashboardGalleryActiveIndex=(index+dashboardGalleryImages.length)%dashboardGalleryImages.length;
     updateDashboardGalleryActiveState();
-    galleryTrack?.querySelector(`[data-gallery-slide="${dashboardGalleryActiveIndex}"]`)?.scrollIntoView({behavior,block:"nearest",inline:"center"});
+    centerDashboardGallerySlide(dashboardGalleryActiveIndex,behavior);
     startDashboardGalleryAutoplay();
   };
   galleryRoot?.addEventListener("mouseenter",pauseDashboardGalleryAutoplay);
@@ -8496,21 +8496,42 @@ function registerAppEventListeners() {
     });
   },{passive:true});
   galleryTrack?.addEventListener("pointerdown",event=>{
-    if(event.pointerType!=="mouse"||event.button!==0||event.target.closest(".gallery-slide-actions,.gallery-nav"))return;
-    dashboardGalleryPointerStart={x:event.clientX,scrollLeft:galleryTrack.scrollLeft};
-    dashboardGalleryDragMoved=false;galleryTrack.classList.add("is-dragging");
-    galleryTrack.setPointerCapture?.(event.pointerId);pauseDashboardGalleryAutoplay();
+    if(event.pointerType!=="mouse"||event.button!==0)return;
+    const target=event.target instanceof Element?event.target:null;
+    if(!target||target.closest(".gallery-slide-actions,.gallery-nav"))return;
+    // Capture on the original image/button, never on the scrolling track.
+    // This preserves the correct click target so a simple click can open Lightbox.
+    dashboardGalleryPointerStart={
+      x:event.clientX,
+      scrollLeft:galleryTrack.scrollLeft,
+      pointerId:event.pointerId
+    };
+    dashboardGalleryDragMoved=false;
+    galleryTrack.classList.add("is-dragging");
+    if(typeof target.setPointerCapture==="function"){
+      try{target.setPointerCapture(event.pointerId);}catch(error){console.debug("Gallery pointer capture unavailable:",error);}
+    }
+    pauseDashboardGalleryAutoplay();
   });
   galleryTrack?.addEventListener("pointermove",event=>{
-    if(!dashboardGalleryPointerStart)return;
+    if(!dashboardGalleryPointerStart||event.pointerId!==dashboardGalleryPointerStart.pointerId)return;
     const delta=event.clientX-dashboardGalleryPointerStart.x;
     if(Math.abs(delta)>5)dashboardGalleryDragMoved=true;
-    if(dashboardGalleryDragMoved){galleryTrack.scrollLeft=dashboardGalleryPointerStart.scrollLeft-delta;event.preventDefault();}
+    if(dashboardGalleryDragMoved){
+      galleryTrack.scrollLeft=dashboardGalleryPointerStart.scrollLeft-delta;
+      event.preventDefault();
+    }
   });
-  const finishGalleryPointer=()=>{
+  const finishGalleryPointer=event=>{
     if(!dashboardGalleryPointerStart)return;
-    dashboardGalleryPointerStart=null;galleryTrack?.classList.remove("is-dragging");
-    if(dashboardGalleryDragMoved){dashboardGallerySuppressClick=true;setTimeout(()=>{dashboardGallerySuppressClick=false;},0);}
+    if(event?.pointerId!=null&&event.pointerId!==dashboardGalleryPointerStart.pointerId)return;
+    const wasDragged=dashboardGalleryDragMoved;
+    dashboardGalleryPointerStart=null;
+    galleryTrack?.classList.remove("is-dragging");
+    if(wasDragged){
+      dashboardGallerySuppressClick=true;
+      requestAnimationFrame(()=>{dashboardGallerySuppressClick=false;});
+    }
     startDashboardGalleryAutoplay();
   };
   galleryTrack?.addEventListener("pointerup",finishGalleryPointer);
