@@ -219,7 +219,7 @@
     const visibleRounds = rounds.filter(round => showArchivedRounds ? !!round.archived_at : !round.archived_at);
     const stats = selected ? roundStats(selected.id) : null;
     const ownRow = stats?.detail.find(row => row.member.user_id === currentUser?.id);
-    const editable = !!selected && (isRoundEditable(selected) ||
+    const editable = !!selected && !selected.archived_at && (isRoundEditable(selected) ||
       editPermissions.some(permission => permission.round_id === selected.id && new Date(permission.expires_at).getTime() > Date.now()));
     const pendingRequest = selected ? requests.find(request =>
       request.round_id === selected.id && request.member_id === currentUser?.id && request.status === "pending"
