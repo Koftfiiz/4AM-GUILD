@@ -4131,7 +4131,7 @@ async function handlePortfolioCreate(event) {
           image_url: item.path,
           cover_image_url: coverPath,
           crop_settings: item.cropBlob ? (item.cropSettings || null) : (item.cropSettings || null),
-          image_type: "other",
+          image_type: item.imageType || "other",
           section_key: item.sectionKey || "stats",
           caption: item.caption || "",
           sort_order: index
@@ -4223,6 +4223,7 @@ async function startPortfolioEdit(portfolioId) {
     preview: await getPortfolioImageUrl(image.cover_image_url || image.image_url),
     existing: true,
     sectionKey: image.section_key || "stats",
+    imageType: image.image_type || "other",
     caption: image.caption || "",
     imageId: image.id,
     path: image.image_url,
