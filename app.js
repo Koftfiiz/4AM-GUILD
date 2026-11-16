@@ -1287,6 +1287,22 @@ let dashboardGalleryScrollFrame = null;
 let dashboardGalleryPointerStart = null;
 let dashboardGalleryDragMoved = false;
 let dashboardGallerySuppressClick = false;
+function pauseDashboardGalleryAutoplay(){
+  if(dashboardGalleryAutoplayTimer){clearInterval(dashboardGalleryAutoplayTimer);dashboardGalleryAutoplayTimer=null;}
+}
+function startDashboardGalleryAutoplay(){
+  pauseDashboardGalleryAutoplay();
+  const root=$("dashboard-gallery");
+  if(!root||dashboardGalleryImages.length<2||document.hidden||root.matches(":hover"))return;
+  dashboardGalleryAutoplayTimer=setInterval(()=>{
+    if(root.isConnected&&!root.matches(":hover")&&!document.hidden){
+      const next=(dashboardGalleryActiveIndex+1)%dashboardGalleryImages.length;
+      dashboardGalleryActiveIndex=next;
+      updateDashboardGalleryActiveState();
+      root.querySelector(`[data-gallery-slide="${next}"]`)?.scrollIntoView({behavior:"smooth",block:"nearest",inline:"center"});
+    }
+  },4800);
+}
 
 function renderDashboardAnnouncementCarousel() {
   const container = $("dashboard-announcement-content");
@@ -8401,16 +8417,6 @@ function registerAppEventListeners() {
     galleryTrack?.querySelector(`[data-gallery-slide="${dashboardGalleryActiveIndex}"]`)?.scrollIntoView({behavior,block:"nearest",inline:"center"});
     startDashboardGalleryAutoplay();
   };
-  function pauseDashboardGalleryAutoplay(){
-    if(dashboardGalleryAutoplayTimer){clearInterval(dashboardGalleryAutoplayTimer);dashboardGalleryAutoplayTimer=null;}
-  }
-  function startDashboardGalleryAutoplay(){
-    pauseDashboardGalleryAutoplay();
-    if(!galleryRoot||dashboardGalleryImages.length<2||document.hidden||galleryRoot.matches(":hover"))return;
-    dashboardGalleryAutoplayTimer=setInterval(()=>{
-      if(!galleryRoot.matches(":hover")&&!document.hidden)goToGallerySlide(dashboardGalleryActiveIndex+1);
-    },4800);
-  }
   galleryRoot?.addEventListener("mouseenter",pauseDashboardGalleryAutoplay);
   galleryRoot?.addEventListener("mouseleave",startDashboardGalleryAutoplay);
   document.addEventListener("visibilitychange",()=>document.hidden?pauseDashboardGalleryAutoplay():startDashboardGalleryAutoplay());
