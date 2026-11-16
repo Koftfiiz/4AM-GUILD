@@ -8111,7 +8111,7 @@ body.gallery-lightbox-open{overflow:hidden}
   /* Match the 50/50 columns used by the announcements row below. */
   grid-template-columns:repeat(2,minmax(0,1fr));
   gap:20px;
-  align-items:start;
+  align-items:stretch;
   padding:16px var(--page-pad) 0;
 }
 #page-dashboard .dashboard-guild-banner{
@@ -8144,10 +8144,12 @@ body.gallery-lightbox-open{overflow:hidden}
 }
 #page-dashboard .dashboard-top-right{
   display:grid;
-  grid-template-rows:auto auto;
-  align-content:start;
+  /* The profile card fills the exact remaining height beside the GIF. */
+  grid-template-rows:auto minmax(0,1fr);
+  align-content:stretch;
   gap:14px;
   min-width:0;
+  min-height:100%;
 }
 #page-dashboard .stats-grid{
   display:grid;
@@ -8183,11 +8185,54 @@ body.gallery-lightbox-open{overflow:hidden}
 #page-dashboard .profile-card{
   min-width:0;
   min-height:0;
-  display:block;
+  height:100%;
+  display:flex;
+  flex-direction:column;
 }
 #page-dashboard .profile-card .profile-content{
-  flex:none;
-  min-height:auto;
+  flex:1 1 auto;
+  min-height:0;
+  display:flex;
+  align-items:center;
+}
+#page-dashboard .profile-card .profile-card-body{
+  width:100%;
+  align-items:center;
+  gap:20px;
+}
+#page-dashboard .profile-card .profile-avatar-column{
+  width:136px;
+  flex:0 0 136px;
+  gap:9px;
+}
+#page-dashboard .profile-card .profile-avatar-ring{
+  width:124px;
+  height:124px;
+}
+#page-dashboard .profile-card .profile-avatar-upload-btn{
+  width:100%;
+  min-height:40px;
+  padding:8px 9px;
+  white-space:normal;
+  line-height:1.25;
+}
+#page-dashboard .profile-card .profile-avatar-upload-status{
+  max-width:136px;
+  text-align:center;
+}
+#page-dashboard .profile-card .profile-meta{
+  flex:1 1 0;
+  min-width:0;
+}
+#page-dashboard .profile-card .profile-list{
+  margin-top:10px;
+  gap:7px;
+}
+#page-dashboard .profile-card .profile-list dt{
+  flex:0 0 104px;
+}
+#page-dashboard .profile-card .profile-name strong{
+  font-size:22px;
 }
 #page-dashboard .dash-body{padding-top:16px}
 #page-dashboard .dashboard-columns{
@@ -8235,9 +8280,21 @@ body.gallery-lightbox-open{overflow:hidden}
   #page-dashboard .dashboard-top-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
   #page-dashboard .stat-card{min-height:118px}
   #page-dashboard .stat-label{font-size:15px}
+  #page-dashboard .profile-card .profile-card-body{gap:14px}
+  #page-dashboard .profile-card .profile-avatar-column{width:116px;flex-basis:116px}
+  #page-dashboard .profile-card .profile-avatar-ring{width:108px;height:108px}
+  #page-dashboard .profile-card .profile-list dt{flex-basis:92px}
 }
 @media(max-width:700px){
   #page-dashboard .dashboard-top-layout{grid-template-columns:1fr;padding:10px 14px 0;gap:12px}
+  #page-dashboard .dashboard-top-right{min-height:0;height:auto;grid-template-rows:auto auto;align-content:start}
+  #page-dashboard .profile-card{height:auto}
+  #page-dashboard .profile-card .profile-content{display:block;flex:none;min-height:0}
+  #page-dashboard .profile-card .profile-card-body{width:100%;align-items:center;gap:16px}
+  #page-dashboard .profile-card .profile-avatar-column{width:100%;flex:0 0 auto}
+  #page-dashboard .profile-card .profile-avatar-ring{width:112px;height:112px}
+  #page-dashboard .profile-card .profile-avatar-upload-btn{width:max-content;min-width:0}
+  #page-dashboard .profile-card .profile-avatar-upload-status{max-width:100%}
   #page-dashboard .dashboard-guild-banner{min-height:0}
   #page-dashboard .dashboard-guild-banner-frame{aspect-ratio:16/9;min-height:0}
   #page-dashboard .dashboard-top-right{gap:10px}
