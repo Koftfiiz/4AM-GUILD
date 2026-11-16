@@ -1237,43 +1237,8 @@ async function registerGuildMember(event) {
 // ==========================================
 
 async function loadDashboard() {
-  const { data: members, error: memberError } = await supabaseClient
-    .from("guild_members")
-    .select("*");
-
-  if (memberError) {
-    console.error("Dashboard members error:", memberError);
-  }
-
-  const memberList = members || [];
-
-  const activeMembers = memberList.filter((member) => {
-    return member.active === true;
-  });
-
-  if ($("stat-members")) {
-    $("stat-members").textContent = activeMembers.length;
-  }
-
-  // ใช้ RPC ที่คืนเฉพาะยอดรวม ไม่เปิดเผยข้อมูลบัญชี Discord ของสมาชิกคนอื่น
-  const { data: discordCount, error: discordError } = await supabaseClient
-    .rpc("get_guild_discord_account_count");
-
-  if (discordError) {
-    console.error("Guild Discord count error:", discordError);
-  }
-
-  if ($("stat-discord")) {
-    $("stat-discord").textContent = discordError
-      ? "--"
-      : (Number(discordCount) || 0);
-  }
-
-  // แสดงตำแหน่ง ไม่ใช่ Role ภายใน
-  if ($("stat-role")) {
-    $("stat-role").textContent = getAccountDisplayPosition();
-  }
-
+  // Dashboard is member-facing: guild-wide statistics are intentionally not
+  // queried or rendered here. Restricted statistics remain in Guild War tabs.
   renderDashboardProfile();
 }
 
