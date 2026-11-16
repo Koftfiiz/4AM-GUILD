@@ -1389,10 +1389,6 @@ function renderDashboardGallery() {
       <button type="button" class="gallery-image-button" data-gallery-focus="${index}" aria-label="ดูภาพ ${escapeHTML(item.caption||"Guild moment")}">
         <img src="${escapeHTML(item.signedUrl)}" alt="${escapeHTML(item.caption||"ภาพความทรงจำ 4AM GUILD")}" loading="lazy">
       </button>
-      <div class="gallery-slide-caption">
-        <strong>${escapeHTML(item.caption||"4AM GUILD MOMENT")}</strong>
-        <span>${activityDateLabel(item.created_at)||"GUILD MEMORY"}</span>
-      </div>
       ${canManageDashboardGallery()? `
         <div class="gallery-slide-actions">
           <button type="button" data-gallery-move="-1" data-gallery-id="${item.id}" aria-label="เลื่อนภาพไปทางซ้าย" ${index===0?"disabled":""}>←</button>
