@@ -40,7 +40,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=dashboard-profile-layout-20261116-r2";
+          app.src = "app.js?v=game-uid-12-digits-20261117-r1";
           app.onload = () => {
             const tracker = document.createElement("script");
             tracker.src = "portfolio-tracker.js?v=portfolio-typography-20261115-r1";
@@ -1329,7 +1329,7 @@
           <label>ชื่อเล่น<input name="nickname" type="text" maxlength="40" required></label>
           <label>อายุ<input name="age" type="number" min="1" max="120" step="1" placeholder="ไม่ระบุก็ได้"></label>
           <label>Class อาชีพ<span class="member-card-edit-class"><img id="member-card-edit-class-icon" alt=""><select name="game_class" required><option value="Ironclad">Ironclad</option><option value="Bloodstrom">Bloodstrom</option><option value="Celestune">Celestune</option><option value="Numina">Numina</option><option value="Sylph">Sylph</option><option value="Nightwaker">Nightwaker</option><option value="Dragonsvelte">Dragonsvelte</option><option value="Mystech">Mystech</option></select></span></label>
-          <label>UID ตัวละคร<input name="game_uid" type="text" inputmode="numeric" pattern="[0-9]{1,12}" maxlength="12" required></label>
+          <label>UID ตัวละคร (UID ใหม่ต้อง 12 หลัก)<input name="game_uid" type="text" inputmode="numeric" pattern="[0-9]{9,12}" minlength="9" maxlength="12" required></label>
           <p id="member-card-edit-status" class="member-card-edit-status" aria-live="polite"></p>
           <div class="member-card-edit-actions"><button type="button" class="btn btn-outline" data-member-card-edit-close>ยกเลิก</button><button type="submit" class="btn btn-primary">บันทึกข้อมูล</button></div>
         </form>
