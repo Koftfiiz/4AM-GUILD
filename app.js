@@ -2722,13 +2722,23 @@ async function removeGuildMemberRecord(recordType, recordId) {
   if (!isManagement()) return;
   if (recordType === "manual") {
     const member = manualGuildMembers.find(item => String(item.id) === String(recordId));
-    if (!member || member.linked_user_id || member.discord_user_id) {
-      alert("ลบไม่ได้: รายชื่อนี้เชื่อมโยงกับบัญชีหรือ Discord อยู่");
+    if (!member) {
+      alert("ไม่พบรายชื่อ Manual นี้ กรุณารีเฟรชหน้าแล้วลองใหม่");
+      return;
+    }
+    // A Discord ID on a Manual row is only a profile association, not a website account.
+    // Keep the hard-delete guard for rows already linked to a real guild_members account.
+    if (member.linked_user_id) {
+      alert("ลบรายชื่อนี้ไม่ได้ เพราะเชื่อมกับบัญชีเว็บไซต์แล้ว กรุณาจัดการสมาชิกผ่านบัญชีที่เชื่อมโยงแทน");
       return;
     }
     const name = member.character_name || "สมาชิก Manual";
-    if (!window.confirm(`ยืนยันลบรายชื่อ Manual “${name}” หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้`)) return;
-    const { error } = await supabaseClient.from("guild_manual_members").delete().eq("id", recordId).is("linked_user_id", null).is("discord_user_id", null);
+    const discordNote = member.discord_user_id
+      ? "\\n\\nการลบจะลบเฉพาะรายชื่อ Manual และการผูก Discord ID ในรายการนี้ ไม่ได้ลบบัญชี Discord ของบุคคลนั้น"
+      : "";
+    if (!window.confirm(`ยืนยันลบรายชื่อ Manual “${name}” หรือไม่? การลบนี้ไม่สามารถย้อนกลับได้${discordNote}`)) return;
+    const { error } = await supabaseClient.from("guild_manual_members")
+      .delete().eq("id", recordId).is("linked_user_id", null);
     if (error) { alert("ลบรายชื่อไม่สำเร็จ: " + error.message); return; }
     await loadMembers();
     return;
