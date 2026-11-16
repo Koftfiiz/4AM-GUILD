@@ -1300,7 +1300,7 @@ function renderDashboardAnnouncementCarousel() {
   const item = dashboardAnnouncements[dashboardAnnouncementIndex];
   const contentPreview = document.createElement("div");
   contentPreview.innerHTML = sanitizeGuildActivityHTML(item.content_html || "");
-  const plainText = (contentPreview.textContent || "").replace(/\\s+/g, " ").trim();
+  const plainText = (contentPreview.textContent || "").replace(/\s+/g, " ").trim();
   const excerpt = plainText.length > 190 ? plainText.slice(0, 190).trimEnd() + "…" : plainText;
 
   container.innerHTML = `
@@ -1447,7 +1447,7 @@ async function uploadDashboardGalleryFiles(files) {
       const {error:uploadError}=await supabaseClient.storage.from("guild-gallery-images").upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});
       if(uploadError)throw uploadError;
       const {error:insertError}=await supabaseClient.from("guild_gallery_images").insert({
-        storage_path:path,caption:file.name.replace(/\\.[^.]+$/,"").slice(0,120),sort_order:dashboardGalleryImages.length+uploaded,uploaded_by:currentUser.id
+        storage_path:path,caption:file.name.replace(/\.[^.]+$/,"").slice(0,120),sort_order:dashboardGalleryImages.length+uploaded,uploaded_by:currentUser.id
       });
       if(insertError){
         await supabaseClient.storage.from("guild-gallery-images").remove([path]);
