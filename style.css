@@ -765,25 +765,6 @@ a { color: inherit; text-decoration: none; }
 }
 .announcement-date .icon { font-size: 20px; }
 
-/* ---- profile ---- */
-
-.profile-content { padding: 20px 26px 24px; }
-
-.profile-card-body { display: flex; align-items: center; gap: 28px; }
-
-.profile-avatar-ring {
-  flex: none;
-  width: 136px;
-  height: 136px;
-  padding: 4px;
-  overflow: hidden;
-  border-radius: 50%;
-  border: 3px solid #c3202f;
-  background: #12080a;
-  box-shadow: 0 0 20px rgba(235, 40, 55, .6), inset 0 0 14px rgba(235, 40, 55, .45);
-}
-.profile-avatar-ring img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block; }
-
 .profile-meta { min-width: 0; flex: 1; }
 
 .profile-name { display: flex; align-items: center; gap: 10px; }
@@ -1904,67 +1885,6 @@ body #registration-screen.login-card::after {
   body #registration-screen.login-card::before,
   body #registration-screen.login-card::after {
     animation: none !important;
-  }
-}
-
-
-/* ---- dashboard profile avatar upload ---- */
-.profile-avatar-column {
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  width: 148px;
-}
-
-.profile-avatar-upload-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: max-content;
-  min-width: 0;
-  min-height: 38px;
-  align-self: center;
-  padding: 7px 10px;
-  font-size: 15px;
-  line-height: 1.2;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.profile-avatar-upload-btn .icon {
-  display: none;
-}
-
-.profile-avatar-upload-btn:disabled {
-  opacity: .65;
-  cursor: wait;
-}
-
-.profile-avatar-upload-status {
-  color: var(--muted);
-  font-size: 15px;
-  line-height: 1.45;
-  text-align: center;
-}
-
-@container (max-width: 470px) {
-  .profile-avatar-column {
-    width: 100%;
-    align-items: flex-start;
-  }
-
-  .profile-avatar-upload-btn {
-    width: max-content;
-    min-width: 0;
-    align-self: center;
-    padding-left: 10px;
-    padding-right: 10px;
-  }
-
-  .profile-avatar-upload-status {
-    text-align: left;
   }
 }
 
