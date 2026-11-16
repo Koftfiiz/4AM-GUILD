@@ -8621,3 +8621,18 @@ body.gallery-lightbox-open{overflow:hidden}
 #page-dashboard .gallery-reorder-active:disabled{opacity:.28;cursor:not-allowed}
 #page-dashboard .gallery-reorder-active.hidden{display:none!important}
 @media(max-width:380px){#page-dashboard .gallery-footer-actions{gap:6px}#page-dashboard .gallery-reorder-active{width:34px;height:36px}}
+
+
+/* Member directory card: use one consistent vertical rhythm for nickname, Discord, age and UID. */
+#members-list .member-directory-card .member-details .member-secondary-name {
+  margin-top: 5px !important;
+  line-height: 1.45 !important;
+}
+#members-list .member-directory-card .member-game-uid {
+  margin-top: 5px !important;
+  line-height: 1.45 !important;
+}
+#members-list .member-directory-card .member-game-uid .member-uid-label,
+#members-list .member-directory-card .member-game-uid .member-uid-value {
+  line-height: 1.45 !important;
+}
