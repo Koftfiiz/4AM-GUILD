@@ -1237,7 +1237,7 @@ async function registerGuildMember(event) {
 // ==========================================
 
 async function loadDashboard() {
-  const { data: members, error: memberError } = await supabaseClient
+  const { count: activeMemberCount, error: memberError } = await supabaseClient
     .from("guild_members")
     .select("user_id", { count: "exact", head: true })
     .eq("active", true);
@@ -1246,7 +1246,7 @@ async function loadDashboard() {
     console.error("Dashboard active member count error:", memberError);
   }
   if ($("stat-members")) {
-    $("stat-members").textContent = memberError ? "--" : (Number(members?.length ?? 0) || 0);
+    $("stat-members").textContent = memberError ? "--" : (Number(activeMemberCount) || 0);
   }
 
   // This RPC returns only an aggregate count, never other members' Discord identities.
