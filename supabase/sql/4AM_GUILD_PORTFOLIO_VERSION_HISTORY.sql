@@ -51,6 +51,11 @@ create index if not exists portfolio_versions_round_idx
 create index if not exists portfolio_version_images_version_idx
   on public.portfolio_version_images(version_id, sort_order, created_at);
 
+-- Disable version triggers during the idempotent legacy backfill. They are recreated below.
+drop trigger if exists portfolio_versions_assign_metadata on public.portfolio_versions;
+drop trigger if exists portfolio_versions_initialize_review on public.portfolio_versions;
+drop trigger if exists portfolio_versions_touch_folder on public.portfolio_versions;
+
 -- Convert every existing folder into Version 1, preserving original timestamps.
 insert into public.portfolio_versions
   (portfolio_id, version_number, round_id, patch_label, title, description,
