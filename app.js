@@ -103,7 +103,7 @@ const WAR_SKILL_BUCKET="war-skill-icons";
 
 const $ = (id) => document.getElementById(id);
 
-const DEFAULT_AVATAR = "assets/default-avatar.jpg";
+const DEFAULT_AVATAR = "/assets/4am-guild-logo.png";
 const AVATAR_BUCKET = "character-avatars";
 const PORTFOLIO_BUCKET = "portfolio-images";
 
