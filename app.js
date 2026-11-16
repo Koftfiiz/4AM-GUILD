@@ -1237,9 +1237,30 @@ async function registerGuildMember(event) {
 // ==========================================
 
 async function loadDashboard() {
-  // Dashboard is member-facing: guild-wide statistics are intentionally not
-  // queried or rendered here. Restricted statistics remain in Guild War tabs.
+  const { data: members, error: memberError } = await supabaseClient
+    .from("guild_members")
+    .select("user_id", { count: "exact", head: true })
+    .eq("active", true);
+
+  if (memberError) {
+    console.error("Dashboard active member count error:", memberError);
+  }
+  if ($("stat-members")) {
+    $("stat-members").textContent = memberError ? "--" : (Number(members?.length ?? 0) || 0);
+  }
+
+  // This RPC returns only an aggregate count, never other members' Discord identities.
+  const { data: discordCount, error: discordError } = await supabaseClient
+    .rpc("get_guild_discord_account_count");
+
+  if (discordError) console.error("Guild Discord count error:", discordError);
+  if ($("stat-discord")) {
+    $("stat-discord").textContent = discordError ? "--" : (Number(discordCount) || 0);
+  }
+  if ($("stat-role")) $("stat-role").textContent = getAccountDisplayPosition();
+
   renderDashboardProfile();
+  await loadDashboardActivities();
 }
 
 let dashboardAnnouncements = [];
@@ -1306,6 +1327,45 @@ function renderDashboardAnnouncementCarousel() {
       </div>
       <button type="button" data-announcement-next aria-label="ประกาศถัดไป" ${dashboardAnnouncements.length < 2 ? "disabled" : ""}>›</button>
     </div>`;
+}
+
+async function loadDashboardActivities() {
+  const container = $("dashboard-activities-content");
+  if (!container) return;
+  container.innerHTML = '<div class="announcement-empty"><h4>กำลังโหลดกิจกรรม...</h4></div>';
+
+  const { data, error } = await supabaseClient
+    .from("guild_activities")
+    .select("id,title,content_html,starts_at,ends_at,created_at")
+    .or("starts_at.not.is.null,ends_at.not.is.null")
+    .order("starts_at", { ascending: true, nullsFirst: false })
+    .order("created_at", { ascending: false })
+    .limit(4);
+
+  if (error) {
+    console.error("Dashboard guild activities error:", error);
+    container.innerHTML = '<div class="announcement-empty"><h4>โหลดกิจกรรมไม่สำเร็จ</h4><p>กรุณาลองใหม่อีกครั้ง</p></div>';
+    return;
+  }
+
+  const items = data || [];
+  if (!items.length) {
+    container.innerHTML = '<div class="announcement-empty"><span class="badge-important">GUILD ACTIVITIES</span><h4>ยังไม่มีกิจกรรมกิลด์</h4><p>เมื่อมีกิจกรรมที่กำหนดวันเวลา จะแสดงที่นี่</p></div>';
+    return;
+  }
+
+  container.innerHTML = items.map(item => {
+    const preview = document.createElement("div");
+    preview.innerHTML = sanitizeGuildActivityHTML(item.content_html || "");
+    const excerpt = (preview.textContent || "").replace(/\\s+/g, " ").trim();
+    const shortText = excerpt.length > 105 ? excerpt.slice(0, 105).trimEnd() + "…" : excerpt;
+    const schedule = activityDateRange(item);
+    return `<article class="dashboard-activity-item">
+      <div class="dashboard-activity-date"><span>◷</span><strong>${escapeHTML(schedule)}</strong></div>
+      <div class="dashboard-activity-copy"><h4>${escapeHTML(item.title || "กิจกรรมกิลด์")}</h4>
+      ${shortText ? `<p>${escapeHTML(shortText)}</p>` : ""}</div>
+    </article>`;
+  }).join("");
 }
 
 async function loadDashboardAnnouncement() {
@@ -6596,7 +6656,7 @@ function subscribeToGuildActivityRealtime(){
  guildActivityRealtimeChannel=supabaseClient.channel("guild-activities-live-"+currentUser.id)
   .on("postgres_changes",{event:"*",schema:"public",table:"guild_activities"},()=>{
    if(!$("page-community")?.classList.contains("hidden"))loadGuildActivities();
-   if(!$("page-dashboard")?.classList.contains("hidden"))loadDashboardAnnouncement();
+   if(!$("page-dashboard")?.classList.contains("hidden")){loadDashboardAnnouncement();loadDashboardActivities();}
   })
   .on("postgres_changes",{event:"*",schema:"public",table:"guild_activity_comments"},()=>{if(!$("page-community")?.classList.contains("hidden"))loadGuildActivityComments();})
   .subscribe();
