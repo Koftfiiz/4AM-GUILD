@@ -8048,3 +8048,13 @@ body.member-card-edit-open{overflow-x:hidden;overflow-y:auto}
  #page-dashboard .gallery-image-button img{-webkit-box-reflect:below 3px linear-gradient(transparent 0%,rgba(255,255,255,.1) 45%,transparent 78%)}
 }
 @media(prefers-reduced-motion:reduce){#page-dashboard .gallery-slide,#page-dashboard .gallery-image-button img{transition:none!important}}
+
+/* Keep the Cover Flow reflection visible beneath each 16:9 frame */
+#page-dashboard .gallery-carousel{overflow:visible;padding-bottom:34px}
+#page-dashboard .gallery-track{padding-bottom:38px}
+#page-dashboard .gallery-slide{overflow:visible}
+#page-dashboard .gallery-image-button{overflow:visible}
+@media(max-width:700px){
+ #page-dashboard .gallery-carousel{padding-bottom:28px}
+ #page-dashboard .gallery-track{padding-bottom:32px}
+}
