@@ -5882,19 +5882,31 @@ input[type="date"]::-webkit-calendar-picker-indicator,input[type="time"]::-webki
 @media(max-width:760px){.appearance-theme-grid{grid-template-columns:1fr}.appearance-custom-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.appearance-admin-grid{grid-template-columns:1fr}.appearance-admin-grid .btn{width:100%}.appearance-theme-info{align-items:flex-start;flex-direction:column}.appearance-theme-info .btn{width:100%}.appearance-logo-item{align-items:flex-start;flex-wrap:wrap}}
 
 
-/* Member directory: nickname and Discord match UID size, weight and contrast. */
-#members-list .member-directory-card .member-secondary-name,
-#members-list .member-directory-card .member-game-uid strong {
+/* Member directory: emphasize field labels only; keep member values regular. */
+#members-list .member-directory-card .member-secondary-name {
   color: #ffffff !important;
   font-size: 16px !important;
-  font-weight: 700 !important;
+  font-weight: 400 !important;
   line-height: 1.45 !important;
   opacity: 1 !important;
 }
-
+#members-list .member-directory-card .member-secondary-name strong,
+#members-list .member-directory-card .member-uid-label {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+#members-list .member-directory-card .member-secondary-name span,
+#members-list .member-directory-card .member-uid-value {
+  color: #ffffff !important;
+  font-weight: 400 !important;
+}
+#members-list .member-directory-card .member-uid-value {
+  font-size: 16px !important;
+  line-height: 1.45 !important;
+}
 @media (max-width: 850px) {
   #members-list .member-directory-card .member-secondary-name,
-  #members-list .member-directory-card .member-game-uid strong {
+  #members-list .member-directory-card .member-uid-value {
     font-size: 15px !important;
   }
 }
