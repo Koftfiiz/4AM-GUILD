@@ -934,9 +934,10 @@ function showRegistrationScreen(errorMessage = "") {
           name="game_uid"
           type="text"
           inputmode="numeric"
-          pattern="[0-9]{1,12}"
+          pattern="[0-9]{10,12}"
+          minlength="10"
           maxlength="12"
-          placeholder="Enter UID (up to 12 digits)"
+          placeholder="Enter UID (10–12 digits)"
           autocomplete="off"
           required
         >
@@ -1080,10 +1081,10 @@ async function registerGuildMember(event) {
     return;
   }
 
-  if (!/^[0-9]{1,12}$/.test(gameUID)) {
+  if (!/^[0-9]{10,12}$/.test(gameUID)) {
     showMessage(
       "registration-message",
-      "UID ตัวละครต้องเป็นตัวเลข 1–12 หลัก"
+      "UID ตัวละครต้องเป็นตัวเลข 10–12 หลัก"
     );
     return;
   }
@@ -1902,7 +1903,7 @@ async function saveMemberCardEditor(form) {
   if (!nickname || nickname.length > 40) { status.textContent = "กรุณากรอกชื่อเล่นไม่เกิน 40 ตัวอักษร"; return; }
   if (ageRaw && (!Number.isInteger(age) || age < 1 || age > 120)) { status.textContent = "อายุต้องเป็นตัวเลข 1–120 ปี"; return; }
   if (!CLASS_DATA.some(item => item.name === gameClass)) { status.textContent = "กรุณาเลือกอาชีพจากรายการ"; return; }
-  if (gameUID !== String(target.game_uid || "") && !/^[0-9]{1,12}$/.test(gameUID)) { status.textContent = "UID ตัวละครใหม่ต้องเป็นตัวเลข 1–12 หลัก"; return; }
+  if (gameUID !== String(target.game_uid || "") && !/^[0-9]{1,12}$/.test(gameUID)) { status.textContent = "UID ตัวละครใหม่ต้องเป็นตัวเลข 10–12 หลัก"; return; }
   const button = form.querySelector('button[type="submit"]');
   if (button) { button.disabled = true; button.textContent = "กำลังบันทึก..."; }
   status.textContent = "กำลังบันทึกข้อมูล...";
