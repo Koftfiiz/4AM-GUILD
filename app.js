@@ -3559,7 +3559,8 @@ function getPortfolioReviewCenterStatus(portfolio) {
   const review = getPortfolioReview(portfolio) || { status: "pending" };
   if (review.status === "approved") return "approved";
   if (review.status === "rejected") return "rejected";
-  return !String(portfolio.description || "").trim() || !(portfolio.portfolio_images || []).length ? "incomplete" : "pending";
+  // รายละเอียดเพิ่มเติมเป็น Optional: ใช้เฉพาะรูปภาพในการพิจารณาความครบถ้วนของแฟ้ม
+  return !(portfolio.portfolio_images || []).length ? "incomplete" : "pending";
 }
 
 function renderPortfolioReviewCenter() {
@@ -3590,7 +3591,7 @@ function renderPortfolioReviewCenter() {
     g.all.forEach(p=>summary[getPortfolioReviewCenterStatus(p)]++);
     const badges=Object.keys(summary).filter(k=>summary[k]>0).map(k=>'<span class="portfolio-review-member-status is-'+k+'">'+labels[k]+' '+summary[k]+'</span>').join('');
     const rows=g.files.length?g.files.map(p=>{
-      const status=getPortfolioReviewCenterStatus(p),review=getPortfolioReview(p),images=p.portfolio_images||[],missing=[!String(p.description||"").trim()?"รายละเอียด":"",!images.length?"รูปภาพ":""].filter(Boolean);
+      const status=getPortfolioReviewCenterStatus(p),review=getPortfolioReview(p),images=p.portfolio_images||[],missing=[!images.length?"รูปภาพ":""].filter(Boolean);
       return '<article class="portfolio-review-row"><div class="portfolio-review-row-main"><strong>'+escapeHTML(p.title||"ไม่มีชื่อแฟ้ม")+'</strong><span class="portfolio-review-row-meta">'+escapeHTML(p.game_class||g.className)+' · '+images.length+' รูป · อัปเดต '+escapeHTML(formatDate(p.updated_at||p.created_at))+'</span>'+(missing.length?'<span class="portfolio-review-missing">ขาด: '+escapeHTML(missing.join(" และ "))+'</span>':'')+(status==="rejected"&&review?.reason?'<span class="portfolio-review-reason-preview">เหตุผลล่าสุด: '+escapeHTML(review.reason)+'</span>':'')+'</div><div class="portfolio-review-row-side"><span class="portfolio-review-queue-status is-'+status+'">'+labels[status]+'</span><button type="button" class="btn btn-outline portfolio-review-open" data-review-center-open="'+escapeHTML(p.member_id)+'">เปิดตรวจแฟ้ม ↗</button></div></article>';
     }).join(''):'<div class="portfolio-review-no-files">'+(g.all.length?"ไม่มีแฟ้มที่ตรงกับตัวกรองสถานะ":"สมาชิกยังไม่มีแฟ้มผลงาน")+'</div>';
     return '<section class="portfolio-review-member-group" style="--class-color:'+color+'"><header class="portfolio-review-member-header"><div class="portfolio-review-member-identity"><span class="portfolio-review-member-class">'+(info?.iconPath?'<img src="'+escapeHTML(info.iconPath)+'" alt="">':'')+'<span>'+escapeHTML(g.className)+'</span></span><h3>'+escapeHTML(getMemberName(g.member))+'</h3><span class="portfolio-review-member-meta">'+g.all.length+' แฟ้มทั้งหมด</span></div><div class="portfolio-review-member-summary">'+badges+'</div></header><div class="portfolio-review-member-files">'+rows+'</div></section>';
