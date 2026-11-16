@@ -1640,23 +1640,29 @@ async function renderDashboardProfile() {
   container.innerHTML = `
     <div class="profile-card-body">
       <div class="profile-avatar-column">
-        <div class="profile-avatar-ring">
+        <button type="button" class="profile-avatar-trigger" aria-label="เปลี่ยนรูปโปรไฟล์" title="คลิกเพื่อเปลี่ยนรูปโปรไฟล์">
           <img src="${escapeHTML(avatar)}" alt="รูปโปรไฟล์"
             onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'">
-        </div>
-        <input type="file" id="profile-avatar-input" accept="image/*" hidden>
-        <button type="button" class="btn btn-outline profile-avatar-upload-btn">
-          เปลี่ยนรูปโปรไฟล์
+          <span class="profile-avatar-overlay" aria-hidden="true">
+            <svg class="profile-avatar-camera" viewBox="0 0 24 24" fill="none">
+              <path d="M4 7.5h3l1.5-2h7l1.5 2h3A1.5 1.5 0 0 1 21.5 9v9A1.5 1.5 0 0 1 20 19.5H4A1.5 1.5 0 0 1 2.5 18V9A1.5 1.5 0 0 1 4 7.5Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+              <circle cx="12" cy="13" r="3.5" stroke="currentColor" stroke-width="1.7"/>
+            </svg>
+            <span>เปลี่ยนรูปโปรไฟล์</span>
+          </span>
         </button>
+        <input type="file" id="profile-avatar-input" accept="image/*" hidden>
         <small class="profile-avatar-upload-status" aria-live="polite">
-          รองรับไฟล์รูปภาพ ขนาดไม่เกิน 5 MB
+          คลิกที่รูปเพื่อเปลี่ยน · รองรับไฟล์ไม่เกิน 5 MB
         </small>
       </div>
 
       <div class="profile-meta">
-        <div class="profile-name">
-          <strong>${escapeHTML(name)}</strong>
-          <svg class="icon icon-fill is-stroke"><use href="#i-crown"/></svg>
+        <div class="profile-identity-row">
+          <div class="profile-name">
+            <strong>${escapeHTML(name)}</strong>
+            <svg class="icon icon-fill is-stroke"><use href="#i-crown"/></svg>
+          </div>
           <span class="role-badge">
             <svg class="icon icon-fill is-stroke"><use href="#i-crown"/></svg>
             ${escapeHTML(role)}
@@ -8658,8 +8664,8 @@ function registerAppEventListeners() {
   });
 
   $("dashboard-profile")?.addEventListener("click", async (event) => {
-    const uploadButton = event.target.closest(".profile-avatar-upload-btn");
-    if (uploadButton) {
+    const avatarTrigger = event.target.closest(".profile-avatar-trigger");
+    if (avatarTrigger && !avatarTrigger.disabled) {
       $("profile-avatar-input")?.click();
       return;
     }
@@ -8675,7 +8681,7 @@ function registerAppEventListeners() {
     const file = input.files?.[0];
     if (!file) return;
 
-    const uploadButton = $("dashboard-profile")?.querySelector(".profile-avatar-upload-btn");
+    const avatarTrigger = $("dashboard-profile")?.querySelector(".profile-avatar-trigger");
     const status = $("dashboard-profile")?.querySelector(".profile-avatar-upload-status");
 
     try {
@@ -8692,9 +8698,9 @@ function registerAppEventListeners() {
         return;
       }
 
-      if (uploadButton) {
-        uploadButton.disabled = true;
-        uploadButton.textContent = "กำลังอัปโหลด...";
+      if (avatarTrigger) {
+        avatarTrigger.disabled = true;
+        avatarTrigger.setAttribute("aria-busy", "true");
       }
       if (status) status.textContent = "กำลังบันทึกรูปโปรไฟล์...";
 
@@ -8704,9 +8710,9 @@ function registerAppEventListeners() {
       if (status) status.textContent = error.message || "อัปโหลดรูปไม่สำเร็จ";
       alert(error.message || "อัปโหลดรูปโปรไฟล์ไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {
-      if (uploadButton) {
-        uploadButton.disabled = false;
-        uploadButton.textContent = "เปลี่ยนรูปโปรไฟล์";
+      if (avatarTrigger) {
+        avatarTrigger.disabled = false;
+        avatarTrigger.removeAttribute("aria-busy");
       }
       input.value = "";
     }
