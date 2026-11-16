@@ -8129,26 +8129,27 @@ body.gallery-lightbox-open{overflow:hidden}
 }
 
 
-/* Dashboard — animated 4AM Guild identity banner */
+/* Dashboard — integrated 4AM identity banner */
 #page-dashboard .dashboard-guild-banner{
   display:flex;
   justify-content:center;
   align-items:center;
   width:100%;
-  padding:18px var(--page-pad) 8px;
+  padding:10px var(--page-pad) 0;
 }
 #page-dashboard .dashboard-guild-banner-frame{
   position:relative;
   display:flex;
   justify-content:center;
   align-items:center;
-  width:min(100%,640px);
+  width:min(100%,720px);
   aspect-ratio:16/9;
+  max-height:300px;
   overflow:hidden;
-  border:1px solid rgba(235,55,79,.42);
-  border-radius:16px;
-  background:radial-gradient(ellipse at center,rgba(76,18,30,.28),#08080b 72%);
-  box-shadow:0 12px 34px rgba(0,0,0,.34),0 0 24px rgba(220,35,62,.14),inset 0 0 22px rgba(210,35,60,.08);
+  border:0;
+  border-radius:10px;
+  background:transparent;
+  box-shadow:0 10px 28px rgba(0,0,0,.22),0 0 24px rgba(220,35,62,.10);
 }
 #page-dashboard .dashboard-guild-banner-frame::after{
   content:"";
@@ -8156,7 +8157,7 @@ body.gallery-lightbox-open{overflow:hidden}
   inset:0;
   border-radius:inherit;
   pointer-events:none;
-  box-shadow:inset 0 0 24px rgba(0,0,0,.24);
+  box-shadow:inset 0 0 18px rgba(0,0,0,.16);
 }
 #page-dashboard .dashboard-guild-banner-frame img{
   display:block;
@@ -8167,7 +8168,10 @@ body.gallery-lightbox-open{overflow:hidden}
   user-select:none;
   -webkit-user-drag:none;
 }
+#page-dashboard .dash-body{padding-top:8px}
+#page-dashboard .dashboard-columns{margin-top:8px}
 @media(max-width:700px){
-  #page-dashboard .dashboard-guild-banner{padding:12px 14px 4px}
-  #page-dashboard .dashboard-guild-banner-frame{width:100%;border-radius:12px}
+  #page-dashboard .dashboard-guild-banner{padding:8px 14px 0}
+  #page-dashboard .dashboard-guild-banner-frame{width:min(100%,520px);border-radius:8px}
+  #page-dashboard .dash-body{padding-top:4px}
 }
