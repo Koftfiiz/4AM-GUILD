@@ -3020,7 +3020,7 @@ function openAvatarCropEditor(file) {
   const zoomControl = modal.querySelector('[data-crop-control="zoom"]');
   const zoomOutput = modal.querySelector('[data-crop-value="zoom"]');
   const values = { zoom: 1, x: 0, y: 0 };
-  const frameSize = 320;
+  let frameSize = 320;
   let baseScale = 1;
   let renderedWidth = 0;
   let renderedHeight = 0;
@@ -3046,15 +3046,17 @@ function openAvatarCropEditor(file) {
     image.style.top = top + "px";
     zoomOutput.textContent = Math.round(values.zoom * 100) + "%";
     if (resultImage) {
-      resultImage.style.width = renderedWidth + "px";
-      resultImage.style.height = renderedHeight + "px";
-      resultImage.style.left = left + "px";
-      resultImage.style.top = top + "px";
+      const resultScale = 76 / frameSize;
+      resultImage.style.width = (renderedWidth * resultScale) + "px";
+      resultImage.style.height = (renderedHeight * resultScale) + "px";
+      resultImage.style.left = (left * resultScale) + "px";
+      resultImage.style.top = (top * resultScale) + "px";
     }
   };
 
   const initializeCrop = () => {
     if (!image.naturalWidth || !image.naturalHeight) return;
+    frameSize = viewport.clientWidth || 320;
     baseScale = Math.max(frameSize / image.naturalWidth, frameSize / image.naturalHeight);
     updatePreview();
   };
