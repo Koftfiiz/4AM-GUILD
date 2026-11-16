@@ -1388,6 +1388,60 @@ function updateDashboardGalleryActiveState() {
   if(next)next.disabled=dashboardGalleryImages.length<2;
 }
 
+function centerDashboardGallerySlide(index, behavior = "smooth") {
+  const track = $("dashboard-gallery-track");
+  const slide = track?.querySelector(`[data-gallery-slide="${index}"]`);
+  if (!track || !slide) return;
+  const target = slide.offsetLeft - (track.clientWidth - slide.offsetWidth) / 2;
+  track.scrollTo({ left: Math.max(0, target), behavior });
+}
+function ensureDashboardGalleryLightbox() {
+  let viewer = $("dashboard-gallery-lightbox");
+  if (viewer) return viewer;
+  viewer = document.createElement("div");
+  viewer.id = "dashboard-gallery-lightbox";
+  viewer.className = "dashboard-gallery-lightbox hidden";
+  viewer.setAttribute("role", "dialog");
+  viewer.setAttribute("aria-modal", "true");
+  viewer.setAttribute("aria-label", "Guild Gallery lightbox");
+  viewer.innerHTML = `<button type="button" class="dashboard-gallery-lightbox-close" data-gallery-lightbox-close aria-label="ปิดภาพ">×</button><button type="button" class="dashboard-gallery-lightbox-nav prev" data-gallery-lightbox-prev aria-label="ภาพก่อนหน้า">‹</button><figure class="dashboard-gallery-lightbox-figure"><img id="dashboard-gallery-lightbox-image" alt="ภาพความทรงจำ 4AM GUILD"><figcaption id="dashboard-gallery-lightbox-counter"></figcaption></figure><button type="button" class="dashboard-gallery-lightbox-nav next" data-gallery-lightbox-next aria-label="ภาพถัดไป">›</button>`;
+  document.body.appendChild(viewer);
+  viewer.addEventListener("click", event => {
+    if (event.target === viewer || event.target.closest("[data-gallery-lightbox-close]")) closeDashboardGalleryLightbox();
+    else if (event.target.closest("[data-gallery-lightbox-prev]")) stepDashboardGalleryLightbox(-1);
+    else if (event.target.closest("[data-gallery-lightbox-next]")) stepDashboardGalleryLightbox(1);
+  });
+  return viewer;
+}
+function updateDashboardGalleryLightbox() {
+  const index = Number(window.dashboardGalleryLightboxIndex || 0), item = dashboardGalleryImages[index];
+  if (!item) return;
+  const image = $("dashboard-gallery-lightbox-image");
+  if (image) image.src = item.signedUrl;
+  const counter = $("dashboard-gallery-lightbox-counter");
+  if (counter) counter.textContent = `${index + 1} / ${dashboardGalleryImages.length}`;
+}
+function openDashboardGalleryLightbox(index) {
+  if (!dashboardGalleryImages.length) return;
+  window.dashboardGalleryLightboxIndex = Math.max(0, Math.min(index, dashboardGalleryImages.length - 1));
+  const viewer = ensureDashboardGalleryLightbox();
+  updateDashboardGalleryLightbox();
+  viewer.classList.remove("hidden");
+  document.body.classList.add("gallery-lightbox-open");
+  pauseDashboardGalleryAutoplay();
+}
+function closeDashboardGalleryLightbox() {
+  $("dashboard-gallery-lightbox")?.classList.add("hidden");
+  document.body.classList.remove("gallery-lightbox-open");
+  startDashboardGalleryAutoplay();
+}
+function stepDashboardGalleryLightbox(delta) {
+  if (!dashboardGalleryImages.length) return;
+  const current = Number(window.dashboardGalleryLightboxIndex || 0);
+  window.dashboardGalleryLightboxIndex = (current + delta + dashboardGalleryImages.length) % dashboardGalleryImages.length;
+  updateDashboardGalleryLightbox();
+}
+
 function renderDashboardGallery() {
   const track=$("dashboard-gallery-track");
   const admin=$("dashboard-gallery-admin");
@@ -1419,7 +1473,7 @@ function renderDashboardGallery() {
     </article>`).join("");
   updateDashboardGalleryActiveState();
   const active=track.querySelector(`[data-gallery-slide="${dashboardGalleryActiveIndex}"]`);
-  if(active)active.scrollIntoView({behavior:"auto",block:"nearest",inline:"center"});
+  if(active)centerDashboardGallerySlide(dashboardGalleryActiveIndex,"auto");
   startDashboardGalleryAutoplay();
 }
 
@@ -8471,7 +8525,7 @@ function registerAppEventListeners() {
     const remove=event.target.closest("[data-gallery-delete]");
     if(move){void moveDashboardGalleryImage(move.dataset.galleryId,Number(move.dataset.galleryMove));return;}
     if(remove){void deleteDashboardGalleryImage(remove.dataset.galleryDelete);return;}
-    if(focus){goToGallerySlide(Number(focus.dataset.galleryFocus));}
+    if(focus){openDashboardGalleryLightbox(Number(focus.dataset.galleryFocus));}
   });
 
   $("user-chip")?.addEventListener("click", (event) => {
@@ -8493,6 +8547,13 @@ function registerAppEventListeners() {
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") closeUserMenu();
+  });
+
+  document.addEventListener("keydown", event => {
+    if ($("dashboard-gallery-lightbox")?.classList.contains("hidden")) return;
+    if (event.key === "Escape") closeDashboardGalleryLightbox();
+    else if (event.key === "ArrowLeft") stepDashboardGalleryLightbox(-1);
+    else if (event.key === "ArrowRight") stepDashboardGalleryLightbox(1);
   });
 
   $("discord-pill")?.addEventListener("click", (event) => {
