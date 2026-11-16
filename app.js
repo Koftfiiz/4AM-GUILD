@@ -1420,6 +1420,14 @@ function updateDashboardGalleryActiveState() {
     deleteButton.disabled=!activeItem;
     deleteButton.classList.toggle("hidden",!activeItem||!canManageDashboardGallery());
   }
+  const moveLeft=$("dashboard-gallery-move-left"),moveRight=$("dashboard-gallery-move-right");
+  [moveLeft,moveRight].forEach(button=>{
+    if(!button)return;
+    button.dataset.galleryId=activeItem?.id||"";
+    button.classList.toggle("hidden",!activeItem||!canManageDashboardGallery());
+  });
+  if(moveLeft)moveLeft.disabled=!activeItem||dashboardGalleryActiveIndex<=0;
+  if(moveRight)moveRight.disabled=!activeItem||dashboardGalleryActiveIndex>=dashboardGalleryImages.length-1;
 }
 
 function centerDashboardGallerySlide(index, behavior = "smooth") {
@@ -1498,11 +1506,7 @@ function renderDashboardGallery() {
       <button type="button" class="gallery-image-button" data-gallery-focus="${index}" aria-label="ดูภาพความทรงจำ ${index+1}">
         <img src="${escapeHTML(item.signedUrl)}" alt="ภาพความทรงจำ 4AM GUILD ลำดับที่ ${index+1}" loading="lazy">
       </button>
-      ${canManageDashboardGallery()? `
-        <div class="gallery-slide-actions" aria-label="จัดลำดับภาพ">
-          <button type="button" data-gallery-move="-1" data-gallery-id="${item.id}" aria-label="เลื่อนภาพไปทางซ้าย" ${index===0?"disabled":""}>←</button>
-          <button type="button" data-gallery-move="1" data-gallery-id="${item.id}" aria-label="เลื่อนภาพไปทางขวา" ${index===dashboardGalleryImages.length-1?"disabled":""}>→</button>
-        </div>`:""}
+      ${""}
     </article>`).join("");
   updateDashboardGalleryActiveState();
   const active=track.querySelector(`[data-gallery-slide="${dashboardGalleryActiveIndex}"]`);
@@ -8679,6 +8683,14 @@ function registerAppEventListeners() {
     const button=event.currentTarget;
     const imageId=button?.dataset?.galleryDelete;
     if(imageId)void deleteDashboardGalleryImage(imageId);
+  });
+  $("dashboard-gallery-move-left")?.addEventListener("click",event=>{
+    const button=event.currentTarget;
+    if(button?.dataset?.galleryId)void moveDashboardGalleryImage(button.dataset.galleryId,-1);
+  });
+  $("dashboard-gallery-move-right")?.addEventListener("click",event=>{
+    const button=event.currentTarget;
+    if(button?.dataset?.galleryId)void moveDashboardGalleryImage(button.dataset.galleryId,1);
   });
 
   $("user-chip")?.addEventListener("click", (event) => {
