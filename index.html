@@ -328,40 +328,62 @@
       <!-- ============ DASHBOARD ============ -->
       <section id="page-dashboard" class="page page-dashboard">
 
-        <section class="dashboard-hero">
-          <div class="hero-content">
-            <span class="hero-welcome">ยินดีต้อนรับสู่</span>
-            <h1>4AM GUILD</h1>
-            <div class="hero-subtitle">
-              <i></i>
-              <span>SWORD OF JUSTICE</span>
-              <i></i>
+        <div class="dashboard-top-layout">
+          <!-- LARGE ANIMATED GUILD HERO -->
+          <section class="dashboard-guild-banner" aria-label="ตราสัญลักษณ์ 4AM GUILD">
+            <div class="dashboard-guild-banner-frame">
+              <img
+                src="/assets/animated-4am-logo.gif"
+                alt="ตราสัญลักษณ์ 4AM GUILD — Sword of Justice"
+                loading="eager"
+                decoding="async"
+              >
             </div>
-          </div>
+          </section>
 
-          <blockquote class="hero-quote">
-            “ร่วมเป็นส่วนหนึ่งของครอบครัว 4AM<br>
-            ก้าวไปด้วยกัน สู่ความแข็งแกร่งที่มากกว่า”
-          </blockquote>
-        </section>
+          <div class="dashboard-top-right">
+            <section class="stats-grid" aria-label="ภาพรวมกิลด์">
+              <article class="stat-card">
+                <div class="stat-icon"><svg class="icon"><use href="#i-users"/></svg></div>
+                <div class="stat-info">
+                  <span class="stat-label">สมาชิกทั้งหมด</span>
+                  <div class="stat-value"><strong id="stat-members">--</strong><em>คน</em></div>
+                  <small>Guild Members</small>
+                </div>
+              </article>
 
-        <!-- 4AM GUILD ANIMATED HERO BANNER -->
-        <section class="dashboard-guild-banner" aria-label="ตราสัญลักษณ์ 4AM GUILD">
-          <div class="dashboard-guild-banner-frame">
-            <img
-              src="/assets/animated-4am-logo.gif"
-              alt="ตราสัญลักษณ์ 4AM GUILD — Sword of Justice"
-              loading="lazy"
-              decoding="async"
-            >
+              <article class="stat-card">
+                <div class="stat-icon is-discord"><svg class="icon icon-fill"><use href="#i-discord"/></svg></div>
+                <div class="stat-info">
+                  <span class="stat-label">บัญชี Discord ที่เชื่อมแล้ว</span>
+                  <div class="stat-value"><strong id="stat-discord">--</strong><em>บัญชี</em></div>
+                  <small>Connected Accounts</small>
+                </div>
+              </article>
+
+              <article class="stat-card">
+                <div class="stat-icon"><svg class="icon icon-fill"><use href="#i-crown"/></svg></div>
+                <div class="stat-info">
+                  <span class="stat-label">สถานะบัญชีของคุณ</span>
+                  <div class="stat-value is-text"><strong id="stat-role">--</strong></div>
+                  <small>Your Guild Role</small>
+                </div>
+              </article>
+            </section>
+
+            <article class="dash-card profile-card">
+              <header class="dash-card-head">
+                <h3><svg class="icon"><use href="#i-user"/></svg> ข้อมูลบัญชีของฉัน</h3>
+              </header>
+              <div id="dashboard-profile" class="profile-content">
+                <p class="muted">กำลังโหลดข้อมูล...</p>
+              </div>
+            </article>
           </div>
-        </section>
+        </div>
 
         <div class="dash-body">
-
-          <!-- Guild statistics are intentionally kept inside the restricted Guild War statistics tabs. -->
-
-          <!-- ANNOUNCEMENT + PROFILE -->
+          <!-- ANNOUNCEMENT + GUILD ACTIVITIES -->
           <div class="dashboard-columns">
             <article class="dash-card announcement-card">
               <header class="dash-card-head">
@@ -370,7 +392,6 @@
                   ดูข่าวสารทั้งหมด <svg class="icon"><use href="#i-chevron-right"/></svg>
                 </button>
               </header>
-
               <div class="announcement-body" id="dashboard-announcement" role="region" tabindex="0" aria-label="ประกาศจากกิลด์">
                 <div class="announcement-text" id="dashboard-announcement-content">
                   <p class="muted">กำลังโหลดข่าวสารล่าสุด...</p>
@@ -378,13 +399,17 @@
               </div>
             </article>
 
-            <article class="dash-card profile-card">
+            <article class="dash-card dashboard-activities-card">
               <header class="dash-card-head">
-                <h3><svg class="icon"><use href="#i-user"/></svg> ข้อมูลบัญชีของคุณ</h3>
+                <h3><svg class="icon"><use href="#i-calendar"/></svg> กิจกรรมกิลด์</h3>
+                <button type="button" class="head-link" data-go-page="activities">
+                  ดูกิจกรรมทั้งหมด <svg class="icon"><use href="#i-chevron-right"/></svg>
+                </button>
               </header>
-
-              <div id="dashboard-profile" class="profile-content">
-                <p class="muted">กำลังโหลดข้อมูล...</p>
+              <div class="dashboard-activities-body" id="dashboard-activities-content" aria-live="polite">
+                <div class="announcement-empty">
+                  <h4>กำลังโหลดกิจกรรม...</h4>
+                </div>
               </div>
             </article>
           </div>
