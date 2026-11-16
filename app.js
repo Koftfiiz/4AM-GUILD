@@ -1412,8 +1412,6 @@ function updateDashboardGalleryActiveState() {
   if(prev)prev.disabled=dashboardGalleryImages.length<2;
   if(next)next.disabled=dashboardGalleryImages.length<2;
   const activeItem=dashboardGalleryImages[dashboardGalleryActiveIndex];
-  const activeCaption=$("dashboard-gallery-active-caption");
-  if(activeCaption)activeCaption.textContent=activeItem?.caption?.trim()||"ภาพความทรงจำของ 4AM GUILD";
   const deleteButton=$("dashboard-gallery-delete-active");
   if(deleteButton){
     deleteButton.dataset.galleryDelete=activeItem?.id||"";
