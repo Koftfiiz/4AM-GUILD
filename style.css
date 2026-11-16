@@ -8025,3 +8025,26 @@ body.member-card-edit-open{overflow-x:hidden;overflow-y:auto}
   color: #ecd2a4 !important;
   background: linear-gradient(90deg,transparent,rgba(7,7,10,.86) 25%) !important;
 }
+
+
+/* 4AM GUILD Cover Flow — 3D depth, reflection, red focus glow and responsive gestures */
+#page-dashboard .gallery-track{perspective:1400px;touch-action:pan-y pan-x;cursor:grab;user-select:none;-webkit-user-select:none;overscroll-behavior-x:contain}
+#page-dashboard .gallery-track.is-dragging{cursor:grabbing;scroll-behavior:auto;scroll-snap-type:none}
+#page-dashboard .gallery-slide{transform-style:preserve-3d;opacity:.42;filter:blur(1.25px) saturate(.78);transform:scale(.84) perspective(1100px) rotateY(13deg);transition:opacity .45s ease,transform .55s cubic-bezier(.2,.75,.25,1),filter .45s ease;will-change:transform,opacity,filter}
+#page-dashboard .gallery-slide:nth-child(odd):not(.is-active){transform:scale(.84) perspective(1100px) rotateY(13deg)}
+#page-dashboard .gallery-slide:nth-child(even):not(.is-active){transform:scale(.84) perspective(1100px) rotateY(-13deg)}
+#page-dashboard .gallery-slide.is-active{opacity:1;filter:none;transform:scale(1) perspective(1100px) rotateY(0);box-shadow:0 0 0 1px rgba(255,65,91,.48),0 0 22px rgba(235,35,65,.42),0 18px 48px rgba(0,0,0,.55)!important;z-index:2}
+#page-dashboard .gallery-image-button{overflow:visible}
+#page-dashboard .gallery-image-button img{border-radius:12px;box-shadow:0 0 0 1px rgba(255,255,255,.06);-webkit-box-reflect:below 5px linear-gradient(transparent 0%,rgba(255,255,255,.13) 45%,transparent 78%);transition:transform .42s cubic-bezier(.2,.75,.25,1),filter .42s ease}
+#page-dashboard .gallery-slide.is-active .gallery-image-button:hover img{transform:scale(1.035);filter:brightness(1.06)}
+#page-dashboard .gallery-slide:not(.is-active) .gallery-image-button img{filter:brightness(.78)}
+#page-dashboard .gallery-slide-actions{z-index:5}
+#page-dashboard .gallery-nav{transition:background .2s ease,transform .2s ease,opacity .2s ease}
+#page-dashboard .gallery-nav:hover{background:rgba(180,20,48,.78)!important;transform:translateY(-50%) scale(1.06)}
+@media(max-width:700px){
+ #page-dashboard .gallery-track{perspective:900px;touch-action:pan-y pan-x;cursor:default}
+ #page-dashboard .gallery-slide{filter:blur(.8px) saturate(.82)}
+ #page-dashboard .gallery-slide.is-active{filter:none;box-shadow:0 0 18px rgba(235,35,65,.38),0 12px 30px rgba(0,0,0,.5)!important}
+ #page-dashboard .gallery-image-button img{-webkit-box-reflect:below 3px linear-gradient(transparent 0%,rgba(255,255,255,.1) 45%,transparent 78%)}
+}
+@media(prefers-reduced-motion:reduce){#page-dashboard .gallery-slide,#page-dashboard .gallery-image-button img{transition:none!important}}
