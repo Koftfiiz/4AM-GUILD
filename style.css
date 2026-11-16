@@ -8058,3 +8058,27 @@ body.member-card-edit-open{overflow-x:hidden;overflow-y:auto}
  #page-dashboard .gallery-carousel{padding-bottom:28px}
  #page-dashboard .gallery-track{padding-bottom:32px}
 }
+
+
+/* Dashboard requested red typography and icons */
+#page-dashboard .hero-welcome{
+  color:#ff536b!important;
+  text-shadow:0 2px 14px rgba(0,0,0,.9),0 0 18px rgba(235,35,65,.24)!important;
+}
+#page-dashboard .stats-grid .stat-icon,
+#page-dashboard .stats-grid .stat-icon.is-discord{
+  color:#ff536b!important;
+  filter:drop-shadow(0 0 12px rgba(235,35,65,.32))!important;
+}
+#page-dashboard .stats-grid .stat-value strong{
+  color:#ff536b!important;
+  text-shadow:0 0 16px rgba(235,35,65,.28)!important;
+}
+#page-dashboard .stats-grid .stat-value em{
+  color:#fff!important;
+  font-style:normal;
+}
+#page-dashboard .stats-grid #stat-role{
+  color:#ff536b!important;
+  text-shadow:0 0 16px rgba(235,35,65,.28)!important;
+}
