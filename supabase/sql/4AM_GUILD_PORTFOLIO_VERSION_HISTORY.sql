@@ -220,7 +220,7 @@ for each row execute function public.initialize_portfolio_version_review();
 create or replace function public.touch_portfolio_folder_after_version()
 returns trigger
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $function$
 begin
@@ -241,7 +241,7 @@ create or replace function public.set_portfolio_version_review(
 )
 returns jsonb
 language plpgsql
-security definer
+security invoker
 set search_path = ''
 as $function$
 begin
@@ -425,4 +425,13 @@ begin
 end;
 $function$;
 
+grant execute on function public.save_portfolio_version(uuid,boolean,text,text,text,text,jsonb) to authenticated;
+
+-- Trigger functions are not public RPC endpoints. Keep direct execution unavailable.
+revoke all on function public.initialize_portfolio_version_review() from public, anon, authenticated;
+revoke all on function public.touch_portfolio_folder_after_version() from public, anon, authenticated;
+revoke all on function public.assign_portfolio_version_metadata() from public, anon, authenticated;
+revoke all on function public.set_portfolio_version_review(uuid,text,text) from public, anon;
+grant execute on function public.set_portfolio_version_review(uuid,text,text) to authenticated;
+revoke all on function public.save_portfolio_version(uuid,boolean,text,text,text,text,jsonb) from public, anon;
 grant execute on function public.save_portfolio_version(uuid,boolean,text,text,text,text,jsonb) to authenticated;
