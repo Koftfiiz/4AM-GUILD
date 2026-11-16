@@ -3729,6 +3729,13 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
     modal.innerHTML = '<div class="portfolio-detail-backdrop" data-portfolio-detail-close></div><section class="portfolio-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="portfolio-detail-title"><button type="button" class="portfolio-detail-close" data-portfolio-detail-close aria-label="ปิด">×</button><div class="portfolio-detail-body" id="portfolio-detail-body"></div></section>';
     document.body.appendChild(modal);
     modal.addEventListener("click", event => {
+      const addVersionButton = event.target.closest("[data-portfolio-add-version]");
+      if (addVersionButton) {
+        const portfolioId = addVersionButton.dataset.portfolioAddVersion;
+        closePortfolioDetail();
+        void startPortfolioEdit(portfolioId);
+        return;
+      }
       const versionButton = event.target.closest("[data-portfolio-version-select]");
       if (versionButton) {
         void openPortfolioDetail(modal.dataset.portfolioId, versionButton.dataset.portfolioVersionSelect);
@@ -3789,7 +3796,9 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
     '<p class="portfolio-detail-owner">' + escapeHTML(owner ? getMemberName(owner) : "Guild Member") + '</p>' +
     '<div class="portfolio-card-tags">' + classes.map(name => '<span class="portfolio-card-tag">' + escapeHTML(name) + '</span>').join("") + '</div>' +
     '<p class="portfolio-version-current-label">กำลังดู Version ' + Number(activeVersion?.version_number || 1) +
-    ' · ' + escapeHTML(activeVersion?.patch_label || "ประวัติเดิม") + '</p></div>' +
+    ' · ' + escapeHTML(activeVersion?.patch_label || "ประวัติเดิม") + '</p>' +
+    (portfolio.member_id === currentUser?.id ? '<button type="button" class="btn btn-primary" data-portfolio-add-version="' + escapeHTML(portfolio.id) + '">＋ เพิ่มเวอร์ชันใหม่</button>' : '') +
+    '</div>' +
     (snapshot.description ? '<div class="portfolio-detail-description"><h3>Description</h3><p>' + escapeHTML(snapshot.description) + '</p></div>' : '') +
     history +
     '<div class="portfolio-detail-gallery">' + (imageCards.filter(Boolean).join("") || '<p class="muted">ไม่มีรูปภาพในเวอร์ชันนี้</p>') + '</div>';
