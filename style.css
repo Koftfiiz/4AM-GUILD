@@ -2746,18 +2746,7 @@ body #registration-screen.login-card::after {
 
 
 /* Align the dashboard role badge with the right edge of the Edit button */
-#page-dashboard .profile-content {
-  padding-right: 14px !important;
-}
 
-#page-dashboard .profile-content .profile-name {
-  width: 100%;
-}
-
-#page-dashboard .profile-content .profile-name > .role-badge {
-  margin-left: auto !important;
-  margin-right: 0 !important;
-}
 
 
 /* Dashboard statistics: improve readability across all three summary cards */
@@ -8193,46 +8182,9 @@ body.gallery-lightbox-open{overflow:hidden}
   flex:1 1 auto;
   min-height:0;
   display:flex;
-  align-items:center;
-}
-#page-dashboard .profile-card .profile-card-body{
-  width:100%;
-  align-items:center;
-  gap:20px;
-}
-#page-dashboard .profile-card .profile-avatar-column{
-  width:136px;
-  flex:0 0 136px;
-  gap:9px;
-}
-#page-dashboard .profile-card .profile-avatar-ring{
-  width:124px;
-  height:124px;
-}
-#page-dashboard .profile-card .profile-avatar-upload-btn{
-  width:100%;
-  min-height:40px;
-  padding:8px 9px;
-  white-space:normal;
-  line-height:1.25;
-}
-#page-dashboard .profile-card .profile-avatar-upload-status{
-  max-width:136px;
-  text-align:center;
-}
-#page-dashboard .profile-card .profile-meta{
-  flex:1 1 0;
-  min-width:0;
-}
-#page-dashboard .profile-card .profile-list{
-  margin-top:10px;
-  gap:7px;
-}
-#page-dashboard .profile-card .profile-list dt{
-  flex:0 0 104px;
-}
-#page-dashboard .profile-card .profile-name strong{
-  font-size:22px;
+  align-items:stretch;
+  padding:0 !important;
+  overflow:hidden;
 }
 #page-dashboard .dash-body{padding-top:16px}
 #page-dashboard .dashboard-columns{
@@ -8280,21 +8232,10 @@ body.gallery-lightbox-open{overflow:hidden}
   #page-dashboard .dashboard-top-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
   #page-dashboard .stat-card{min-height:118px}
   #page-dashboard .stat-label{font-size:15px}
-  #page-dashboard .profile-card .profile-card-body{gap:14px}
-  #page-dashboard .profile-card .profile-avatar-column{width:116px;flex-basis:116px}
-  #page-dashboard .profile-card .profile-avatar-ring{width:108px;height:108px}
-  #page-dashboard .profile-card .profile-list dt{flex-basis:92px}
 }
 @media(max-width:700px){
   #page-dashboard .dashboard-top-layout{grid-template-columns:1fr;padding:10px 14px 0;gap:12px}
   #page-dashboard .dashboard-top-right{min-height:0;height:auto;grid-template-rows:auto auto;align-content:start}
-  #page-dashboard .profile-card{height:auto}
-  #page-dashboard .profile-card .profile-content{display:block;flex:none;min-height:0}
-  #page-dashboard .profile-card .profile-card-body{width:100%;align-items:center;gap:16px}
-  #page-dashboard .profile-card .profile-avatar-column{width:100%;flex:0 0 auto}
-  #page-dashboard .profile-card .profile-avatar-ring{width:112px;height:112px}
-  #page-dashboard .profile-card .profile-avatar-upload-btn{width:max-content;min-width:0}
-  #page-dashboard .profile-card .profile-avatar-upload-status{max-width:100%}
   #page-dashboard .dashboard-guild-banner{min-height:0}
   #page-dashboard .dashboard-guild-banner-frame{aspect-ratio:16/9;min-height:0}
   #page-dashboard .dashboard-top-right{gap:10px}
@@ -8311,152 +8252,119 @@ body.gallery-lightbox-open{overflow:hidden}
 }
 
 
-/* Dashboard profile refinement: spacious avatar column and high-contrast account details.
-   Keep the outer profile card dimensions and dashboard grid unchanged. */
-#page-dashboard .profile-card .profile-content{
-  padding:20px 20px 20px 28px;
-}
+/* Dashboard account profile — full-height portrait panel and compact identity header.
+   The card shell and dashboard grid retain their existing dimensions. */
 #page-dashboard .profile-card .profile-card-body{
-  gap:30px;
+  display:grid;grid-template-columns:minmax(0,.96fr) minmax(0,1.04fr);
+  align-items:stretch;width:100%;height:100%;min-height:0;gap:0;
 }
 #page-dashboard .profile-card .profile-avatar-column{
-  width:158px;
-  flex:0 0 158px;
-  gap:12px;
+  position:relative;display:flex;min-width:0;min-height:220px;width:auto;flex:none;
+  align-items:stretch;justify-content:stretch;overflow:hidden;background:#10090c;
 }
-#page-dashboard .profile-card .profile-avatar-ring{
-  width:148px;
-  height:148px;
-  border:2px solid #ed4058;
-  box-shadow:0 0 22px rgba(237,64,88,.28);
+#page-dashboard .profile-card .profile-avatar-trigger{
+  position:relative;display:block;width:100%;height:100%;min-height:220px;padding:0;
+  overflow:hidden;border:0;border-radius:0;background:#10090c;color:#fff;cursor:pointer;text-align:center;
 }
-#page-dashboard .profile-card .profile-avatar-upload-btn{
-  width:100%;
-  min-height:44px;
-  border:1px solid #e43b54;
-  border-radius:9px;
-  background:linear-gradient(135deg,#d72d45,#9f172e);
-  color:#fff;
-  font-size:16px;
-  font-weight:650;
-  box-shadow:0 5px 16px rgba(190,25,48,.2);
-  transition:background .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease;
+#page-dashboard .profile-card .profile-avatar-trigger img{
+  position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;
+  object-position:center;border:0;border-radius:0;transition:transform .35s ease;
 }
-#page-dashboard .profile-card .profile-avatar-upload-btn:hover{
-  border-color:#ff7182;
-  background:linear-gradient(135deg,#ef4059,#bd2039);
-  color:#fff;
-  box-shadow:0 7px 20px rgba(220,35,60,.3);
-  transform:translateY(-1px);
+#page-dashboard .profile-card .profile-avatar-overlay{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:9px;padding:16px;background:rgba(5,5,7,.58);color:#fff;opacity:0;transition:opacity .2s ease;
 }
-#page-dashboard .profile-card .profile-avatar-upload-btn:focus-visible{
-  outline:2px solid #ff8b99;
-  outline-offset:3px;
-}
+#page-dashboard .profile-card .profile-avatar-camera{width:38px;height:38px;color:#fff}
+#page-dashboard .profile-card .profile-avatar-overlay>span{font-size:16px;font-weight:650;line-height:1.4}
+#page-dashboard .profile-card .profile-avatar-trigger:hover .profile-avatar-overlay,
+#page-dashboard .profile-card .profile-avatar-trigger:focus-visible .profile-avatar-overlay{opacity:1}
+#page-dashboard .profile-card .profile-avatar-trigger:hover img{transform:scale(1.035)}
+#page-dashboard .profile-card .profile-avatar-trigger:focus-visible{outline:2px solid #ff7183;outline-offset:-4px}
+#page-dashboard .profile-card .profile-avatar-trigger:disabled{cursor:progress}
+#page-dashboard .profile-card .profile-avatar-trigger[aria-busy="true"] .profile-avatar-overlay{opacity:1}
 #page-dashboard .profile-card .profile-avatar-upload-status{
-  max-width:158px;
-  color:#f0e8ea;
-  font-size:15px;
-  line-height:1.45;
+  position:absolute;right:10px;bottom:10px;left:10px;z-index:2;max-width:none;margin:0;padding:6px 9px;
+  border:1px solid rgba(255,255,255,.12);border-radius:7px;background:rgba(8,8,10,.72);
+  color:#f4e9ec;font-size:15px;line-height:1.4;text-align:center;pointer-events:none;backdrop-filter:blur(8px);
+}
+#page-dashboard .profile-card .profile-meta{
+  display:flex;flex-direction:column;justify-content:center;min-width:0;padding:22px 24px;
+  background:linear-gradient(145deg,#151014 0%,#0d0b0e 100%);
+}
+#page-dashboard .profile-card .profile-identity-row{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px;min-width:0;
 }
 #page-dashboard .profile-card .profile-name{
-  align-items:center;
-  gap:10px;
+  display:flex;align-items:center;min-width:0;gap:9px;flex-wrap:wrap;
 }
-#page-dashboard .profile-card .profile-name > strong{
-  color:#ff626f;
-  font-size:25px;
-  font-weight:750;
-  line-height:1.25;
+#page-dashboard .profile-card .profile-name>strong{
+  min-width:0;color:#ff626f;font-size:25px;font-weight:750;line-height:1.3;overflow-wrap:anywhere;
   text-shadow:0 0 14px rgba(255,75,95,.16);
 }
-#page-dashboard .profile-card .profile-name > .icon{
-  color:#ff7885;
+#page-dashboard .profile-card .profile-name>.icon{flex:none;color:#ff7885}
+#page-dashboard .profile-card .profile-identity-row>.role-badge{
+  flex:none;margin:0;padding:7px 13px;border:1px solid #ff7183;border-radius:999px;
+  background:linear-gradient(135deg,#650b18 0%,#a80f25 48%,#d51e37 100%);
+  color:#fff;font-size:15px;font-weight:700;line-height:1.35;white-space:nowrap;
+  box-shadow:0 4px 14px rgba(190,25,48,.2);
 }
-#page-dashboard .profile-card .role-badge{
-  color:#fff;
-}
-#page-dashboard .profile-card .profile-list{
-  margin-top:16px;
-  gap:12px;
-}
-#page-dashboard .profile-card .profile-list > div{
-  align-items:center;
-  gap:12px;
-  font-size:18px;
-  line-height:1.4;
+#page-dashboard .profile-card .profile-identity-row>.role-badge .icon{color:#ffb0ba;font-size:16px}
+#page-dashboard .profile-card .profile-list{display:grid;gap:11px;margin:18px 0 0}
+#page-dashboard .profile-card .profile-list>div{
+  display:flex;align-items:center;gap:10px;min-width:0;font-size:16px;line-height:1.45;
 }
 #page-dashboard .profile-card .profile-list dt{
-  flex:0 0 120px;
-  width:120px;
-  color:#fff;
-  font-size:17px;
-  font-weight:650;
+  flex:0 0 112px;width:112px;color:#c8b8bd;font-size:15px;font-weight:650;
 }
 #page-dashboard .profile-card .profile-list dd{
-  color:#fff;
-  font-size:18px;
-  font-weight:500;
+  display:flex;align-items:center;gap:8px;min-width:0;margin:0;color:#fff;font-size:16px;
+  font-weight:500;overflow-wrap:anywhere;
 }
-#page-dashboard .profile-card .profile-list dd .icon{
-  color:#9da8ff;
-}
+#page-dashboard .profile-card .profile-list dd .icon{color:#9da8ff}
 #page-dashboard .profile-card .profile-game-uid .copy-own-game-uid{
-  border-color:rgba(237,64,88,.55);
-  background:rgba(190,25,48,.16);
-  color:#fff;
-  font-size:15px;
+  flex:none;padding:5px 9px;border-color:rgba(237,64,88,.55);background:rgba(190,25,48,.16);
+  color:#fff;font-size:15px;white-space:nowrap;
 }
-@media(max-width:980px){
-  #page-dashboard .profile-card .profile-content{
-    padding:18px 16px 18px 20px;
-  }
-  #page-dashboard .profile-card .profile-card-body{gap:20px}
-  #page-dashboard .profile-card .profile-avatar-column{
-    width:138px;
-    flex-basis:138px;
-  }
-  #page-dashboard .profile-card .profile-avatar-ring{
-    width:128px;
-    height:128px;
-  }
-  #page-dashboard .profile-card .profile-avatar-upload-status{max-width:138px}
-  #page-dashboard .profile-card .profile-list{gap:10px}
-  #page-dashboard .profile-card .profile-list > div{font-size:17px}
-  #page-dashboard .profile-card .profile-list dt{
-    flex-basis:108px;
-    width:108px;
-    font-size:16px;
-  }
-  #page-dashboard .profile-card .profile-list dd{font-size:17px}
+@media(max-width:1100px) and (min-width:701px){
+  #page-dashboard .profile-card .profile-card-body{grid-template-columns:minmax(0,.82fr) minmax(0,1.18fr)}
+  #page-dashboard .profile-card .profile-meta{padding:18px}
+  #page-dashboard .profile-card .profile-identity-row{gap:8px}
+  #page-dashboard .profile-card .profile-name>strong{font-size:21px}
+  #page-dashboard .profile-card .profile-identity-row>.role-badge{padding:6px 9px}
+  #page-dashboard .profile-card .profile-list{gap:9px;margin-top:14px}
+  #page-dashboard .profile-card .profile-list dt{flex-basis:100px;width:100px}
+  #page-dashboard .profile-card .profile-list>div,
+  #page-dashboard .profile-card .profile-list dd{font-size:15px}
 }
 @media(max-width:700px){
-  #page-dashboard .profile-card .profile-content{padding:20px 18px}
-  #page-dashboard .profile-card .profile-card-body{gap:20px}
+  #page-dashboard .profile-card{height:auto}
+  #page-dashboard .profile-card .profile-content{display:block;flex:none;min-height:0;overflow:visible}
+  #page-dashboard .profile-card .profile-card-body{
+    display:grid;grid-template-columns:minmax(0,1fr);width:100%;height:auto;
+  }
   #page-dashboard .profile-card .profile-avatar-column{
-    width:100%;
-    flex:0 0 auto;
+    min-height:0;width:100%;height:auto;aspect-ratio:16/9;
   }
-  #page-dashboard .profile-card .profile-avatar-ring{
-    width:132px;
-    height:132px;
+  #page-dashboard .profile-card .profile-avatar-trigger{min-height:0;height:100%}
+  #page-dashboard .profile-card .profile-avatar-overlay{
+    opacity:1;inset:auto 12px 48px auto;width:42px;height:42px;padding:8px;
+    border:1px solid rgba(255,255,255,.2);border-radius:50%;background:rgba(8,8,10,.72);
   }
-  #page-dashboard .profile-card .profile-avatar-upload-btn{
-    width:max-content;
-    min-width:180px;
+  #page-dashboard .profile-card .profile-avatar-overlay>span{display:none}
+  #page-dashboard .profile-card .profile-avatar-camera{width:24px;height:24px}
+  #page-dashboard .profile-card .profile-avatar-upload-status{
+    right:10px;bottom:9px;left:10px;font-size:15px;
   }
-  #page-dashboard .profile-card .profile-avatar-upload-status{max-width:100%}
-  #page-dashboard .profile-card .profile-name{justify-content:flex-start}
-  #page-dashboard .profile-card .profile-name > strong{font-size:23px}
-  #page-dashboard .profile-card .profile-list{gap:10px}
-  #page-dashboard .profile-card .profile-list > div{
-    align-items:flex-start;
-    font-size:16px;
-  }
-  #page-dashboard .profile-card .profile-list dt{
-    flex:0 0 112px;
-    width:112px;
-    font-size:15px;
-  }
-  #page-dashboard .profile-card .profile-list dd{font-size:16px}
+  #page-dashboard .profile-card .profile-meta{padding:20px 18px}
+  #page-dashboard .profile-card .profile-identity-row{align-items:center}
+  #page-dashboard .profile-card .profile-name>strong{font-size:22px}
+  #page-dashboard .profile-card .profile-identity-row>.role-badge{font-size:15px}
+  #page-dashboard .profile-card .profile-list{gap:10px;margin-top:15px}
+  #page-dashboard .profile-card .profile-list>div{align-items:flex-start;font-size:15px}
+  #page-dashboard .profile-card .profile-list dt{flex:0 0 108px;width:108px;font-size:15px}
+  #page-dashboard .profile-card .profile-list dd{font-size:15px}
+}
+@media(max-width:420px){
+  #page-dashboard .profile-card .profile-identity-row{align-items:flex-start;flex-direction:column}
+  #page-dashboard .profile-card .profile-identity-row>.role-badge{align-self:flex-start}
 }
