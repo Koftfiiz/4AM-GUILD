@@ -348,3 +348,81 @@ end;
 $function$;
 
 grant execute on function public.save_portfolio_version(uuid,boolean,text,text,text,text,jsonb) to authenticated;
+
+-- Transactional save for a complete new version. Storage uploads happen first;
+-- this function commits the folder/version/image rows atomically.
+create or replace function public.save_portfolio_version(
+  target_portfolio_id uuid,
+  create_new_folder boolean,
+  folder_title text,
+  folder_description text,
+  folder_game_class text,
+  folder_portfolio_type text,
+  image_payload jsonb
+)
+returns jsonb
+language plpgsql
+set search_path = ''
+as $function$
+declare
+  saved_portfolio_id uuid;
+  saved_version_id uuid;
+begin
+  if (select auth.uid()) is null then raise exception 'Authentication required'; end if;
+  if not public.is_guild_member() then raise exception 'Active guild membership required'; end if;
+  if target_portfolio_id is null
+     or nullif(btrim(folder_title), '') is null
+     or nullif(btrim(folder_game_class), '') is null
+     or folder_portfolio_type not in ('pvp','pve','cultivation_skills')
+     or jsonb_typeof(coalesce(image_payload, '[]'::jsonb)) <> 'array'
+     or jsonb_array_length(coalesce(image_payload, '[]'::jsonb)) < 1 then
+    raise exception 'Invalid portfolio version payload';
+  end if;
+
+  if create_new_folder then
+    insert into public.portfolios
+      (id, member_id, title, description, game_class, portfolio_type)
+    values
+      (target_portfolio_id, (select auth.uid()), btrim(folder_title),
+       folder_description, btrim(folder_game_class), folder_portfolio_type)
+    returning id into saved_portfolio_id;
+  else
+    update public.portfolios
+    set title = btrim(folder_title),
+        description = folder_description,
+        game_class = btrim(folder_game_class),
+        portfolio_type = folder_portfolio_type
+    where id = target_portfolio_id
+      and member_id = (select auth.uid())
+    returning id into saved_portfolio_id;
+    if not found then raise exception 'Portfolio folder not found or not owned by current member'; end if;
+  end if;
+
+  insert into public.portfolio_versions (portfolio_id, title, game_class, portfolio_type)
+  values (saved_portfolio_id, btrim(folder_title), btrim(folder_game_class), folder_portfolio_type)
+  returning id into saved_version_id;
+
+  insert into public.portfolio_version_images
+    (version_id, image_url, cover_image_url, crop_settings, image_type,
+     section_key, caption, sort_order)
+  select
+    saved_version_id, item.image_url, item.cover_image_url, item.crop_settings,
+    coalesce(nullif(item.image_type, ''), 'other'),
+    coalesce(nullif(item.section_key, ''), 'stats'),
+    item.caption, coalesce(item.sort_order, 0)
+  from jsonb_to_recordset(coalesce(image_payload, '[]'::jsonb)) as item(
+    image_url text,
+    cover_image_url text,
+    crop_settings jsonb,
+    image_type text,
+    section_key text,
+    caption text,
+    sort_order integer
+  );
+
+  if not found then raise exception 'At least one version image is required'; end if;
+  return jsonb_build_object('success', true, 'portfolio_id', saved_portfolio_id, 'version_id', saved_version_id);
+end;
+$function$;
+
+grant execute on function public.save_portfolio_version(uuid,boolean,text,text,text,text,jsonb) to authenticated;
