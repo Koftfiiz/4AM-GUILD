@@ -3751,7 +3751,7 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
   const portfolioType = snapshot.portfolio_type || portfolio.portfolio_type;
   const title = portfolioType === "cultivation_skills"
     ? "คัมภีร์หู่เฉียน / ขั้นสกิล"
-    : (/^build\\b/i.test(snapshot.title || "") ? snapshot.title : "Build " + (snapshot.title || "Untitled"));
+    : (/^build\b/i.test(snapshot.title || "") ? snapshot.title : "Build " + (snapshot.title || "Untitled"));
   const sectionLabels = {
     cultivation:"คัมภีร์หู่เฉียน",
     hero_skills:"ขั้นสกิลเหล่าผู้กล้า / อัลติ",
@@ -4258,7 +4258,7 @@ async function deletePortfolio(portfolioId) {
     const versions = portfolio.portfolio_versions || [];
     const allImages = versions.flatMap(version => version.portfolio_images || []);
     const paths = [...new Set(allImages.flatMap(image => [image.image_url, image.cover_image_url])
-      .filter(path => path && !/^https?:\\/\\//i.test(path)))];
+      .filter(path => path && !/^https?:\/\//i.test(path)))];
 
     const { error } = await supabaseClient.from("portfolios").delete().eq("id", portfolioId);
     if (error) throw error;
