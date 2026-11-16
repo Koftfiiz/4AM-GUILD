@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=brand-typography-20261115-r1">
+  <link rel="stylesheet" href="style.css?v=dashboard-refresh-20261116-r1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
@@ -40,7 +40,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=brand-typography-20261115-r1";
+          app.src = "app.js?v=dashboard-refresh-20261116-r1";
           app.onload = () => {
             const tracker = document.createElement("script");
             tracker.src = "portfolio-tracker.js?v=portfolio-typography-20261115-r1";
@@ -387,7 +387,7 @@
                 </button>
               </header>
 
-              <div class="announcement-body" id="dashboard-announcement" data-go-page="guild-news" role="link" tabindex="0" aria-label="เปิดอ่านข่าวสารกิลด์">
+              <div class="announcement-body" id="dashboard-announcement" role="region" aria-label="ประกาศจากกิลด์">
                 <div class="announcement-text" id="dashboard-announcement-content">
                   <p class="muted">กำลังโหลดข่าวสารล่าสุด...</p>
                 </div>
@@ -397,9 +397,6 @@
             <article class="dash-card profile-card">
               <header class="dash-card-head">
                 <h3><svg class="icon"><use href="#i-user"/></svg> ข้อมูลบัญชีของคุณ</h3>
-                <button type="button" class="head-btn" data-go-page="settings">
-                  <svg class="icon"><use href="#i-edit"/></svg> แก้ไข
-                </button>
               </header>
 
               <div id="dashboard-profile" class="profile-content">
@@ -407,6 +404,31 @@
               </div>
             </article>
           </div>
+
+          <!-- GUILD GALLERY -->
+          <section class="dash-card dashboard-gallery-card" id="dashboard-gallery">
+            <header class="dash-card-head">
+              <div class="dashboard-gallery-heading">
+                <h3><svg class="icon"><use href="#i-image"/></svg> Guild Gallery</h3>
+                <span>ช่วงเวลาที่น่าจดจำของ 4AM GUILD</span>
+              </div>
+              <div class="gallery-admin-tools hidden" id="dashboard-gallery-admin">
+                <input type="file" id="dashboard-gallery-upload-input" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+                <button type="button" class="btn btn-primary gallery-upload-trigger" id="dashboard-gallery-upload-trigger">＋ เพิ่มรูปภาพ</button>
+              </div>
+            </header>
+            <div class="gallery-carousel" aria-label="แกลเลอรีภาพกิลด์">
+              <button type="button" class="gallery-nav gallery-nav-prev" id="dashboard-gallery-prev" aria-label="ภาพก่อนหน้า">‹</button>
+              <div class="gallery-track" id="dashboard-gallery-track">
+                <div class="gallery-empty-state"><span>✦</span><strong>กำลังโหลดภาพจากกิลด์...</strong><p>ภาพความทรงจำของ 4AM GUILD</p></div>
+              </div>
+              <button type="button" class="gallery-nav gallery-nav-next" id="dashboard-gallery-next" aria-label="ภาพถัดไป">›</button>
+            </div>
+            <div class="gallery-footer">
+              <span id="dashboard-gallery-count">GUILD MOMENTS</span>
+              <p id="dashboard-gallery-status" aria-live="polite">ภาพที่คัดเลือกโดยฝ่ายบริหาร</p>
+            </div>
+          </section>
 
           <!-- QUICK MENU -->
           <section class="dash-card quick-panel">
