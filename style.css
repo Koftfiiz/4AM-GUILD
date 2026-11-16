@@ -8100,3 +8100,30 @@ body.member-card-edit-open{overflow-x:hidden;overflow-y:auto}
 .dashboard-gallery-lightbox-close:hover,.dashboard-gallery-lightbox-nav:hover{border-color:#ff536b;background:rgba(150,20,43,.82)}
 body.gallery-lightbox-open{overflow:hidden}
 @media(max-width:700px){.dashboard-gallery-lightbox{padding:14px}.dashboard-gallery-lightbox-figure{width:100%}.dashboard-gallery-lightbox-figure img{max-height:78vh}.dashboard-gallery-lightbox-close{top:12px;right:12px;width:40px;height:40px}.dashboard-gallery-lightbox-nav{width:38px;height:48px;font-size:32px}.dashboard-gallery-lightbox-nav.prev{left:8px}.dashboard-gallery-lightbox-nav.next{right:8px}}
+
+
+/* Guild Gallery interaction reliability: native mouse drag + image click */
+#page-dashboard .gallery-track{
+  cursor:grab;
+  -webkit-user-select:none;
+  user-select:none;
+}
+#page-dashboard .gallery-track.is-dragging{
+  cursor:grabbing!important;
+  scroll-behavior:auto!important;
+  scroll-snap-type:none!important;
+}
+#page-dashboard .gallery-track.is-dragging .gallery-image-button{
+  cursor:grabbing!important;
+}
+#page-dashboard .gallery-image-button,
+#page-dashboard .gallery-image-button img{
+  -webkit-user-select:none;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+#page-dashboard .gallery-image-button{
+  cursor:zoom-in;
+  pointer-events:auto;
+  touch-action:pan-x pan-y;
+}
