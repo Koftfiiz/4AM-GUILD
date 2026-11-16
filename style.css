@@ -8598,3 +8598,13 @@ body.gallery-lightbox-open{overflow:hidden}
   #page-dashboard .gallery-delete-active{min-height:36px;padding:7px 10px;gap:6px;white-space:nowrap}
 }
 @media(max-width:380px){#page-dashboard .gallery-footer{flex-wrap:wrap}#page-dashboard .gallery-delete-active{margin-left:auto}}
+
+
+/* Cover Flow controls stay in the footer, never on top of the photos */
+#page-dashboard .gallery-slide-actions{display:none!important}
+#page-dashboard .gallery-footer-actions{display:flex;flex:0 0 auto;align-items:center;gap:8px}
+#page-dashboard .gallery-reorder-active{display:grid;place-items:center;width:38px;height:38px;padding:0;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(255,255,255,.035);color:#e8dce0;font-size:20px;cursor:pointer}
+#page-dashboard .gallery-reorder-active:hover:not(:disabled){border-color:rgba(236,63,87,.5);background:rgba(130,22,42,.16);color:#ff9aaa}
+#page-dashboard .gallery-reorder-active:disabled{opacity:.28;cursor:not-allowed}
+#page-dashboard .gallery-reorder-active.hidden{display:none!important}
+@media(max-width:380px){#page-dashboard .gallery-footer-actions{gap:6px}#page-dashboard .gallery-reorder-active{width:34px;height:36px}}
