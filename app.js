@@ -1411,6 +1411,15 @@ function updateDashboardGalleryActiveState() {
   const prev=$("dashboard-gallery-prev"),next=$("dashboard-gallery-next");
   if(prev)prev.disabled=dashboardGalleryImages.length<2;
   if(next)next.disabled=dashboardGalleryImages.length<2;
+  const activeItem=dashboardGalleryImages[dashboardGalleryActiveIndex];
+  const activeCaption=$("dashboard-gallery-active-caption");
+  if(activeCaption)activeCaption.textContent=activeItem?.caption?.trim()||"ภาพความทรงจำของ 4AM GUILD";
+  const deleteButton=$("dashboard-gallery-delete-active");
+  if(deleteButton){
+    deleteButton.dataset.galleryDelete=activeItem?.id||"";
+    deleteButton.disabled=!activeItem;
+    deleteButton.classList.toggle("hidden",!activeItem||!canManageDashboardGallery());
+  }
 }
 
 function centerDashboardGallerySlide(index, behavior = "smooth") {
@@ -1490,10 +1499,9 @@ function renderDashboardGallery() {
         <img src="${escapeHTML(item.signedUrl)}" alt="ภาพความทรงจำ 4AM GUILD ลำดับที่ ${index+1}" loading="lazy">
       </button>
       ${canManageDashboardGallery()? `
-        <div class="gallery-slide-actions">
+        <div class="gallery-slide-actions" aria-label="จัดลำดับภาพ">
           <button type="button" data-gallery-move="-1" data-gallery-id="${item.id}" aria-label="เลื่อนภาพไปทางซ้าย" ${index===0?"disabled":""}>←</button>
           <button type="button" data-gallery-move="1" data-gallery-id="${item.id}" aria-label="เลื่อนภาพไปทางขวา" ${index===dashboardGalleryImages.length-1?"disabled":""}>→</button>
-          <button type="button" data-gallery-delete="${item.id}" aria-label="ลบภาพนี้">ลบภาพ</button>
         </div>`:""}
     </article>`).join("");
   updateDashboardGalleryActiveState();
@@ -8667,6 +8675,11 @@ function registerAppEventListeners() {
   },true);
   $("dashboard-gallery-prev")?.addEventListener("click",()=>goToGallerySlide(dashboardGalleryActiveIndex-1));
   $("dashboard-gallery-next")?.addEventListener("click",()=>goToGallerySlide(dashboardGalleryActiveIndex+1));
+  $("dashboard-gallery-delete-active")?.addEventListener("click",event=>{
+    const button=event.currentTarget;
+    const imageId=button?.dataset?.galleryDelete;
+    if(imageId)void deleteDashboardGalleryImage(imageId);
+  });
 
   $("user-chip")?.addEventListener("click", (event) => {
     event.stopPropagation();
