@@ -1642,6 +1642,7 @@ async function renderDashboardProfile() {
       <div class="profile-avatar-column">
         <button type="button" class="profile-avatar-trigger" aria-label="เปลี่ยนรูปโปรไฟล์" title="คลิกเพื่อเปลี่ยนรูปโปรไฟล์">
           <img src="${escapeHTML(avatar)}" alt="รูปโปรไฟล์"
+            style="object-position:${Number(currentMember.avatar_crop_settings?.x ?? 50)}% ${Number(currentMember.avatar_crop_settings?.y ?? 50)}%;transform:scale(${Math.min(2.5,Math.max(1,Number(currentMember.avatar_crop_settings?.zoom ?? 1)))})"
             onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'">
           <span class="profile-avatar-overlay" aria-hidden="true">
             <svg class="profile-avatar-camera" viewBox="0 0 24 24" fill="none">
@@ -2913,7 +2914,7 @@ async function handleDiscordCallback() {
 // MEMBER AVATAR STORAGE
 // ==========================================
 
-async function uploadMemberAvatar(file) {
+async function uploadMemberAvatar(file, cropSettings = { x: 50, y: 50, zoom: 1 }) {
   if (!currentUser || !currentMember) {
     throw new Error("ไม่พบข้อมูลสมาชิกของบัญชีนี้");
   }
@@ -2926,10 +2927,16 @@ async function uploadMemberAvatar(file) {
     throw new Error("รูปภาพต้องมีขนาดไม่เกิน 5 MB");
   }
 
+  const settings = {
+    x: Math.min(100, Math.max(0, Number(cropSettings.x) || 50)),
+    y: Math.min(100, Math.max(0, Number(cropSettings.y) || 50)),
+    zoom: Math.min(2.5, Math.max(1, Number(cropSettings.zoom) || 1))
+  };
   const extension = file.name.split(".").pop().toLowerCase();
   const safeExtension = /^[a-z0-9]+$/.test(extension) ? extension : "jpg";
   const path = `${currentUser.id}/avatar-${Date.now()}.${safeExtension}`;
 
+  // Upload the untouched original file. Crop values are stored separately as display settings.
   const { error: uploadError } = await supabaseClient.storage
     .from(AVATAR_BUCKET)
     .upload(path, file, {
@@ -2942,16 +2949,95 @@ async function uploadMemberAvatar(file) {
 
   const { error: updateError } = await supabaseClient
     .from("guild_members")
-    .update({ avatar_url: path })
+    .update({ avatar_url: path, avatar_crop_settings: settings })
     .eq("user_id", currentUser.id);
 
-  if (updateError) throw updateError;
+  if (updateError) {
+    await supabaseClient.storage.from(AVATAR_BUCKET).remove([path]);
+    throw updateError;
+  }
 
   currentMember.avatar_url = path;
+  currentMember.avatar_crop_settings = settings;
   updateUserChip();
-  renderDashboardProfile();
+  await renderDashboardProfile();
 
   return path;
+}
+
+function closeAvatarCropEditor() {
+  const modal = document.getElementById("avatar-crop-editor");
+  if (!modal) return;
+  if (modal.dataset.previewUrl) URL.revokeObjectURL(modal.dataset.previewUrl);
+  modal.remove();
+}
+
+function openAvatarCropEditor(file) {
+  closeAvatarCropEditor();
+  const previewUrl = URL.createObjectURL(file);
+  const modal = document.createElement("div");
+  modal.id = "avatar-crop-editor";
+  modal.className = "avatar-crop-editor";
+  modal.dataset.previewUrl = previewUrl;
+  modal.innerHTML = `
+    <div class="avatar-crop-dialog" role="dialog" aria-modal="true" aria-labelledby="avatar-crop-title">
+      <div class="avatar-crop-heading">
+        <div><span class="avatar-crop-eyebrow">PROFILE IMAGE</span><h2 id="avatar-crop-title">ปรับตำแหน่งรูปโปรไฟล์</h2></div>
+        <button type="button" class="avatar-crop-close" data-avatar-crop-cancel aria-label="ปิด">×</button>
+      </div>
+      <p class="avatar-crop-description">เลื่อนตำแหน่งและซูมให้ได้ภาพที่ต้องการ โดยระบบจะเก็บไฟล์ต้นฉบับไว้เหมือนเดิม</p>
+      <div class="avatar-crop-preview"><img src="${previewUrl}" alt="ตัวอย่างรูปโปรไฟล์"></div>
+      <div class="avatar-crop-controls">
+        <label>ซูม <output data-crop-value="zoom">100%</output><input type="range" min="100" max="250" step="1" value="100" data-crop-control="zoom"></label>
+        <label>เลื่อนแนวนอน <output data-crop-value="x">50%</output><input type="range" min="0" max="100" step="1" value="50" data-crop-control="x"></label>
+        <label>เลื่อนแนวตั้ง <output data-crop-value="y">50%</output><input type="range" min="0" max="100" step="1" value="50" data-crop-control="y"></label>
+      </div>
+      <div class="avatar-crop-actions">
+        <button type="button" class="avatar-crop-reset" data-avatar-crop-reset>รีเซ็ต</button>
+        <span class="avatar-crop-error" aria-live="polite"></span>
+        <button type="button" class="avatar-crop-save" data-avatar-crop-save>ยืนยันและบันทึกรูป</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+
+  const image = modal.querySelector(".avatar-crop-preview img");
+  const controls = [...modal.querySelectorAll("[data-crop-control]")];
+  const values = { x: 50, y: 50, zoom: 100 };
+  const updatePreview = () => {
+    image.style.objectPosition = `${values.x}% ${values.y}%`;
+    image.style.transform = `scale(${values.zoom / 100})`;
+    modal.querySelector('[data-crop-value="x"]').textContent = `${values.x}%`;
+    modal.querySelector('[data-crop-value="y"]').textContent = `${values.y}%`;
+    modal.querySelector('[data-crop-value="zoom"]').textContent = `${values.zoom}%`;
+  };
+  controls.forEach(control => control.addEventListener("input", () => {
+    values[control.dataset.cropControl] = Number(control.value);
+    updatePreview();
+  }));
+  modal.querySelector("[data-avatar-crop-reset]").addEventListener("click", () => {
+    Object.assign(values, { x: 50, y: 50, zoom: 100 });
+    controls.forEach(control => { control.value = values[control.dataset.cropControl]; });
+    updatePreview();
+  });
+  modal.querySelectorAll("[data-avatar-crop-cancel]").forEach(button => button.addEventListener("click", closeAvatarCropEditor));
+  modal.addEventListener("click", event => { if (event.target === modal) closeAvatarCropEditor(); });
+  modal.querySelector("[data-avatar-crop-save]").addEventListener("click", async event => {
+    const button = event.currentTarget;
+    const errorBox = modal.querySelector(".avatar-crop-error");
+    button.disabled = true;
+    button.textContent = "กำลังบันทึก...";
+    errorBox.textContent = "";
+    try {
+      await uploadMemberAvatar(file, { x: values.x, y: values.y, zoom: values.zoom / 100 });
+      closeAvatarCropEditor();
+    } catch (error) {
+      console.error("Profile avatar upload error:", error);
+      errorBox.textContent = error.message || "บันทึกรูปไม่สำเร็จ";
+      button.disabled = false;
+      button.textContent = "ลองบันทึกอีกครั้ง";
+    }
+  });
+  modal.querySelector(".avatar-crop-close").focus();
 }
 
 // ==========================================
@@ -8544,41 +8630,18 @@ function registerAppEventListeners() {
     if (button) await copyGameUID(button);
   });
 
-  $("dashboard-profile")?.addEventListener("change", async (event) => {
+  $("dashboard-profile")?.addEventListener("change", (event) => {
     if (event.target.id !== "profile-avatar-input") return;
-
     const input = event.target;
     const file = input.files?.[0];
     if (!file) return;
-
-    const avatarTrigger = $("dashboard-profile")?.querySelector(".profile-avatar-trigger");
-    const status = $("dashboard-profile")?.querySelector(".profile-avatar-upload-status");
-
     try {
-      if (!file.type.startsWith("image/")) {
-        throw new Error("กรุณาเลือกไฟล์รูปภาพ");
-      }
-      if (file.size > 5 * 1024 * 1024) {
-        throw new Error("รูปภาพต้องมีขนาดไม่เกิน 5 MB");
-      }
-
-      if (avatarTrigger) {
-        avatarTrigger.disabled = true;
-        avatarTrigger.setAttribute("aria-busy", "true");
-      }
-      if (status) status.textContent = "กำลังบันทึกรูปโปรไฟล์...";
-
-      // อัปโหลดไฟล์ต้นฉบับโดยตรง เพื่อรักษาสัดส่วน รายละเอียด และทรงผมในภาพ
-      await uploadMemberAvatar(file);
+      if (!file.type.startsWith("image/")) throw new Error("กรุณาเลือกไฟล์รูปภาพ");
+      if (file.size > 5 * 1024 * 1024) throw new Error("รูปภาพต้องมีขนาดไม่เกิน 5 MB");
+      openAvatarCropEditor(file);
     } catch (error) {
-      console.error("Profile avatar upload error:", error);
-      if (status) status.textContent = error.message || "อัปโหลดรูปไม่สำเร็จ";
-      alert(error.message || "อัปโหลดรูปโปรไฟล์ไม่สำเร็จ กรุณาลองอีกครั้ง");
+      alert(error.message || "ไม่สามารถเปิดรูปภาพได้");
     } finally {
-      if (avatarTrigger) {
-        avatarTrigger.disabled = false;
-        avatarTrigger.removeAttribute("aria-busy");
-      }
       input.value = "";
     }
   });
