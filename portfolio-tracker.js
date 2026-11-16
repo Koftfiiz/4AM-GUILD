@@ -1,6 +1,8 @@
 (() => {
   let rounds = [];
   let portfolios = [];
+  let requests = [];
+  let editPermissions = [];
   let selectedRoundId = "";
   let busy = false;
 
@@ -32,6 +34,9 @@
     }
     return date;
   };
+  const isRoundEditable = (round) => round && round.status === "open" &&
+    Date.now() >= new Date(round.starts_at).getTime() &&
+    Date.now() <= new Date(round.closes_at).getTime();
 
   function ensureRoot() {
     const page = $("page-portfolio");
@@ -83,6 +88,10 @@
       ".portfolio-tracker-own-card strong{display:block;font-size:20px;color:#fff}",
       ".portfolio-tracker-own-card span{display:block;margin-top:5px;color:#bbb;font-size:15px}",
       ".portfolio-tracker-note{padding:13px;border-left:3px solid #e8333f;border-radius:7px;background:rgba(232,51,63,.07);color:#ddd;font-size:15px;line-height:1.6}",
+      ".portfolio-tracker-request{display:grid;gap:9px;padding:13px;border:1px solid rgba(232,51,63,.28);border-radius:10px;background:rgba(232,51,63,.055)}",
+      ".portfolio-tracker-request p{margin:0;color:#bbb;font-size:15px;line-height:1.5}",
+      ".portfolio-tracker-request textarea{width:100%;min-height:76px;padding:10px;border:1px solid rgba(232,51,63,.35);border-radius:8px;background:#10090c;color:#fff;font-size:15px}",
+      ".portfolio-tracker-actions{display:flex;gap:8px;flex-wrap:wrap}",
       ".portfolio-tracker-empty{padding:20px;border:1px dashed rgba(255,255,255,.16);border-radius:9px;color:#aaa;text-align:center;font-size:15px}",
       "@media(max-width:760px){.portfolio-tracker-form{grid-template-columns:1fr 1fr}.portfolio-tracker-form label:first-child{grid-column:1/-1}.portfolio-tracker-form button{grid-column:1/-1}.portfolio-tracker-own-grid{grid-template-columns:1fr}.portfolio-tracker-stats{grid-template-columns:1fr 1fr}}"
     ].join("");
@@ -90,17 +99,21 @@
   }
 
   async function loadData() {
-    const [roundResult, portfolioResult] = await Promise.all([
+    const [roundResult, portfolioResult, requestResult, permissionResult] = await Promise.all([
       supabaseClient.from("portfolio_update_rounds").select("*").order("created_at",{ascending:false}),
       supabaseClient.from("portfolios").select(
         "id,member_id,title,game_class,portfolio_type,created_at,updated_at," +
         "portfolio_versions(id,version_number,round_id,patch_label,created_at," +
         "portfolio_version_images(id,section_key,image_url,sort_order))"
-      ).order("created_at",{ascending:false})
+      ).order("created_at",{ascending:false}),
+      supabaseClient.from("portfolio_update_edit_requests").select("*").order("created_at",{ascending:false}),
+      supabaseClient.from("portfolio_update_edit_permissions").select("*").eq("member_id",currentUser.id)
     ]);
-    const failure = [roundResult,portfolioResult].find(result => result.error);
+    const failure = [roundResult,portfolioResult,requestResult,permissionResult].find(result => result.error);
     if (failure) throw failure.error;
     rounds = roundResult.data || [];
+    requests = requestResult.data || [];
+    editPermissions = permissionResult.data || [];
     portfolios = (portfolioResult.data || []).map(portfolio => ({
       ...portfolio,
       portfolio_versions: (portfolio.portfolio_versions || []).map(version => ({
@@ -198,6 +211,14 @@
     const selected = rounds.find(round => round.id === selectedRoundId);
     const stats = selected ? roundStats(selected.id) : null;
     const ownRow = stats?.detail.find(row => row.member.user_id === currentUser?.id);
+    const editable = !!selected && (isRoundEditable(selected) ||
+      editPermissions.some(permission => permission.round_id === selected.id && new Date(permission.expires_at).getTime() > Date.now()));
+    const pendingRequest = selected ? requests.find(request =>
+      request.round_id === selected.id && request.member_id === currentUser?.id && request.status === "pending"
+    ) : null;
+    const ownPermission = selected ? editPermissions.find(permission =>
+      permission.round_id === selected.id && new Date(permission.expires_at).getTime() > Date.now()
+    ) : null;
 
     root.innerHTML =
       (management() ? (
@@ -241,7 +262,17 @@
                 '<td><button class="btn btn-outline btn-sm" type="button" data-pt-member="' + esc(row.member.user_id) + '">ดูรายละเอียด</button></td></tr>'
               ).join("") +
             '</tbody></table></div>' +
-            '<div id="pt-member-detail" class="portfolio-tracker-detail"></div>'
+            '<div id="pt-member-detail" class="portfolio-tracker-detail"></div>' +
+            '<h4 style="margin:22px 0 10px;color:#f08a92">คำขอแก้ไขหลังปิดรอบ</h4>' +
+            '<div class="portfolio-tracker-requests">' +
+              (requests.filter(request => request.round_id === selected.id && request.status === "pending").map(request =>
+                '<div class="portfolio-tracker-request"><strong>' + esc(memberName(request.member_id)) + '</strong><p>' +
+                esc(request.reason) + '</p><div class="portfolio-tracker-actions">' +
+                '<button class="btn btn-primary btn-sm" type="button" data-pt-approve-request="' + esc(request.id) + '">อนุมัติ 24 ชั่วโมง</button>' +
+                '<button class="btn btn-outline btn-sm" type="button" data-pt-reject-request="' + esc(request.id) + '">ปฏิเสธ</button>' +
+                '</div></div>'
+              ).join("") || '<p class="portfolio-tracker-muted">ไม่มีคำขอที่รออนุมัติ</p>') +
+            '</div>'
           ) : "") +
           '<div class="portfolio-tracker-own">' +
             '<h4>ความคืบหน้า Portfolio ของคุณ</h4>' +
@@ -254,9 +285,18 @@
               (ownRow.missing.length ? '<div class="portfolio-tracker-note">รายการที่ยังต้องอัปเดต: ' + ownRow.missing.map(esc).join(" · ") + '</div>' :
                 '<div class="portfolio-tracker-note">แฟ้ม Portfolio ของคุณมีเวอร์ชันในรอบนี้ครบตามรายการที่มีอยู่แล้ว</div>')
             ) : '<div class="portfolio-tracker-empty">ไม่พบข้อมูลสมาชิกที่เข้าสู่ระบบ</div>') +
+            (ownPermission && !isRoundEditable(selected) ? '<div class="portfolio-tracker-note">คุณได้รับอนุญาตให้แก้ไขรอบนี้ถึง ' + esc(dateLabel(ownPermission.expires_at)) + '</div>' : '') +
             '<div><button type="button" class="btn btn-primary" data-pt-open-portfolio="' + esc(currentUser?.id || "") + '">ไปยังแฟ้ม Portfolio เพื่อเพิ่มเวอร์ชัน</button></div>' +
+            (!editable ? (
+              '<div class="portfolio-tracker-request">' +
+                '<strong>รอบนี้ปิดรับการแก้ไขแล้ว</strong>' +
+                '<p class="portfolio-tracker-muted">หากต้องการเพิ่มหรือแก้ไข Build ในรอบนี้ สามารถส่งคำขอให้ฝ่ายบริหารอนุมัติสิทธิ์แก้ไขได้</p>' +
+                (pendingRequest ? '<span class="portfolio-tracker-pill is-partial">ส่งคำขอแล้ว · รออนุมัติ</span>' :
+                  '<form id="pt-edit-request"><textarea name="reason" maxlength="1000" required placeholder="ระบุเหตุผลที่ต้องการแก้ไข..."></textarea><button class="btn btn-outline btn-sm" type="submit">ส่งคำขอแก้ไข</button></form>') +
+              '</div>'
+            ) : '') +
           '</div>' +
-          '<div class="portfolio-tracker-note">หมายเหตุ: การเพิ่ม Version ใหม่ต้องทำจากแฟ้มหลักเดิมในหน้า Portfolio ระบบจะเก็บรูปและข้อมูลเวอร์ชันเก่าไว้ และเชื่อม Version ใหม่กับ Patch ที่เปิดรับอยู่โดยอัตโนมัติ</div>'
+          '<div class="portfolio-tracker-note">หมายเหตุ: การเพิ่ม Version ใหม่ต้องทำจากแฟ้มหลักเดิมในหน้า Portfolio ระบบจะเก็บรูปและข้อมูลเวอร์ชันเก่าไว้ หากรอบปิดแล้ว Version จะเชื่อมกับรอบเดิมได้เมื่อได้รับอนุญาตแก้ไขจากฝ่ายบริหาร</div>'
         ) : '<div class="portfolio-tracker-empty">เลือกหรือสร้างรอบ Patch เพื่อดูสถานะการอัปเดต</div>') +
       '</section>';
 
@@ -279,7 +319,21 @@
     }).join("");
     host.innerHTML = '<div class="portfolio-tracker-detail-item"><strong>' + esc(memberName(memberId)) +
       '</strong><span>' + pill(row.status) + '</span></div>' +
-      (items || '<div class="portfolio-tracker-empty">สมาชิกยังไม่มีแฟ้ม Portfolio</div>');
+      (items || '<div class="portfolio-tracker-empty">สมาชิกยังไม่มีแฟ้ม Portfolio</div>') +
+      '<div class="portfolio-tracker-detail-item"><span class="portfolio-tracker-muted">อนุญาตให้สมาชิกเพิ่ม Version ในรอบนี้ได้ 24 ชั่วโมง</span>' +
+      '<button type="button" class="btn btn-primary btn-sm" data-pt-grant-member="' + esc(memberId) + '">อนุญาตแก้ไข 24 ชั่วโมง</button></div>';
+  }
+
+  async function grantEdit(memberId, roundId, hours = 24) {
+    const expiresAt = new Date(Date.now() + hours * 3600000).toISOString();
+    const {error} = await supabaseClient.from("portfolio_update_edit_permissions").upsert({
+      round_id:roundId,
+      member_id:memberId,
+      granted_by:currentUser.id,
+      expires_at:expiresAt
+    },{onConflict:"round_id,member_id"});
+    if (error) throw error;
+    return expiresAt;
   }
 
   function bindEvents(root) {
@@ -326,6 +380,63 @@
     );
     root.querySelectorAll("[data-pt-open-portfolio]").forEach(button =>
       button.addEventListener("click",() => openMemberPortfolio(button.dataset.ptOpenPortfolio))
+    );
+
+    root.querySelector("#pt-edit-request")?.addEventListener("submit",async event => {
+      event.preventDefault();
+      if (!selectedRoundId || !currentUser) return;
+      const reason = String(new FormData(event.currentTarget).get("reason") || "").trim();
+      if (!reason) { alert("กรุณาระบุเหตุผลที่ต้องการแก้ไข"); return; }
+      const {error} = await supabaseClient.from("portfolio_update_edit_requests").insert({
+        round_id:selectedRoundId,
+        member_id:currentUser.id,
+        reason
+      });
+      if (error) { alert("ส่งคำขอแก้ไขไม่สำเร็จ: " + error.message); return; }
+      await loadData();
+      render();
+    });
+
+    root.querySelectorAll("[data-pt-grant-member]").forEach(button =>
+      button.addEventListener("click",async() => {
+        if (!management()) return;
+        try {
+          const expiresAt = await grantEdit(button.dataset.ptGrantMember,selectedRoundId,24);
+          alert("อนุญาตแก้ไขถึง " + dateLabel(expiresAt));
+          await loadData();
+          render();
+        } catch(error) { alert("อนุญาตแก้ไขไม่สำเร็จ: " + error.message); }
+      })
+    );
+
+    root.querySelectorAll("[data-pt-approve-request]").forEach(button =>
+      button.addEventListener("click",async() => {
+        if (!management()) return;
+        const request = requests.find(item => item.id === button.dataset.ptApproveRequest);
+        if (!request) return;
+        try {
+          const expiresAt = await grantEdit(request.member_id,request.round_id,24);
+          const {error} = await supabaseClient.from("portfolio_update_edit_requests")
+            .update({status:"approved",reviewed_by:currentUser.id,reviewed_at:new Date().toISOString()})
+            .eq("id",request.id);
+          if (error) throw error;
+          alert("อนุมัติคำขอแล้ว · แก้ไขได้ถึง " + dateLabel(expiresAt));
+          await loadData();
+          render();
+        } catch(error) { alert("อนุมัติคำขอไม่สำเร็จ: " + error.message); }
+      })
+    );
+
+    root.querySelectorAll("[data-pt-reject-request]").forEach(button =>
+      button.addEventListener("click",async() => {
+        if (!management()) return;
+        const {error} = await supabaseClient.from("portfolio_update_edit_requests")
+          .update({status:"rejected",reviewed_by:currentUser.id,reviewed_at:new Date().toISOString()})
+          .eq("id",button.dataset.ptRejectRequest);
+        if (error) { alert("ปฏิเสธคำขอไม่สำเร็จ: " + error.message); return; }
+        await loadData();
+        render();
+      })
     );
   }
 
