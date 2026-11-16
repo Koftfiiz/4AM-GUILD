@@ -1652,6 +1652,9 @@ async function renderDashboardProfile() {
           </span>
         </button>
         <input type="file" id="profile-avatar-input" accept="image/*" hidden>
+        <small class="profile-avatar-upload-status" aria-live="polite">
+          คลิกที่รูปเพื่อเปลี่ยน · รองรับไฟล์ไม่เกิน 5 MB
+        </small>
       </div>
 
       <div class="profile-meta">
@@ -1697,9 +1700,6 @@ async function renderDashboardProfile() {
             </dd>
           </div>
         </dl>
-        <small class="profile-avatar-upload-status" aria-live="polite">
-          คลิกที่รูปเพื่อเปลี่ยน · รองรับไฟล์ไม่เกิน 5 MB
-        </small>
       </div>
     </div>
   `;
