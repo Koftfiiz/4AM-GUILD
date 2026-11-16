@@ -8133,12 +8133,15 @@ body.gallery-lightbox-open{overflow:hidden}
 }
 #page-dashboard .dashboard-top-right{
   display:grid;
-  /* The profile card fills the exact remaining height beside the GIF. */
+  /* Let the GIF define the dashboard row height; prevent the profile's
+     intrinsic content from enlarging the right column beyond that height. */
   grid-template-rows:auto minmax(0,1fr);
   align-content:stretch;
   gap:14px;
   min-width:0;
-  min-height:100%;
+  min-height:0;
+  height:100%;
+  overflow:hidden;
 }
 #page-dashboard .stats-grid{
   display:grid;
