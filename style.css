@@ -7882,3 +7882,118 @@ body.member-card-edit-open{overflow-x:hidden;overflow-y:auto}
   #page-dashboard .gallery-slide-caption{align-items:flex-start;flex-direction:column;gap:4px}
   #page-dashboard .gallery-footer{align-items:flex-start;flex-direction:column;gap:5px}
 }
+
+
+/* Guild Gallery — floating landscape Cover Flow (no enclosing card/frame) */
+#page-dashboard .dashboard-gallery-card{
+  position:relative;display:block;margin:28px 0 18px;padding:0;
+  border:0!important;border-radius:0!important;background:transparent!important;
+  box-shadow:none!important;overflow:visible;
+}
+#page-dashboard .dashboard-gallery-head{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  min-height:0;margin:0 10px 4px;padding:0 4px 0 8px;
+  border:0!important;background:transparent!important;
+}
+#page-dashboard .dashboard-gallery-heading h3{
+  margin:0;color:#f4edef;font-size:18px;font-weight:750;letter-spacing:.02em;
+}
+#page-dashboard .dashboard-gallery-heading h3 .icon{color:#ed435d}
+#page-dashboard .dashboard-gallery-heading span{display:block;margin-top:3px;color:#92878c;font-size:15px}
+#page-dashboard .gallery-carousel{
+  position:relative;display:block;width:100%;padding:12px 0 8px;overflow:hidden;
+}
+#page-dashboard .gallery-track{
+  display:flex;align-items:center;justify-content:flex-start;gap:clamp(12px,2vw,24px);
+  width:100%;min-width:0;overflow-x:auto;overflow-y:hidden;
+  padding:18px max(52px,calc((100% - min(68vw,680px))/2));
+  scroll-snap-type:x mandatory;scroll-behavior:smooth;
+  scrollbar-width:none;-ms-overflow-style:none;
+}
+#page-dashboard .gallery-track::-webkit-scrollbar{display:none}
+#page-dashboard .gallery-slide{
+  position:relative;flex:0 0 min(68vw,680px);width:min(68vw,680px);max-width:680px;
+  min-width:0;overflow:hidden;scroll-snap-align:center;
+  border:0!important;border-radius:12px;background:transparent!important;
+  opacity:.48;transform:scale(.86) perspective(1100px) rotateY(8deg);
+  box-shadow:none!important;
+  transition:opacity .38s ease,transform .38s cubic-bezier(.2,.75,.25,1);
+}
+#page-dashboard .gallery-slide.is-active{
+  opacity:1;transform:scale(1) perspective(1100px) rotateY(0);
+  border:0!important;box-shadow:0 18px 42px rgba(0,0,0,.34)!important;
+}
+#page-dashboard .gallery-image-button{
+  display:block;position:relative;width:100%;height:auto;aspect-ratio:16/9;
+  padding:0;border:0!important;border-radius:12px;background:#0d0b0e;overflow:hidden;
+  cursor:zoom-in;
+}
+#page-dashboard .gallery-image-button img{
+  display:block;width:100%;height:100%;aspect-ratio:16/9;object-fit:cover;
+  object-position:center center;border:0;border-radius:12px;
+  transition:transform .5s ease;
+}
+#page-dashboard .gallery-slide.is-active .gallery-image-button img{transform:scale(1.005)}
+#page-dashboard .gallery-slide-caption{
+  position:absolute;left:0;right:0;bottom:0;z-index:2;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:12px;
+  min-height:68px;padding:28px 18px 13px;
+  background:linear-gradient(180deg,transparent,rgba(0,0,0,.68));
+  pointer-events:none;
+}
+#page-dashboard .gallery-slide-caption strong{
+  color:#fff;font-size:15px;font-weight:650;text-shadow:0 2px 8px #000;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#page-dashboard .gallery-slide-caption span{
+  color:rgba(255,255,255,.78);font-size:15px;text-shadow:0 2px 8px #000;
+}
+#page-dashboard .gallery-slide-actions{
+  position:absolute;z-index:3;top:12px;right:12px;display:flex;gap:6px;padding:0;
+}
+#page-dashboard .gallery-slide-actions button{
+  min-width:34px;height:32px;padding:0 9px;border:1px solid rgba(255,255,255,.22);
+  border-radius:7px;background:rgba(8,8,10,.72);backdrop-filter:blur(8px);
+  color:#fff;font-size:15px;
+}
+#page-dashboard .gallery-slide-actions button:last-child{margin-left:0;color:#ff8292}
+#page-dashboard .gallery-nav{
+  position:absolute;z-index:5;top:50%;transform:translateY(-50%);
+  display:grid;place-items:center;width:40px;height:40px;flex:0 0 40px;
+  border:0!important;border-radius:50%;background:rgba(8,8,11,.5)!important;
+  color:#fff;font-size:28px;line-height:1;backdrop-filter:blur(8px);
+  box-shadow:0 4px 16px rgba(0,0,0,.24);cursor:pointer;
+}
+#page-dashboard .gallery-nav-prev{left:12px}
+#page-dashboard .gallery-nav-next{right:12px}
+#page-dashboard .gallery-nav:disabled{opacity:.22}
+#page-dashboard .gallery-footer{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:0 14px;padding:2px 4px 0;border:0;background:transparent;
+}
+#page-dashboard .gallery-footer span{color:#e85a70;font-size:15px;font-weight:750;letter-spacing:.1em}
+#page-dashboard .gallery-footer p{margin:0;color:#82777c;font-size:15px}
+#page-dashboard .gallery-empty-state{
+  border:0!important;border-radius:0!important;background:transparent!important;
+  min-height:210px;
+}
+@media(max-width:700px){
+  #page-dashboard .dashboard-gallery-card{margin:22px 0 14px}
+  #page-dashboard .dashboard-gallery-head{align-items:center;margin:0 4px 2px;padding:0}
+  #page-dashboard .dashboard-gallery-heading h3{font-size:17px}
+  #page-dashboard .dashboard-gallery-heading span{font-size:15px}
+  #page-dashboard .gallery-upload-trigger{min-height:36px;padding:6px 10px}
+  #page-dashboard .gallery-carousel{padding:8px 0 6px}
+  #page-dashboard .gallery-track{
+    gap:10px;padding:14px max(42px,calc((100% - (100vw - 76px))/2));
+  }
+  #page-dashboard .gallery-slide{flex-basis:calc(100vw - 76px);width:calc(100vw - 76px);opacity:.4;transform:scale(.88) perspective(800px) rotateY(5deg)}
+  #page-dashboard .gallery-slide.is-active{opacity:1;transform:scale(1) perspective(800px) rotateY(0)}
+  #page-dashboard .gallery-image-button,#page-dashboard .gallery-image-button img{height:auto;aspect-ratio:16/9}
+  #page-dashboard .gallery-slide-caption{min-height:56px;padding:22px 12px 10px}
+  #page-dashboard .gallery-slide-caption strong,#page-dashboard .gallery-slide-caption span{font-size:15px}
+  #page-dashboard .gallery-nav{width:32px;height:32px;font-size:23px}
+  #page-dashboard .gallery-nav-prev{left:5px}
+  #page-dashboard .gallery-nav-next{right:5px}
+  #page-dashboard .gallery-footer{align-items:flex-start;flex-direction:column;gap:4px;margin:0 4px}
+}
