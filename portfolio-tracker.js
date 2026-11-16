@@ -322,6 +322,24 @@
       (items || '<div class="portfolio-tracker-empty">สมาชิกยังไม่มีแฟ้ม Portfolio</div>') +
       '<div class="portfolio-tracker-detail-item"><span class="portfolio-tracker-muted">อนุญาตให้สมาชิกเพิ่ม Version ในรอบนี้ได้ 24 ชั่วโมง</span>' +
       '<button type="button" class="btn btn-primary btn-sm" data-pt-grant-member="' + esc(memberId) + '">อนุญาตแก้ไข 24 ชั่วโมง</button></div>';
+
+    host.querySelectorAll("[data-pt-open-portfolio]").forEach(button =>
+      button.addEventListener("click",() => openMemberPortfolio(button.dataset.ptOpenPortfolio))
+    );
+    host.querySelector("[data-pt-grant-member]")?.addEventListener("click",async event => {
+      if (!management()) return;
+      const button = event.currentTarget;
+      button.disabled = true;
+      try {
+        const expiresAt = await grantEdit(memberId,roundId,24);
+        alert("อนุญาตแก้ไขถึง " + dateLabel(expiresAt));
+        await loadData();
+        render();
+      } catch(error) {
+        button.disabled = false;
+        alert("อนุญาตแก้ไขไม่สำเร็จ: " + error.message);
+      }
+    });
   }
 
   async function grantEdit(memberId, roundId, hours = 24) {
