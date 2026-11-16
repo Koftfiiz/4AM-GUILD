@@ -8168,7 +8168,7 @@ body.gallery-lightbox-open{overflow:hidden}
 }
 #page-dashboard .profile-card .profile-avatar-column{
   display:grid;
-  grid-template-rows:minmax(0,1fr) auto;
+  grid-template-rows:minmax(0,1fr);
   align-items:stretch;
   align-self:stretch;
   width:100%;
@@ -8249,22 +8249,6 @@ body.gallery-lightbox-open{overflow:hidden}
 #page-dashboard .profile-card .profile-avatar-trigger[aria-busy="true"] .profile-avatar-overlay{
   opacity:1;
 }
-#page-dashboard .profile-card .profile-avatar-upload-status{
-  display:block;
-  flex:none;
-  width:100%;
-  max-width:none;
-  min-width:0;
-  margin:0;
-  padding:8px 10px;
-  border:1px solid rgba(237,64,88,.2);
-  border-radius:9px;
-  background:rgba(190,25,48,.08);
-  color:#cbbdc1;
-  font-size:15px;
-  line-height:1.4;
-  text-align:center;
-}
 #page-dashboard .profile-card .profile-meta{
   display:flex;
   flex-direction:column;
@@ -8278,6 +8262,20 @@ body.gallery-lightbox-open{overflow:hidden}
   overflow-x:hidden;
   overscroll-behavior:contain;
   background:linear-gradient(145deg,#151014 0%,#0d0b0e 100%);
+}
+#page-dashboard .profile-card .profile-avatar-upload-status{
+  display:block;
+  width:fit-content;
+  max-width:100%;
+  margin:12px 0 0;
+  padding:7px 11px;
+  border:1px solid rgba(237,64,88,.2);
+  border-radius:8px;
+  background:rgba(190,25,48,.08);
+  color:#cbbdc1;
+  font-size:15px;
+  line-height:1.45;
+  text-align:left;
 }
 #page-dashboard .profile-card .profile-identity-row{
   display:flex;
@@ -8450,9 +8448,6 @@ body.gallery-lightbox-open{overflow:hidden}
   #page-dashboard .profile-card .profile-avatar-camera{
     width:24px;
     height:24px;
-  }
-  #page-dashboard .profile-card .profile-avatar-upload-status{
-    margin:10px 0 0;
   }
   #page-dashboard .profile-card .profile-meta{
     width:100%;
