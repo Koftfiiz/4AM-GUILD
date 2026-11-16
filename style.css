@@ -8127,3 +8127,47 @@ body.gallery-lightbox-open{overflow:hidden}
   pointer-events:auto;
   touch-action:pan-x pan-y;
 }
+
+
+/* Dashboard — animated 4AM Guild identity banner */
+#page-dashboard .dashboard-guild-banner{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  width:100%;
+  padding:18px var(--page-pad) 8px;
+}
+#page-dashboard .dashboard-guild-banner-frame{
+  position:relative;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  width:min(100%,640px);
+  aspect-ratio:16/9;
+  overflow:hidden;
+  border:1px solid rgba(235,55,79,.42);
+  border-radius:16px;
+  background:radial-gradient(ellipse at center,rgba(76,18,30,.28),#08080b 72%);
+  box-shadow:0 12px 34px rgba(0,0,0,.34),0 0 24px rgba(220,35,62,.14),inset 0 0 22px rgba(210,35,60,.08);
+}
+#page-dashboard .dashboard-guild-banner-frame::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  box-shadow:inset 0 0 24px rgba(0,0,0,.24);
+}
+#page-dashboard .dashboard-guild-banner-frame img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center;
+  user-select:none;
+  -webkit-user-drag:none;
+}
+@media(max-width:700px){
+  #page-dashboard .dashboard-guild-banner{padding:12px 14px 4px}
+  #page-dashboard .dashboard-guild-banner-frame{width:100%;border-radius:12px}
+}
