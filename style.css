@@ -8636,3 +8636,67 @@ body.gallery-lightbox-open{overflow:hidden}
 #members-list .member-directory-card .member-game-uid .member-uid-value {
   line-height: 1.45 !important;
 }
+
+/* Portfolio version history: compact, accessible, black-and-red UI. */
+.portfolio-version-history {
+  display: grid;
+  gap: 12px;
+  margin: 22px 0;
+  padding: 16px;
+  border: 1px solid rgba(232, 51, 63, .24);
+  border-radius: 12px;
+  background: rgba(15, 10, 12, .72);
+}
+.portfolio-version-history > h3 {
+  margin: 0;
+  color: #f4f4f5;
+  font-size: 17px;
+}
+.portfolio-version-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 9px;
+}
+.portfolio-version-item {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 9px;
+  background: rgba(255, 255, 255, .025);
+  color: #e5e5e7;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, transform .18s ease;
+}
+.portfolio-version-item:hover {
+  border-color: rgba(232, 51, 63, .6);
+  background: rgba(232, 51, 63, .07);
+}
+.portfolio-version-item.is-active {
+  border-color: #e8333f;
+  background: rgba(232, 51, 63, .13);
+  box-shadow: inset 3px 0 0 #e8333f;
+}
+.portfolio-version-item strong,
+.portfolio-version-item span,
+.portfolio-version-item small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.45;
+}
+.portfolio-version-item strong { color: #fff; font-weight: 800; }
+.portfolio-version-item span { color: #f0b5ba; }
+.portfolio-version-item small { color: #a9a9af; }
+.portfolio-version-current-label {
+  margin: 10px 0 0;
+  color: #f0b5ba;
+  font-size: 15px;
+  line-height: 1.5;
+}
+@media (max-width: 600px) {
+  .portfolio-version-history { padding: 13px; }
+  .portfolio-version-list { grid-template-columns: 1fr; }
+}
