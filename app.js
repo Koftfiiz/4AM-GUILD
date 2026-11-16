@@ -1955,7 +1955,24 @@ function renderGuildPositionOptions(selected = "") {
   ).join("");
 }
 
+// The member-card pencil can open this editor directly from the Directory page,
+// before the management page has initialized its dynamic select options.
+function ensureManualMemberFormOptions() {
+  const form = $("manual-member-form");
+  const classSelect = form?.elements?.game_class;
+  const positionSelect = form?.elements?.guild_position;
+  if (classSelect && classSelect.options.length <= 1) {
+    classSelect.innerHTML = '<option value="">เลือก Class อาชีพ</option>' + CLASS_DATA.map(item =>
+      `<option value="${escapeHTML(item.name)}">${escapeHTML(item.name)}</option>`
+    ).join("");
+  }
+  if (positionSelect && positionSelect.options.length <= 1) {
+    positionSelect.innerHTML = renderGuildPositionOptions();
+  }
+}
+
 function openManualMemberModal() {
+  ensureManualMemberFormOptions();
   const modal = $("manual-member-modal");
   if (!modal) return;
   // Reparent this overlay so it is not trapped inside a hidden page section.
@@ -2083,15 +2100,7 @@ async function loadManualMemberManagement() {
   if (!discordResult.error) discordAccountDirectory = new Map((discordResult.data || []).map(row => [String(row.user_id), row]));
   else console.info("Discord health details limited by current RLS permissions:", discordResult.error.message);
 
-  const form = $("manual-member-form");
-  const classSelect = form?.elements?.game_class;
-  const positionSelect = form?.elements?.guild_position;
-  if (classSelect && classSelect.options.length <= 1) {
-    classSelect.innerHTML = '<option value="">เลือก Class อาชีพ</option>' + CLASS_DATA.map(item =>
-      `<option value="${escapeHTML(item.name)}">${escapeHTML(item.name)}</option>`
-    ).join("");
-  }
-  if (positionSelect && positionSelect.options.length <= 1) positionSelect.innerHTML = renderGuildPositionOptions();
+  ensureManualMemberFormOptions();
   const positionFilter = $("manual-member-position-filter");
   if (positionFilter && positionFilter.options.length <= 1) positionFilter.innerHTML = '<option value="all">ทุกตำแหน่ง</option>' + GUILD_POSITIONS.map(p => '<option value="' + escapeHTML(p) + '">' + escapeHTML(p) + '</option>').join("");
   renderMemberAdminSavedFilters();
@@ -2489,6 +2498,7 @@ async function saveManualGuildMember(form) {
 function fillManualMemberForm(member, type = "manual") {
   const form = $("manual-member-form");
   if (!member || !form || (type === "account" && !canManageMemberProfiles())) return;
+  ensureManualMemberFormOptions();
   $("manual-member-id").value = type === "manual" ? member.id : "";
   $("manual-member-type").value = type;
   $("manual-member-user-id").value = type === "account" ? member.user_id : "";
