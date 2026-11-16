@@ -1282,6 +1282,11 @@ let dashboardAnnouncementIndex = 0;
 let dashboardGalleryImages = [];
 let dashboardGalleryActiveIndex = 0;
 let dashboardGalleryBusy = false;
+let dashboardGalleryAutoplayTimer = null;
+let dashboardGalleryScrollFrame = null;
+let dashboardGalleryPointerStart = null;
+let dashboardGalleryDragMoved = false;
+let dashboardGallerySuppressClick = false;
 
 function renderDashboardAnnouncementCarousel() {
   const container = $("dashboard-announcement-content");
@@ -1386,8 +1391,8 @@ function renderDashboardGallery() {
   dashboardGalleryActiveIndex=Math.max(0,Math.min(dashboardGalleryActiveIndex,dashboardGalleryImages.length-1));
   track.innerHTML=dashboardGalleryImages.map((item,index)=>`
     <article class="gallery-slide ${index===dashboardGalleryActiveIndex?"is-active":""}" data-gallery-slide="${index}" aria-current="${index===dashboardGalleryActiveIndex?"true":"false"}">
-      <button type="button" class="gallery-image-button" data-gallery-focus="${index}" aria-label="ดูภาพ ${escapeHTML(item.caption||"Guild moment")}">
-        <img src="${escapeHTML(item.signedUrl)}" alt="${escapeHTML(item.caption||"ภาพความทรงจำ 4AM GUILD")}" loading="lazy">
+      <button type="button" class="gallery-image-button" data-gallery-focus="${index}" aria-label="ดูภาพความทรงจำ ${index+1}">
+        <img src="${escapeHTML(item.signedUrl)}" alt="ภาพความทรงจำ 4AM GUILD ลำดับที่ ${index+1}" loading="lazy">
       </button>
       ${canManageDashboardGallery()? `
         <div class="gallery-slide-actions">
@@ -1399,6 +1404,7 @@ function renderDashboardGallery() {
   updateDashboardGalleryActiveState();
   const active=track.querySelector(`[data-gallery-slide="${dashboardGalleryActiveIndex}"]`);
   if(active)active.scrollIntoView({behavior:"auto",block:"nearest",inline:"center"});
+  startDashboardGalleryAutoplay();
 }
 
 async function loadDashboardGallery() {
@@ -8386,23 +8392,70 @@ function registerAppEventListeners() {
   $("dashboard-gallery-upload-input")?.addEventListener("change",event=>{
     void uploadDashboardGalleryFiles(event.target.files||[]);
   });
-  $("dashboard-gallery-prev")?.addEventListener("click",()=>{
+  const galleryTrack=$("dashboard-gallery-track");
+  const galleryRoot=$("dashboard-gallery");
+  const goToGallerySlide=(index,behavior="smooth")=>{
     if(!dashboardGalleryImages.length)return;
-    dashboardGalleryActiveIndex=(dashboardGalleryActiveIndex-1+dashboardGalleryImages.length)%dashboardGalleryImages.length;
-    renderDashboardGallery();
+    dashboardGalleryActiveIndex=(index+dashboardGalleryImages.length)%dashboardGalleryImages.length;
+    updateDashboardGalleryActiveState();
+    galleryTrack?.querySelector(`[data-gallery-slide="${dashboardGalleryActiveIndex}"]`)?.scrollIntoView({behavior,block:"nearest",inline:"center"});
+    startDashboardGalleryAutoplay();
+  };
+  function pauseDashboardGalleryAutoplay(){
+    if(dashboardGalleryAutoplayTimer){clearInterval(dashboardGalleryAutoplayTimer);dashboardGalleryAutoplayTimer=null;}
+  }
+  function startDashboardGalleryAutoplay(){
+    pauseDashboardGalleryAutoplay();
+    if(!galleryRoot||dashboardGalleryImages.length<2||document.hidden||galleryRoot.matches(":hover"))return;
+    dashboardGalleryAutoplayTimer=setInterval(()=>{
+      if(!galleryRoot.matches(":hover")&&!document.hidden)goToGallerySlide(dashboardGalleryActiveIndex+1);
+    },4800);
+  }
+  galleryRoot?.addEventListener("mouseenter",pauseDashboardGalleryAutoplay);
+  galleryRoot?.addEventListener("mouseleave",startDashboardGalleryAutoplay);
+  document.addEventListener("visibilitychange",()=>document.hidden?pauseDashboardGalleryAutoplay():startDashboardGalleryAutoplay());
+  galleryTrack?.addEventListener("scroll",()=>{
+    if(dashboardGalleryScrollFrame)cancelAnimationFrame(dashboardGalleryScrollFrame);
+    dashboardGalleryScrollFrame=requestAnimationFrame(()=>{
+      const slides=[...galleryTrack.querySelectorAll(".gallery-slide")];
+      if(!slides.length)return;
+      const center=galleryTrack.getBoundingClientRect().left+galleryTrack.clientWidth/2;
+      let nearest=0,distance=Infinity;
+      slides.forEach((slide,index)=>{const rect=slide.getBoundingClientRect();const d=Math.abs(rect.left+rect.width/2-center);if(d<distance){distance=d;nearest=index;}});
+      if(nearest!==dashboardGalleryActiveIndex){dashboardGalleryActiveIndex=nearest;updateDashboardGalleryActiveState();}
+    });
+  },{passive:true});
+  galleryTrack?.addEventListener("pointerdown",event=>{
+    if(event.pointerType!=="mouse"||event.button!==0||event.target.closest("button"))return;
+    dashboardGalleryPointerStart={x:event.clientX,scrollLeft:galleryTrack.scrollLeft};
+    dashboardGalleryDragMoved=false;galleryTrack.classList.add("is-dragging");
+    galleryTrack.setPointerCapture?.(event.pointerId);pauseDashboardGalleryAutoplay();
   });
-  $("dashboard-gallery-next")?.addEventListener("click",()=>{
-    if(!dashboardGalleryImages.length)return;
-    dashboardGalleryActiveIndex=(dashboardGalleryActiveIndex+1)%dashboardGalleryImages.length;
-    renderDashboardGallery();
+  galleryTrack?.addEventListener("pointermove",event=>{
+    if(!dashboardGalleryPointerStart)return;
+    const delta=event.clientX-dashboardGalleryPointerStart.x;
+    if(Math.abs(delta)>5)dashboardGalleryDragMoved=true;
+    if(dashboardGalleryDragMoved){galleryTrack.scrollLeft=dashboardGalleryPointerStart.scrollLeft-delta;event.preventDefault();}
   });
+  const finishGalleryPointer=()=>{
+    if(!dashboardGalleryPointerStart)return;
+    dashboardGalleryPointerStart=null;galleryTrack?.classList.remove("is-dragging");
+    if(dashboardGalleryDragMoved){dashboardGallerySuppressClick=true;setTimeout(()=>{dashboardGallerySuppressClick=false;},0);}
+    startDashboardGalleryAutoplay();
+  };
+  galleryTrack?.addEventListener("pointerup",finishGalleryPointer);
+  galleryTrack?.addEventListener("pointercancel",finishGalleryPointer);
+  galleryTrack?.addEventListener("lostpointercapture",finishGalleryPointer);
+  galleryTrack?.addEventListener("click",event=>{if(dashboardGallerySuppressClick){event.preventDefault();event.stopImmediatePropagation();}},true);
+  $("dashboard-gallery-prev")?.addEventListener("click",()=>goToGallerySlide(dashboardGalleryActiveIndex-1));
+  $("dashboard-gallery-next")?.addEventListener("click",()=>goToGallerySlide(dashboardGalleryActiveIndex+1));
   $("dashboard-gallery-track")?.addEventListener("click",event=>{
     const focus=event.target.closest("[data-gallery-focus]");
     const move=event.target.closest("[data-gallery-move]");
     const remove=event.target.closest("[data-gallery-delete]");
     if(move){void moveDashboardGalleryImage(move.dataset.galleryId,Number(move.dataset.galleryMove));return;}
     if(remove){void deleteDashboardGalleryImage(remove.dataset.galleryDelete);return;}
-    if(focus){dashboardGalleryActiveIndex=Number(focus.dataset.galleryFocus);renderDashboardGallery();}
+    if(focus){goToGallerySlide(Number(focus.dataset.galleryFocus));}
   });
 
   $("user-chip")?.addEventListener("click", (event) => {
