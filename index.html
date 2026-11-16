@@ -449,8 +449,15 @@
               <button type="button" class="gallery-nav gallery-nav-next" id="dashboard-gallery-next" aria-label="ภาพถัดไป">›</button>
             </div>
             <div class="gallery-footer">
-              <span id="dashboard-gallery-count">GUILD MOMENTS</span>
-              <p id="dashboard-gallery-status" aria-live="polite">ภาพที่คัดเลือกโดยฝ่ายบริหาร</p>
+              <div class="gallery-footer-info">
+                <span id="dashboard-gallery-count">GUILD MOMENTS</span>
+                <p id="dashboard-gallery-active-caption">ภาพความทรงจำของ 4AM GUILD</p>
+                <p id="dashboard-gallery-status" aria-live="polite">ภาพที่คัดเลือกโดยฝ่ายบริหาร</p>
+              </div>
+              <button type="button" class="gallery-delete-active hidden" id="dashboard-gallery-delete-active" aria-label="ลบภาพที่เลือก" disabled>
+                <svg class="icon" aria-hidden="true"><use href="#i-trash-2"/></svg>
+                <span>ลบภาพนี้</span>
+              </button>
             </div>
           </section>
 
