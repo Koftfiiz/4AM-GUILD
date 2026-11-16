@@ -8175,3 +8175,146 @@ body.gallery-lightbox-open{overflow:hidden}
   #page-dashboard .dashboard-guild-banner-frame{width:min(100%,520px);border-radius:8px}
   #page-dashboard .dash-body{padding-top:4px}
 }
+
+
+/* =====================================================
+   DASHBOARD — NEW TWO-COLUMN HERO + CONTENT LAYOUT
+   ===================================================== */
+#page-dashboard .dashboard-top-layout{
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);
+  gap:20px;
+  align-items:stretch;
+  padding:16px var(--page-pad) 0;
+}
+#page-dashboard .dashboard-guild-banner{
+  display:flex;
+  align-items:stretch;
+  justify-content:stretch;
+  min-width:0;
+  width:100%;
+  padding:0;
+}
+#page-dashboard .dashboard-guild-banner-frame{
+  width:100%;
+  max-width:none;
+  max-height:none;
+  min-height:100%;
+  aspect-ratio:auto;
+  border:1px solid rgba(220,45,65,.38);
+  border-radius:10px;
+  background:radial-gradient(ellipse at center,rgba(80,10,20,.22),#070405 78%);
+  box-shadow:0 0 22px rgba(190,25,40,.16),inset 0 0 24px rgba(0,0,0,.45);
+}
+#page-dashboard .dashboard-guild-banner-frame img{
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+#page-dashboard .dashboard-top-right{
+  display:grid;
+  grid-template-rows:auto minmax(0,1fr);
+  gap:14px;
+  min-width:0;
+}
+#page-dashboard .stats-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+}
+#page-dashboard .stat-card{
+  min-width:0;
+  min-height:126px;
+  grid-template-columns:1fr;
+  justify-items:center;
+  align-content:center;
+  gap:5px;
+  padding:12px 8px;
+  border-color:rgba(220,45,65,.42);
+  background:linear-gradient(155deg,rgba(30,9,14,.96),rgba(8,5,6,.98));
+  box-shadow:0 0 14px rgba(190,25,40,.16),inset 0 0 20px rgba(120,10,22,.12);
+}
+#page-dashboard .stat-icon{
+  width:34px;
+  height:34px;
+  font-size:29px;
+  color:#ff6577;
+  filter:drop-shadow(0 0 8px rgba(230,45,65,.28));
+}
+#page-dashboard .stat-icon.is-discord{color:#8790ff;filter:drop-shadow(0 0 8px rgba(101,114,242,.3))}
+#page-dashboard .stat-info{min-width:0;width:100%;text-align:center}
+#page-dashboard .stat-label{font-size:15px;line-height:1.35;min-height:38px;display:flex;align-items:center;justify-content:center;color:#f1e9e9}
+#page-dashboard .stat-value strong{font-size:clamp(25px,2.5vw,36px);color:#ff6577;text-shadow:0 0 12px rgba(230,45,65,.22)}
+#page-dashboard .stat-value em{font-size:15px;color:#ffd5da}
+#page-dashboard .stat-value.is-text strong{font-size:clamp(17px,1.7vw,23px);overflow-wrap:anywhere}
+#page-dashboard .stat-info small{font-size:15px;color:#bdaeb1}
+#page-dashboard .profile-card{
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+}
+#page-dashboard .profile-card .profile-content{flex:1;min-height:0}
+#page-dashboard .dash-body{padding-top:16px}
+#page-dashboard .dashboard-columns{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:18px;
+  margin-top:0;
+  align-items:stretch;
+}
+#page-dashboard .announcement-card,
+#page-dashboard .dashboard-activities-card{min-width:0;min-height:270px}
+#page-dashboard .announcement-body,
+#page-dashboard .dashboard-activities-body{min-height:205px}
+#page-dashboard .dashboard-activities-body{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  margin:8px;
+  padding:8px 16px;
+  border-radius:6px;
+  background:#090506;
+}
+#page-dashboard .dashboard-activity-item{
+  display:grid;
+  grid-template-columns:minmax(110px,.72fr) minmax(0,1.6fr);
+  gap:12px;
+  padding:13px 4px;
+  border-bottom:1px solid rgba(210,45,62,.2);
+}
+#page-dashboard .dashboard-activity-item:last-child{border-bottom:0}
+#page-dashboard .dashboard-activity-date{
+  display:flex;
+  align-items:flex-start;
+  gap:7px;
+  color:#ff8b98;
+  font-size:15px;
+  line-height:1.45;
+}
+#page-dashboard .dashboard-activity-date span{font-size:18px;color:#ff6577}
+#page-dashboard .dashboard-activity-date strong{font-weight:600}
+#page-dashboard .dashboard-activity-copy{min-width:0}
+#page-dashboard .dashboard-activity-copy h4{margin:0 0 5px;color:#fff0f1;font-size:16px;font-weight:600;line-height:1.4}
+#page-dashboard .dashboard-activity-copy p{margin:0;color:#bcaeb0;font-size:15px;line-height:1.5}
+#page-dashboard .dashboard-gallery-card{margin-top:20px}
+@media(max-width:980px){
+  #page-dashboard .dashboard-top-layout{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+  #page-dashboard .stat-card{min-height:118px}
+  #page-dashboard .stat-label{font-size:15px}
+}
+@media(max-width:700px){
+  #page-dashboard .dashboard-top-layout{grid-template-columns:1fr;padding:10px 14px 0;gap:12px}
+  #page-dashboard .dashboard-guild-banner{min-height:0}
+  #page-dashboard .dashboard-guild-banner-frame{aspect-ratio:16/9;min-height:0}
+  #page-dashboard .dashboard-top-right{gap:10px}
+  #page-dashboard .stats-grid{gap:7px}
+  #page-dashboard .stat-card{min-height:112px;padding:9px 5px}
+  #page-dashboard .stat-label{font-size:15px;min-height:42px}
+  #page-dashboard .stat-value strong{font-size:25px}
+  #page-dashboard .stat-value.is-text strong{font-size:16px}
+  #page-dashboard .dash-body{padding:12px 14px 20px}
+  #page-dashboard .dashboard-columns{grid-template-columns:1fr;gap:12px}
+  #page-dashboard .announcement-card,#page-dashboard .dashboard-activities-card{min-height:0}
+  #page-dashboard .dashboard-activity-item{grid-template-columns:1fr;gap:4px}
+  #page-dashboard .dashboard-gallery-card{margin-top:16px}
+}
