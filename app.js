@@ -2913,52 +2913,6 @@ async function handleDiscordCallback() {
 // MEMBER AVATAR STORAGE
 // ==========================================
 
-// ปรับขนาดรูปโปรไฟล์อัตโนมัติโดยรักษาสัดส่วนต้นฉบับ ไม่เปิดหน้าต่างครอป
-function optimizeAvatarImage(file) {
-  return new Promise((resolve, reject) => {
-    const objectUrl = URL.createObjectURL(file);
-    const image = new Image();
-
-    image.onload = () => {
-      try {
-        const maxDimension = 1600;
-        const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
-        const width = Math.max(1, Math.round(image.naturalWidth * scale));
-        const height = Math.max(1, Math.round(image.naturalHeight * scale));
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-
-        const context = canvas.getContext("2d");
-        if (!context) throw new Error("ไม่สามารถประมวลผลรูปภาพได้");
-
-        context.drawImage(image, 0, 0, width, height);
-        canvas.toBlob((blob) => {
-          URL.revokeObjectURL(objectUrl);
-          if (!blob) {
-            reject(new Error("ไม่สามารถประมวลผลรูปภาพได้"));
-            return;
-          }
-          resolve(new File([blob], "profile-avatar.jpg", {
-            type: "image/jpeg",
-            lastModified: Date.now()
-          }));
-        }, "image/jpeg", 0.9);
-      } catch (error) {
-        URL.revokeObjectURL(objectUrl);
-        reject(error);
-      }
-    };
-
-    image.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error("ไม่สามารถอ่านไฟล์รูปภาพนี้ได้"));
-    };
-
-    image.src = objectUrl;
-  });
-}
-
 async function uploadMemberAvatar(file) {
   if (!currentUser || !currentMember) {
     throw new Error("ไม่พบข้อมูลสมาชิกของบัญชีนี้");
@@ -8612,10 +8566,10 @@ function registerAppEventListeners() {
         avatarTrigger.disabled = true;
         avatarTrigger.setAttribute("aria-busy", "true");
       }
-      if (status) status.textContent = "กำลังปรับขนาดและบันทึกรูปโปรไฟล์...";
+      if (status) status.textContent = "กำลังบันทึกรูปโปรไฟล์...";
 
-      const optimizedFile = await optimizeAvatarImage(file);
-      await uploadMemberAvatar(optimizedFile);
+      // อัปโหลดไฟล์ต้นฉบับโดยตรง เพื่อรักษาสัดส่วน รายละเอียด และทรงผมในภาพ
+      await uploadMemberAvatar(file);
     } catch (error) {
       console.error("Profile avatar upload error:", error);
       if (status) status.textContent = error.message || "อัปโหลดรูปไม่สำเร็จ";
