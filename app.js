@@ -1642,7 +1642,6 @@ async function renderDashboardProfile() {
       <div class="profile-avatar-column">
         <button type="button" class="profile-avatar-trigger" aria-label="เปลี่ยนรูปโปรไฟล์" title="คลิกเพื่อเปลี่ยนรูปโปรไฟล์">
           <img src="${escapeHTML(avatar)}" alt="รูปโปรไฟล์"
-            style="object-position:${Number(currentMember.avatar_crop_settings?.x ?? 50)}% ${Number(currentMember.avatar_crop_settings?.y ?? 50)}%;transform:scale(${Math.min(2.5,Math.max(1,Number(currentMember.avatar_crop_settings?.zoom ?? 1)))})"
             onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'">
           <span class="profile-avatar-overlay" aria-hidden="true">
             <svg class="profile-avatar-camera" viewBox="0 0 24 24" fill="none">
@@ -2914,55 +2913,61 @@ async function handleDiscordCallback() {
 // MEMBER AVATAR STORAGE
 // ==========================================
 
-async function uploadMemberAvatar(file, cropSettings = { x: 50, y: 50, zoom: 1 }) {
+async function uploadMemberAvatar(file, croppedBlob) {
   if (!currentUser || !currentMember) {
     throw new Error("ไม่พบข้อมูลสมาชิกของบัญชีนี้");
   }
-
-  if (!file || !file.type.startsWith("image/")) {
-    throw new Error("กรุณาเลือกไฟล์รูปภาพ");
+  if (!(croppedBlob instanceof Blob) || !croppedBlob.type.startsWith("image/")) {
+    throw new Error("ไม่สามารถสร้างภาพ Crop ได้ กรุณาลองใหม่");
   }
 
-  if (file.size > 5 * 1024 * 1024) {
-    throw new Error("รูปภาพต้องมีขนาดไม่เกิน 5 MB");
-  }
-
-  const settings = {
-    x: Math.min(100, Math.max(0, Number(cropSettings.x) || 50)),
-    y: Math.min(100, Math.max(0, Number(cropSettings.y) || 50)),
-    zoom: Math.min(2.5, Math.max(1, Number(cropSettings.zoom) || 1))
-  };
+  const stamp = Date.now();
   const extension = file.name.split(".").pop().toLowerCase();
-  const safeExtension = /^[a-z0-9]+$/.test(extension) ? extension : "jpg";
-  const path = `${currentUser.id}/avatar-${Date.now()}.${safeExtension}`;
+  const safeExtension = /^[a-z0-9]+$/.test(extension) ? extension : "bin";
+  const originalPath = `${currentUser.id}/original-${stamp}.${safeExtension}`;
+  const croppedExtension = croppedBlob.type === "image/webp" ? "webp" : "png";
+  const croppedPath = `${currentUser.id}/avatar-${stamp}.${croppedExtension}`;
 
-  // Upload the untouched original file. Crop values are stored separately as display settings.
-  const { error: uploadError } = await supabaseClient.storage
+  // Preserve the uploaded source unchanged, and store the exact square crop as the live avatar.
+  const { error: originalUploadError } = await supabaseClient.storage
     .from(AVATAR_BUCKET)
-    .upload(path, file, {
+    .upload(originalPath, file, {
       cacheControl: "3600",
-      upsert: true,
+      upsert: false,
       contentType: file.type
     });
+  if (originalUploadError) throw originalUploadError;
 
-  if (uploadError) throw uploadError;
+  const { error: cropUploadError } = await supabaseClient.storage
+    .from(AVATAR_BUCKET)
+    .upload(croppedPath, croppedBlob, {
+      cacheControl: "3600",
+      upsert: false,
+      contentType: croppedBlob.type
+    });
+  if (cropUploadError) {
+    await supabaseClient.storage.from(AVATAR_BUCKET).remove([originalPath]);
+    throw cropUploadError;
+  }
 
   const { error: updateError } = await supabaseClient
     .from("guild_members")
-    .update({ avatar_url: path, avatar_crop_settings: settings })
+    .update({
+      avatar_url: croppedPath,
+      avatar_crop_settings: { x: 50, y: 50, zoom: 1 }
+    })
     .eq("user_id", currentUser.id);
 
   if (updateError) {
-    await supabaseClient.storage.from(AVATAR_BUCKET).remove([path]);
+    await supabaseClient.storage.from(AVATAR_BUCKET).remove([originalPath, croppedPath]);
     throw updateError;
   }
 
-  currentMember.avatar_url = path;
-  currentMember.avatar_crop_settings = settings;
+  currentMember.avatar_url = croppedPath;
+  currentMember.avatar_crop_settings = { x: 50, y: 50, zoom: 1 };
   updateUserChip();
   await renderDashboardProfile();
-
-  return path;
+  return croppedPath;
 }
 
 function closeAvatarCropEditor() {
@@ -2982,56 +2987,148 @@ function openAvatarCropEditor(file) {
   modal.innerHTML = `
     <div class="avatar-crop-dialog" role="dialog" aria-modal="true" aria-labelledby="avatar-crop-title">
       <div class="avatar-crop-heading">
-        <div><span class="avatar-crop-eyebrow">PROFILE IMAGE</span><h2 id="avatar-crop-title">ปรับตำแหน่งรูปโปรไฟล์</h2></div>
+        <div><span class="avatar-crop-eyebrow">PROFILE IMAGE</span><h2 id="avatar-crop-title">จัดกรอบรูปโปรไฟล์</h2></div>
         <button type="button" class="avatar-crop-close" data-avatar-crop-cancel aria-label="ปิด">×</button>
       </div>
-      <p class="avatar-crop-description">เลื่อนตำแหน่งและซูมให้ได้ภาพที่ต้องการ โดยระบบจะเก็บไฟล์ต้นฉบับไว้เหมือนเดิม</p>
-      <div class="avatar-crop-preview"><img src="${previewUrl}" alt="ตัวอย่างรูปโปรไฟล์"></div>
+      <p class="avatar-crop-description">ลากรูปเพื่อจัดตำแหน่ง และซูมเข้าออกได้ พื้นที่สี่เหลี่ยม 1:1 ภายในกรอบสีแดงคือภาพที่จะปรากฏบนเว็บไซต์จริง</p>
+      <div class="avatar-crop-stage">
+        <div class="avatar-crop-viewport">
+          <img src="${previewUrl}" alt="ตัวอย่างรูปโปรไฟล์">
+        </div>
+      </div>
       <div class="avatar-crop-controls">
-        <label>ซูม <output data-crop-value="zoom">100%</output><input type="range" min="100" max="250" step="1" value="100" data-crop-control="zoom"></label>
-        <label>เลื่อนแนวนอน <output data-crop-value="x">50%</output><input type="range" min="0" max="100" step="1" value="50" data-crop-control="x"></label>
-        <label>เลื่อนแนวตั้ง <output data-crop-value="y">50%</output><input type="range" min="0" max="100" step="1" value="50" data-crop-control="y"></label>
+        <label>ซูมภาพ <output data-crop-value="zoom">100%</output>
+          <input type="range" min="100" max="300" step="1" value="100" data-crop-control="zoom">
+        </label>
+      </div>
+      <div class="avatar-crop-result-row">
+        <span>ตัวอย่างหลัง Crop</span>
+        <div class="avatar-crop-result"><img src="${previewUrl}" alt="ตัวอย่างผลลัพธ์รูปโปรไฟล์"></div>
+        <small>สัดส่วนจริง 1:1 · 512 × 512 px</small>
       </div>
       <div class="avatar-crop-actions">
-        <button type="button" class="avatar-crop-reset" data-avatar-crop-reset>รีเซ็ต</button>
+        <button type="button" class="avatar-crop-reset" data-avatar-crop-reset>รีเซ็ตตำแหน่ง</button>
         <span class="avatar-crop-error" aria-live="polite"></span>
         <button type="button" class="avatar-crop-save" data-avatar-crop-save>ยืนยันและบันทึกรูป</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
 
-  const image = modal.querySelector(".avatar-crop-preview img");
-  const controls = [...modal.querySelectorAll("[data-crop-control]")];
-  const values = { x: 50, y: 50, zoom: 100 };
-  const updatePreview = () => {
-    image.style.objectPosition = `${values.x}% ${values.y}%`;
-    image.style.transform = `scale(${values.zoom / 100})`;
-    modal.querySelector('[data-crop-value="x"]').textContent = `${values.x}%`;
-    modal.querySelector('[data-crop-value="y"]').textContent = `${values.y}%`;
-    modal.querySelector('[data-crop-value="zoom"]').textContent = `${values.zoom}%`;
+  const image = modal.querySelector(".avatar-crop-viewport img");
+  const resultImage = modal.querySelector(".avatar-crop-result img");
+  const viewport = modal.querySelector(".avatar-crop-viewport");
+  const zoomControl = modal.querySelector('[data-crop-control="zoom"]');
+  const zoomOutput = modal.querySelector('[data-crop-value="zoom"]');
+  const values = { zoom: 1, x: 0, y: 0 };
+  const frameSize = 320;
+  let baseScale = 1;
+  let renderedWidth = 0;
+  let renderedHeight = 0;
+  let dragging = false;
+  let pointerStart = null;
+
+  const clampPosition = () => {
+    const maxX = Math.max(0, (renderedWidth - frameSize) / 2);
+    const maxY = Math.max(0, (renderedHeight - frameSize) / 2);
+    values.x = Math.min(maxX, Math.max(-maxX, values.x));
+    values.y = Math.min(maxY, Math.max(-maxY, values.y));
   };
-  controls.forEach(control => control.addEventListener("input", () => {
-    values[control.dataset.cropControl] = Number(control.value);
+
+  const updatePreview = () => {
+    renderedWidth = image.naturalWidth * baseScale * values.zoom;
+    renderedHeight = image.naturalHeight * baseScale * values.zoom;
+    clampPosition();
+    const left = (frameSize - renderedWidth) / 2 + values.x;
+    const top = (frameSize - renderedHeight) / 2 + values.y;
+    image.style.width = renderedWidth + "px";
+    image.style.height = renderedHeight + "px";
+    image.style.left = left + "px";
+    image.style.top = top + "px";
+    zoomOutput.textContent = Math.round(values.zoom * 100) + "%";
+    if (resultImage) {
+      resultImage.style.width = renderedWidth + "px";
+      resultImage.style.height = renderedHeight + "px";
+      resultImage.style.left = left + "px";
+      resultImage.style.top = top + "px";
+    }
+  };
+
+  const initializeCrop = () => {
+    if (!image.naturalWidth || !image.naturalHeight) return;
+    baseScale = Math.max(frameSize / image.naturalWidth, frameSize / image.naturalHeight);
     updatePreview();
-  }));
+  };
+  if (image.complete && image.naturalWidth) initializeCrop();
+  else image.addEventListener("load", initializeCrop, { once: true });
+
+  zoomControl.addEventListener("input", () => {
+    values.zoom = Number(zoomControl.value) / 100;
+    updatePreview();
+  });
+
+  viewport.addEventListener("pointerdown", event => {
+    if (!image.naturalWidth) return;
+    dragging = true;
+    pointerStart = { x: event.clientX, y: event.clientY, offsetX: values.x, offsetY: values.y };
+    viewport.setPointerCapture(event.pointerId);
+    viewport.classList.add("is-dragging");
+    event.preventDefault();
+  });
+  viewport.addEventListener("pointermove", event => {
+    if (!dragging || !pointerStart) return;
+    values.x = pointerStart.offsetX + event.clientX - pointerStart.x;
+    values.y = pointerStart.offsetY + event.clientY - pointerStart.y;
+    updatePreview();
+  });
+  const stopDragging = () => {
+    dragging = false;
+    pointerStart = null;
+    viewport.classList.remove("is-dragging");
+  };
+  viewport.addEventListener("pointerup", stopDragging);
+  viewport.addEventListener("pointercancel", stopDragging);
+  viewport.addEventListener("lostpointercapture", stopDragging);
+
   modal.querySelector("[data-avatar-crop-reset]").addEventListener("click", () => {
-    Object.assign(values, { x: 50, y: 50, zoom: 100 });
-    controls.forEach(control => { control.value = values[control.dataset.cropControl]; });
+    values.zoom = 1;
+    values.x = 0;
+    values.y = 0;
+    zoomControl.value = "100";
     updatePreview();
   });
   modal.querySelectorAll("[data-avatar-crop-cancel]").forEach(button => button.addEventListener("click", closeAvatarCropEditor));
-  modal.addEventListener("click", event => { if (event.target === modal) closeAvatarCropEditor(); });
+  modal.addEventListener("click", event => {
+    if (event.target === modal) closeAvatarCropEditor();
+  });
+
   modal.querySelector("[data-avatar-crop-save]").addEventListener("click", async event => {
     const button = event.currentTarget;
     const errorBox = modal.querySelector(".avatar-crop-error");
     button.disabled = true;
-    button.textContent = "กำลังบันทึก...";
+    button.textContent = "กำลัง Crop และบันทึก...";
     errorBox.textContent = "";
     try {
-      await uploadMemberAvatar(file, { x: values.x, y: values.y, zoom: values.zoom / 100 });
+      if (!image.naturalWidth || !image.naturalHeight) throw new Error("รูปภาพยังโหลดไม่เสร็จ กรุณารอสักครู่");
+      const scale = baseScale * values.zoom;
+      const renderedLeft = (frameSize - renderedWidth) / 2 + values.x;
+      const renderedTop = (frameSize - renderedHeight) / 2 + values.y;
+      const sourceX = Math.max(0, (0 - renderedLeft) / scale);
+      const sourceY = Math.max(0, (0 - renderedTop) / scale);
+      const sourceSize = frameSize / scale;
+      const canvas = document.createElement("canvas");
+      canvas.width = 512;
+      canvas.height = 512;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("เบราว์เซอร์ไม่สามารถประมวลผลรูปภาพได้");
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.drawImage(image, sourceX, sourceY, sourceSize, sourceSize, 0, 0, 512, 512);
+      const croppedBlob = await new Promise(resolve => canvas.toBlob(resolve, "image/webp", 0.94));
+      if (!croppedBlob) throw new Error("สร้างไฟล์ Crop ไม่สำเร็จ กรุณาลองใหม่");
+      await uploadMemberAvatar(file, croppedBlob);
       closeAvatarCropEditor();
     } catch (error) {
-      console.error("Profile avatar upload error:", error);
+      console.error("Profile avatar crop/upload error:", error);
       errorBox.textContent = error.message || "บันทึกรูปไม่สำเร็จ";
       button.disabled = false;
       button.textContent = "ลองบันทึกอีกครั้ง";
