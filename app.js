@@ -1652,9 +1652,6 @@ async function renderDashboardProfile() {
           </span>
         </button>
         <input type="file" id="profile-avatar-input" accept="image/*" hidden>
-        <small class="profile-avatar-upload-status" aria-live="polite">
-          คลิกที่รูปเพื่อเปลี่ยน · รองรับไฟล์ไม่เกิน 5 MB
-        </small>
       </div>
 
       <div class="profile-meta">
@@ -1700,6 +1697,9 @@ async function renderDashboardProfile() {
             </dd>
           </div>
         </dl>
+        <small class="profile-avatar-upload-status" aria-live="polite">
+          คลิกที่รูปเพื่อเปลี่ยน · รองรับไฟล์ไม่เกิน 5 MB
+        </small>
       </div>
     </div>
   `;
@@ -2913,132 +2913,48 @@ async function handleDiscordCallback() {
 // MEMBER AVATAR STORAGE
 // ==========================================
 
-// เปิดเครื่องมือครอปรูปโปรไฟล์แบบวงกลมก่อนอัปโหลด
-function openAvatarCropper(file) {
+// ปรับขนาดรูปโปรไฟล์อัตโนมัติโดยรักษาสัดส่วนต้นฉบับ ไม่เปิดหน้าต่างครอป
+function optimizeAvatarImage(file) {
   return new Promise((resolve, reject) => {
     const objectUrl = URL.createObjectURL(file);
     const image = new Image();
+
     image.onload = () => {
-      const size = 320;
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) {
-        URL.revokeObjectURL(objectUrl);
-        reject(new Error("ไม่สามารถเปิดเครื่องมือครอปรูปได้"));
-        return;
-      }
+      try {
+        const maxDimension = 1600;
+        const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+        const width = Math.max(1, Math.round(image.naturalWidth * scale));
+        const height = Math.max(1, Math.round(image.naturalHeight * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
 
-      let zoom = 1;
-      let offsetX = 0;
-      let offsetY = 0;
-      let dragging = false;
-      let lastX = 0;
-      let lastY = 0;
-      const baseScale = Math.max(size / image.naturalWidth, size / image.naturalHeight);
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("ไม่สามารถประมวลผลรูปภาพได้");
 
-      const modal = document.createElement("div");
-      modal.className = "avatar-crop-modal";
-      modal.innerHTML = `
-        <div class="avatar-crop-dialog" role="dialog" aria-modal="true" aria-labelledby="avatar-crop-title">
-          <h3 id="avatar-crop-title">จัดตำแหน่งรูปโปรไฟล์</h3>
-          <p class="avatar-crop-hint">ลากรูปเพื่อจัดตำแหน่ง และเลื่อนเพื่อซูมเข้า–ออก</p>
-          <canvas class="avatar-crop-canvas" width="${size}" height="${size}" aria-label="ตัวอย่างรูปโปรไฟล์ที่ครอป"></canvas>
-          <label class="avatar-crop-zoom-label" for="avatar-crop-zoom">ซูมรูปภาพ</label>
-          <input id="avatar-crop-zoom" class="avatar-crop-zoom" type="range" min="1" max="3" step="0.01" value="1">
-          <div class="avatar-crop-actions">
-            <button type="button" class="btn btn-outline avatar-crop-cancel">ยกเลิก</button>
-            <button type="button" class="btn btn-primary avatar-crop-confirm">ยืนยันรูปภาพ</button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(modal);
-      const preview = modal.querySelector("canvas");
-      const previewCtx = preview.getContext("2d");
-      const zoomInput = modal.querySelector(".avatar-crop-zoom");
-
-      function drawPreview() {
-        previewCtx.clearRect(0, 0, size, size);
-        const scale = baseScale * zoom;
-        const width = image.naturalWidth * scale;
-        const height = image.naturalHeight * scale;
-        const x = (size - width) / 2 + offsetX;
-        const y = (size - height) / 2 + offsetY;
-        previewCtx.drawImage(image, x, y, width, height);
-
-        previewCtx.beginPath();
-        previewCtx.rect(0, 0, size, size);
-        previewCtx.arc(size / 2, size / 2, size / 2 - 3, 0, Math.PI * 2);
-        previewCtx.fillStyle = "rgba(0, 0, 0, .58)";
-        previewCtx.fill("evenodd");
-
-        previewCtx.beginPath();
-        previewCtx.arc(size / 2, size / 2, size / 2 - 2, 0, Math.PI * 2);
-        previewCtx.strokeStyle = "#e33b4d";
-        previewCtx.lineWidth = 4;
-        previewCtx.stroke();
-      }
-
-      function finish(result) {
-        modal.remove();
-        URL.revokeObjectURL(objectUrl);
-        resolve(result);
-      }
-
-      preview.addEventListener("pointerdown", (event) => {
-        dragging = true;
-        lastX = event.clientX;
-        lastY = event.clientY;
-        preview.setPointerCapture(event.pointerId);
-      });
-      preview.addEventListener("pointermove", (event) => {
-        if (!dragging) return;
-        const rect = preview.getBoundingClientRect();
-        const factor = size / rect.width;
-        offsetX += (event.clientX - lastX) * factor;
-        offsetY += (event.clientY - lastY) * factor;
-        lastX = event.clientX;
-        lastY = event.clientY;
-        drawPreview();
-      });
-      preview.addEventListener("pointerup", () => { dragging = false; });
-      preview.addEventListener("pointercancel", () => { dragging = false; });
-      zoomInput.addEventListener("input", () => {
-        zoom = Number(zoomInput.value);
-        drawPreview();
-      });
-      modal.querySelector(".avatar-crop-cancel").addEventListener("click", () => finish(null));
-      modal.querySelector(".avatar-crop-confirm").addEventListener("click", () => {
-        const output = document.createElement("canvas");
-        output.width = 512;
-        output.height = 512;
-        const outputCtx = output.getContext("2d");
-        const scale = baseScale * zoom * (512 / size);
-        const width = image.naturalWidth * scale;
-        const height = image.naturalHeight * scale;
-        const x = (512 - width) / 2 + offsetX * (512 / size);
-        const y = (512 - height) / 2 + offsetY * (512 / size);
-        outputCtx.drawImage(image, x, y, width, height);
-        output.toBlob((blob) => {
+        context.drawImage(image, 0, 0, width, height);
+        canvas.toBlob((blob) => {
+          URL.revokeObjectURL(objectUrl);
           if (!blob) {
             reject(new Error("ไม่สามารถประมวลผลรูปภาพได้"));
-            modal.remove();
-            URL.revokeObjectURL(objectUrl);
             return;
           }
-          finish(new File([blob], "profile-avatar.jpg", { type: "image/jpeg" }));
-        }, "image/jpeg", 0.92);
-      });
-      modal.addEventListener("click", (event) => {
-        if (event.target === modal) finish(null);
-      });
-      drawPreview();
+          resolve(new File([blob], "profile-avatar.jpg", {
+            type: "image/jpeg",
+            lastModified: Date.now()
+          }));
+        }, "image/jpeg", 0.9);
+      } catch (error) {
+        URL.revokeObjectURL(objectUrl);
+        reject(error);
+      }
     };
+
     image.onerror = () => {
       URL.revokeObjectURL(objectUrl);
       reject(new Error("ไม่สามารถอ่านไฟล์รูปภาพนี้ได้"));
     };
+
     image.src = objectUrl;
   });
 }
@@ -8692,19 +8608,14 @@ function registerAppEventListeners() {
         throw new Error("รูปภาพต้องมีขนาดไม่เกิน 5 MB");
       }
 
-      const croppedFile = await openAvatarCropper(file);
-      if (!croppedFile) {
-        if (status) status.textContent = "ยกเลิกการเปลี่ยนรูปโปรไฟล์แล้ว";
-        return;
-      }
-
       if (avatarTrigger) {
         avatarTrigger.disabled = true;
         avatarTrigger.setAttribute("aria-busy", "true");
       }
-      if (status) status.textContent = "กำลังบันทึกรูปโปรไฟล์...";
+      if (status) status.textContent = "กำลังปรับขนาดและบันทึกรูปโปรไฟล์...";
 
-      await uploadMemberAvatar(croppedFile);
+      const optimizedFile = await optimizeAvatarImage(file);
+      await uploadMemberAvatar(optimizedFile);
     } catch (error) {
       console.error("Profile avatar upload error:", error);
       if (status) status.textContent = error.message || "อัปโหลดรูปไม่สำเร็จ";
