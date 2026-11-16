@@ -8432,7 +8432,7 @@ function registerAppEventListeners() {
     });
   },{passive:true});
   galleryTrack?.addEventListener("pointerdown",event=>{
-    if(event.pointerType!=="mouse"||event.button!==0||event.target.closest("button"))return;
+    if(event.pointerType!=="mouse"||event.button!==0||event.target.closest(".gallery-slide-actions,.gallery-nav"))return;
     dashboardGalleryPointerStart={x:event.clientX,scrollLeft:galleryTrack.scrollLeft};
     dashboardGalleryDragMoved=false;galleryTrack.classList.add("is-dragging");
     galleryTrack.setPointerCapture?.(event.pointerId);pauseDashboardGalleryAutoplay();
