@@ -8082,3 +8082,21 @@ body.member-card-edit-open{overflow-x:hidden;overflow-y:auto}
   color:#ff536b!important;
   text-shadow:0 0 16px rgba(235,35,65,.28)!important;
 }
+
+
+/* Guild Gallery: precise active-slide centering and fullscreen lightbox */
+#page-dashboard .gallery-carousel{overflow:visible!important}
+#page-dashboard .gallery-track{justify-content:flex-start!important;padding-left:0!important;padding-right:0!important;scroll-padding-inline:0!important;scroll-snap-type:x mandatory}
+#page-dashboard .gallery-slide{scroll-snap-align:center;flex-shrink:0}
+.dashboard-gallery-lightbox{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:clamp(18px,4vw,56px);background:rgba(3,3,6,.96);backdrop-filter:blur(14px)}
+.dashboard-gallery-lightbox.hidden{display:none!important}
+.dashboard-gallery-lightbox-figure{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;width:min(92vw,1500px);max-height:92vh;margin:0}
+.dashboard-gallery-lightbox-figure img{display:block;width:100%;height:auto;max-height:84vh;object-fit:contain;border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.1),0 0 34px rgba(230,35,65,.18)}
+#dashboard-gallery-lightbox-counter{color:#e9dfe2;font-size:15px;letter-spacing:.12em}
+.dashboard-gallery-lightbox-close,.dashboard-gallery-lightbox-nav{position:fixed;z-index:2;display:grid;place-items:center;border:1px solid rgba(255,255,255,.18);color:#fff;background:rgba(25,17,22,.78);backdrop-filter:blur(10px);cursor:pointer}
+.dashboard-gallery-lightbox-close{top:22px;right:24px;width:46px;height:46px;border-radius:50%;font-size:30px;line-height:1}
+.dashboard-gallery-lightbox-nav{top:50%;transform:translateY(-50%);width:48px;height:64px;border-radius:12px;font-size:42px;line-height:1}
+.dashboard-gallery-lightbox-nav.prev{left:22px}.dashboard-gallery-lightbox-nav.next{right:22px}
+.dashboard-gallery-lightbox-close:hover,.dashboard-gallery-lightbox-nav:hover{border-color:#ff536b;background:rgba(150,20,43,.82)}
+body.gallery-lightbox-open{overflow:hidden}
+@media(max-width:700px){.dashboard-gallery-lightbox{padding:14px}.dashboard-gallery-lightbox-figure{width:100%}.dashboard-gallery-lightbox-figure img{max-height:78vh}.dashboard-gallery-lightbox-close{top:12px;right:12px;width:40px;height:40px}.dashboard-gallery-lightbox-nav{width:38px;height:48px;font-size:32px}.dashboard-gallery-lightbox-nav.prev{left:8px}.dashboard-gallery-lightbox-nav.next{right:8px}}
