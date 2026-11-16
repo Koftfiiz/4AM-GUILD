@@ -8256,14 +8256,14 @@ body.gallery-lightbox-open{overflow:hidden}
    The card shell and dashboard grid retain their existing dimensions. */
 #page-dashboard .profile-card .profile-card-body{
   display:grid;grid-template-columns:minmax(0,.96fr) minmax(0,1.04fr);
-  align-items:stretch;width:100%;height:100%;min-height:0;gap:0;
+  align-items:start;width:100%;height:auto;min-height:0;gap:0;
 }
 #page-dashboard .profile-card .profile-avatar-column{
-  position:relative;display:flex;min-width:0;min-height:220px;width:auto;flex:none;
-  align-items:stretch;justify-content:stretch;overflow:hidden;background:#10090c;
+  position:relative;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+  min-width:0;min-height:0;width:100%;height:auto;overflow:visible;background:transparent;
 }
 #page-dashboard .profile-card .profile-avatar-trigger{
-  position:relative;display:block;width:100%;height:100%;min-height:220px;padding:0;
+  position:relative;display:block;flex:none;width:100%;height:auto;min-height:0;aspect-ratio:1/1;padding:0;
   overflow:hidden;border:0;border-radius:0;background:#10090c;color:#fff;cursor:pointer;text-align:center;
 }
 #page-dashboard .profile-card .profile-avatar-trigger img{
@@ -8284,17 +8284,18 @@ body.gallery-lightbox-open{overflow:hidden}
 #page-dashboard .profile-card .profile-avatar-trigger[aria-busy="true"] .profile-avatar-overlay{opacity:1}
 #page-dashboard .profile-card .profile-avatar-upload-status{
   display:block;
+  flex:none;
   width:100%;
   max-width:none;
-  margin:auto 0 -10px;
-  padding:11px 13px;
+  margin:10px 0 0;
+  padding:9px 10px;
   border:1px solid rgba(237,64,88,.2);
   border-radius:9px;
   background:rgba(190,25,48,.08);
   color:#cbbdc1;
   font-size:15px;
   line-height:1.5;
-  text-align:left;
+  text-align:center;
 }
 #page-dashboard .profile-card .profile-meta{
   display:flex;flex-direction:column;justify-content:flex-start;min-width:0;padding:22px 24px;
@@ -8352,9 +8353,9 @@ body.gallery-lightbox-open{overflow:hidden}
     display:grid;grid-template-columns:minmax(0,1fr);width:100%;height:auto;
   }
   #page-dashboard .profile-card .profile-avatar-column{
-    min-height:0;width:100%;height:auto;aspect-ratio:16/9;
+    min-height:0;width:100%;height:auto;aspect-ratio:auto;
   }
-  #page-dashboard .profile-card .profile-avatar-trigger{min-height:0;height:100%}
+  #page-dashboard .profile-card .profile-avatar-trigger{min-height:0;height:auto;aspect-ratio:1/1}
   #page-dashboard .profile-card .profile-avatar-overlay{
     opacity:1;inset:auto 12px 48px auto;width:42px;height:42px;padding:8px;
     border:1px solid rgba(255,255,255,.2);border-radius:50%;background:rgba(8,8,10,.72);
@@ -8376,20 +8377,21 @@ body.gallery-lightbox-open{overflow:hidden}
 }
 
 
-/* Profile avatar — fixed square display to match the crop output at every breakpoint */
-#page-dashboard .profile-card .profile-card-body{align-items:start!important}
+/* Dashboard avatar stays square; the helper note sits below the image
+   in the avatar column, separate from the account details. */
+#page-dashboard .profile-card .profile-card-body{align-items:start}
 #page-dashboard .profile-card .profile-avatar-column{
-  align-self:start;width:100%!important;height:auto!important;min-height:0!important;aspect-ratio:1/1;
+  align-self:start;width:100%;height:auto;min-height:0;aspect-ratio:auto;
 }
 #page-dashboard .profile-card .profile-avatar-trigger{
-  width:100%;height:100%;min-height:0!important;aspect-ratio:1/1;
+  width:100%;height:auto;min-height:0;aspect-ratio:1/1;
 }
 #page-dashboard .profile-card .profile-avatar-trigger img{
   object-fit:cover;object-position:center;transform:none!important;
 }
 @media(max-width:700px){
-  #page-dashboard .profile-card .profile-avatar-column{width:100%!important;height:auto!important;aspect-ratio:1/1}
-  #page-dashboard .profile-card .profile-avatar-trigger{height:100%;aspect-ratio:1/1}
+  #page-dashboard .profile-card .profile-avatar-column{width:100%;height:auto;aspect-ratio:auto}
+  #page-dashboard .profile-card .profile-avatar-trigger{height:auto;aspect-ratio:1/1}
 }
 .avatar-crop-editor{
   position:fixed;inset:0;z-index:12000;display:flex;align-items:center;justify-content:center;
