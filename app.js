@@ -4164,6 +4164,7 @@ async function handlePortfolioCreate(event) {
 
     portfolioClassFilter = "all";
     await loadPortfolios();
+    await window.loadPortfolioTracker?.();
     renderClassLegend();
     resetPortfolioForm();
 
