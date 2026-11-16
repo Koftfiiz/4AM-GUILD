@@ -8516,17 +8516,39 @@ function registerAppEventListeners() {
   galleryTrack?.addEventListener("pointerup",finishGalleryPointer);
   galleryTrack?.addEventListener("pointercancel",finishGalleryPointer);
   galleryTrack?.addEventListener("lostpointercapture",finishGalleryPointer);
-  galleryTrack?.addEventListener("click",event=>{if(dashboardGallerySuppressClick){event.preventDefault();event.stopImmediatePropagation();}},true);
+  // Handle gallery clicks in the capture phase so child/ancestor handlers
+  // cannot swallow the image click before the Lightbox receives it.
+  galleryTrack?.addEventListener("click",event=>{
+    if(dashboardGallerySuppressClick){
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      return;
+    }
+    const target=event.target instanceof Element?event.target:null;
+    if(!target)return;
+    const move=target.closest("[data-gallery-move]");
+    const remove=target.closest("[data-gallery-delete]");
+    const focus=target.closest("[data-gallery-focus]");
+    if(move){
+      event.preventDefault();
+      event.stopPropagation();
+      void moveDashboardGalleryImage(move.dataset.galleryId,Number(move.dataset.galleryMove));
+      return;
+    }
+    if(remove){
+      event.preventDefault();
+      event.stopPropagation();
+      void deleteDashboardGalleryImage(remove.dataset.galleryDelete);
+      return;
+    }
+    if(focus){
+      event.preventDefault();
+      event.stopPropagation();
+      openDashboardGalleryLightbox(Number(focus.dataset.galleryFocus));
+    }
+  },true);
   $("dashboard-gallery-prev")?.addEventListener("click",()=>goToGallerySlide(dashboardGalleryActiveIndex-1));
   $("dashboard-gallery-next")?.addEventListener("click",()=>goToGallerySlide(dashboardGalleryActiveIndex+1));
-  $("dashboard-gallery-track")?.addEventListener("click",event=>{
-    const focus=event.target.closest("[data-gallery-focus]");
-    const move=event.target.closest("[data-gallery-move]");
-    const remove=event.target.closest("[data-gallery-delete]");
-    if(move){void moveDashboardGalleryImage(move.dataset.galleryId,Number(move.dataset.galleryMove));return;}
-    if(remove){void deleteDashboardGalleryImage(remove.dataset.galleryDelete);return;}
-    if(focus){openDashboardGalleryLightbox(Number(focus.dataset.galleryFocus));}
-  });
 
   $("user-chip")?.addEventListener("click", (event) => {
     event.stopPropagation();
