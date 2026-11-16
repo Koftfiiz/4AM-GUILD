@@ -8578,3 +8578,23 @@ body.gallery-lightbox-open{overflow:hidden}
   .avatar-crop-actions{flex-wrap:wrap}
   .avatar-crop-save{margin-left:auto}
 }
+
+
+/* Guild Gallery — keep destructive action outside the Cover Flow images */
+#page-dashboard .gallery-slide-actions{top:12px;right:12px}
+#page-dashboard .gallery-slide-actions button{min-width:34px;width:34px;padding:0;border-color:rgba(255,255,255,.16);background:rgba(8,8,10,.58);color:#f4e9ec}
+#page-dashboard .gallery-footer{align-items:center;gap:16px;margin:0 14px;padding:4px 4px 0}
+#page-dashboard .gallery-footer-info{display:grid;min-width:0;gap:4px}
+#page-dashboard #dashboard-gallery-active-caption{margin:0;color:#d8cdd1;font-size:15px;overflow-wrap:anywhere}
+#page-dashboard #dashboard-gallery-status{color:#82777c;font-size:15px}
+#page-dashboard .gallery-delete-active{display:inline-flex;flex:0 0 auto;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 13px;border:1px solid rgba(239,65,91,.34);border-radius:9px;background:rgba(150,22,44,.12);color:#ff7186;font-size:15px;font-weight:650;cursor:pointer;transition:background .2s ease,border-color .2s ease,transform .2s ease}
+#page-dashboard .gallery-delete-active .icon{width:17px;height:17px}
+#page-dashboard .gallery-delete-active:hover:not(:disabled){border-color:rgba(255,83,107,.72);background:rgba(170,24,49,.24);transform:translateY(-1px)}
+#page-dashboard .gallery-delete-active:disabled{opacity:.35;cursor:not-allowed}
+#page-dashboard .gallery-delete-active.hidden{display:none!important}
+@media(max-width:700px){
+  #page-dashboard .gallery-footer{align-items:flex-start;flex-direction:row;margin:0 4px;gap:10px}
+  #page-dashboard .gallery-footer-info{flex:1}
+  #page-dashboard .gallery-delete-active{min-height:36px;padding:7px 10px;gap:6px;white-space:nowrap}
+}
+@media(max-width:380px){#page-dashboard .gallery-footer{flex-wrap:wrap}#page-dashboard .gallery-delete-active{margin-left:auto}}
