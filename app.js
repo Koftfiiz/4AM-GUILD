@@ -1447,7 +1447,7 @@ async function uploadDashboardGalleryFiles(files) {
       const {error:uploadError}=await supabaseClient.storage.from("guild-gallery-images").upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});
       if(uploadError)throw uploadError;
       const {error:insertError}=await supabaseClient.from("guild_gallery_images").insert({
-        storage_path:path,caption:file.name.replace(/\.[^.]+$/,"").slice(0,120),sort_order:dashboardGalleryImages.length+uploaded,uploaded_by:currentUser.id
+        storage_path:path,caption:file.name.replace(/\.[^.]+$/,"").slice(0,120),sort_order:Math.max(-1,...dashboardGalleryImages.map(item=>Number(item.sort_order)||0))+1+uploaded,uploaded_by:currentUser.id
       });
       if(insertError){
         await supabaseClient.storage.from("guild-gallery-images").remove([path]);
