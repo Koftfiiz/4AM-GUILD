@@ -1678,10 +1678,6 @@ async function renderDashboardProfile() {
           </span>
         </div>
 
-        <small class="profile-avatar-upload-status" aria-live="polite">
-          คลิกที่รูปเพื่อเปลี่ยน · รองรับไฟล์ไม่เกิน 5 MB
-        </small>
-
         <dl class="profile-list">
           <div>
             <dt>ชื่อตัวละคร :</dt>
@@ -1713,6 +1709,10 @@ async function renderDashboardProfile() {
             </dd>
           </div>
         </dl>
+
+        <small class="profile-avatar-upload-status" aria-live="polite">
+          คลิกที่รูปเพื่อเปลี่ยน · รองรับไฟล์ไม่เกิน 5 MB
+        </small>
       </div>
     </div>
   `;
