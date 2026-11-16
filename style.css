@@ -8283,9 +8283,18 @@ body.gallery-lightbox-open{overflow:hidden}
 #page-dashboard .profile-card .profile-avatar-trigger:disabled{cursor:progress}
 #page-dashboard .profile-card .profile-avatar-trigger[aria-busy="true"] .profile-avatar-overlay{opacity:1}
 #page-dashboard .profile-card .profile-avatar-upload-status{
-  position:absolute;right:10px;bottom:10px;left:10px;z-index:2;max-width:none;margin:0;padding:6px 9px;
-  border:1px solid rgba(255,255,255,.12);border-radius:7px;background:rgba(8,8,10,.72);
-  color:#f4e9ec;font-size:15px;line-height:1.4;text-align:center;pointer-events:none;backdrop-filter:blur(8px);
+  display:block;
+  width:100%;
+  max-width:none;
+  margin:18px 0 0;
+  padding:11px 13px;
+  border:1px solid rgba(237,64,88,.2);
+  border-radius:9px;
+  background:rgba(190,25,48,.08);
+  color:#cbbdc1;
+  font-size:15px;
+  line-height:1.5;
+  text-align:left;
 }
 #page-dashboard .profile-card .profile-meta{
   display:flex;flex-direction:column;justify-content:flex-start;min-width:0;padding:22px 24px;
@@ -8352,9 +8361,6 @@ body.gallery-lightbox-open{overflow:hidden}
   }
   #page-dashboard .profile-card .profile-avatar-overlay>span{display:none}
   #page-dashboard .profile-card .profile-avatar-camera{width:24px;height:24px}
-  #page-dashboard .profile-card .profile-avatar-upload-status{
-    right:10px;bottom:9px;left:10px;font-size:15px;
-  }
   #page-dashboard .profile-card .profile-meta{padding:20px 18px}
   #page-dashboard .profile-card .profile-identity-row{align-items:center}
   #page-dashboard .profile-card .profile-name>strong{font-size:22px}
