@@ -8288,7 +8288,7 @@ body.gallery-lightbox-open{overflow:hidden}
   color:#f4e9ec;font-size:15px;line-height:1.4;text-align:center;pointer-events:none;backdrop-filter:blur(8px);
 }
 #page-dashboard .profile-card .profile-meta{
-  display:flex;flex-direction:column;justify-content:center;min-width:0;padding:22px 24px;
+  display:flex;flex-direction:column;justify-content:flex-start;min-width:0;padding:22px 24px;
   background:linear-gradient(145deg,#151014 0%,#0d0b0e 100%);
 }
 #page-dashboard .profile-card .profile-identity-row{
