@@ -1298,7 +1298,7 @@ function renderDashboardAnnouncementCarousel() {
       <div class="announcement-empty">
         <span class="badge-important">GUILD NEWS</span>
         <h4>ยังไม่มีประกาศจากกิลด์</h4>
-        <p>เมื่อฝ่ายบริหารเผยแพร่ข่าวสาร ประกาศจะปรากฏที่นี่</p>
+        <p>เมื่อมีการโพสต์ข่าวสาร ประกาศจะปรากฏที่นี่</p>
       </div>`;
     return;
   }
@@ -1350,7 +1350,7 @@ async function loadDashboardActivities() {
 
   const items = data || [];
   if (!items.length) {
-    container.innerHTML = '<div class="announcement-empty"><span class="badge-important">GUILD ACTIVITIES</span><h4>ยังไม่มีกิจกรรมกิลด์</h4><p>เมื่อมีกิจกรรมที่กำหนดวันเวลา จะแสดงที่นี่</p></div>';
+    container.innerHTML = '<div class="announcement-empty"><span class="badge-important">GUILD ACTIVITIES</span><h4>ยังไม่มีกิจกรรมกิลด์</h4><p>เมื่อมีการโพสต์กิจกรรมกิลด์ กิจกรรมกิลด์จะปรากฏที่นี่</p></div>';
     return;
   }
 
