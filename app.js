@@ -1277,10 +1277,54 @@ async function loadDashboard() {
   renderDashboardProfile();
 }
 
+let dashboardAnnouncements = [];
+let dashboardAnnouncementIndex = 0;
+let dashboardGalleryImages = [];
+let dashboardGalleryActiveIndex = 0;
+let dashboardGalleryBusy = false;
+
+function renderDashboardAnnouncementCarousel() {
+  const container = $("dashboard-announcement-content");
+  if (!container) return;
+  if (!dashboardAnnouncements.length) {
+    container.innerHTML = `
+      <div class="announcement-empty">
+        <span class="badge-important">GUILD NEWS</span>
+        <h4>ยังไม่มีประกาศจากกิลด์</h4>
+        <p>เมื่อฝ่ายบริหารเผยแพร่ข่าวสาร ประกาศจะปรากฏที่นี่</p>
+      </div>`;
+    return;
+  }
+
+  dashboardAnnouncementIndex = Math.max(0, Math.min(dashboardAnnouncementIndex, dashboardAnnouncements.length - 1));
+  const item = dashboardAnnouncements[dashboardAnnouncementIndex];
+  const contentPreview = document.createElement("div");
+  contentPreview.innerHTML = sanitizeGuildActivityHTML(item.content_html || "");
+  const plainText = (contentPreview.textContent || "").replace(/\\s+/g, " ").trim();
+  const excerpt = plainText.length > 190 ? plainText.slice(0, 190).trimEnd() + "…" : plainText;
+
+  container.innerHTML = `
+    <div class="announcement-carousel-content">
+      <span class="badge-important">ประกาศ ${String(dashboardAnnouncementIndex + 1).padStart(2,"0")} / ${String(dashboardAnnouncements.length).padStart(2,"0")}</span>
+      <h4>${escapeHTML(item.title || "ข่าวสารจากกิลด์")}</h4>
+      <p>${escapeHTML(excerpt || "กดเพื่ออ่านรายละเอียดข่าวสารจากกิลด์")}</p>
+      <div class="announcement-date">
+        <svg class="icon"><use href="#i-clock"/></svg>
+        เผยแพร่เมื่อ ${escapeHTML(activityDateLabel(item.created_at) || "-")}
+      </div>
+    </div>
+    <div class="announcement-carousel-controls" aria-label="เลื่อนประกาศ">
+      <button type="button" data-announcement-prev aria-label="ประกาศก่อนหน้า" ${dashboardAnnouncements.length < 2 ? "disabled" : ""}>‹</button>
+      <div class="announcement-carousel-dots">
+        ${dashboardAnnouncements.map((_,index)=>`<button type="button" data-announcement-index="${index}" class="${index===dashboardAnnouncementIndex?"is-active":""}" aria-label="ดูประกาศที่ ${index+1}" aria-current="${index===dashboardAnnouncementIndex?"true":"false"}"></button>`).join("")}
+      </div>
+      <button type="button" data-announcement-next aria-label="ประกาศถัดไป" ${dashboardAnnouncements.length < 2 ? "disabled" : ""}>›</button>
+    </div>`;
+}
+
 async function loadDashboardAnnouncement() {
   const container = $("dashboard-announcement-content");
   if (!container) return;
-
   container.innerHTML = '<p class="muted">กำลังโหลดข่าวสารล่าสุด...</p>';
 
   const { data, error } = await supabaseClient
@@ -1289,34 +1333,178 @@ async function loadDashboardAnnouncement() {
     .is("starts_at", null)
     .is("ends_at", null)
     .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
+    .limit(5);
 
   if (error) {
     console.error("Dashboard guild announcement error:", error);
-    container.innerHTML = '<span class="badge-important">ข่าวสารจากกิลด์</span><h4>โหลดข่าวสารไม่สำเร็จ</h4><p>กรุณาลองใหม่อีกครั้ง</p>';
+    container.innerHTML = '<div class="announcement-empty"><span class="badge-important">GUILD NEWS</span><h4>โหลดข่าวสารไม่สำเร็จ</h4><p>กรุณาลองใหม่อีกครั้ง</p></div>';
     return;
   }
 
-  if (!data) {
-    container.innerHTML = '<span class="badge-important">ข่าวสารจากกิลด์</span><h4>ยังไม่มีข่าวสารที่เผยแพร่</h4><p>เมื่อสร้างประกาศกิลด์ ข่าวสารล่าสุดจะแสดงที่นี่</p>';
+  dashboardAnnouncements = data || [];
+  dashboardAnnouncementIndex = 0;
+  renderDashboardAnnouncementCarousel();
+}
+
+function canManageDashboardGallery() {
+  return !isRolePreviewActive() && canManageMemberProfiles();
+}
+
+function updateDashboardGalleryActiveState() {
+  const track = $("dashboard-gallery-track");
+  if (!track) return;
+  const slides = [...track.querySelectorAll(".gallery-slide")];
+  slides.forEach((slide,index)=>{
+    slide.classList.toggle("is-active",index===dashboardGalleryActiveIndex);
+    slide.setAttribute("aria-current",index===dashboardGalleryActiveIndex?"true":"false");
+  });
+  const count = $("dashboard-gallery-count");
+  if (count) count.textContent = dashboardGalleryImages.length
+    ? `GUILD MOMENTS · ${String(dashboardGalleryActiveIndex+1).padStart(2,"0")} / ${String(dashboardGalleryImages.length).padStart(2,"0")}`
+    : "GUILD MOMENTS";
+  const prev=$("dashboard-gallery-prev"),next=$("dashboard-gallery-next");
+  if(prev)prev.disabled=dashboardGalleryImages.length<2;
+  if(next)next.disabled=dashboardGalleryImages.length<2;
+}
+
+function renderDashboardGallery() {
+  const track=$("dashboard-gallery-track");
+  const admin=$("dashboard-gallery-admin");
+  if(!track)return;
+  if(admin)admin.classList.toggle("hidden",!canManageDashboardGallery());
+  if(!dashboardGalleryImages.length){
+    track.innerHTML=`
+      <div class="gallery-empty-state">
+        <span>✦</span>
+        <strong>ยังไม่มีภาพใน Guild Gallery</strong>
+        <p>${canManageDashboardGallery()?"เริ่มต้นเก็บภาพความทรงจำของกิลด์ด้วยการเพิ่มรูปภาพ":"รอภาพความทรงจำที่ฝ่ายบริหารคัดเลือกมาแสดงที่นี่"}</p>
+      </div>`;
+    updateDashboardGalleryActiveState();
     return;
   }
 
-  const contentPreview = document.createElement("div");
-  contentPreview.innerHTML = sanitizeGuildActivityHTML(data.content_html || "");
-  const plainText = (contentPreview.textContent || "").replace(/\s+/g, " ").trim();
-  const excerpt = plainText.length > 190 ? plainText.slice(0, 190).trimEnd() + "…" : plainText;
+  dashboardGalleryActiveIndex=Math.max(0,Math.min(dashboardGalleryActiveIndex,dashboardGalleryImages.length-1));
+  track.innerHTML=dashboardGalleryImages.map((item,index)=>`
+    <article class="gallery-slide ${index===dashboardGalleryActiveIndex?"is-active":""}" data-gallery-slide="${index}" aria-current="${index===dashboardGalleryActiveIndex?"true":"false"}">
+      <button type="button" class="gallery-image-button" data-gallery-focus="${index}" aria-label="ดูภาพ ${escapeHTML(item.caption||"Guild moment")}">
+        <img src="${escapeHTML(item.signedUrl)}" alt="${escapeHTML(item.caption||"ภาพความทรงจำ 4AM GUILD")}" loading="lazy">
+      </button>
+      <div class="gallery-slide-caption">
+        <strong>${escapeHTML(item.caption||"4AM GUILD MOMENT")}</strong>
+        <span>${activityDateLabel(item.created_at)||"GUILD MEMORY"}</span>
+      </div>
+      ${canManageDashboardGallery()? `
+        <div class="gallery-slide-actions">
+          <button type="button" data-gallery-move="-1" data-gallery-id="${item.id}" aria-label="เลื่อนภาพไปทางซ้าย" ${index===0?"disabled":""}>←</button>
+          <button type="button" data-gallery-move="1" data-gallery-id="${item.id}" aria-label="เลื่อนภาพไปทางขวา" ${index===dashboardGalleryImages.length-1?"disabled":""}>→</button>
+          <button type="button" data-gallery-delete="${item.id}" aria-label="ลบภาพนี้">ลบภาพ</button>
+        </div>`:""}
+    </article>`).join("");
+  updateDashboardGalleryActiveState();
+  const active=track.querySelector(`[data-gallery-slide="${dashboardGalleryActiveIndex}"]`);
+  if(active)active.scrollIntoView({behavior:"auto",block:"nearest",inline:"center"});
+}
 
-  container.innerHTML = `
-    <span class="badge-important">ข่าวสารล่าสุด</span>
-    <h4>${escapeHTML(data.title || "ข่าวสารจากกิลด์")}</h4>
-    <p>${escapeHTML(excerpt || "กดเพื่ออ่านรายละเอียดข่าวสารจากกิลด์")}</p>
-    <div class="announcement-date">
-      <svg class="icon"><use href="#i-clock"/></svg>
-      เผยแพร่เมื่อ ${escapeHTML(activityDateLabel(data.created_at) || "-")}
-    </div>
-  `;
+async function loadDashboardGallery() {
+  const track=$("dashboard-gallery-track");
+  if(!track)return;
+  track.innerHTML='<div class="gallery-empty-state"><span>✦</span><strong>กำลังโหลดภาพจากกิลด์...</strong><p>ภาพความทรงจำของ 4AM GUILD</p></div>';
+  const {data,error}=await supabaseClient.from("guild_gallery_images")
+    .select("id,storage_path,caption,sort_order,created_at")
+    .eq("is_published",true)
+    .order("sort_order",{ascending:true})
+    .order("created_at",{ascending:false});
+  if(error){
+    console.error("Load Guild Gallery:",error);
+    track.innerHTML='<div class="gallery-empty-state"><span>!</span><strong>โหลด Guild Gallery ไม่สำเร็จ</strong><p>กรุณารีเฟรชหน้า Dashboard อีกครั้ง</p></div>';
+    return;
+  }
+  const rows=data||[];
+  const signed=await Promise.all(rows.map(async item=>{
+    const {data:signedData,error:signedError}=await supabaseClient.storage.from("guild-gallery-images").createSignedUrl(item.storage_path,3600);
+    if(signedError){console.warn("Guild Gallery signed URL:",signedError);return null;}
+    return {...item,signedUrl:signedData.signedUrl};
+  }));
+  dashboardGalleryImages=signed.filter(Boolean);
+  dashboardGalleryActiveIndex=0;
+  renderDashboardGallery();
+}
+
+async function uploadDashboardGalleryFiles(files) {
+  if(!canManageDashboardGallery()||dashboardGalleryBusy)return;
+  const selected=[...files];
+  if(!selected.length)return;
+  dashboardGalleryBusy=true;
+  const status=$("dashboard-gallery-status"),trigger=$("dashboard-gallery-upload-trigger");
+  if(trigger){trigger.disabled=true;trigger.textContent="กำลังอัปโหลด...";}
+  let uploaded=0;
+  try{
+    for(const file of selected){
+      if(!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type))throw new Error("รองรับเฉพาะ JPG, PNG, WEBP และ GIF");
+      if(file.size>10*1024*1024)throw new Error("รูปภาพแต่ละไฟล์ต้องมีขนาดไม่เกิน 10 MB");
+      const safeName=file.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").slice(-90)||"guild-image";
+      const path="gallery/"+crypto.randomUUID()+"-"+safeName;
+      const {error:uploadError}=await supabaseClient.storage.from("guild-gallery-images").upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});
+      if(uploadError)throw uploadError;
+      const {error:insertError}=await supabaseClient.from("guild_gallery_images").insert({
+        storage_path:path,caption:file.name.replace(/\\.[^.]+$/,"").slice(0,120),sort_order:dashboardGalleryImages.length+uploaded,uploaded_by:currentUser.id
+      });
+      if(insertError){
+        await supabaseClient.storage.from("guild-gallery-images").remove([path]);
+        throw insertError;
+      }
+      uploaded++;
+    }
+    if(status)status.textContent="เพิ่มภาพ "+uploaded+" ภาพเรียบร้อยแล้ว";
+    await loadDashboardGallery();
+  }catch(error){
+    console.error("Upload Guild Gallery:",error);
+    if(status)status.textContent="อัปโหลดไม่สำเร็จ: "+(error.message||"กรุณาลองอีกครั้ง");
+    alert("เพิ่มภาพใน Guild Gallery ไม่สำเร็จ: "+(error.message||"กรุณาลองอีกครั้ง"));
+  }finally{
+    dashboardGalleryBusy=false;
+    if(trigger){trigger.disabled=false;trigger.textContent="＋ เพิ่มรูปภาพ";}
+    const input=$("dashboard-gallery-upload-input");if(input)input.value="";
+  }
+}
+
+async function moveDashboardGalleryImage(id,direction) {
+  if(!canManageDashboardGallery()||dashboardGalleryBusy)return;
+  const index=dashboardGalleryImages.findIndex(item=>item.id===id);
+  const targetIndex=index+direction;
+  if(index<0||targetIndex<0||targetIndex>=dashboardGalleryImages.length)return;
+  dashboardGalleryBusy=true;
+  const first=dashboardGalleryImages[index],second=dashboardGalleryImages[targetIndex];
+  try{
+    const firstOrder=first.sort_order,secondOrder=second.sort_order;
+    const firstResult=await supabaseClient.from("guild_gallery_images").update({sort_order:secondOrder,updated_at:new Date().toISOString()}).eq("id",first.id);
+    if(firstResult.error)throw firstResult.error;
+    const secondResult=await supabaseClient.from("guild_gallery_images").update({sort_order:firstOrder,updated_at:new Date().toISOString()}).eq("id",second.id);
+    if(secondResult.error)throw secondResult.error;
+    await loadDashboardGallery();
+    dashboardGalleryActiveIndex=targetIndex;
+    renderDashboardGallery();
+  }catch(error){
+    console.error("Reorder Guild Gallery:",error);
+    alert("จัดลำดับภาพไม่สำเร็จ: "+(error.message||"กรุณาลองอีกครั้ง"));
+  }finally{dashboardGalleryBusy=false;}
+}
+
+async function deleteDashboardGalleryImage(id) {
+  if(!canManageDashboardGallery()||dashboardGalleryBusy)return;
+  const item=dashboardGalleryImages.find(row=>row.id===id);
+  if(!item||!window.confirm("ต้องการลบภาพนี้ออกจาก Guild Gallery ใช่หรือไม่?"))return;
+  dashboardGalleryBusy=true;
+  try{
+    const {error}=await supabaseClient.from("guild_gallery_images").delete().eq("id",id);
+    if(error)throw error;
+    const {error:storageError}=await supabaseClient.storage.from("guild-gallery-images").remove([item.storage_path]);
+    if(storageError)console.warn("Gallery image metadata removed; storage cleanup needs review:",storageError);
+    await loadDashboardGallery();
+  }catch(error){
+    console.error("Delete Guild Gallery image:",error);
+    alert("ลบภาพไม่สำเร็จ: "+(error.message||"กรุณาลองอีกครั้ง"));
+  }finally{dashboardGalleryBusy=false;}
 }
 
 async function renderDashboardProfile() {
@@ -7591,6 +7779,7 @@ function openGuildPage(pageName) {
 
   if (pageName === "dashboard") {
     loadDashboardAnnouncement();
+    loadDashboardGallery();
     subscribeToGuildActivityRealtime();
   }
   if (pageName === "settings") {
@@ -8175,10 +8364,49 @@ function registerAppEventListeners() {
     });
   });
 
+  $("dashboard-announcement")?.addEventListener("click", (event) => {
+    const previous=event.target.closest("[data-announcement-prev]");
+    const next=event.target.closest("[data-announcement-next]");
+    const dot=event.target.closest("[data-announcement-index]");
+    if(previous||next||dot){
+      event.stopPropagation();
+      if(dot)dashboardAnnouncementIndex=Number(dot.dataset.announcementIndex);
+      else dashboardAnnouncementIndex=(dashboardAnnouncementIndex+(next?1:-1)+dashboardAnnouncements.length)%dashboardAnnouncements.length;
+      renderDashboardAnnouncementCarousel();
+      return;
+    }
+    openGuildPage("guild-news");
+  });
   $("dashboard-announcement")?.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" && event.key !== " ") return;
+    if(event.target.closest("button"))return;
     event.preventDefault();
     openGuildPage("guild-news");
+  });
+
+  $("dashboard-gallery-upload-trigger")?.addEventListener("click",()=> {
+    if(canManageDashboardGallery())$("dashboard-gallery-upload-input")?.click();
+  });
+  $("dashboard-gallery-upload-input")?.addEventListener("change",event=>{
+    void uploadDashboardGalleryFiles(event.target.files||[]);
+  });
+  $("dashboard-gallery-prev")?.addEventListener("click",()=>{
+    if(!dashboardGalleryImages.length)return;
+    dashboardGalleryActiveIndex=(dashboardGalleryActiveIndex-1+dashboardGalleryImages.length)%dashboardGalleryImages.length;
+    renderDashboardGallery();
+  });
+  $("dashboard-gallery-next")?.addEventListener("click",()=>{
+    if(!dashboardGalleryImages.length)return;
+    dashboardGalleryActiveIndex=(dashboardGalleryActiveIndex+1)%dashboardGalleryImages.length;
+    renderDashboardGallery();
+  });
+  $("dashboard-gallery-track")?.addEventListener("click",event=>{
+    const focus=event.target.closest("[data-gallery-focus]");
+    const move=event.target.closest("[data-gallery-move]");
+    const remove=event.target.closest("[data-gallery-delete]");
+    if(move){void moveDashboardGalleryImage(move.dataset.galleryId,Number(move.dataset.galleryMove));return;}
+    if(remove){void deleteDashboardGalleryImage(remove.dataset.galleryDelete);return;}
+    if(focus){dashboardGalleryActiveIndex=Number(focus.dataset.galleryFocus);renderDashboardGallery();}
   });
 
   $("user-chip")?.addEventListener("click", (event) => {
