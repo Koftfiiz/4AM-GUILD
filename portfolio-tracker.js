@@ -4,6 +4,7 @@
   let requests = [];
   let editPermissions = [];
   let selectedRoundId = "";
+  let showArchivedRounds = false;
   let busy = false;
 
   const $ = (id) => document.getElementById(id);
@@ -68,6 +69,10 @@
       ".portfolio-tracker-round-list{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}",
       ".portfolio-tracker-round{padding:10px 13px;border:1px solid rgba(255,255,255,.14);border-radius:9px;background:rgba(255,255,255,.025);color:#eee;cursor:pointer;font-size:15px}",
       ".portfolio-tracker-round.is-active{border-color:#e8333f;background:rgba(232,51,63,.13);color:#fff}",
+      ".portfolio-tracker-round.is-archived{opacity:.82;border-style:dashed}",
+      ".portfolio-tracker-round-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0 14px}",
+      ".portfolio-tracker-danger{border-color:rgba(232,51,63,.55)!important;color:#ff9da5!important}",
+      ".portfolio-tracker-archived-label{display:inline-block;margin-left:6px;color:#ff9da5;font-size:15px}",
       ".portfolio-tracker-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:14px 0}",
       ".portfolio-tracker-stat{padding:14px;border:1px solid rgba(232,51,63,.2);border-radius:10px;background:rgba(255,255,255,.025)}",
       ".portfolio-tracker-stat strong{display:block;font-size:25px;color:#fff}",
@@ -209,6 +214,7 @@
     if (!root) return;
     injectStyles();
     const selected = rounds.find(round => round.id === selectedRoundId);
+    const visibleRounds = rounds.filter(round => showArchivedRounds ? !!round.archived_at : !round.archived_at);
     const stats = selected ? roundStats(selected.id) : null;
     const ownRow = stats?.detail.find(row => row.member.user_id === currentUser?.id);
     const editable = !!selected && (isRoundEditable(selected) ||
@@ -238,13 +244,16 @@
         '<div class="portfolio-tracker-heading"><div><span class="panel-kicker">PATCH VERSION TRACKER</span><h3>ติดตามการอัปเดต Portfolio</h3><p>ตรวจจาก Version ที่บันทึกในแฟ้มหลัก ไม่ต้องอัปโหลดรูปซ้ำในหน้านี้</p></div>' +
         '<button id="pt-refresh" class="btn btn-outline btn-sm" type="button">รีเฟรช</button></div>' +
         '<div class="portfolio-tracker-round-list">' +
-          (rounds.map(round => '<button type="button" class="portfolio-tracker-round ' + (round.id===selectedRoundId?"is-active":"") +
-            '" data-pt-round="' + esc(round.id) + '">' + esc(round.round_name) + ' · ' + (round.status==="open"?"เปิดรับ":"ปิดรับ") + '</button>').join("") ||
-            '<div class="portfolio-tracker-empty">ยังไม่มีรอบอัปเดตแฟ้มผลงาน</div>') +
+          (visibleRounds.map(round => '<button type="button" class="portfolio-tracker-round ' + (round.id===selectedRoundId?"is-active":"") + (round.archived_at?" is-archived":"") +
+            '" data-pt-round="' + esc(round.id) + '">' + esc(round.round_name) + ' · ' + (round.archived_at?"เก็บเข้าคลัง":(round.status==="open"?"เปิดรับ":"ปิดรับ")) + '</button>').join("") ||
+            '<div class="portfolio-tracker-empty">' + (showArchivedRounds?"ยังไม่มีรอบที่เก็บเข้าคลัง":"ยังไม่มีรอบอัปเดตแฟ้มผลงาน") + '</div>') +
+          (management() ? '<div class="portfolio-tracker-round-tools"><button id="pt-toggle-archived" class="btn btn-outline btn-sm" type="button">' + (showArchivedRounds?"← กลับไปรอบที่ใช้งาน":"ดูรอบที่เก็บเข้าคลัง") + '</button></div>' : "") +
         '</div>' +
         (selected ? (
           '<div class="portfolio-tracker-heading"><div><strong>' + esc(selected.round_name) + '</strong><p>เริ่ม ' + dateLabel(selected.starts_at) + ' · ปิดรับ ' + dateLabel(selected.closes_at) + '</p></div>' +
-          (management() ? '<button id="pt-toggle-round" class="btn btn-outline btn-sm" type="button">' + (selected.status==="open"?"ปิดรอบรับข้อมูล":"เปิดรอบอีกครั้ง") + '</button>' : "") +
+          (management() ? '<div class="portfolio-tracker-actions"><button id="pt-toggle-round" class="btn btn-outline btn-sm" type="button" ' + (selected.archived_at?'disabled':'') + '>' + (selected.status==="open"?"ปิดรอบรับข้อมูล":"เปิดรอบอีกครั้ง") + '</button>' +
+            (selected.archived_at ? '<button id="pt-restore-round" class="btn btn-outline btn-sm" type="button">กู้คืนรอบ</button>' : '<button id="pt-archive-round" class="btn btn-outline btn-sm" type="button">เก็บเข้าคลัง</button>') +
+            '<button id="pt-delete-round" class="btn btn-outline btn-sm portfolio-tracker-danger" type="button">ลบถาวร</button></div>' : "") +
           '</div>' +
           (management() ? (
             '<div class="portfolio-tracker-stats">' +
@@ -373,6 +382,58 @@
       }).select("id").single();
       if (error) { alert("สร้างรอบไม่สำเร็จ: " + error.message); return; }
       selectedRoundId = data.id;
+      await loadData();
+      render();
+    });
+
+    root.querySelector("#pt-toggle-archived")?.addEventListener("click",() => {
+      showArchivedRounds = !showArchivedRounds;
+      const firstVisible = rounds.find(round => showArchivedRounds ? !!round.archived_at : !round.archived_at);
+      selectedRoundId = firstVisible?.id || "";
+      render();
+    });
+
+    root.querySelector("#pt-archive-round")?.addEventListener("click",async() => {
+      if (!management() || !selectedRoundId) return;
+      const round = rounds.find(item => item.id === selectedRoundId);
+      if (!round || round.archived_at) return;
+      if (!confirm('เก็บรอบ “' + round.round_name + '” เข้าคลังใช่หรือไม่? รอบนี้จะหายจากรายการที่ใช้งาน แต่ประวัติ Version และรูปภาพจะยังอยู่ครบ')) return;
+      const {error} = await supabaseClient.from("portfolio_update_rounds").update({archived_at:new Date().toISOString(),archived_by:currentUser.id}).eq("id",selectedRoundId);
+      if (error) { alert("เก็บรอบเข้าคลังไม่สำเร็จ: " + error.message); return; }
+      showArchivedRounds = true;
+      await loadData();
+      render();
+    });
+
+    root.querySelector("#pt-restore-round")?.addEventListener("click",async() => {
+      if (!management() || !selectedRoundId) return;
+      const {error} = await supabaseClient.from("portfolio_update_rounds").update({archived_at:null,archived_by:null}).eq("id",selectedRoundId);
+      if (error) { alert("กู้คืนรอบไม่สำเร็จ: " + error.message); return; }
+      showArchivedRounds = false;
+      await loadData();
+      render();
+    });
+
+    root.querySelector("#pt-delete-round")?.addEventListener("click",async() => {
+      if (!management() || !selectedRoundId) return;
+      const round = rounds.find(item => item.id === selectedRoundId);
+      if (!round) return;
+      if (!confirm('ต้องการตรวจสอบและลบรอบ “' + round.round_name + '” ถาวรใช่หรือไม่? ระบบจะตรวจสอบข้อมูลที่เชื่อมโยงก่อนดำเนินการ')) return;
+      const checks = await Promise.all([
+        supabaseClient.from("portfolio_versions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
+        supabaseClient.from("portfolio_update_submissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
+        supabaseClient.from("portfolio_update_edit_requests").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
+        supabaseClient.from("portfolio_update_edit_permissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId)
+      ]);
+      const failed = checks.find(result => result.error);
+      if (failed) { alert("ตรวจสอบข้อมูลก่อนลบไม่สำเร็จ: " + failed.error.message); return; }
+      const [versions,submissions,requestsCount,permissions] = checks.map(result => result.count || 0);
+      const details = 'ข้อมูลที่พบในรอบนี้:\n• Portfolio Versions: ' + versions + '\n• Submissions: ' + submissions + '\n• คำขอแก้ไข: ' + requestsCount + '\n• สิทธิ์แก้ไข: ' + permissions + '\n\nการลบรอบจะลบข้อมูล Submission/คำขอ/สิทธิ์ที่ผูกกับรอบนี้ แต่จะเก็บตัว Version และรูปภาพในแฟ้ม Portfolio ไว้ โดยตัดเฉพาะความเชื่อมโยงกับรอบนี้';
+      if (!confirm(details + '\n\nยืนยันลบถาวรหรือไม่? การกระทำนี้ย้อนกลับไม่ได้')) return;
+      const {error} = await supabaseClient.from("portfolio_update_rounds").delete().eq("id",selectedRoundId);
+      if (error) { alert("ลบรอบไม่สำเร็จ: " + error.message); return; }
+      alert("ลบรอบอัปเดตเรียบร้อยแล้ว โดยข้อมูล Version และรูปภาพ Portfolio ยังคงอยู่");
+      selectedRoundId = "";
       await loadData();
       render();
     });
