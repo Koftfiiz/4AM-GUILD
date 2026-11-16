@@ -8267,7 +8267,7 @@ body.gallery-lightbox-open{overflow:hidden}
   display:block;
   width:fit-content;
   max-width:100%;
-  margin:12px 0 0;
+  margin:auto 0 0;
   padding:7px 11px;
   border:1px solid rgba(237,64,88,.2);
   border-radius:8px;
@@ -8395,6 +8395,7 @@ body.gallery-lightbox-open{overflow:hidden}
   #page-dashboard .profile-card .profile-list dd{
     font-size:15px;
   }
+  #page-dashboard .profile-card .profile-avatar-upload-status{margin:18px 0 0}
 }
 
 /* Mobile keeps the upload target square and stacks account details below it. */
