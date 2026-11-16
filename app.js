@@ -1357,7 +1357,7 @@ async function loadDashboardActivities() {
   container.innerHTML = items.map(item => {
     const preview = document.createElement("div");
     preview.innerHTML = sanitizeGuildActivityHTML(item.content_html || "");
-    const excerpt = (preview.textContent || "").replace(/\\s+/g, " ").trim();
+    const excerpt = (preview.textContent || "").replace(/\s+/g, " ").trim();
     const shortText = excerpt.length > 105 ? excerpt.slice(0, 105).trimEnd() + "…" : excerpt;
     const schedule = activityDateRange(item);
     return `<article class="dashboard-activity-item">
