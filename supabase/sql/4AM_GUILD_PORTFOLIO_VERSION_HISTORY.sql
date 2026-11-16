@@ -187,11 +187,23 @@ begin
   new.created_by := (select auth.uid());
   new.created_at := now();
 
+  -- Prefer the currently open Patch window.
   select id, round_name into active_round_id, active_round_name
   from public.portfolio_update_rounds
   where status = 'open' and now() >= starts_at and now() <= closes_at
   order by starts_at desc, created_at desc
   limit 1;
+
+  -- If the window is closed, honor a still-valid management-granted edit permission.
+  if active_round_id is null then
+    select r.id, r.round_name into active_round_id, active_round_name
+    from public.portfolio_update_edit_permissions permission
+    join public.portfolio_update_rounds r on r.id = permission.round_id
+    where permission.member_id = (select auth.uid())
+      and permission.expires_at > now()
+    order by permission.expires_at desc, r.closes_at desc
+    limit 1;
+  end if;
 
   new.round_id := active_round_id;
   new.patch_label := active_round_name;
