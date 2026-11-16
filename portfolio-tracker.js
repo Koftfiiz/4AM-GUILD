@@ -140,9 +140,12 @@
         return !!version && (version.portfolio_version_images || []).length > 0;
       }).length;
       const missing = [];
-      if (!cultivationFolders.length) missing.push("สร้างแฟ้มคัมภีร์หู่เฉียน / ขั้นสกิล");
-      if (cultivationUpdated < cultivationTotal) missing.push("อัปเดตคัมภีร์หู่เฉียน");
-      if (skillsUpdated < skillsTotal) missing.push("อัปเดตขั้นสกิล");
+      if (!cultivationFolders.length) {
+        missing.push("สร้างแฟ้มคัมภีร์หู่เฉียน / ขั้นสกิล");
+      } else {
+        if (cultivationUpdated < cultivationTotal) missing.push("อัปเดตคัมภีร์หู่เฉียน");
+        if (skillsUpdated < skillsTotal) missing.push("อัปเดตขั้นสกิล");
+      }
       pvpFolders.forEach(portfolio => {
         if (!versionForRound(portfolio,roundId)) missing.push("PvP Build: " + (portfolio.title || "ไม่มีชื่อ Build"));
       });
