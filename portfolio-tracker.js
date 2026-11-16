@@ -127,7 +127,9 @@
       }))
     }));
     if (!selectedRoundId || !rounds.some(round => round.id === selectedRoundId)) {
-      selectedRoundId = rounds[0]?.id || "";
+      const preferred = rounds.find(round => !round.archived_at) || rounds[0];
+      selectedRoundId = preferred?.id || "";
+      showArchivedRounds = !!preferred?.archived_at;
     }
   }
 
