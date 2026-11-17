@@ -3302,15 +3302,7 @@ async function loadPortfolios() {
   }
   return signedUrl;
 }
-baseClient.storage
-    .from(PORTFOLIO_BUCKET)
-    .createSignedUrl(path, 3600);
-  if (error) {
-    console.error("Portfolio image URL error:", error);
-    return "";
-  }
-  return data?.signedUrl || "";
-}
+
 
 function getPortfolioClasses(value) {
   return String(value || "")
