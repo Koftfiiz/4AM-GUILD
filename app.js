@@ -84,6 +84,9 @@ let presenceRefreshBusy = false;
 let discordAccount = null;
 let discordGuildMembersCache = [];
 let allPortfolios = [];
+// Reuse signed Portfolio URLs while valid so repeat renders/details can benefit
+// from the browser cache instead of generating a fresh token for the same file.
+const portfolioSignedUrlCache = new Map();
 let portfolioClassFilter = "all";
 let currentPortfolioMemberId = null;
 let portfolioManageMode = false;
@@ -3274,20 +3277,32 @@ async function loadPortfolios() {
     return {
       ...portfolio,
       portfolio_versions: versions,
-      current_version: latest,
-      portfolio_images: latest?.portfolio_images || [],
-      portfolio_reviews: latest?.portfolio_reviews || null
-    };
-  });
-
-  renderPortfolios();
-  renderPortfolioReviewCenter();
-}
-
-async function getPortfolioImageUrl(path) {
+      currentasync function getPortfolioImageUrl(path) {
   if (!path) return "";
   if (/^https?:\/\//i.test(path)) return path;
+
+  const now = Date.now();
+  const cached = portfolioSignedUrlCache.get(path);
+  if (cached && cached.expiresAt > now + 60_000) return cached.url;
+
   const { data, error } = await supabaseClient.storage
+    .from(PORTFOLIO_BUCKET)
+    .createSignedUrl(path, 3600);
+  if (error) {
+    console.error("Portfolio image URL error:", error);
+    return "";
+  }
+
+  const signedUrl = data?.signedUrl || "";
+  if (signedUrl) {
+    portfolioSignedUrlCache.set(path, {
+      url: signedUrl,
+      expiresAt: now + 55 * 60 * 1000
+    });
+  }
+  return signedUrl;
+}
+baseClient.storage
     .from(PORTFOLIO_BUCKET)
     .createSignedUrl(path, 3600);
   if (error) {
