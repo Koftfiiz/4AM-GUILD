@@ -4167,15 +4167,18 @@ async function uploadPortfolioImage(file, portfolioId, caption="", sortOrder=0, 
   if (!currentUser) throw new Error("กรุณาเข้าสู่ระบบก่อน");
   if (!file || !file.type.startsWith("image/")) throw new Error("กรุณาเลือกรูปภาพ");
 
-  const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+  // Keep portfolio screenshots detailed while reducing oversized PNG/JPEG uploads.
+  // GIF and unsupported formats safely fall back to the original file.
+  const uploadFile = await prepareStorageImageForUpload(file, { maxDimension: 2880, quality: 0.92 });
+  const ext = (uploadFile.name.split(".").pop() || "jpg").toLowerCase();
   const safe = /^[a-z0-9]+$/.test(ext) ? ext : "jpg";
   const base = `${currentUser.id}/${portfolioId}/versions/${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
   const originalPath = `${base}.${safe}`;
   const coverPath = coverBlob ? `${base}-cover.webp` : null;
   const storage = supabaseClient.storage.from(PORTFOLIO_BUCKET);
 
-  const { error: originalError } = await storage.upload(originalPath, file, {
-    cacheControl: "3600", upsert: false, contentType: file.type
+  const { error: originalError } = await storage.upload(originalPath, uploadFile, {
+    cacheControl: "86400", upsert: false, contentType: uploadFile.type
   });
   if (originalError) throw originalError;
 
