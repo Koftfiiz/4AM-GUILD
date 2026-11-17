@@ -116,7 +116,7 @@
       supabaseClient.from("portfolio_update_rounds").select("*").order("created_at",{ascending:false}),
       supabaseClient.from("portfolios").select(
         "id,member_id,title,game_class,portfolio_type,created_at,updated_at," +
-        "portfolio_versions(id,version_number,round_id,patch_label,created_at," +
+        "portfolio_versions(id,version_number,version_name,round_id,patch_label,created_at," +
         "portfolio_version_images(id,section_key,image_url,sort_order))"
       ).order("created_at",{ascending:false}),
       supabaseClient.from("portfolio_update_edit_requests").select("*").order("created_at",{ascending:false}),
@@ -265,13 +265,13 @@
           const selectedVersionId = submission?.version_id || versions[0]?.id || "";
           const chosen = versions.find(version => version.id === submission?.version_id);
           const statusHtml = submission
-            ? '<span class="portfolio-tracker-pill is-complete">ส่งแล้ว · Version ' + esc(chosen?.version_number ?? "—") + '</span>' +
+            ? '<span class="portfolio-tracker-pill is-complete">ส่งแล้ว · Version ' + esc(chosen?.version_number ?? "—") + (chosen?.version_name ? ' · ' + esc(chosen.version_name) : '') + '</span>' +
               '<p class="portfolio-tracker-muted">ส่งครั้งแรก ' + esc(dateLabel(submission.submitted_at)) +
               (submission.updated_at && submission.updated_at !== submission.submitted_at ? ' · เปลี่ยนรายการล่าสุด ' + esc(dateLabel(submission.updated_at)) : '') + '</p>'
             : '<span class="portfolio-tracker-pill is-empty">ยังไม่ได้ส่ง</span>';
           const options = versions.map(version =>
             '<option value="' + esc(version.id) + '" ' + (version.id === selectedVersionId ? "selected" : "") + '>' +
-            'Version ' + esc(version.version_number) + ' · ' + esc(dateLabel(version.created_at)) + '</option>'
+            'Version ' + esc(version.version_number) + ' · ' + esc(version.version_name || ("Version " + version.version_number)) + ' · ' + esc(dateLabel(version.created_at)) + '</option>'
           ).join("") || '<option value="">ยังไม่มี Version</option>';
           return '<div class="portfolio-tracker-submit-row"><div class="portfolio-tracker-submit-info">' +
             '<strong>' + esc(portfolio.title || "แฟ้มไม่มีชื่อ") + '</strong><p>' +
@@ -344,7 +344,7 @@
       const label = portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" :
         portfolio.portfolio_type === "pve" ? "PvE Build" : "PvP Build";
       const state = submission
-        ? "ส่งแล้ว · Version " + (version?.version_number ?? "ไม่พบ Version")
+        ? "ส่งแล้ว · Version " + (version?.version_number ?? "ไม่พบ Version") + (version?.version_name ? " · " + version.version_name : "")
         : "ยังไม่ได้ส่ง";
       return '<div class="portfolio-tracker-detail-item"><div><strong>' + esc(label + " · " + (portfolio.title || "แฟ้มผลงาน")) +
         '</strong><p class="portfolio-tracker-muted">' + esc(portfolio.game_class || "ไม่ระบุอาชีพ") + ' · ' + esc(state) +
