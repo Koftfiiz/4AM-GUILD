@@ -3170,7 +3170,7 @@ async function loadPortfolios() {
     .select(`
       id, member_id, title, description, game_class, portfolio_type, created_at, updated_at,
       portfolio_versions (
-        id, version_number, round_id, patch_label, title, description, game_class,
+        id, version_number, version_name, round_id, patch_label, title, description, game_class,
         portfolio_type, created_by, created_at,
         portfolio_version_images (
           id, image_url, cover_image_url, crop_settings, image_type,
