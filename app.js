@@ -3218,10 +3218,6 @@ async function loadPortfolios() {
       ...portfolio,
       portfolio_versions: versions,
       current_version: latest,
-      title: latest?.title ?? portfolio.title,
-      description: latest?.description ?? portfolio.description,
-      game_class: latest?.game_class ?? portfolio.game_class,
-      portfolio_type: latest?.portfolio_type ?? portfolio.portfolio_type,
       portfolio_images: latest?.portfolio_images || [],
       portfolio_reviews: latest?.portfolio_reviews || null
     };
@@ -3991,12 +3987,18 @@ async function renderPortfolios() {
           </div>
           <div class="portfolio-card-management">
             ${isOwner ? `
-              <button type="button" class="portfolio-edit-button" data-portfolio-action="edit" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="แก้ไขแฟ้มผลงาน" title="แก้ไขแฟ้มผลงาน">
+              <button type="button" class="portfolio-edit-button" data-portfolio-action="edit-folder" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="แก้ไขข้อมูลแฟ้มผลงาน" title="แก้ไขข้อมูลแฟ้มผลงาน">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg>
-                <span>เพิ่มเวอร์ชัน</span>
+                <span>แก้ไขแฟ้ม</span>
+              </button>
+              <button type="button" class="portfolio-add-version-button" data-portfolio-action="add-version" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="เพิ่ม Version ใหม่" title="เพิ่ม Version ใหม่">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+                <span>เพิ่ม Version</span>
+              </button>
+              <button type="button" class="portfolio-delete-button" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงาน" title="ลบแฟ้มผลงาน">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
               </button>
             ` : ""}
-
           </div>
           ${reviewPanel}
           ${reviewControls}
@@ -4320,6 +4322,130 @@ async function startPortfolioEdit(portfolioId) {
   $("portfolio-create-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+async function editPortfolioFolder(portfolioId, button) {
+  const portfolio = allPortfolios.find(item => item.id === portfolioId);
+  if (!portfolio || portfolio.member_id !== currentUser?.id || isRolePreviewActive()) {
+    alert("แก้ไขได้เฉพาะแฟ้มผลงานของคุณเท่านั้น");
+    return;
+  }
+
+  const isSpecial = portfolio.portfolio_type === "cultivation_skills";
+  const enteredTitle = isSpecial
+    ? portfolio.title
+    : prompt("แก้ไขชื่อแฟ้มผลงาน", portfolio.title || "");
+  if (enteredTitle === null) return;
+  const title = String(enteredTitle || "").trim();
+  if (!isSpecial && (!title || title.length > 120)) {
+    alert("กรุณาระบุชื่อแฟ้ม 1–120 ตัวอักษร");
+    return;
+  }
+
+  const enteredDescription = prompt("แก้ไขรายละเอียดแฟ้ม", portfolio.description || "");
+  if (enteredDescription === null) return;
+  const description = String(enteredDescription || "").trim();
+  if (description.length > 2000) {
+    alert("รายละเอียดแฟ้มต้องไม่เกิน 2,000 ตัวอักษร");
+    return;
+  }
+
+  const currentClasses = getPortfolioClasses(portfolio.game_class).join(", ");
+  const enteredClasses = prompt("แก้ไข Class Tags (คั่นแต่ละคลาสด้วยเครื่องหมายจุลภาค)", currentClasses);
+  if (enteredClasses === null) return;
+  const selectedClasses = String(enteredClasses).split(",").map(value => value.trim()).filter(Boolean);
+  const allowedClasses = new Set(CLASS_DATA.map(item => item.name.toLowerCase()));
+  const invalidClasses = selectedClasses.filter(value => !allowedClasses.has(value.toLowerCase()));
+  if (!selectedClasses.length || invalidClasses.length) {
+    alert("กรุณาระบุคลาสที่มีอยู่ในระบบอย่างน้อย 1 คลาส: " + CLASS_DATA.map(item => item.name).join(", "));
+    return;
+  }
+  const normalizedClasses = [...new Set(selectedClasses.map(value =>
+    CLASS_DATA.find(item => item.name.toLowerCase() === value.toLowerCase()).name
+  ))].join(", ");
+
+  if (button) { button.disabled = true; button.textContent = "กำลังบันทึก..."; }
+  try {
+    const { data, error } = await supabaseClient.from("portfolios")
+      .update({ title: isSpecial ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : title, description, game_class: normalizedClasses })
+      .eq("id", portfolioId)
+      .eq("member_id", currentUser.id)
+      .select("id")
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) throw new Error("ไม่พบแฟ้ม หรือบัญชีนี้ไม่มีสิทธิ์แก้ไข");
+    await loadPortfolios();
+    await renderPortfolios();
+    alert("บันทึกข้อมูลแฟ้มผลงานเรียบร้อยแล้ว โดยประวัติ Version เดิมไม่เปลี่ยนแปลง");
+  } catch (error) {
+    console.error("Edit portfolio folder:", error);
+    alert("แก้ไขแฟ้มไม่สำเร็จ: " + (error.message || "Unknown error"));
+  } finally {
+    if (button) { button.disabled = false; button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg><span>แก้ไขแฟ้ม</span>'; }
+  }
+}
+
+async function deletePortfolioFolder(portfolioId, button) {
+  const portfolio = allPortfolios.find(item => item.id === portfolioId);
+  if (!portfolio || portfolio.member_id !== currentUser?.id || isRolePreviewActive()) {
+    alert("ลบได้เฉพาะแฟ้มผลงานของคุณเท่านั้น");
+    return;
+  }
+  const label = portfolio.portfolio_type === "cultivation_skills"
+    ? "คัมภีร์หู่เฉียน / ขั้นสกิล"
+    : (portfolio.title || "แฟ้มผลงาน");
+  if (!confirm("ยืนยันลบแฟ้ม “" + label + "” ถาวรหรือไม่?\n\nระบบจะลบแฟ้มนี้พร้อม Versions รูปภาพ และผลตรวจทั้งหมดของแฟ้มนี้\n\nแฟ้มอื่นของคุณจะไม่ได้รับผลกระทบ\n\nหากแฟ้มนี้มีประวัติการส่ง PATCH ระบบจะไม่อนุญาตให้ลบ เพื่อรักษาประวัติการส่งงาน")) return;
+
+  if (button) { button.disabled = true; button.textContent = "…"; }
+  try {
+    const [submissionResult, legacyImageResult, versionResult] = await Promise.all([
+      supabaseClient.from("portfolio_patch_submissions").select("id").eq("portfolio_id", portfolioId).limit(1),
+      supabaseClient.from("portfolio_images").select("image_url, cover_image_url").eq("portfolio_id", portfolioId),
+      supabaseClient.from("portfolio_versions").select("id").eq("portfolio_id", portfolioId)
+    ]);
+    for (const result of [submissionResult, legacyImageResult, versionResult]) {
+      if (result.error) throw result.error;
+    }
+    if (submissionResult.data?.length) {
+      throw new Error("แฟ้มนี้มีประวัติการส่ง PATCH อยู่ จึงยังลบไม่ได้ เพื่อเก็บประวัติการส่งและผลตรวจไว้ครบถ้วน");
+    }
+
+    const versionIds = (versionResult.data || []).map(row => row.id);
+    let versionImages = [];
+    if (versionIds.length) {
+      const { data, error } = await supabaseClient.from("portfolio_version_images")
+        .select("image_url, cover_image_url").in("version_id", versionIds);
+      if (error) throw error;
+      versionImages = data || [];
+    }
+    const allImageRows = [...(legacyImageResult.data || []), ...versionImages];
+    const paths = [...new Set(allImageRows.flatMap(row => [row.image_url, row.cover_image_url])
+      .filter(path => path && !/^https?:\/\//i.test(path)))];
+
+    const { data: deleted, error } = await supabaseClient.from("portfolios")
+      .delete().eq("id", portfolioId).eq("member_id", currentUser.id).select("id");
+    if (error) {
+      if (error.code === "23503") throw new Error("แฟ้มนี้ยังมีประวัติ PATCH เชื่อมโยงอยู่ จึงไม่สามารถลบได้");
+      throw error;
+    }
+    if (!deleted?.length) throw new Error("ไม่พบแฟ้มที่ลบได้ หรือบัญชีนี้ไม่มีสิทธิ์ลบ");
+
+    let storageWarning = "";
+    if (paths.length) {
+      const { error: storageError } = await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove(paths);
+      if (storageError) {
+        console.warn("Portfolio folder Storage cleanup failed:", storageError);
+        storageWarning = "\nหมายเหตุ: มีไฟล์รูปบางส่วนที่ลบจาก Storage ไม่สำเร็จ กรุณาแจ้ง Developer ตรวจสอบ";
+      }
+    }
+    await loadPortfolios();
+    await renderPortfolios();
+    alert("ลบแฟ้ม “" + label + "” เรียบร้อยแล้ว" + storageWarning);
+  } catch (error) {
+    console.error("Portfolio folder delete error:", error);
+    alert("ลบแฟ้มไม่สำเร็จ: " + (error.message || "Unknown error"));
+    if (button) { button.disabled = false; button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>'; }
+  }
+}
+
 async function handlePortfolioCardAction(event) {
   const button = event.target.closest("[data-portfolio-action]");
   if (!button) return;
@@ -4329,11 +4455,18 @@ async function handlePortfolioCardAction(event) {
   const portfolio = allPortfolios.find((item) => item.id === portfolioId);
   if (!portfolio) return;
 
-  if (button.dataset.portfolioAction === "edit") {
+  const action = button.dataset.portfolioAction;
+  if (action === "edit-folder") {
+    await editPortfolioFolder(portfolioId, button);
+    return;
+  }
+  if (action === "add-version") {
     await startPortfolioEdit(portfolioId);
     return;
   }
-
+  if (action === "delete") {
+    await deletePortfolioFolder(portfolioId, button);
+  }
 }
 
 function registerPortfolioEvents() {
