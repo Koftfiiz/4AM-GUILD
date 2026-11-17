@@ -6563,23 +6563,22 @@ body select:disabled {
 @media(max-width:560px){.manual-member-link-option{align-items:stretch;flex-direction:column}.manual-member-link-confirm{width:100%}}
 
 
-/* Manual-member confirmation: anchor to the viewport itself, not a grid/container.
-   Top anchoring is intentional: landscape phones have very little vertical space,
-   so the panel must start within the visible area and scroll internally. */
+/* Manual-member confirmation modal: always centered in the visible viewport.
+   On short landscape screens, keep the centered panel scrollable internally. */
 body > #manual-member-link-screen {
   position: fixed !important;
-  top: max(12px, env(safe-area-inset-top, 0px)) !important;
+  top: 50% !important;
   left: 50% !important;
   right: auto !important;
   bottom: auto !important;
-  transform: translateX(-50%) !important;
+  transform: translate(-50%, -50%) !important;
   z-index: 100000 !important;
   display: block !important;
-  width: min(620px, calc(100vw - 24px)) !important;
-  max-width: calc(100vw - 24px) !important;
+  width: min(620px, calc(100vw - 32px)) !important;
+  max-width: calc(100vw - 32px) !important;
   height: auto !important;
-  max-height: calc(100vh - 24px) !important;
-  max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px)) !important;
+  max-height: calc(100vh - 32px) !important;
+  max-height: calc(100dvh - 32px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)) !important;
   margin: 0 !important;
   padding: 26px !important;
   overflow-x: hidden !important;
@@ -6597,11 +6596,10 @@ body > #manual-member-link-screen {
   }
 }
 
-@media (max-height: 500px) {
+@media (max-height: 520px) {
   body > #manual-member-link-screen {
-    top: max(6px, env(safe-area-inset-top, 0px)) !important;
-    max-height: calc(100vh - 12px) !important;
-    max-height: calc(100dvh - 12px - env(safe-area-inset-top, 0px)) !important;
+    max-height: calc(100vh - 20px) !important;
+    max-height: calc(100dvh - 20px) !important;
     padding: 12px 14px !important;
   }
 }
