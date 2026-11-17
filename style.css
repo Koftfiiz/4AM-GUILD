@@ -6563,16 +6563,24 @@ body select:disabled {
 @media(max-width:560px){.manual-member-link-option{align-items:stretch;flex-direction:column}.manual-member-link-confirm{width:100%}}
 
 
-/* Center the Discord manual-member confirmation panel as a viewport overlay. */
-/* Body-level modal avoids clipping by login screen overflow on mobile browsers. */
+/* Manual-member confirmation: anchor to the viewport itself, not a grid/container.
+   Top anchoring is intentional: landscape phones have very little vertical space,
+   so the panel must start within the visible area and scroll internally. */
 body > #manual-member-link-screen {
   position: fixed !important;
-  inset: 12px !important;
+  top: max(12px, env(safe-area-inset-top, 0px)) !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translateX(-50%) !important;
   z-index: 100000 !important;
+  display: block !important;
   width: min(620px, calc(100vw - 24px)) !important;
-  max-width: 620px !important;
-  max-height: calc(100dvh - 24px) !important;
-  margin: auto !important;
+  max-width: calc(100vw - 24px) !important;
+  height: auto !important;
+  max-height: calc(100vh - 24px) !important;
+  max-height: calc(100dvh - 24px - env(safe-area-inset-top, 0px)) !important;
+  margin: 0 !important;
   padding: 26px !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
@@ -6581,11 +6589,20 @@ body > #manual-member-link-screen {
   box-sizing: border-box !important;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 700px) {
   body > #manual-member-link-screen {
     width: calc(100vw - 24px) !important;
-    max-height: calc(100dvh - 24px) !important;
-    padding: 20px 16px !important;
+    max-width: calc(100vw - 24px) !important;
+    padding: 18px 14px !important;
+  }
+}
+
+@media (max-height: 500px) {
+  body > #manual-member-link-screen {
+    top: max(6px, env(safe-area-inset-top, 0px)) !important;
+    max-height: calc(100vh - 12px) !important;
+    max-height: calc(100dvh - 12px - env(safe-area-inset-top, 0px)) !important;
+    padding: 12px 14px !important;
   }
 }
 
