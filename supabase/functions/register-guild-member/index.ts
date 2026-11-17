@@ -243,7 +243,7 @@ Deno.serve(async (req: Request) => {
         .update({ discord_connection_status: "connected_member", guild_member_verified: true, last_checked_at: new Date().toISOString(), updated_at: new Date().toISOString() })
         .eq("user_id", user.id);
       if (statusError) console.warn("Could not store initial Discord connection status", statusError);
-      return jsonResponse(200, { success: true, status: "pending_review", message: "เชื่อมบัญชีและส่งคำขอให้ฝ่ายจัดการตรวจสอบแล้ว" });
+      return jsonResponse(200, { success: true, status: "active", message: "เชื่อมบัญชีสมาชิก Manual สำเร็จ สามารถเข้าใช้งานเว็บไซต์ได้ทันที" });
     }
 
     if (action !== "register") return jsonResponse(400, { success: false, message: "Invalid registration action" });

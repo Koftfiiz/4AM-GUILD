@@ -1,0 +1,112 @@
+CREATE OR REPLACE FUNCTION public.enforce_guild_member_game_uid_12_digits()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path TO ''
+AS $function$
+BEGIN
+  IF TG_OP = 'INSERT' OR NEW.game_uid IS DISTINCT FROM OLD.game_uid THEN
+    IF NEW.game_uid IS NULL THEN
+      IF TG_OP = 'INSERT' AND NEW.registration_source = 'manual_link' THEN
+        RETURN NEW;
+      END IF;
+      RAISE EXCEPTION 'Game UID must contain 5 to 12 digits';
+    END IF;
+    IF NEW.game_uid !~ '^[0-9]{5,12}$' THEN
+      RAISE EXCEPTION 'Game UID must contain 5 to 12 digits';
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.link_manual_guild_member_pending(
+  p_user_id uuid,
+  p_manual_member_id uuid,
+  p_discord_user_id text,
+  p_discord_username text,
+  p_discord_global_name text,
+  p_discord_role_ids text[]
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_manual public.guild_manual_members%rowtype;
+  v_existing uuid;
+  v_discord_name text;
+BEGIN
+  IF p_user_id IS NULL OR p_discord_user_id !~ '^[0-9]{17,20}$' THEN
+    RAISE EXCEPTION 'Invalid user or Discord identity';
+  END IF;
+
+  SELECT * INTO v_manual
+  FROM public.guild_manual_members
+  WHERE id = p_manual_member_id
+    AND btrim(coalesce(discord_user_id, '')) = p_discord_user_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Manual record does not match this Discord account';
+  END IF;
+  IF v_manual.active IS DISTINCT FROM true THEN
+    RAISE EXCEPTION 'Manual member record is inactive';
+  END IF;
+  IF v_manual.linked_user_id IS NOT NULL AND v_manual.linked_user_id <> p_user_id THEN
+    RAISE EXCEPTION 'Manual record is already linked to another account';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.guild_members WHERE user_id = p_user_id) THEN
+    RAISE EXCEPTION 'Guild profile already exists';
+  END IF;
+
+  SELECT user_id INTO v_existing
+  FROM public.discord_accounts
+  WHERE discord_user_id = p_discord_user_id
+  FOR UPDATE;
+  IF FOUND AND v_existing <> p_user_id THEN
+    RAISE EXCEPTION 'Discord account is linked to another user';
+  END IF;
+  IF EXISTS (SELECT 1 FROM public.discord_accounts WHERE user_id = p_user_id) THEN
+    RAISE EXCEPTION 'This user already has a linked Discord account';
+  END IF;
+
+  v_discord_name := coalesce(
+    nullif(btrim(v_manual.discord_server_nickname), ''),
+    nullif(btrim(v_manual.discord_global_name), ''),
+    nullif(btrim(v_manual.discord_username), ''),
+    nullif(btrim(v_manual.discord_name), ''),
+    p_discord_username
+  );
+
+  INSERT INTO public.guild_members(
+    user_id, character_name, game_class, nickname, discord_name, age, role,
+    active, guild_position, membership_status, registration_source,
+    discord_role_ids, last_discord_sync_at
+  ) VALUES (
+    p_user_id, v_manual.character_name, v_manual.game_class, v_manual.nickname,
+    v_discord_name, v_manual.age, 'member',
+    true, v_manual.guild_position, 'active', 'manual_link',
+    coalesce(p_discord_role_ids, '{}'::text[]), now()
+  );
+
+  INSERT INTO public.discord_accounts(
+    user_id, discord_user_id, discord_username, discord_global_name, verified,
+    guild_member_verified, verified_at, last_checked_at, updated_at
+  ) VALUES (
+    p_user_id, p_discord_user_id, p_discord_username, p_discord_global_name,
+    true, true, now(), now(), now()
+  );
+
+  UPDATE public.guild_manual_members
+  SET linked_user_id = p_user_id,
+      linked_at = coalesce(linked_at, now()),
+      updated_at = now()
+  WHERE id = v_manual.id
+    AND (linked_user_id IS NULL OR linked_user_id = p_user_id);
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Could not save Manual account link';
+  END IF;
+END;
+$function$;

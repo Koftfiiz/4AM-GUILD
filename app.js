@@ -821,8 +821,15 @@ async function confirmManualMemberLink(manualMemberId) {
     if (!data?.success) throw new Error(data?.message || "ไม่สามารถส่งคำขอเชื่อมบัญชีได้");
     $("manual-member-link-screen")?.remove();
     await loadCurrentMember();
-    if (!currentMember) throw new Error("ส่งคำขอแล้ว แต่ไม่พบข้อมูลสมาชิก กรุณาเข้าสู่ระบบใหม่");
-    showMembershipStatusScreen("pending_review");
+    if (!currentMember) throw new Error("เชื่อมบัญชีแล้ว แต่ไม่พบข้อมูลสมาชิก กรุณาเข้าสู่ระบบใหม่");
+
+    // Manual Directory records are already Management-approved when active.
+    // Continue into the app immediately instead of showing the pending-review screen.
+    if (currentMember.membership_status === "pending_review") {
+      showMembershipStatusScreen("pending_review");
+      return;
+    }
+    await loadApplication();
   } catch (error) {
     console.error("Manual member confirmation failed:", error);
     showMessage("manual-member-link-message", error.message || "ไม่สามารถยืนยันการเชื่อมบัญชีได้");
