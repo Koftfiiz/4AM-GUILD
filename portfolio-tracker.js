@@ -326,7 +326,8 @@
     host.innerHTML = '<div class="portfolio-tracker-detail-item"><strong>' + esc(memberName(memberId)) +
       '</strong><span>' + pill(row.status,row.submitted + "/" + row.total + " แฟ้ม") + '</span></div>' +
       (items || '<div class="portfolio-tracker-empty">สมาชิกยังไม่มีแฟ้ม Portfolio</div>') +
-      (management() && !rounds.find(item=>item.id===roundId)?.archived_at
+      (management() && !rounds.find(item=>item.id===roundId)?.archived_at &&
+        (rounds.find(item=>item.id===roundId)?.status === "closed" || Date.now() > new Date(rounds.find(item=>item.id===roundId)?.closes_at).getTime())
         ? '<div class="portfolio-tracker-detail-item"><span class="portfolio-tracker-muted">อนุญาตให้สมาชิกส่งหรือเปลี่ยน Version หลังปิดรอบได้ 24 ชั่วโมง</span>' +
           '<button type="button" class="btn btn-primary btn-sm" data-pt-grant-member="' + esc(memberId) + '">อนุญาตส่งล่าช้า 24 ชั่วโมง</button></div>'
         : '');
@@ -532,7 +533,7 @@
             .update({status:"approved",reviewed_by:currentUser.id,reviewed_at:new Date().toISOString()})
             .eq("id",request.id);
           if (error) throw error;
-          alert("อนุมัติคำขอแล้ว · แก้ไขได้ถึง " + dateLabel(expiresAt));
+          alert("อนุมัติคำขอแล้ว · ส่ง Patch ล่าช้าได้ถึง " + dateLabel(expiresAt));
           await loadData();
           render();
         } catch(error) { alert("อนุมัติคำขอไม่สำเร็จ: " + error.message); }
