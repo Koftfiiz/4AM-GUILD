@@ -1292,6 +1292,7 @@ async function loadDashboard() {
 let dashboardAnnouncements = [];
 let dashboardAnnouncementIndex = 0;
 let dashboardGalleryImages = [];
+const dashboardGallerySignedUrlCache = new Map();
 let dashboardGalleryActiveIndex = 0;
 let dashboardGalleryBusy = false;
 let dashboardGalleryAutoplayTimer = null;
@@ -1553,11 +1554,22 @@ async function loadDashboardGallery() {
     return;
   }
   const rows=data||[];
+  const now=Date.now();
   const signed=await Promise.all(rows.map(async item=>{
+    const cached=dashboardGallerySignedUrlCache.get(item.storage_path);
+    if(cached&&cached.expiresAt>now+60_000){
+      return {...item,signedUrl:cached.url};
+    }
     const {data:signedData,error:signedError}=await supabaseClient.storage.from("guild-gallery-images").createSignedUrl(item.storage_path,3600);
     if(signedError){console.warn("Guild Gallery signed URL:",signedError);return null;}
-    return {...item,signedUrl:signedData.signedUrl};
+    const signedUrl=signedData.signedUrl;
+    dashboardGallerySignedUrlCache.set(item.storage_path,{url:signedUrl,expiresAt:Date.now()+55*60*1000});
+    return {...item,signedUrl};
   }));
+  const activePaths=new Set(rows.map(item=>item.storage_path));
+  for(const path of dashboardGallerySignedUrlCache.keys()){
+    if(!activePaths.has(path))dashboardGallerySignedUrlCache.delete(path);
+  }
   dashboardGalleryImages=signed.filter(Boolean);
   dashboardGalleryActiveIndex=0;
   renderDashboardGallery();
