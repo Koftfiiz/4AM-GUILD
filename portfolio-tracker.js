@@ -281,7 +281,7 @@
             (!editable || !versions.length ? "disabled" : "") + '>' + options + '</select></label>' +
             '<button type="button" class="btn btn-primary btn-sm" data-pt-submit="' + esc(portfolio.id) + '" ' +
             (!editable || !versions.length ? "disabled" : "") + '>' +
-            (submission ? "เปลี่ยน Version ที่ส่ง" : "ส่ง Version นี้เข้ารอบ") + '</button></div></div>';
+            (submission ? "เปลี่ยนเวอร์ชันที่ส่ง" : "ส่งเวอร์ชันนี้เข้าระบบ") + '</button></div></div>';
         }).join("") + '</div>'
       : '<div class="portfolio-tracker-empty">คุณยังไม่มีแฟ้ม Portfolio สามารถสร้างแฟ้มและ Version ได้ทุกเวลา แล้วกลับมาเลือกส่งเข้ารอบนี้ได้</div>';
 
@@ -469,7 +469,27 @@
 
     root.querySelectorAll("[data-pt-submit]").forEach(button =>
       button.addEventListener("click",async() => {
-        if (!selectedRoundId || !currentUser || !editable) return;
+        if (!currentUser) {
+          alert("กรุณาเข้าสู่ระบบก่อนส่ง Version");
+          return;
+        }
+        const activeRound = rounds.find(round => round.id === selectedRoundId);
+        if (!activeRound) {
+          alert("ไม่พบรอบ Patch ที่เลือก กรุณารีเฟรชหน้าเว็บ");
+          return;
+        }
+        const activePermission = editPermissions.find(permission =>
+          permission.round_id === activeRound.id &&
+          new Date(permission.expires_at).getTime() > Date.now()
+        );
+        const canSubmitNow = !activeRound.archived_at &&
+          (isRoundEditable(activeRound) || !!activePermission);
+        if (!canSubmitNow) {
+          alert(activeRound.archived_at
+            ? "รอบ Patch นี้ถูกเก็บเข้าคลังแล้ว ไม่สามารถส่งหรือเปลี่ยน Version ได้"
+            : "รอบ Patch นี้ยังไม่เปิดรับหรือปิดรับแล้ว กรุณาตรวจสอบช่วงเวลารับสมัครหรือขออนุญาต Management");
+          return;
+        }
         const portfolioId = button.dataset.ptSubmit;
         const select = root.querySelector('[data-pt-version-select="' + portfolioId + '"]');
         const versionId = select?.value;
@@ -483,6 +503,8 @@
           : "ยืนยันส่ง Version " + version?.version_number + " ของแฟ้ม “" + portfolio.title + "” เข้ารอบ Patch นี้ใช่หรือไม่?";
         if (!confirm(prompt)) return;
         button.disabled = true;
+        const originalLabel = button.textContent;
+        button.textContent = "กำลังส่ง...";
         try {
           const {error} = await supabaseClient.rpc("submit_portfolio_patch",{
             target_round_id:selectedRoundId,
@@ -495,6 +517,7 @@
           alert(existing ? "เปลี่ยน Version ที่ส่งเรียบร้อยแล้ว" : "ส่ง Version เข้ารอบ Patch เรียบร้อยแล้ว");
         } catch(error) {
           button.disabled = false;
+          button.textContent = originalLabel;
           alert("ส่ง Version ไม่สำเร็จ: " + (error.message || "Unknown error"));
         }
       })
