@@ -405,19 +405,19 @@
   }
 
   function bindEvents(root) {
-    // Delegate member-detail clicks from the persistent root so the action remains
-    // available after the tracker re-renders its inner HTML.
-    if (root.dataset.ptMemberClickBound !== "true") {
-      root.dataset.ptMemberClickBound = "true";
-      root.addEventListener("click", event => {
-        const button = event.target?.closest?.("[data-pt-member]");
-        if (!button || !root.contains(button)) return;
+    // Bind directly to each freshly-rendered member button. This avoids relying
+    // on bubbling through app navigation/layout wrappers.
+    root.querySelectorAll("[data-pt-member]").forEach(button => {
+      button.onclick = event => {
         event.preventDefault();
+        event.stopPropagation();
+        const memberId = button.getAttribute("data-pt-member");
+        const host = root.querySelector("#pt-member-detail");
+        if (host) host.innerHTML = '<div class="portfolio-tracker-muted">กำลังเปิดรายละเอียดสมาชิก…</div>';
         try {
-          renderMemberDetail(root, button.dataset.ptMember, selectedRoundId);
+          renderMemberDetail(root, memberId, selectedRoundId);
         } catch (error) {
           console.error("[Portfolio Tracker] เปิดรายละเอียดสมาชิกไม่สำเร็จ", error);
-          const host = root.querySelector("#pt-member-detail");
           if (host) {
             host.innerHTML = '<div class="portfolio-tracker-empty">เปิดรายละเอียดไม่สำเร็จ: ' +
               esc(error?.message || "เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ") + '</div>';
@@ -425,8 +425,8 @@
             alert("เปิดรายละเอียดสมาชิกไม่สำเร็จ: " + (error?.message || "กรุณารีเฟรชหน้าแล้วลองอีกครั้ง"));
           }
         }
-      });
-    }
+      };
+    });
 
     root.querySelector("#pt-create-round")?.addEventListener("submit",async event => {
       event.preventDefault();
