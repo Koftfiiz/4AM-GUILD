@@ -3947,7 +3947,7 @@ async function renderPortfolios() {
     return `
       <article class="portfolio-card ${portfolioManageMode && (isOwner || reviewer) ? "is-jiggling" : ""}" data-portfolio-card-id="${escapeHTML(portfolio.id)}" role="button" tabindex="0" aria-label="เปิดแฟ้ม ${escapeHTML(portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : portfolio.title || "ผลงาน")}" ${color ? `style="--class-color:${color}"` : ""}>
         ${imageUrl ? `<img class="portfolio-card-image" src="${escapeHTML(imageUrl)}" alt="${escapeHTML(portfolio.title)}" loading="lazy">` : '<div class="portfolio-card-no-image">4AM GUILD</div>'}
-        ${portfolioManageMode && (isOwner || reviewer) ? `<button type="button" class="portfolio-iphone-delete" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงาน" title="ลบแฟ้มผลงาน">−</button>` : ""}
+        ${(isOwner || (portfolioManageMode && reviewer)) ? `<button type="button" class="portfolio-iphone-delete" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงานถาวร" title="ลบแฟ้มผลงานถาวร">−</button>` : ""}
         <div class="portfolio-card-content">
           <div class="portfolio-card-owner">${escapeHTML(ownerName)}</div>
           <span class="portfolio-type-chip">${portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : portfolio.portfolio_type === "pve" ? "PvE Build" : "PvP Build"}</span>
@@ -4296,21 +4296,40 @@ async function deletePortfolio(portfolioId) {
     alert("คุณลบได้เฉพาะแฟ้มผลงานของตัวเองเท่านั้น");
     return;
   }
+
   try {
+    // Collect every stored image path before the database cascades remove the version rows.
     const versions = portfolio.portfolio_versions || [];
-    const allImages = versions.flatMap(version => version.portfolio_images || []);
+    const versionImages = versions.flatMap(version => version.portfolio_images || []);
+    const { data: legacyImages, error: legacyError } = await supabaseClient
+      .from("portfolio_images")
+      .select("image_url, cover_image_url")
+      .eq("portfolio_id", portfolioId);
+    if (legacyError) throw legacyError;
+
+    const allImages = [...versionImages, ...(legacyImages || [])];
     const paths = [...new Set(allImages.flatMap(image => [image.image_url, image.cover_image_url])
       .filter(path => path && !/^https?:\/\//i.test(path)))];
 
-    const { error } = await supabaseClient.from("portfolios").delete().eq("id", portfolioId);
+    // The DB cascade is scoped to this one Portfolio folder and its own history/submissions.
+    const { data: deletedRows, error } = await supabaseClient
+      .from("portfolios")
+      .delete()
+      .eq("id", portfolioId)
+      .select("id");
     if (error) throw error;
+    if (!deletedRows?.length) throw new Error("ไม่พบแฟ้มที่ลบได้ หรือบัญชีไม่มีสิทธิ์ลบ");
 
+    let storageWarning = "";
     if (paths.length) {
       const { error: storageError } = await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove(paths);
-      if (storageError) console.warn("Portfolio Storage cleanup failed after folder deletion:", storageError);
+      if (storageError) {
+        console.warn("Portfolio Storage cleanup failed after folder deletion:", storageError);
+        storageWarning = "\\nแต่มีรูปภาพบางไฟล์ที่ยังลบจาก Storage ไม่สำเร็จ กรุณาแจ้ง Developer ตรวจสอบ";
+      }
     }
     await loadPortfolios();
-    alert("ลบแฟ้มผลงานและประวัติเวอร์ชันเรียบร้อยแล้ว");
+    alert("ลบแฟ้มทดสอบและข้อมูลที่อยู่ภายในแฟ้มนี้ถาวรเรียบร้อยแล้ว" + storageWarning);
   } catch (error) {
     console.error("Portfolio delete error:", error);
     alert("ลบแฟ้มผลงานไม่สำเร็จ: " + (error.message || "Unknown error"));
@@ -4336,7 +4355,7 @@ async function handlePortfolioCardAction(event) {
     const canReviewDelete = portfolioManageMode && isPortfolioReviewer();
     if (!isOwner && !canReviewDelete) return;
 
-    if (!confirm("ต้องการลบแฟ้มผลงานนี้ใช่หรือไม่?\\nรูปภาพและข้อมูลในแฟ้มนี้จะถูกลบด้วย")) return;
+    if (!confirm("ยืนยันลบแฟ้มผลงานนี้ถาวรใช่หรือไม่?\\n\\nข้อมูลทั้งหมดภายในแฟ้มนี้จะถูกลบ ได้แก่ ทุก Version, รูปภาพ, รีวิว และประวัติการส่ง PATCH\\n\\nการดำเนินการนี้ไม่สามารถกู้คืนได้")) return;
 
     button.disabled = true;
     button.textContent = "…";
