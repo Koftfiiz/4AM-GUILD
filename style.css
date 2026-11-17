@@ -6564,27 +6564,28 @@ body select:disabled {
 
 
 /* Center the Discord manual-member confirmation panel as a viewport overlay. */
-#login-screen #manual-member-link-screen {
+/* Body-level modal avoids clipping by login screen overflow on mobile browsers. */
+body > #manual-member-link-screen {
   position: fixed !important;
-  inset: 0 !important;
-  z-index: 10000 !important;
-  width: min(620px, calc(100vw - 32px)) !important;
+  inset: 12px !important;
+  z-index: 100000 !important;
+  width: min(620px, calc(100vw - 24px)) !important;
   max-width: 620px !important;
-  max-height: calc(100dvh - 32px) !important;
+  max-height: calc(100dvh - 24px) !important;
   margin: auto !important;
-  padding: 30px !important;
+  padding: 26px !important;
   overflow-x: hidden !important;
   overflow-y: auto !important;
-  align-self: auto !important;
-  justify-self: auto !important;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   box-sizing: border-box !important;
 }
 
 @media (max-width: 560px) {
-  #login-screen #manual-member-link-screen {
+  body > #manual-member-link-screen {
     width: calc(100vw - 24px) !important;
     max-height: calc(100dvh - 24px) !important;
-    padding: 22px 16px !important;
+    padding: 20px 16px !important;
   }
 }
 
