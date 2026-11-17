@@ -3562,6 +3562,8 @@ function resetPortfolioForm() {
   setPortfolioTitleFieldVisibility("pvp");
   setPortfolioTitlePlaceholder("pvp");
   window.editingPortfolioId = null;
+  window.editingPortfolioVersionId = null;
+  if ($("portfolio-title")) $("portfolio-title").readOnly = false;
   window.portfolioOriginalImages = [];
   renderPortfolioClassChoices();
   renderPortfolioSelectedFiles();
@@ -3793,6 +3795,15 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
         void startPortfolioEdit(portfolioId);
         return;
       }
+      const editVersionButton = event.target.closest("[data-portfolio-version-edit]");
+      if (editVersionButton) {
+        event.stopPropagation();
+        const versionId = editVersionButton.dataset.portfolioVersionEdit;
+        const portfolioId = modal.dataset.portfolioId;
+        closePortfolioDetail();
+        void startPortfolioVersionEdit(portfolioId, versionId);
+        return;
+      }
       const renameVersionButton = event.target.closest("[data-portfolio-version-rename]");
       if (renameVersionButton) {
         event.stopPropagation();
@@ -3854,7 +3865,7 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
         '" data-portfolio-version-select="' + escapeHTML(version.id) + '" aria-pressed="' + selected + '">' +
         '<strong>Version ' + Number(version.version_number) + '</strong><span>' + escapeHTML(customVersionName ? versionName : "ยังไม่ได้ตั้งชื่อ") + ' · ' + escapeHTML(label) +
         '</span><small>' + escapeHTML(formatDate(version.created_at)) + '</small></button>' +
-        (portfolio.member_id === currentUser?.id ? '<button type="button" class="portfolio-version-rename" data-portfolio-version-rename="' + escapeHTML(version.id) + '" aria-label="เปลี่ยนชื่อ ' + escapeHTML(versionName) + '">เปลี่ยนชื่อ</button><button type="button" class="portfolio-version-delete" data-portfolio-version-delete="' + escapeHTML(version.id) + '" aria-label="ลบ ' + escapeHTML(versionName) + '" title="ลบเฉพาะ Version นี้">−</button>' : '') +
+        (portfolio.member_id === currentUser?.id ? '<button type="button" class="portfolio-version-edit" data-portfolio-version-edit="' + escapeHTML(version.id) + '">แก้ไขเนื้อหา</button><button type="button" class="portfolio-version-rename" data-portfolio-version-rename="' + escapeHTML(version.id) + '" aria-label="เปลี่ยนชื่อ ' + escapeHTML(versionName) + '">เปลี่ยนชื่อ</button><button type="button" class="portfolio-version-delete" data-portfolio-version-delete="' + escapeHTML(version.id) + '" aria-label="ลบ ' + escapeHTML(versionName) + '" title="ลบเฉพาะ Version นี้">−</button>' : '') +
         '</div>';
     }).join("") + '</div></section>' : "";
 
@@ -4163,13 +4174,14 @@ async function handlePortfolioCreate(event) {
   const status = $("portfolio-form-status");
   const submit = $("portfolio-create-submit");
   const editingId = window.editingPortfolioId || null;
+  const editingVersionId = window.editingPortfolioVersionId || null;
 
   if (!versionName || versionName.length > 80) {
     if (status) status.textContent = "กรุณากรอกชื่อ Version (ไม่เกิน 80 ตัวอักษร)";
     $("portfolio-version-name")?.focus();
     return;
   }
-  if (!isCultivationSkills && !title) {
+  if (!editingVersionId && !isCultivationSkills && !title) {
     if (status) status.textContent = "กรุณากรอกชื่อผลงาน";
     $("portfolio-title")?.focus();
     return;
@@ -4193,12 +4205,14 @@ async function handlePortfolioCreate(event) {
   }
 
   submit.disabled = true;
-  submit.textContent = editingId ? "กำลังสร้างเวอร์ชันใหม่..." : "กำลังสร้างแฟ้มและ Version 1...";
-  if (status) status.textContent = editingId
-    ? "กำลังบันทึก Snapshot ใหม่ โดยเก็บเวอร์ชันก่อนหน้าไว้ครบถ้วน..."
-    : "กำลังสร้างแฟ้มหลักและบันทึก Version 1...";
+  submit.textContent = editingVersionId ? "กำลังบันทึกการแก้ไข..." : editingId ? "กำลังสร้างเวอร์ชันใหม่..." : "กำลังสร้างแฟ้มและ Version 1...";
+  if (status) status.textContent = editingVersionId
+    ? "กำลังบันทึกการแก้ไขเฉพาะ Version ที่เลือก..."
+    : editingId
+      ? "กำลังบันทึก Snapshot ใหม่ โดยเก็บเวอร์ชันก่อนหน้าไว้ครบถ้วน..."
+      : "กำลังสร้างแฟ้มหลักและบันทึก Version 1...";
 
-  const folderId = editingId || crypto.randomUUID();
+  const folderId = editingId || (editingVersionId ? allPortfolios.find(p => p.portfolio_versions?.some(v => v.id === editingVersionId))?.id : null) || crypto.randomUUID();
   const uploadedPaths = [];
 
   try {
@@ -4219,7 +4233,7 @@ async function handlePortfolioCreate(event) {
         }
         image = {
           image_url: item.path,
-          cover_image_url: coverPath,
+          cover_image_url: index === 0 && !coverPath ? item.path : coverPath,
           crop_settings: item.cropBlob ? (item.cropSettings || null) : (item.cropSettings || null),
           image_type: item.imageType || "other",
           section_key: item.sectionKey || "stats",
@@ -4241,23 +4255,44 @@ async function handlePortfolioCreate(event) {
       if (status) status.textContent = `กำลังเตรียม Snapshot ${index + 1}/${files.length}...`;
     }
 
-    const { data, error } = await supabaseClient.rpc("save_portfolio_version", {
-      target_portfolio_id: folderId,
-      create_new_folder: !editingId,
-      folder_title: title,
-      folder_description: description,
-      folder_game_class: selectedClasses.join(", "),
-      folder_portfolio_type: portfolioType,
-      folder_version_name: versionName,
-      image_payload: imagePayload
-    });
-    if (error) throw error;
+    if (editingVersionId) {
+      const { error } = await supabaseClient.rpc("update_portfolio_version", {
+        target_version_id: editingVersionId,
+        new_version_name: versionName,
+        version_description: description,
+        version_game_class: selectedClasses.join(", "),
+        version_portfolio_type: portfolioType,
+        image_payload: imagePayload
+      });
+      if (error) throw error;
+
+      const retainedPaths = new Set(imagePayload.flatMap(image => [image.image_url, image.cover_image_url]).filter(Boolean));
+      const obsoletePaths = [...new Set((window.portfolioOriginalImages || []).flatMap(image => [image.image_url, image.cover_image_url])
+        .filter(path => path && !/^https?:\/\//i.test(path) && !retainedPaths.has(path)))];
+      if (obsoletePaths.length) {
+        const { error: cleanupError } = await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove(obsoletePaths);
+        if (cleanupError) console.warn("Edited Portfolio Version Storage cleanup failed:", cleanupError);
+      }
+    } else {
+      const { error } = await supabaseClient.rpc("save_portfolio_version", {
+        target_portfolio_id: folderId,
+        create_new_folder: !editingId,
+        folder_title: title,
+        folder_description: description,
+        folder_game_class: selectedClasses.join(", "),
+        folder_portfolio_type: portfolioType,
+        folder_version_name: versionName,
+        image_payload: imagePayload
+      });
+      if (error) throw error;
+    }
 
     portfolioClassFilter = "all";
     await loadPortfolios();
     await window.loadPortfolioTracker?.();
     renderClassLegend();
     resetPortfolioForm();
+    if (editingVersionId) await openPortfolioDetail(folderId, editingVersionId);
 
     const savedNow = new Date();
     const savedAt = formatDate(savedNow.toLocaleDateString("en-CA", {timeZone:"Asia/Bangkok"})) + " " +
@@ -4272,7 +4307,7 @@ async function handlePortfolioCreate(event) {
     if (status) status.textContent = "บันทึกเวอร์ชันไม่สำเร็จ: " + (error.message || "Unknown error");
   } finally {
     submit.disabled = false;
-    submit.textContent = window.editingPortfolioId ? "บันทึกเวอร์ชันใหม่" : "บันทึก Portfolio";
+    submit.textContent = window.editingPortfolioVersionId ? "บันทึกการแก้ไข" : window.editingPortfolioId ? "บันทึกเวอร์ชันใหม่" : "บันทึก Portfolio";
   }
 }
 
@@ -4322,67 +4357,81 @@ async function startPortfolioEdit(portfolioId) {
   $("portfolio-create-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+async function startPortfolioVersionEdit(portfolioId, versionId) {
+  const portfolio = allPortfolios.find(item => item.id === portfolioId);
+  const version = portfolio?.portfolio_versions?.find(item => item.id === versionId);
+  if (!portfolio || portfolio.member_id !== currentUser?.id || !version || isRolePreviewActive()) {
+    alert("แก้ไขได้เฉพาะ Version ในแฟ้มของคุณเท่านั้น");
+    return;
+  }
+  try {
+    const { data: submissions, error } = await supabaseClient
+      .from("portfolio_patch_submissions").select("id").eq("version_id", versionId).limit(1);
+    if (error) throw error;
+    if (submissions?.length) {
+      alert("Version นี้มีประวัติการส่ง PATCH จึงล็อกการแก้ไขไว้ เพื่อรักษาประวัติการส่งงานและผลตรวจ");
+      return;
+    }
+    resetPortfolioForm();
+    window.editingPortfolioVersionId = version.id;
+    window.editingPortfolioId = null;
+    window.portfolioOriginalImages = [...(version.portfolio_images || [])];
+    $("portfolio-title").value = portfolio.title || "";
+    $("portfolio-title").readOnly = true;
+    $("portfolio-version-name").value = version.version_name || ("Version " + version.version_number);
+    $("portfolio-description").value = version.description || "";
+    $("portfolio-type").value = version.portfolio_type || portfolio.portfolio_type || "pvp";
+    setPortfolioTitleFieldVisibility($("portfolio-type").value);
+    setPortfolioTitlePlaceholder($("portfolio-type").value);
+    $("portfolio-title-label").textContent = "ชื่อแฟ้ม (ไม่สามารถแก้ไขจากหน้านี้)";
+    $("portfolio-type-step")?.classList.add("hidden");
+    $("portfolio-create-form")?.classList.remove("hidden");
+    renderPortfolioClassChoices();
+    const selectedClasses = new Set(getPortfolioClasses(version.game_class || portfolio.game_class).map(name => name.toLowerCase()));
+    document.querySelectorAll(".portfolio-class-tag").forEach(button => {
+      const selected = selectedClasses.has(String(button.dataset.class || "").toLowerCase());
+      button.classList.toggle("is-selected", selected);
+      button.setAttribute("aria-pressed", String(selected));
+    });
+    window.portfolioDraftFiles = await Promise.all((version.portfolio_images || []).map(async image => ({
+      existing: true, file: null, path: image.image_url, coverPath: image.cover_image_url || null,
+      preview: await getPortfolioImageUrl(image.cover_image_url || image.image_url),
+      cropSettings: image.crop_settings || null, imageType: image.image_type || "other",
+      sectionKey: image.section_key || "stats", caption: image.caption || "", cropBlob: null
+    })));
+    if (window.portfolioDraftFiles.some(item => !item.preview)) throw new Error("โหลดรูปภาพเดิมบางรูปไม่สำเร็จ กรุณารีเฟรชแล้วลองใหม่");
+    document.querySelectorAll("[data-portfolio-type]").forEach(button =>
+      button.classList.toggle("is-selected", button.dataset.portfolioType === $("portfolio-type").value)
+    );
+    renderPortfolioSelectedFiles();
+    const heading = $("portfolio-form-heading");
+    if (heading) {
+      heading.querySelector("h3").textContent = "แก้ไข Version " + Number(version.version_number);
+      heading.querySelector("p").textContent = "แก้ไขรายละเอียด Class Tags และรูปภาพของ Version นี้โดยตรง ประวัติ Version อื่นจะไม่เปลี่ยนแปลง";
+    }
+    const submit = $("portfolio-create-submit");
+    if (submit) submit.textContent = "บันทึกการแก้ไข";
+    const status = $("portfolio-form-status");
+    if (status) status.textContent = "";
+    closePortfolioDetail();
+    $("portfolio-create-panel")?.classList.remove("hidden");
+    $("portfolio-add-button")?.setAttribute("aria-expanded", "true");
+    $("portfolio-create-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  } catch (error) {
+    console.error("Open Portfolio Version editor:", error);
+    alert("เปิดหน้าแก้ไข Version ไม่สำเร็จ: " + (error.message || "Unknown error"));
+    resetPortfolioForm();
+  }
+}
+
 async function editPortfolioFolder(portfolioId, button) {
   const portfolio = allPortfolios.find(item => item.id === portfolioId);
   if (!portfolio || portfolio.member_id !== currentUser?.id || isRolePreviewActive()) {
     alert("แก้ไขได้เฉพาะแฟ้มผลงานของคุณเท่านั้น");
     return;
   }
-
-  const isSpecial = portfolio.portfolio_type === "cultivation_skills";
-  const enteredTitle = isSpecial
-    ? portfolio.title
-    : prompt("แก้ไขชื่อแฟ้มผลงาน", portfolio.title || "");
-  if (enteredTitle === null) return;
-  const title = String(enteredTitle || "").trim();
-  if (!isSpecial && (!title || title.length > 120)) {
-    alert("กรุณาระบุชื่อแฟ้ม 1–120 ตัวอักษร");
-    return;
-  }
-
-  const enteredDescription = prompt("แก้ไขรายละเอียดแฟ้ม", portfolio.description || "");
-  if (enteredDescription === null) return;
-  const description = String(enteredDescription || "").trim();
-  if (description.length > 2000) {
-    alert("รายละเอียดแฟ้มต้องไม่เกิน 2,000 ตัวอักษร");
-    return;
-  }
-
-  const currentClasses = getPortfolioClasses(portfolio.game_class).join(", ");
-  const enteredClasses = prompt("แก้ไข Class Tags (คั่นแต่ละคลาสด้วยเครื่องหมายจุลภาค)", currentClasses);
-  if (enteredClasses === null) return;
-  const selectedClasses = String(enteredClasses).split(",").map(value => value.trim()).filter(Boolean);
-  const allowedClasses = new Set(CLASS_DATA.map(item => item.name.toLowerCase()));
-  const invalidClasses = selectedClasses.filter(value => !allowedClasses.has(value.toLowerCase()));
-  if (!selectedClasses.length || invalidClasses.length) {
-    alert("กรุณาระบุคลาสที่มีอยู่ในระบบอย่างน้อย 1 คลาส: " + CLASS_DATA.map(item => item.name).join(", "));
-    return;
-  }
-  const normalizedClasses = [...new Set(selectedClasses.map(value =>
-    CLASS_DATA.find(item => item.name.toLowerCase() === value.toLowerCase()).name
-  ))].join(", ");
-
-  if (button) { button.disabled = true; button.textContent = "กำลังบันทึก..."; }
-  try {
-    const { data, error } = await supabaseClient.from("portfolios")
-      .update({ title: isSpecial ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : title, description, game_class: normalizedClasses })
-      .eq("id", portfolioId)
-      .eq("member_id", currentUser.id)
-      .select("id")
-      .maybeSingle();
-    if (error) throw error;
-    if (!data) throw new Error("ไม่พบแฟ้ม หรือบัญชีนี้ไม่มีสิทธิ์แก้ไข");
-    await loadPortfolios();
-    await renderPortfolios();
-    alert("บันทึกข้อมูลแฟ้มผลงานเรียบร้อยแล้ว โดยประวัติ Version เดิมไม่เปลี่ยนแปลง");
-  } catch (error) {
-    console.error("Edit portfolio folder:", error);
-    alert("แก้ไขแฟ้มไม่สำเร็จ: " + (error.message || "Unknown error"));
-  } finally {
-    if (button) { button.disabled = false; button.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg><span>แก้ไขแฟ้ม</span>'; }
-  }
+  await openPortfolioDetail(portfolioId);
 }
-
 async function deletePortfolioFolder(portfolioId, button) {
   const portfolio = allPortfolios.find(item => item.id === portfolioId);
   if (!portfolio || portfolio.member_id !== currentUser?.id || isRolePreviewActive()) {
