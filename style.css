@@ -8732,3 +8732,10 @@ body.gallery-lightbox-open{overflow:hidden}
   .portfolio-version-row { grid-template-columns: minmax(0, 1fr); }
   .portfolio-version-rename { min-height: 40px; }
 }
+
+
+/* Owner-only delete control for an individual Portfolio Version */
+.portfolio-version-delete{display:grid;place-items:center;align-self:center;width:34px;height:34px;padding:0;border:2px solid rgba(255,255,255,.9);border-radius:50%;background:#ed3349;color:#fff;font:900 21px/1 Arial,sans-serif;box-shadow:0 2px 9px rgba(0,0,0,.45);cursor:pointer;touch-action:manipulation}
+.portfolio-version-delete:hover{background:#ff5265;transform:scale(1.06)}
+.portfolio-version-delete:disabled{opacity:.7;cursor:wait}
+@media(max-width:420px){.portfolio-version-delete{justify-self:center}}
