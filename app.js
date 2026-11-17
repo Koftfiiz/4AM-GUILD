@@ -601,14 +601,30 @@ async function loadApplication() {
     // Load an existing approved profile first. OAuth login itself never creates or links membership.
     await loadCurrentMember();
 
-    // TEMPORARILY PAUSED: automatic Discord role/membership synchronization.
-    // Website access is determined only by Management-controlled guild_members
-    // membership_status/active. Discord role checks will be reintroduced only
-    // after Management has agreed on the policy.
+    // Manual Directory is Management-prepared and already approved.
+    // Check an exact Discord ID match BEFORE showing pending-review status so
+    // an existing Manual member is routed to explicit name confirmation.
     if (!isDeveloper() && currentMember?.membership_status === "pending_review") {
+      const { data: manualMatches, error: lookupError } =
+        await supabaseClient.rpc("lookup_my_manual_member");
+
+      if (lookupError) {
+        throw new Error("ไม่สามารถตรวจสอบรายชื่อสมาชิก Manual ได้: " + lookupError.message);
+      }
+
+      const activeManualMatches = (Array.isArray(manualMatches) ? manualMatches : [])
+        .filter(row => row.active === true);
+
+      if (activeManualMatches.length > 0) {
+        showManualMemberChooser(activeManualMatches);
+        return;
+      }
+
       showMembershipStatusScreen("pending_review");
       return;
     }
+
+    // Website access remains controlled by Management through guild_members.
     if (!isDeveloper() && currentMember && (currentMember.active !== true || currentMember.membership_status === "suspended")) {
       showMembershipStatusScreen(currentMember.membership_status || "suspended");
       return;
