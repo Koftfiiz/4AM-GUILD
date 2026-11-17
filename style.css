@@ -8739,3 +8739,38 @@ body.gallery-lightbox-open{overflow:hidden}
 .portfolio-version-delete:hover{background:#ff5265;transform:scale(1.06)}
 .portfolio-version-delete:disabled{opacity:.7;cursor:wait}
 @media(max-width:420px){.portfolio-version-delete{justify-self:center}}
+
+
+/* Portfolio owner controls: black/red, readable 15px minimum */
+.portfolio-card-management button { font-size: 15px; }
+.portfolio-card-management .portfolio-edit-button {
+  color: #ffb0b7;
+  border-color: rgba(232,51,63,.55);
+  background: rgba(190,25,48,.14);
+}
+.portfolio-card-management .portfolio-add-version-button {
+  color: #f0e6e7;
+  border-color: rgba(255,255,255,.18);
+  background: rgba(255,255,255,.045);
+}
+.portfolio-card-management .portfolio-delete-button {
+  width: 38px;
+  min-width: 38px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0;
+  border-radius: 50%;
+  color: #ff8792;
+  border-color: rgba(232,51,63,.7);
+  background: rgba(190,25,48,.2);
+}
+.portfolio-card-management .portfolio-delete-button svg { width: 18px; height: 18px; }
+.portfolio-card-management .portfolio-delete-button:hover {
+  color: #fff;
+  background: rgba(190,25,48,.75);
+  border-color: #ff5968;
+}
+@media (max-width: 560px) {
+  .portfolio-card-management { gap: 7px; }
+  .portfolio-card-management button { min-height: 40px; }
+}
