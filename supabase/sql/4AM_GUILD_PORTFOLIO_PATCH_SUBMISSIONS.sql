@@ -58,6 +58,7 @@ as $$
       and ep.member_id = auth.uid()
       and ep.expires_at > now()
       and r.archived_at is null
+      and (r.status = 'closed' or now() > r.closes_at)
   );
 $$;
 
@@ -160,6 +161,7 @@ begin
           where ep.round_id = r.id
             and ep.member_id = current_member_id
             and ep.expires_at > now()
+            and (r.status = 'closed' or now() > r.closes_at)
         )
       )
   ) then
