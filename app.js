@@ -357,16 +357,18 @@ async function resolveAvatarUrl(member) {
     return member.avatar_url;
   }
 
-  const { data, error } = await supabaseClient.storage
+  // character-avatars is already a public bucket. Public URLs avoid a
+  // signed-URL creation request for every avatar resolution and are CDN-cacheable.
+  const { data } = supabaseClient.storage
     .from(AVATAR_BUCKET)
-    .createSignedUrl(member.avatar_url, 3600);
+    .getPublicUrl(member.avatar_url);
 
-  if (error || !data?.signedUrl) {
-    console.error("Avatar URL error:", error);
+  if (!data?.publicUrl) {
+    console.warn("Avatar public URL unavailable for:", member.avatar_url);
     return DEFAULT_AVATAR;
   }
 
-  return data.signedUrl;
+  return data.publicUrl;
 }
 
 function updateUserChip() {
@@ -2135,9 +2137,9 @@ function resetManualMemberForm() {
 // WEBSITE MEMBER PRESENCE
 // ==========================================
 
-const GUILD_PRESENCE_STALE_MS = 2 * 60 * 1000;
-const GUILD_PRESENCE_HEARTBEAT_MS = 45 * 1000;
-const GUILD_PRESENCE_REFRESH_MS = 30 * 1000;
+const GUILD_PRESENCE_STALE_MS = 4 * 60 * 1000;
+const GUILD_PRESENCE_HEARTBEAT_MS = 90 * 1000;
+const GUILD_PRESENCE_REFRESH_MS = 60 * 1000;
 
 async function sendGuildPresenceHeartbeat() {
   if (!currentUser?.id || currentMember?.active !== true) return;
@@ -2977,7 +2979,7 @@ async function uploadMemberAvatar(file, croppedBlob) {
   const { error: originalUploadError } = await supabaseClient.storage
     .from(AVATAR_BUCKET)
     .upload(originalPath, file, {
-      cacheControl: "3600",
+      cacheControl: "86400",
       upsert: false,
       contentType: file.type
     });
@@ -2986,7 +2988,7 @@ async function uploadMemberAvatar(file, croppedBlob) {
   const { error: cropUploadError } = await supabaseClient.storage
     .from(AVATAR_BUCKET)
     .upload(croppedPath, croppedBlob, {
-      cacheControl: "3600",
+      cacheControl: "86400",
       upsert: false,
       contentType: croppedBlob.type
     });
@@ -3514,7 +3516,7 @@ async function savePortfolioCrop() {
       const cropData=portfolioCropper.getData(true);const cropScale=Math.min(1,2400/Math.max(cropData.width,cropData.height));const canvas=portfolioMemberCoverCropMode==="fit"?portfolioCropper.getCroppedCanvas({width:1600,height:1200,minWidth:800,minHeight:600,imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"}):portfolioCropper.getCroppedCanvas({width:Math.max(1,Math.round(cropData.width*cropScale)),height:Math.max(1,Math.round(cropData.height*cropScale)),imageSmoothingEnabled:true,imageSmoothingQuality:"high",fillColor:"#090909"});
       const blob=await new Promise((resolve,reject)=>canvas.toBlob(v=>v?resolve(v):reject(new Error("ไม่สามารถสร้างภาพหน้าปกได้")),"image/webp",.9));
       const path=`${currentUser.id}/portfolio-cover-${Date.now()}.webp`;
-      const {error:uploadError}=await supabaseClient.storage.from(AVATAR_BUCKET).upload(path,blob,{cacheControl:"3600",upsert:false,contentType:"image/webp"});
+      const {error:uploadError}=await supabaseClient.storage.from(AVATAR_BUCKET).upload(path,blob,{cacheControl:"86400",upsert:false,contentType:"image/webp"});
       if(uploadError)throw uploadError;
       const oldPath=allMembers.find(m=>m.user_id===currentUser.id)?.member_cover_url||null;
       const cropSettings={...portfolioCropper.getData(true),mode:portfolioMemberCoverCropMode,aspectRatio:portfolioMemberCoverCropMode==="fit"?"4:3":null};
