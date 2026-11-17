@@ -3170,7 +3170,7 @@ async function loadPortfolios() {
     .select(`
       id, member_id, title, description, game_class, portfolio_type, created_at, updated_at,
       portfolio_versions (
-        id, version_number, round_id, patch_label, title, description, game_class,
+        id, version_number, version_name, round_id, patch_label, title, description, game_class,
         portfolio_type, created_by, created_at,
         portfolio_version_images (
           id, image_url, cover_image_url, crop_settings, image_type,
@@ -3555,6 +3555,7 @@ function resetPortfolioForm() {
   $("portfolio-type-step")?.classList.remove("hidden");
   $("portfolio-create-form")?.classList.add("hidden");
   $("portfolio-type").value = "pvp";
+  if ($("portfolio-version-name")) $("portfolio-version-name").value = "";
   setPortfolioTitleFieldVisibility("pvp");
   setPortfolioTitlePlaceholder("pvp");
   window.editingPortfolioId = null;
@@ -3718,6 +3719,36 @@ function closePortfolioDetail() {
   document.body.classList.remove("portfolio-detail-open");
 }
 
+async function renamePortfolioVersion(versionId, portfolioId) {
+  const portfolio = allPortfolios.find(item => item.id === portfolioId);
+  const version = portfolio?.portfolio_versions?.find(item => item.id === versionId);
+  if (!portfolio || portfolio.member_id !== currentUser?.id || !version) {
+    alert("เปลี่ยนชื่อได้เฉพาะ Version ในแฟ้มของคุณเท่านั้น");
+    return;
+  }
+  const currentName = version.version_name || ("Version " + version.version_number);
+  const entered = prompt("ตั้งชื่อ Version (ไม่เกิน 80 ตัวอักษร)", currentName);
+  if (entered === null) return;
+  const newName = entered.trim();
+  if (!newName || newName.length > 80) {
+    alert("กรุณาระบุชื่อ Version ตั้งแต่ 1–80 ตัวอักษร");
+    return;
+  }
+  if (newName === currentName) return;
+  try {
+    const { error } = await supabaseClient.rpc("rename_portfolio_version", {
+      target_version_id: versionId,
+      new_version_name: newName
+    });
+    if (error) throw error;
+    await loadPortfolios();
+    await openPortfolioDetail(portfolioId, versionId);
+  } catch (error) {
+    console.error("Rename portfolio version:", error);
+    alert("เปลี่ยนชื่อ Version ไม่สำเร็จ: " + (error.message || "Unknown error"));
+  }
+}
+
 async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
   const portfolio = allPortfolios.find(item => item.id === portfolioId);
   if (!portfolio) return;
@@ -3734,6 +3765,12 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
         const portfolioId = addVersionButton.dataset.portfolioAddVersion;
         closePortfolioDetail();
         void startPortfolioEdit(portfolioId);
+        return;
+      }
+      const renameVersionButton = event.target.closest("[data-portfolio-version-rename]");
+      if (renameVersionButton) {
+        event.stopPropagation();
+        void renamePortfolioVersion(renameVersionButton.dataset.portfolioVersionRename, modal.dataset.portfolioId);
         return;
       }
       const versionButton = event.target.closest("[data-portfolio-version-select]");
@@ -3783,10 +3820,13 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
     versions.map(version => {
       const selected = version.id === activeVersion?.id;
       const label = version.patch_label || "Portfolio Version";
-      return '<button type="button" class="portfolio-version-item ' + (selected ? 'is-active' : '') +
+      const versionName = version.version_name || ("Version " + Number(version.version_number));
+      return '<div class="portfolio-version-row"><button type="button" class="portfolio-version-item ' + (selected ? 'is-active' : '') +
         '" data-portfolio-version-select="' + escapeHTML(version.id) + '" aria-pressed="' + selected + '">' +
-        '<strong>Version ' + Number(version.version_number) + '</strong><span>' + escapeHTML(label) +
-        '</span><small>' + escapeHTML(formatDate(version.created_at)) + '</small></button>';
+        '<strong>Version ' + Number(version.version_number) + ' · ' + escapeHTML(versionName) + '</strong><span>' + escapeHTML(label) +
+        '</span><small>' + escapeHTML(formatDate(version.created_at)) + '</small></button>' +
+        (portfolio.member_id === currentUser?.id ? '<button type="button" class="portfolio-version-rename" data-portfolio-version-rename="' + escapeHTML(version.id) + '" aria-label="เปลี่ยนชื่อ ' + escapeHTML(versionName) + '">เปลี่ยนชื่อ</button>' : '') +
+        '</div>';
     }).join("") + '</div></section>' : "";
 
   body.innerHTML =
@@ -3796,6 +3836,7 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
     '<p class="portfolio-detail-owner">' + escapeHTML(owner ? getMemberName(owner) : "Guild Member") + '</p>' +
     '<div class="portfolio-card-tags">' + classes.map(name => '<span class="portfolio-card-tag">' + escapeHTML(name) + '</span>').join("") + '</div>' +
     '<p class="portfolio-version-current-label">กำลังดู Version ' + Number(activeVersion?.version_number || 1) +
+    ' · ' + escapeHTML(activeVersion?.version_name || ("Version " + Number(activeVersion?.version_number || 1))) +
     ' · ' + escapeHTML(activeVersion?.patch_label || "Portfolio Version") + '</p>' +
     (portfolio.member_id === currentUser?.id ? '<button type="button" class="btn btn-primary" data-portfolio-add-version="' + escapeHTML(portfolio.id) + '">＋ เพิ่มเวอร์ชันใหม่</button>' : '') +
     '</div>' +
@@ -4080,6 +4121,7 @@ async function handlePortfolioCreate(event) {
   const portfolioType = $("portfolio-type")?.value || "pvp";
   const isCultivationSkills = portfolioType === "cultivation_skills";
   const title = isCultivationSkills ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : ($("portfolio-title")?.value.trim() || "");
+  const versionName = $("portfolio-version-name")?.value.trim() || "";
   const description = $("portfolio-description")?.value.trim() || "";
   const files = window.portfolioDraftFiles || [];
   const selectedClasses = [...document.querySelectorAll(".portfolio-class-tag.is-selected")]
@@ -4088,6 +4130,11 @@ async function handlePortfolioCreate(event) {
   const submit = $("portfolio-create-submit");
   const editingId = window.editingPortfolioId || null;
 
+  if (!versionName || versionName.length > 80) {
+    if (status) status.textContent = "กรุณากรอกชื่อ Version (ไม่เกิน 80 ตัวอักษร)";
+    $("portfolio-version-name")?.focus();
+    return;
+  }
   if (!isCultivationSkills && !title) {
     if (status) status.textContent = "กรุณากรอกชื่อผลงาน";
     $("portfolio-title")?.focus();
@@ -4167,6 +4214,7 @@ async function handlePortfolioCreate(event) {
       folder_description: description,
       folder_game_class: selectedClasses.join(", "),
       folder_portfolio_type: portfolioType,
+      folder_version_name: versionName,
       image_payload: imagePayload
     });
     if (error) throw error;
@@ -4203,13 +4251,13 @@ async function startPortfolioEdit(portfolioId) {
   resetPortfolioForm();
   window.editingPortfolioId = portfolio.id;
   const latest = portfolio.current_version || portfolio.portfolio_versions?.[0] || null;
-  const latestImages = latest?.portfolio_images || portfolio.portfolio_images || [];
-  window.portfolioOriginalImages = latestImages.map(image => ({
-    id: image.id, path: image.image_url, coverPath: image.cover_image_url || null
-  }));
 
-  $("portfolio-title").value = latest?.title || portfolio.title || "";
-  $("portfolio-description").value = latest?.description || portfolio.description || "";
+  // New versions are independent snapshots. Never preload old text, classes, or images.
+  window.portfolioOriginalImages = [];
+  window.portfolioDraftFiles = [];
+  $("portfolio-title").value = "";
+  $("portfolio-version-name").value = "";
+  $("portfolio-description").value = "";
   $("portfolio-type").value = latest?.portfolio_type || portfolio.portfolio_type || "pvp";
   setPortfolioTitleFieldVisibility($("portfolio-type").value);
   setPortfolioTitlePlaceholder($("portfolio-type").value);
@@ -4220,34 +4268,16 @@ async function startPortfolioEdit(portfolioId) {
   $("portfolio-create-form")?.classList.remove("hidden");
   $("portfolio-title-label").textContent = "ชื่อ Build";
   renderPortfolioClassChoices();
-
-  const selected = new Set(getPortfolioClasses(latest?.game_class || portfolio.game_class));
   document.querySelectorAll(".portfolio-class-tag").forEach(button => {
-    const active = selected.has(button.dataset.class);
-    button.classList.toggle("is-selected", active);
-    button.setAttribute("aria-pressed", String(active));
+    button.classList.remove("is-selected");
+    button.setAttribute("aria-pressed", "false");
   });
-
-  const imageItems = await Promise.all(latestImages.map(async image => ({
-    file: null,
-    preview: await getPortfolioImageUrl(image.cover_image_url || image.image_url),
-    existing: true,
-    sectionKey: image.section_key || "stats",
-    imageType: image.image_type || "other",
-    caption: image.caption || "",
-    imageId: image.id,
-    path: image.image_url,
-    coverPath: image.cover_image_url || null,
-    cropSettings: image.crop_settings || null,
-    cropBlob: null
-  })));
-  window.portfolioDraftFiles = imageItems.filter(item => item.preview);
   renderPortfolioSelectedFiles();
 
   const heading = $("portfolio-form-heading");
   if (heading) {
     heading.querySelector("h3").textContent = "เพิ่มเวอร์ชันใหม่";
-    heading.querySelector("p").textContent = "รูปที่แสดงอยู่คือ Snapshot ล่าสุด คุณสามารถเพิ่ม เปลี่ยน หรือนำรูปออกได้ โดยเวอร์ชันเก่าจะไม่ถูกแก้ไข";
+    heading.querySelector("p").textContent = "เริ่มต้น Snapshot ใหม่ทั้งหมด กรุณากรอกชื่อ Version รายละเอียด เลือกคลาส และอัปโหลดรูปภาพใหม่ โดยไม่มีการนำข้อมูลหรือรูปจากเวอร์ชันก่อนหน้ามาใช้";
   }
   const submit = $("portfolio-create-submit");
   if (submit) submit.textContent = "บันทึกเวอร์ชันใหม่";

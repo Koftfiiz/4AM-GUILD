@@ -8700,3 +8700,35 @@ body.gallery-lightbox-open{overflow:hidden}
   .portfolio-version-history { padding: 13px; }
   .portfolio-version-list { grid-template-columns: 1fr; }
 }
+
+
+/* Portfolio version names and independent rename action */
+.portfolio-version-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: stretch;
+  min-width: 0;
+}
+.portfolio-version-item { width: 100%; }
+.portfolio-version-rename {
+  align-self: stretch;
+  min-width: 82px;
+  padding: 8px 12px;
+  border: 1px solid rgba(232, 51, 63, .42);
+  border-radius: 9px;
+  background: rgba(232, 51, 63, .08);
+  color: #ff727b;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.portfolio-version-rename:hover {
+  border-color: #e8333f;
+  background: rgba(232, 51, 63, .16);
+}
+@media (max-width: 420px) {
+  .portfolio-version-row { grid-template-columns: minmax(0, 1fr); }
+  .portfolio-version-rename { min-height: 40px; }
+}
