@@ -421,13 +421,14 @@
       const checks = await Promise.all([
         supabaseClient.from("portfolio_versions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
         supabaseClient.from("portfolio_patch_submissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
+        supabaseClient.from("portfolio_update_submissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
         supabaseClient.from("portfolio_update_edit_requests").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
         supabaseClient.from("portfolio_update_edit_permissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId)
       ]);
       const failed = checks.find(result => result.error);
       if (failed) { alert("ตรวจสอบข้อมูลก่อนลบไม่สำเร็จ: " + failed.error.message); return; }
-      const [legacyVersions,submissions,requestsCount,permissions] = checks.map(result => result.count || 0);
-      const details = 'ข้อมูลที่พบในรอบนี้:\n• Portfolio Versions: ' + versions + '\n• Submissions: ' + submissions + '\n• คำขอแก้ไข: ' + requestsCount + '\n• สิทธิ์แก้ไข: ' + permissions + '\n\nการลบรอบจะลบข้อมูล Patch Submission/คำขอ/สิทธิ์ที่ผูกกับรอบนี้ ส่วน Version และรูปภาพ Portfolio จะยังคงอยู่';
+      const [legacyVersions,patchSubmissions,legacySubmissions,requestsCount,permissions] = checks.map(result => result.count || 0);
+      const details = 'ข้อมูลที่พบในรอบนี้:\n• Legacy-linked Versions: ' + legacyVersions + '\n• Patch Submissions ใหม่: ' + patchSubmissions + '\n• Submissions เดิม: ' + legacySubmissions + '\n• คำขอแก้ไข: ' + requestsCount + '\n• สิทธิ์แก้ไข: ' + permissions + '\n\nการลบรอบจะลบข้อมูล Submission/คำขอ/สิทธิ์ที่ผูกกับรอบนี้ ส่วน Version และรูปภาพ Portfolio จะยังคงอยู่';
       if (!confirm(details + '\n\nยืนยันลบถาวรหรือไม่? การกระทำนี้ย้อนกลับไม่ได้')) return;
       const {error} = await supabaseClient.from("portfolio_update_rounds").delete().eq("id",selectedRoundId);
       if (error) { alert("ลบรอบไม่สำเร็จ: " + error.message); return; }
