@@ -6221,11 +6221,12 @@ async function updateWarSignupTimeForDate(){
   const note=$("war-signup-time-note");
   if(!input||!display)return;
   if(type==="practice"){
-    display.readOnly=true;
-    display.setAttribute("data-activity-time-input","");
-    display.value=input.value||"";
+    // Practice signup events allow a freely editable start time.
+    display.readOnly=false;
+    display.removeAttribute("data-activity-time-input");
+    display.value=input.value||display.value||"";
     display.required=true;
-    if(note)note.textContent="ซ้อมวอร์: Management กำหนดวันและเวลาเองได้ (24 ชั่วโมง)";
+    if(note)note.textContent="ซ้อมวอร์: เลือกหรือพิมพ์เวลาเริ่มวอร์ได้เอง (24 ชั่วโมง)";
     return;
   }
   display.readOnly=true;
@@ -6372,11 +6373,14 @@ function registerWarRecordAndAttendanceEvents(){
     updateWarSignupDateControls(current,false);
     updateWarSignupTimeForDate();
   });
-  $("war-signup-start-time-display")?.addEventListener("change",()=>{
-    if($("war-signup-type")?.value!=="practice")return;
-    const value=$("war-signup-start-time-display").value.trim();
-    if(/^([01]\\d|2[0-3]):[0-5]\\d$/.test(value))$("war-signup-start-time").value=value;
-  });
+  const syncWarSignupStartTime=()=>{
+    const display=$("war-signup-start-time-display"),hidden=$("war-signup-start-time");
+    if(!display||!hidden||$("war-signup-type")?.value!=="practice")return;
+    const value=String(display.value||"").trim();
+    if(/^([01]\\d|2[0-3]):[0-5]\\d$/.test(value))hidden.value=value;
+  };
+  $("war-signup-start-time-display")?.addEventListener("input",syncWarSignupStartTime);
+  $("war-signup-start-time-display")?.addEventListener("change",syncWarSignupStartTime);
   $("war-signup-create-form")?.addEventListener("submit",async e=>{e.preventDefault();await createWarSignupEvent(e.currentTarget);});
   $("war-signup-content")?.addEventListener("click",e=>{
     const join=e.target.closest("[data-war-signup-join]"),edit=e.target.closest("[data-war-signup-edit]"),del=e.target.closest("[data-war-signup-delete]"),cancel=e.target.closest("[data-war-signup-cancel]"),evidence=e.target.closest("[data-war-signup-evidence]"),discord=e.target.closest("[data-war-signup-discord]");
