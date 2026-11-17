@@ -3277,7 +3277,17 @@ async function loadPortfolios() {
     return {
       ...portfolio,
       portfolio_versions: versions,
-      currentasync function getPortfolioImageUrl(path) {
+      current_version: latest,
+      portfolio_images: latest?.portfolio_images || [],
+      portfolio_reviews: latest?.portfolio_reviews || null
+    };
+  });
+
+  renderPortfolios();
+  renderPortfolioReviewCenter();
+}
+
+async function getPortfolioImageUrl(path) {
   if (!path) return "";
   if (/^https?:\/\//i.test(path)) return path;
 
@@ -3302,7 +3312,6 @@ async function loadPortfolios() {
   }
   return signedUrl;
 }
-
 
 function getPortfolioClasses(value) {
   return String(value || "")
