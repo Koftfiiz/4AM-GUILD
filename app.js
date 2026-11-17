@@ -1575,6 +1575,31 @@ async function loadDashboardGallery() {
   renderDashboardGallery();
 }
 
+async function prepareStorageImageForUpload(file,{maxDimension=1920,quality=0.86}={}){
+  if(!file||!/^image\\/(jpeg|png|webp)$/.test(file.type)||typeof createImageBitmap!=="function")return file;
+  let bitmap;
+  try{
+    bitmap=await createImageBitmap(file);
+    const scale=Math.min(1,maxDimension/Math.max(bitmap.width,bitmap.height));
+    if(scale>=1&&file.size<500*1024)return file;
+    const canvas=document.createElement("canvas");
+    canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+    canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+    const context=canvas.getContext("2d");
+    if(!context)return file;
+    context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+    const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",quality));
+    if(!blob||blob.type!=="image/webp"||blob.size>=file.size*0.95)return file;
+    const baseName=file.name.replace(/\\.[^.]+$/,"")||"image";
+    return new File([blob],baseName+".webp",{type:"image/webp",lastModified:Date.now()});
+  }catch(error){
+    console.warn("Image optimization skipped:",error);
+    return file;
+  }finally{
+    bitmap?.close?.();
+  }
+}
+
 async function uploadDashboardGalleryFiles(files) {
   if(!canManageDashboardGallery()||dashboardGalleryBusy)return;
   const selected=[...files];
@@ -1587,9 +1612,10 @@ async function uploadDashboardGalleryFiles(files) {
     for(const file of selected){
       if(!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type))throw new Error("รองรับเฉพาะ JPG, PNG, WEBP และ GIF");
       if(file.size>10*1024*1024)throw new Error("รูปภาพแต่ละไฟล์ต้องมีขนาดไม่เกิน 10 MB");
-      const safeName=file.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").slice(-90)||"guild-image";
+      const uploadFile=await prepareStorageImageForUpload(file);
+      const safeName=uploadFile.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").slice(-90)||"guild-image";
       const path="gallery/"+crypto.randomUUID()+"-"+safeName;
-      const {error:uploadError}=await supabaseClient.storage.from("guild-gallery-images").upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});
+      const {error:uploadError}=await supabaseClient.storage.from("guild-gallery-images").upload(path,uploadFile,{contentType:uploadFile.type,cacheControl:"86400",upsert:false});
       if(uploadError)throw uploadError;
       const {error:insertError}=await supabaseClient.from("guild_gallery_images").insert({
         storage_path:path,caption:file.name.replace(/\.[^.]+$/,"").slice(0,120),sort_order:Math.max(-1,...dashboardGalleryImages.map(item=>Number(item.sort_order)||0))+1+uploaded,uploaded_by:currentUser.id
@@ -8081,8 +8107,9 @@ async function uploadGuildRuleImage(key,file){
  if(!isManagement())throw new Error("ไม่มีสิทธิ์อัปโหลดรูป");
  if(!file||!/^image\/(png|jpeg|webp|gif)$/.test(file.type))throw new Error("รองรับ PNG, JPG, WEBP และ GIF");
  if(file.size>8*1024*1024)throw new Error("รูปต้องมีขนาดไม่เกิน 8 MB");
- const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"}[file.type],path=currentUser.id+"/"+key+"/"+crypto.randomUUID()+"."+ext;
- const {error}=await supabaseClient.storage.from(GUILD_RULE_BUCKET).upload(path,file,{contentType:file.type,cacheControl:"3600",upsert:false});if(error)throw error;
+ const uploadFile=await prepareStorageImageForUpload(file);
+ const ext={"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"}[uploadFile.type],path=currentUser.id+"/"+key+"/"+crypto.randomUUID()+"."+ext;
+ const {error}=await supabaseClient.storage.from(GUILD_RULE_BUCKET).upload(path,uploadFile,{contentType:uploadFile.type,cacheControl:"86400",upsert:false});if(error)throw error;
  return supabaseClient.storage.from(GUILD_RULE_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 function registerGuildRuleEvents(){
