@@ -3756,6 +3756,29 @@ async function renamePortfolioVersion(versionId, portfolioId) {
   }
 }
 
+async function deletePortfolioVersion(versionId, portfolioId, button) {
+  const portfolio = allPortfolios.find(item => item.id === portfolioId);
+  const version = portfolio?.portfolio_versions?.find(item => item.id === versionId);
+  if (!portfolio || portfolio.member_id !== currentUser?.id || !version) { alert("ลบได้เฉพาะ Version ในแฟ้มผลงานของคุณเท่านั้น"); return; }
+  const versionLabel = "Version " + Number(version.version_number) + (version.version_name && version.version_name !== ("Version " + Number(version.version_number)) ? " · " + version.version_name : "");
+  if (!confirm("ยืนยันลบ " + versionLabel + " ใช่หรือไม่?\n\nระบบจะลบเฉพาะ Version นี้ พร้อมรูปภาพและผลตรวจที่อยู่ภายใน Version นี้\n\nแฟ้ม Portfolio หลักและ Version อื่นจะไม่ถูกลบ\n\nหาก Version นี้ยังมีประวัติการส่ง PATCH ระบบจะไม่อนุญาตให้ลบ")) return;
+  if (button) { button.disabled = true; button.textContent = "…"; }
+  try {
+    const { data: imageRows, error: imageError } = await supabaseClient.from("portfolio_version_images").select("image_url, cover_image_url").eq("version_id", versionId);
+    if (imageError) throw imageError;
+    const paths = [...new Set((imageRows || []).flatMap(image => [image.image_url, image.cover_image_url]).filter(path => path && !/^https?:\/\//i.test(path)))];
+    const { data: submissions, error: submissionError } = await supabaseClient.from("portfolio_patch_submissions").select("id").eq("version_id", versionId).limit(1);
+    if (submissionError) throw submissionError;
+    if (submissions?.length) throw new Error("Version นี้ยังมีประวัติการส่ง PATCH อยู่ จึงไม่สามารถลบได้ เพื่อรักษาประวัติการส่งงาน");
+    const { data: deletedRows, error } = await supabaseClient.from("portfolio_versions").delete().eq("id", versionId).select("id");
+    if (error) { if (error.code === "23503") throw new Error("Version นี้ยังถูกอ้างอิงโดยประวัติ PATCH จึงไม่สามารถลบได้"); throw error; }
+    if (!deletedRows?.length) throw new Error("ไม่พบ Version ที่ลบได้ หรือบัญชีไม่มีสิทธิ์ลบ");
+    let storageWarning = "";
+    if (paths.length) { const { error: storageError } = await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove(paths); if (storageError) { console.warn("Portfolio Version Storage cleanup failed:", storageError); storageWarning = "\nแต่มีรูปภาพบางไฟล์ที่ยังลบจาก Storage ไม่สำเร็จ กรุณาแจ้ง Developer ตรวจสอบ"; } }
+    await loadPortfolios(); await openPortfolioDetail(portfolioId);
+    alert("ลบ " + versionLabel + " เรียบร้อยแล้ว โดยแฟ้มหลักและ Version อื่นยังอยู่ครบ" + storageWarning);
+  } catch (error) { console.error("Portfolio Version delete error:", error); alert("ลบ Version ไม่สำเร็จ: " + (error.message || "Unknown error")); if (button) { button.disabled = false; button.textContent = "−"; } }
+}
 async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
   const portfolio = allPortfolios.find(item => item.id === portfolioId);
   if (!portfolio) return;
@@ -3780,6 +3803,8 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
         void renamePortfolioVersion(renameVersionButton.dataset.portfolioVersionRename, modal.dataset.portfolioId);
         return;
       }
+      const deleteVersionButton = event.target.closest("[data-portfolio-version-delete]");
+      if (deleteVersionButton) { event.stopPropagation(); void deletePortfolioVersion(deleteVersionButton.dataset.portfolioVersionDelete, modal.dataset.portfolioId, deleteVersionButton); return; }
       const versionButton = event.target.closest("[data-portfolio-version-select]");
       if (versionButton) {
         void openPortfolioDetail(modal.dataset.portfolioId, versionButton.dataset.portfolioVersionSelect);
@@ -3833,7 +3858,7 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
         '" data-portfolio-version-select="' + escapeHTML(version.id) + '" aria-pressed="' + selected + '">' +
         '<strong>Version ' + Number(version.version_number) + '</strong><span>' + escapeHTML(customVersionName ? versionName : "ยังไม่ได้ตั้งชื่อ") + ' · ' + escapeHTML(label) +
         '</span><small>' + escapeHTML(formatDate(version.created_at)) + '</small></button>' +
-        (portfolio.member_id === currentUser?.id ? '<button type="button" class="portfolio-version-rename" data-portfolio-version-rename="' + escapeHTML(version.id) + '" aria-label="เปลี่ยนชื่อ ' + escapeHTML(versionName) + '">เปลี่ยนชื่อ</button>' : '') +
+        (portfolio.member_id === currentUser?.id ? '<button type="button" class="portfolio-version-rename" data-portfolio-version-rename="' + escapeHTML(version.id) + '" aria-label="เปลี่ยนชื่อ ' + escapeHTML(versionName) + '">เปลี่ยนชื่อ</button><button type="button" class="portfolio-version-delete" data-portfolio-version-delete="' + escapeHTML(version.id) + '" aria-label="ลบ ' + escapeHTML(versionName) + '" title="ลบเฉพาะ Version นี้">−</button>' : '') +
         '</div>';
     }).join("") + '</div></section>' : "";
 
@@ -3954,7 +3979,6 @@ async function renderPortfolios() {
     return `
       <article class="portfolio-card ${portfolioManageMode && (isOwner || reviewer) ? "is-jiggling" : ""}" data-portfolio-card-id="${escapeHTML(portfolio.id)}" role="button" tabindex="0" aria-label="เปิดแฟ้ม ${escapeHTML(portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : portfolio.title || "ผลงาน")}" ${color ? `style="--class-color:${color}"` : ""}>
         ${imageUrl ? `<img class="portfolio-card-image" src="${escapeHTML(imageUrl)}" alt="${escapeHTML(portfolio.title)}" loading="lazy">` : '<div class="portfolio-card-no-image">4AM GUILD</div>'}
-        ${(isOwner || (portfolioManageMode && reviewer)) ? `<button type="button" class="portfolio-iphone-delete" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงานถาวร" title="ลบแฟ้มผลงานถาวร">−</button>` : ""}
         <div class="portfolio-card-content">
           <div class="portfolio-card-owner">${escapeHTML(ownerName)}</div>
           <span class="portfolio-type-chip">${portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" : portfolio.portfolio_type === "pve" ? "PvE Build" : "PvP Build"}</span>
@@ -4296,53 +4320,6 @@ async function startPortfolioEdit(portfolioId) {
   $("portfolio-create-panel")?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-async function deletePortfolio(portfolioId) {
-  const portfolio = allPortfolios.find(item => item.id === portfolioId);
-  if (!portfolio) return;
-  if (portfolio.member_id !== currentUser?.id && !isPortfolioReviewer()) {
-    alert("คุณลบได้เฉพาะแฟ้มผลงานของตัวเองเท่านั้น");
-    return;
-  }
-
-  try {
-    // Collect every stored image path before the database cascades remove the version rows.
-    const versions = portfolio.portfolio_versions || [];
-    const versionImages = versions.flatMap(version => version.portfolio_images || []);
-    const { data: legacyImages, error: legacyError } = await supabaseClient
-      .from("portfolio_images")
-      .select("image_url, cover_image_url")
-      .eq("portfolio_id", portfolioId);
-    if (legacyError) throw legacyError;
-
-    const allImages = [...versionImages, ...(legacyImages || [])];
-    const paths = [...new Set(allImages.flatMap(image => [image.image_url, image.cover_image_url])
-      .filter(path => path && !/^https?:\/\//i.test(path)))];
-
-    // The DB cascade is scoped to this one Portfolio folder and its own history/submissions.
-    const { data: deletedRows, error } = await supabaseClient
-      .from("portfolios")
-      .delete()
-      .eq("id", portfolioId)
-      .select("id");
-    if (error) throw error;
-    if (!deletedRows?.length) throw new Error("ไม่พบแฟ้มที่ลบได้ หรือบัญชีไม่มีสิทธิ์ลบ");
-
-    let storageWarning = "";
-    if (paths.length) {
-      const { error: storageError } = await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove(paths);
-      if (storageError) {
-        console.warn("Portfolio Storage cleanup failed after folder deletion:", storageError);
-        storageWarning = "\\nแต่มีรูปภาพบางไฟล์ที่ยังลบจาก Storage ไม่สำเร็จ กรุณาแจ้ง Developer ตรวจสอบ";
-      }
-    }
-    await loadPortfolios();
-    alert("ลบแฟ้มทดสอบและข้อมูลที่อยู่ภายในแฟ้มนี้ถาวรเรียบร้อยแล้ว" + storageWarning);
-  } catch (error) {
-    console.error("Portfolio delete error:", error);
-    alert("ลบแฟ้มผลงานไม่สำเร็จ: " + (error.message || "Unknown error"));
-  }
-}
-
 async function handlePortfolioCardAction(event) {
   const button = event.target.closest("[data-portfolio-action]");
   if (!button) return;
@@ -4357,18 +4334,6 @@ async function handlePortfolioCardAction(event) {
     return;
   }
 
-  if (button.dataset.portfolioAction === "delete") {
-    const isOwner = portfolio.member_id === currentUser?.id;
-    const canReviewDelete = portfolioManageMode && isPortfolioReviewer();
-    if (!isOwner && !canReviewDelete) return;
-
-    if (!confirm("ยืนยันลบแฟ้มผลงานนี้ถาวรใช่หรือไม่?\\n\\nข้อมูลทั้งหมดภายในแฟ้มนี้จะถูกลบ ได้แก่ ทุก Version, รูปภาพ, รีวิว และประวัติการส่ง PATCH\\n\\nการดำเนินการนี้ไม่สามารถกู้คืนได้")) return;
-
-    button.disabled = true;
-    button.textContent = "…";
-    button.title = "กำลังลบแฟ้มผลงาน...";
-    await deletePortfolio(portfolioId);
-  }
 }
 
 function registerPortfolioEvents() {
