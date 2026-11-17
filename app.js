@@ -3779,10 +3779,10 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
   window.portfolioLightboxIndex = 0;
 
   const classes = getPortfolioClasses(snapshot.game_class || portfolio.game_class);
-  const history = versions.length ? '<section class="portfolio-version-history"><h3>ประวัติ Patch</h3><div class="portfolio-version-list">' +
+  const history = versions.length ? '<section class="portfolio-version-history"><h3>ประวัติ Version</h3><div class="portfolio-version-list">' +
     versions.map(version => {
       const selected = version.id === activeVersion?.id;
-      const label = version.patch_label || "นอกช่วง Patch";
+      const label = version.patch_label || "Portfolio Version";
       return '<button type="button" class="portfolio-version-item ' + (selected ? 'is-active' : '') +
         '" data-portfolio-version-select="' + escapeHTML(version.id) + '" aria-pressed="' + selected + '">' +
         '<strong>Version ' + Number(version.version_number) + '</strong><span>' + escapeHTML(label) +
@@ -3796,7 +3796,7 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
     '<p class="portfolio-detail-owner">' + escapeHTML(owner ? getMemberName(owner) : "Guild Member") + '</p>' +
     '<div class="portfolio-card-tags">' + classes.map(name => '<span class="portfolio-card-tag">' + escapeHTML(name) + '</span>').join("") + '</div>' +
     '<p class="portfolio-version-current-label">กำลังดู Version ' + Number(activeVersion?.version_number || 1) +
-    ' · ' + escapeHTML(activeVersion?.patch_label || "ประวัติเดิม") + '</p>' +
+    ' · ' + escapeHTML(activeVersion?.patch_label || "Portfolio Version") + '</p>' +
     (portfolio.member_id === currentUser?.id ? '<button type="button" class="btn btn-primary" data-portfolio-add-version="' + escapeHTML(portfolio.id) + '">＋ เพิ่มเวอร์ชันใหม่</button>' : '') +
     '</div>' +
     (snapshot.description ? '<div class="portfolio-detail-description"><h3>Description</h3><p>' + escapeHTML(snapshot.description) + '</p></div>' : '') +

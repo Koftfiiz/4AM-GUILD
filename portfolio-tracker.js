@@ -1,6 +1,7 @@
 (() => {
   let rounds = [];
   let portfolios = [];
+  let submissions = [];
   let requests = [];
   let editPermissions = [];
   let selectedRoundId = "";
@@ -97,6 +98,13 @@
       ".portfolio-tracker-request p{margin:0;color:#bbb;font-size:15px;line-height:1.5}",
       ".portfolio-tracker-request textarea{width:100%;min-height:76px;padding:10px;border:1px solid rgba(232,51,63,.35);border-radius:8px;background:#10090c;color:#fff;font-size:15px}",
       ".portfolio-tracker-actions{display:flex;gap:8px;flex-wrap:wrap}",
+      ".portfolio-tracker-submit-list{display:grid;gap:10px}",
+      ".portfolio-tracker-submit-row{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;padding:14px;border:1px solid rgba(232,51,63,.22);border-radius:10px;background:rgba(255,255,255,.025)}",
+      ".portfolio-tracker-submit-info{display:grid;gap:5px;min-width:180px;flex:1}",
+      ".portfolio-tracker-submit-info p{margin:0;color:#aaa;font-size:15px}",
+      ".portfolio-tracker-submit-controls{display:flex;align-items:end;gap:8px;flex-wrap:wrap}",
+      ".portfolio-tracker-submit-controls label{display:grid;gap:6px;color:#ccc;font-size:15px}",
+      ".portfolio-tracker-submit-controls select{min-width:190px;max-width:100%;min-height:40px;padding:8px 10px;border:1px solid rgba(232,51,63,.4);border-radius:8px;background:#10090c;color:#fff;font-size:15px}",
       ".portfolio-tracker-empty{padding:20px;border:1px dashed rgba(255,255,255,.16);border-radius:9px;color:#aaa;text-align:center;font-size:15px}",
       "@media(max-width:760px){.portfolio-tracker-form{grid-template-columns:1fr 1fr}.portfolio-tracker-form label:first-child{grid-column:1/-1}.portfolio-tracker-form button{grid-column:1/-1}.portfolio-tracker-own-grid{grid-template-columns:1fr}.portfolio-tracker-stats{grid-template-columns:1fr 1fr}}"
     ].join("");
@@ -104,7 +112,7 @@
   }
 
   async function loadData() {
-    const [roundResult, portfolioResult, requestResult, permissionResult] = await Promise.all([
+    const [roundResult, portfolioResult, requestResult, permissionResult, submissionResult] = await Promise.all([
       supabaseClient.from("portfolio_update_rounds").select("*").order("created_at",{ascending:false}),
       supabaseClient.from("portfolios").select(
         "id,member_id,title,game_class,portfolio_type,created_at,updated_at," +
@@ -112,13 +120,15 @@
         "portfolio_version_images(id,section_key,image_url,sort_order))"
       ).order("created_at",{ascending:false}),
       supabaseClient.from("portfolio_update_edit_requests").select("*").order("created_at",{ascending:false}),
-      supabaseClient.from("portfolio_update_edit_permissions").select("*").eq("member_id",currentUser.id)
+      supabaseClient.from("portfolio_update_edit_permissions").select("*").eq("member_id",currentUser.id),
+      supabaseClient.from("portfolio_patch_submissions").select("id,round_id,portfolio_id,version_id,member_id,submitted_at,updated_at").order("submitted_at",{ascending:false})
     ]);
-    const failure = [roundResult,portfolioResult,requestResult,permissionResult].find(result => result.error);
+    const failure = [roundResult,portfolioResult,requestResult,permissionResult,submissionResult].find(result => result.error);
     if (failure) throw failure.error;
     rounds = roundResult.data || [];
     requests = requestResult.data || [];
     editPermissions = permissionResult.data || [];
+    submissions = submissionResult.data || [];
     portfolios = (portfolioResult.data || []).map(portfolio => ({
       ...portfolio,
       portfolio_versions: (portfolio.portfolio_versions || []).map(version => ({
@@ -133,62 +143,33 @@
     }
   }
 
-  function versionForRound(portfolio, roundId) {
-    return (portfolio.portfolio_versions || [])
-      .filter(version => version.round_id === roundId)
-      .sort((a,b) => Number(b.version_number)-Number(a.version_number))[0] || null;
-  }
-
-  function sectionUpdated(portfolio, roundId, sectionKey) {
-    const version = versionForRound(portfolio,roundId);
-    return !!version && (version.portfolio_version_images || []).some(image => image.section_key === sectionKey);
+  function submissionForFolder(portfolioId, roundId) {
+    return submissions.find(item => item.portfolio_id === portfolioId && item.round_id === roundId) || null;
   }
 
   function roundStats(roundId) {
     const members = (allMembers || []).filter(member => member.active !== false);
-    let complete = 0;
+    let completeMembers = 0;
     const detail = members.map(member => {
       const own = portfolios.filter(portfolio => portfolio.member_id === member.user_id);
-      const cultivationFolders = own.filter(portfolio => portfolio.portfolio_type === "cultivation_skills");
-      const pvpFolders = own.filter(portfolio => portfolio.portfolio_type === "pvp");
-      const cultivationTotal = Math.max(1,cultivationFolders.length);
-      const skillsTotal = Math.max(1,cultivationFolders.length);
-      const cultivationUpdated = cultivationFolders.filter(portfolio => sectionUpdated(portfolio,roundId,"cultivation")).length;
-      const skillsUpdated = cultivationFolders.filter(portfolio => sectionUpdated(portfolio,roundId,"hero_skills")).length;
-      const pvpUpdated = pvpFolders.filter(portfolio => {
-        const version = versionForRound(portfolio,roundId);
-        return !!version && (version.portfolio_version_images || []).length > 0;
-      }).length;
-      const missing = [];
-      if (!cultivationFolders.length) {
-        missing.push("สร้างแฟ้มคัมภีร์หู่เฉียน / ขั้นสกิล");
-      } else {
-        if (cultivationUpdated < cultivationTotal) missing.push("อัปเดตคัมภีร์หู่เฉียน");
-        if (skillsUpdated < skillsTotal) missing.push("อัปเดตขั้นสกิล");
-      }
-      pvpFolders.forEach(portfolio => {
-        if (!versionForRound(portfolio,roundId)) missing.push("PvP Build: " + (portfolio.title || "ไม่มีชื่อ Build"));
-      });
-      const isComplete = cultivationUpdated === cultivationTotal &&
-        skillsUpdated === skillsTotal && pvpUpdated === pvpFolders.length;
-      if (isComplete) complete++;
+      const submitted = own.filter(portfolio => !!submissionForFolder(portfolio.id, roundId));
+      const missing = own.filter(portfolio => !submissionForFolder(portfolio.id, roundId))
+        .map(portfolio => portfolio.title || "แฟ้มไม่มีชื่อ");
+      const isComplete = own.length > 0 && submitted.length === own.length;
+      if (isComplete) completeMembers++;
       return {
-        member, portfolios:own, cultivationFolders, pvpFolders,
-        cultivation:{updated:cultivationUpdated,total:cultivationTotal},
-        skills:{updated:skillsUpdated,total:skillsTotal},
-        pvp:{updated:pvpUpdated,total:pvpFolders.length},
-        missing,status:isComplete?"complete":(cultivationUpdated+skillsUpdated+pvpUpdated>0?"partial":"empty")
+        member, portfolios: own, submitted: submitted.length, total: own.length,
+        missing, status: isComplete ? "complete" : (submitted.length ? "partial" : "empty")
       };
     });
+    const totalFolders = detail.reduce((sum,row)=>sum+row.total,0);
+    const submittedFolders = detail.reduce((sum,row)=>sum+row.submitted,0);
     return {
-      detail,complete,total:members.length,
-      incomplete:members.length-complete,
-      totalPvp:pvpFoldersTotal(detail)
+      detail, complete:completeMembers, total:members.length,
+      incomplete:members.length-completeMembers,
+      totalFolders, submittedFolders,
+      pendingFolders:totalFolders-submittedFolders
     };
-  }
-
-  function pvpFoldersTotal(rows) {
-    return rows.reduce((sum,row)=>sum+row.pvp.total,0);
   }
 
   function pill(status,label) {
@@ -215,101 +196,140 @@
     const root = ensureRoot();
     if (!root) return;
     injectStyles();
+
     const selected = rounds.find(round => round.id === selectedRoundId);
     const visibleRounds = rounds.filter(round => showArchivedRounds ? !!round.archived_at : !round.archived_at);
     const stats = selected ? roundStats(selected.id) : null;
-    const ownRow = stats?.detail.find(row => row.member.user_id === currentUser?.id);
-    const editable = !!selected && !selected.archived_at && (isRoundEditable(selected) ||
-      editPermissions.some(permission => permission.round_id === selected.id && new Date(permission.expires_at).getTime() > Date.now()));
-    const pendingRequest = selected ? requests.find(request =>
-      request.round_id === selected.id && request.member_id === currentUser?.id && request.status === "pending"
-    ) : null;
+    const ownRow = stats ? stats.detail.find(row => row.member.user_id === currentUser?.id) : null;
     const ownPermission = selected ? editPermissions.find(permission =>
       permission.round_id === selected.id && new Date(permission.expires_at).getTime() > Date.now()
     ) : null;
+    const editable = !!selected && !selected.archived_at && (isRoundEditable(selected) || !!ownPermission);
+    const canRequestLate = !!selected && !selected.archived_at && !editable &&
+      (selected.status === "closed" || Date.now() > new Date(selected.closes_at).getTime());
+    const pendingRequest = selected ? requests.find(request =>
+      request.round_id === selected.id && request.member_id === currentUser?.id && request.status === "pending"
+    ) : null;
 
-    root.innerHTML =
-      (management() ? (
-        '<section class="portfolio-tracker-panel">' +
-          '<div class="portfolio-tracker-heading"><div><span class="panel-kicker">PORTFOLIO PATCH SCHEDULE</span><h3>จัดการรอบอัปเดตแฟ้มผลงาน</h3><p>กำหนดช่วง Patch และติดตามเวอร์ชันจากแฟ้ม Portfolio โดยอัตโนมัติ</p></div>' +
-          '<span class="portfolio-tracker-pill is-complete">Management</span></div>' +
-          '<form id="pt-create-round" class="portfolio-tracker-form">' +
-            '<label>ชื่อ Patch / รอบ<input name="round_name" maxlength="120" required placeholder="เช่น Patch 2.1.1 (เดือนพฤศจิกายน)"></label>' +
-            '<label>วันและเวลาเริ่ม<input name="starts_at" type="text" data-activity-datetime-input readonly autocomplete="off" placeholder="dd/mm/yyyy HH:mm" required></label>' +
-            '<label>วันและเวลาปิดรับ<input name="closes_at" type="text" data-activity-datetime-input readonly autocomplete="off" placeholder="dd/mm/yyyy HH:mm" required></label>' +
-            '<button class="btn btn-primary" type="submit">＋ สร้างรอบใหม่</button>' +
-          '</form>' +
-          '<p class="portfolio-tracker-muted">ระบบจะนับเวอร์ชันที่สร้างในช่วงวันและเวลาของรอบนี้ โดยอิงเวลาไทยจากฐานข้อมูล และเก็บประวัติเวอร์ชันก่อนหน้าไว้</p>' +
-        '</section>'
-      ) : "") +
+    const managementPanel = management()
+      ? '<section class="portfolio-tracker-panel">' +
+        '<div class="portfolio-tracker-heading"><div><span class="panel-kicker">PORTFOLIO PATCH SCHEDULE</span><h3>จัดการรอบ Patch</h3><p>กำหนดช่วงเปิดรับและติดตามรายการ Version ที่สมาชิกเลือกส่ง</p></div>' +
+        '<span class="portfolio-tracker-pill is-complete">Management</span></div>' +
+        '<form id="pt-create-round" class="portfolio-tracker-form">' +
+        '<label>ชื่อ Patch / รอบ<input name="round_name" maxlength="120" required placeholder="เช่น Patch 2.1.1 (เดือนพฤศจิกายน)"></label>' +
+        '<label>วันและเวลาเริ่ม<input name="starts_at" type="text" data-activity-datetime-input readonly autocomplete="off" placeholder="dd/mm/yyyy HH:mm" required></label>' +
+        '<label>วันและเวลาปิดรับ<input name="closes_at" type="text" data-activity-datetime-input readonly autocomplete="off" placeholder="dd/mm/yyyy HH:mm" required></label>' +
+        '<button class="btn btn-primary" type="submit">＋ สร้างรอบใหม่</button></form>' +
+        '<p class="portfolio-tracker-muted">สมาชิกสร้างและเพิ่ม Version ในแฟ้มได้ตลอดเวลา การส่ง Patch เป็นขั้นตอนแยกต่างหาก โดยเลือก Version ที่ต้องการส่งเอง</p></section>'
+      : "";
+
+    const roundButtons = visibleRounds.map(round =>
+      '<button type="button" class="portfolio-tracker-round ' +
+      (round.id === selectedRoundId ? "is-active" : "") +
+      (round.archived_at ? " is-archived" : "") +
+      '" data-pt-round="' + esc(round.id) + '">' + esc(round.round_name) + ' · ' +
+      (round.archived_at ? "เก็บเข้าคลัง" : (round.status === "open" ? "เปิดรับ" : "ปิดรับ")) +
+      '</button>'
+    ).join("");
+
+    const managementStats = management() && stats ? (
+      '<div class="portfolio-tracker-stats">' +
+      '<div class="portfolio-tracker-stat"><strong>' + stats.total + '</strong><span>สมาชิกทั้งหมด</span></div>' +
+      '<div class="portfolio-tracker-stat"><strong>' + stats.submittedFolders + '/' + stats.totalFolders + '</strong><span>แฟ้มที่ส่งแล้ว</span></div>' +
+      '<div class="portfolio-tracker-stat"><strong>' + stats.pendingFolders + '</strong><span>แฟ้มที่ยังไม่ส่ง</span></div></div>' +
+      '<div class="portfolio-tracker-table-wrap"><table class="portfolio-tracker-table"><thead><tr><th>สมาชิก</th><th>แฟ้มทั้งหมด</th><th>ส่งแล้ว</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>' +
+      stats.detail.map(row =>
+        '<tr><td><strong>' + esc(memberName(row.member.user_id)) + '</strong></td>' +
+        '<td>' + row.total + '</td><td>' + row.submitted + '/' + row.total + '</td>' +
+        '<td>' + pill(row.status, row.total === 0 ? "ยังไม่มีแฟ้ม" : row.submitted + "/" + row.total + " แฟ้ม") + '</td>' +
+        '<td><button class="btn btn-outline btn-sm" type="button" data-pt-member="' + esc(row.member.user_id) + '">ดูรายละเอียด</button></td></tr>'
+      ).join("") +
+      '</tbody></table></div><div id="pt-member-detail" class="portfolio-tracker-detail"></div>'
+    ) : "";
+
+    const requestQueue = management() && selected ? (
+      '<h4 style="margin:22px 0 10px;color:#f08a92">คำขอส่ง Patch ล่าช้า</h4><div class="portfolio-tracker-requests">' +
+      (requests.filter(request => request.round_id === selected.id && request.status === "pending").map(request =>
+        '<div class="portfolio-tracker-request"><strong>' + esc(memberName(request.member_id)) + '</strong><p>' +
+        esc(request.reason) + '</p><div class="portfolio-tracker-actions">' +
+        '<button class="btn btn-primary btn-sm" type="button" data-pt-approve-request="' + esc(request.id) + '">อนุมัติ 24 ชั่วโมง</button>' +
+        '<button class="btn btn-outline btn-sm" type="button" data-pt-reject-request="' + esc(request.id) + '">ปฏิเสธ</button>' +
+        '</div></div>'
+      ).join("") || '<p class="portfolio-tracker-muted">ไม่มีคำขอที่รออนุมัติ</p>') + '</div>'
+    ) : "";
+
+    const ownFoldersHtml = ownRow && ownRow.portfolios.length
+      ? '<div class="portfolio-tracker-submit-list">' + ownRow.portfolios.map(portfolio => {
+          const versions = [...(portfolio.portfolio_versions || [])].sort((a,b) => Number(b.version_number) - Number(a.version_number));
+          const submission = submissionForFolder(portfolio.id, selected.id);
+          const selectedVersionId = submission?.version_id || versions[0]?.id || "";
+          const chosen = versions.find(version => version.id === submission?.version_id);
+          const statusHtml = submission
+            ? '<span class="portfolio-tracker-pill is-complete">ส่งแล้ว · Version ' + esc(chosen?.version_number ?? "—") + '</span>' +
+              '<p class="portfolio-tracker-muted">ส่งครั้งแรก ' + esc(dateLabel(submission.submitted_at)) +
+              (submission.updated_at && submission.updated_at !== submission.submitted_at ? ' · เปลี่ยนรายการล่าสุด ' + esc(dateLabel(submission.updated_at)) : '') + '</p>'
+            : '<span class="portfolio-tracker-pill is-empty">ยังไม่ได้ส่ง</span>';
+          const options = versions.map(version =>
+            '<option value="' + esc(version.id) + '" ' + (version.id === selectedVersionId ? "selected" : "") + '>' +
+            'Version ' + esc(version.version_number) + ' · ' + esc(dateLabel(version.created_at)) + '</option>'
+          ).join("") || '<option value="">ยังไม่มี Version</option>';
+          return '<div class="portfolio-tracker-submit-row"><div class="portfolio-tracker-submit-info">' +
+            '<strong>' + esc(portfolio.title || "แฟ้มไม่มีชื่อ") + '</strong><p>' +
+            esc(portfolio.game_class || "ไม่ระบุคลาส") + ' · ' + esc(portfolio.portfolio_type || "Portfolio") + '</p>' +
+            statusHtml + '</div><div class="portfolio-tracker-submit-controls">' +
+            '<label>เลือก Version<select data-pt-version-select="' + esc(portfolio.id) + '" ' +
+            (!editable || !versions.length ? "disabled" : "") + '>' + options + '</select></label>' +
+            '<button type="button" class="btn btn-primary btn-sm" data-pt-submit="' + esc(portfolio.id) + '" ' +
+            (!editable || !versions.length ? "disabled" : "") + '>' +
+            (submission ? "เปลี่ยน Version ที่ส่ง" : "ส่ง Version นี้เข้ารอบ") + '</button></div></div>';
+        }).join("") + '</div>'
+      : '<div class="portfolio-tracker-empty">คุณยังไม่มีแฟ้ม Portfolio สามารถสร้างแฟ้มและ Version ได้ทุกเวลา แล้วกลับมาเลือกส่งเข้ารอบนี้ได้</div>';
+
+    const latePermissionNote = ownPermission && !isRoundEditable(selected)
+      ? '<div class="portfolio-tracker-note">คุณได้รับอนุญาตให้ส่งหรือเปลี่ยน Version ในรอบนี้ถึง ' + esc(dateLabel(ownPermission.expires_at)) + '</div>'
+      : "";
+    const lateRequestPanel = !editable && canRequestLate
+      ? '<div class="portfolio-tracker-request"><strong>รอบนี้ปิดรับการส่งแล้ว</strong>' +
+        '<p class="portfolio-tracker-muted">หากต้องการส่งหรือเปลี่ยน Version หลังปิดรอบ สามารถส่งคำขอให้ Management อนุมัติสิทธิ์ได้</p>' +
+        (pendingRequest
+          ? '<span class="portfolio-tracker-pill is-partial">ส่งคำขอแล้ว · รออนุมัติ</span>'
+          : '<form id="pt-edit-request"><textarea name="reason" maxlength="1000" required placeholder="ระบุเหตุผลที่ต้องการส่ง Patch ล่าช้า..."></textarea><button class="btn btn-outline btn-sm" type="submit">ส่งคำขออนุญาตส่งล่าช้า</button></form>') +
+        '</div>'
+      : "";
+    const archivedNote = selected && selected.archived_at
+      ? '<div class="portfolio-tracker-note">รอบนี้ถูกเก็บเข้าคลังแล้ว จึงไม่สามารถส่งหรือเปลี่ยน Version ได้</div>'
+      : "";
+
+    const selectedRoundHtml = selected
+      ? '<div class="portfolio-tracker-heading"><div><strong>' + esc(selected.round_name) + '</strong><p>เริ่ม ' +
+        dateLabel(selected.starts_at) + ' · ปิดรับ ' + dateLabel(selected.closes_at) + '</p></div>' +
+        (management()
+          ? '<div class="portfolio-tracker-actions"><button id="pt-toggle-round" class="btn btn-outline btn-sm" type="button" ' +
+            (selected.archived_at ? "disabled" : "") + '>' +
+            (selected.status === "open" ? "ปิดรอบรับส่ง" : "เปิดรอบอีกครั้ง") + '</button>' +
+            (selected.archived_at
+              ? '<button id="pt-restore-round" class="btn btn-outline btn-sm" type="button">กู้คืนรอบ</button>'
+              : '<button id="pt-archive-round" class="btn btn-outline btn-sm" type="button">เก็บเข้าคลัง</button>') +
+            '<button id="pt-delete-round" class="btn btn-outline btn-sm portfolio-tracker-danger" type="button">ลบถาวร</button></div>'
+          : "") +
+        '</div>' + managementStats + requestQueue +
+        '<div class="portfolio-tracker-own"><h4>แฟ้ม Portfolio ของคุณในรอบนี้</h4>' +
+        ownFoldersHtml + latePermissionNote +
+        '<div><button type="button" class="btn btn-outline" data-pt-open-portfolio="' + esc(currentUser?.id || "") + '">ไปยังแฟ้ม Portfolio</button></div>' +
+        lateRequestPanel + archivedNote + '</div>'
+      : '<div class="portfolio-tracker-empty">เลือกหรือสร้างรอบ Patch เพื่อดูสถานะการส่งผลงาน</div>';
+
+    root.innerHTML = managementPanel +
       '<section class="portfolio-tracker-panel">' +
-        '<div class="portfolio-tracker-heading"><div><span class="panel-kicker">PATCH VERSION TRACKER</span><h3>ติดตามการอัปเดต Portfolio</h3><p>ตรวจจาก Version ที่บันทึกในแฟ้มหลัก ไม่ต้องอัปโหลดรูปซ้ำในหน้านี้</p></div>' +
-        '<button id="pt-refresh" class="btn btn-outline btn-sm" type="button">รีเฟรช</button></div>' +
-        '<div class="portfolio-tracker-round-list">' +
-          (visibleRounds.map(round => '<button type="button" class="portfolio-tracker-round ' + (round.id===selectedRoundId?"is-active":"") + (round.archived_at?" is-archived":"") +
-            '" data-pt-round="' + esc(round.id) + '">' + esc(round.round_name) + ' · ' + (round.archived_at?"เก็บเข้าคลัง":(round.status==="open"?"เปิดรับ":"ปิดรับ")) + '</button>').join("") ||
-            '<div class="portfolio-tracker-empty">' + (showArchivedRounds?"ยังไม่มีรอบที่เก็บเข้าคลัง":"ยังไม่มีรอบอัปเดตแฟ้มผลงาน") + '</div>') +
-          (management() ? '<div class="portfolio-tracker-round-tools"><button id="pt-toggle-archived" class="btn btn-outline btn-sm" type="button">' + (showArchivedRounds?"← กลับไปรอบที่ใช้งาน":"ดูรอบที่เก็บเข้าคลัง") + '</button></div>' : "") +
-        '</div>' +
-        (selected ? (
-          '<div class="portfolio-tracker-heading"><div><strong>' + esc(selected.round_name) + '</strong><p>เริ่ม ' + dateLabel(selected.starts_at) + ' · ปิดรับ ' + dateLabel(selected.closes_at) + '</p></div>' +
-          (management() ? '<div class="portfolio-tracker-actions"><button id="pt-toggle-round" class="btn btn-outline btn-sm" type="button" ' + (selected.archived_at?'disabled':'') + '>' + (selected.status==="open"?"ปิดรอบรับข้อมูล":"เปิดรอบอีกครั้ง") + '</button>' +
-            (selected.archived_at ? '<button id="pt-restore-round" class="btn btn-outline btn-sm" type="button">กู้คืนรอบ</button>' : '<button id="pt-archive-round" class="btn btn-outline btn-sm" type="button">เก็บเข้าคลัง</button>') +
-            '<button id="pt-delete-round" class="btn btn-outline btn-sm portfolio-tracker-danger" type="button">ลบถาวร</button></div>' : "") +
-          '</div>' +
-          (management() ? (
-            '<div class="portfolio-tracker-stats">' +
-              '<div class="portfolio-tracker-stat"><strong>' + stats.total + '</strong><span>สมาชิกทั้งหมด</span></div>' +
-              '<div class="portfolio-tracker-stat"><strong>' + stats.complete + '</strong><span>อัปเดตครบแล้ว</span></div>' +
-              '<div class="portfolio-tracker-stat"><strong>' + stats.totalPvp + '</strong><span>PvP Build ที่ต้องติดตาม</span></div>' +
-            '</div>' +
-            '<div class="portfolio-tracker-table-wrap"><table class="portfolio-tracker-table"><thead><tr><th>สมาชิก</th><th>คัมภีร์หู่เฉียน</th><th>ขั้นสกิล</th><th>PvP Build</th><th>สถานะรวม</th><th>จัดการ</th></tr></thead><tbody>' +
-              stats.detail.map(row =>
-                '<tr><td><strong>' + esc(memberName(row.member.user_id)) + '</strong></td>' +
-                '<td>' + progressCell(row.cultivation,"ไม่มีแฟ้ม") + '</td>' +
-                '<td>' + progressCell(row.skills,"ไม่มีแฟ้ม") + '</td>' +
-                '<td>' + progressCell(row.pvp,"ไม่มี Build") + '</td>' +
-                '<td>' + pill(row.status) + '</td>' +
-                '<td><button class="btn btn-outline btn-sm" type="button" data-pt-member="' + esc(row.member.user_id) + '">ดูรายละเอียด</button></td></tr>'
-              ).join("") +
-            '</tbody></table></div>' +
-            '<div id="pt-member-detail" class="portfolio-tracker-detail"></div>' +
-            '<h4 style="margin:22px 0 10px;color:#f08a92">คำขอแก้ไขหลังปิดรอบ</h4>' +
-            '<div class="portfolio-tracker-requests">' +
-              (requests.filter(request => request.round_id === selected.id && request.status === "pending").map(request =>
-                '<div class="portfolio-tracker-request"><strong>' + esc(memberName(request.member_id)) + '</strong><p>' +
-                esc(request.reason) + '</p><div class="portfolio-tracker-actions">' +
-                '<button class="btn btn-primary btn-sm" type="button" data-pt-approve-request="' + esc(request.id) + '">อนุมัติ 24 ชั่วโมง</button>' +
-                '<button class="btn btn-outline btn-sm" type="button" data-pt-reject-request="' + esc(request.id) + '">ปฏิเสธ</button>' +
-                '</div></div>'
-              ).join("") || '<p class="portfolio-tracker-muted">ไม่มีคำขอที่รออนุมัติ</p>') +
-            '</div>'
-          ) : "") +
-          '<div class="portfolio-tracker-own">' +
-            '<h4>ความคืบหน้า Portfolio ของคุณ</h4>' +
-            (ownRow ? (
-              '<div class="portfolio-tracker-own-grid">' +
-                '<div class="portfolio-tracker-own-card"><strong>' + ownRow.cultivation.updated + '/' + ownRow.cultivation.total + '</strong><span>คัมภีร์หู่เฉียน</span></div>' +
-                '<div class="portfolio-tracker-own-card"><strong>' + ownRow.skills.updated + '/' + ownRow.skills.total + '</strong><span>ขั้นสกิล</span></div>' +
-                '<div class="portfolio-tracker-own-card"><strong>' + ownRow.pvp.updated + '/' + ownRow.pvp.total + '</strong><span>PvP Build</span></div>' +
-              '</div>' +
-              (ownRow.missing.length ? '<div class="portfolio-tracker-note">รายการที่ยังต้องอัปเดต: ' + ownRow.missing.map(esc).join(" · ") + '</div>' :
-                '<div class="portfolio-tracker-note">แฟ้ม Portfolio ของคุณมีเวอร์ชันในรอบนี้ครบตามรายการที่มีอยู่แล้ว</div>')
-            ) : '<div class="portfolio-tracker-empty">ไม่พบข้อมูลสมาชิกที่เข้าสู่ระบบ</div>') +
-            (ownPermission && !isRoundEditable(selected) ? '<div class="portfolio-tracker-note">คุณได้รับอนุญาตให้แก้ไขรอบนี้ถึง ' + esc(dateLabel(ownPermission.expires_at)) + '</div>' : '') +
-            '<div><button type="button" class="btn btn-primary" data-pt-open-portfolio="' + esc(currentUser?.id || "") + '">ไปยังแฟ้ม Portfolio เพื่อเพิ่มเวอร์ชัน</button></div>' +
-            (!editable ? (
-              '<div class="portfolio-tracker-request">' +
-                '<strong>รอบนี้ปิดรับการแก้ไขแล้ว</strong>' +
-                '<p class="portfolio-tracker-muted">หากต้องการเพิ่มหรือแก้ไข Build ในรอบนี้ สามารถส่งคำขอให้ฝ่ายบริหารอนุมัติสิทธิ์แก้ไขได้</p>' +
-                (pendingRequest ? '<span class="portfolio-tracker-pill is-partial">ส่งคำขอแล้ว · รออนุมัติ</span>' :
-                  '<form id="pt-edit-request"><textarea name="reason" maxlength="1000" required placeholder="ระบุเหตุผลที่ต้องการแก้ไข..."></textarea><button class="btn btn-outline btn-sm" type="submit">ส่งคำขอแก้ไข</button></form>') +
-              '</div>'
-            ) : '') +
-          '</div>' +
-          '<div class="portfolio-tracker-note">หมายเหตุ: การเพิ่ม Version ใหม่ต้องทำจากแฟ้มหลักเดิมในหน้า Portfolio ระบบจะเก็บรูปและข้อมูลเวอร์ชันเก่าไว้ หากรอบปิดแล้ว Version จะเชื่อมกับรอบเดิมได้เมื่อได้รับอนุญาตแก้ไขจากฝ่ายบริหาร</div>'
-        ) : '<div class="portfolio-tracker-empty">เลือกหรือสร้างรอบ Patch เพื่อดูสถานะการอัปเดต</div>') +
-      '</section>';
+      '<div class="portfolio-tracker-heading"><div><span class="panel-kicker">PATCH SUBMISSION TRACKER</span>' +
+      '<h3>ติดตามการส่ง Version เข้ารอบ Patch</h3>' +
+      '<p>หนึ่งแฟ้มส่งได้หนึ่ง Version ต่อรอบ และเปลี่ยน Version ที่เลือกได้ก่อนปิดรับหรือภายในเวลาที่ได้รับอนุญาต</p></div>' +
+      '<button id="pt-refresh" class="btn btn-outline btn-sm" type="button">รีเฟรช</button></div>' +
+      '<div class="portfolio-tracker-round-list">' +
+      (roundButtons || '<div class="portfolio-tracker-empty">' + (showArchivedRounds ? "ยังไม่มีรอบที่เก็บเข้าคลัง" : "ยังไม่มีรอบ Patch") + '</div>') +
+      (management() ? '<div class="portfolio-tracker-round-tools"><button id="pt-toggle-archived" class="btn btn-outline btn-sm" type="button">' +
+        (showArchivedRounds ? "← กลับไปรอบที่ใช้งาน" : "ดูรอบที่เก็บเข้าคลัง") + '</button></div>' : "") +
+      '</div>' + selectedRoundHtml + '</section>';
 
     bindEvents(root);
   }
@@ -319,20 +339,26 @@
     const host = root.querySelector("#pt-member-detail");
     if (!row || !host) return;
     const items = row.portfolios.map(portfolio => {
-      const version = versionForRound(portfolio,roundId);
+      const submission = submissionForFolder(portfolio.id,roundId);
+      const version = (portfolio.portfolio_versions || []).find(item=>item.id===submission?.version_id);
       const label = portfolio.portfolio_type === "cultivation_skills" ? "คัมภีร์หู่เฉียน / ขั้นสกิล" :
         portfolio.portfolio_type === "pve" ? "PvE Build" : "PvP Build";
-      const state = version ? "มี Version ในรอบนี้ · Version " + version.version_number : "ยังไม่มี Version ในรอบนี้";
+      const state = submission
+        ? "ส่งแล้ว · Version " + (version?.version_number ?? "ไม่พบ Version")
+        : "ยังไม่ได้ส่ง";
       return '<div class="portfolio-tracker-detail-item"><div><strong>' + esc(label + " · " + (portfolio.title || "แฟ้มผลงาน")) +
         '</strong><p class="portfolio-tracker-muted">' + esc(portfolio.game_class || "ไม่ระบุอาชีพ") + ' · ' + esc(state) +
-        (version ? ' · ' + esc(dateLabel(version.created_at)) : "") + '</p></div>' +
+        (submission ? ' · ' + esc(dateLabel(submission.submitted_at)) : "") + '</p></div>' +
         '<button type="button" class="btn btn-outline btn-sm" data-pt-open-portfolio="' + esc(memberId) + '">เปิดแฟ้ม</button></div>';
     }).join("");
     host.innerHTML = '<div class="portfolio-tracker-detail-item"><strong>' + esc(memberName(memberId)) +
-      '</strong><span>' + pill(row.status) + '</span></div>' +
+      '</strong><span>' + pill(row.status,row.submitted + "/" + row.total + " แฟ้ม") + '</span></div>' +
       (items || '<div class="portfolio-tracker-empty">สมาชิกยังไม่มีแฟ้ม Portfolio</div>') +
-      '<div class="portfolio-tracker-detail-item"><span class="portfolio-tracker-muted">อนุญาตให้สมาชิกเพิ่ม Version ในรอบนี้ได้ 24 ชั่วโมง</span>' +
-      '<button type="button" class="btn btn-primary btn-sm" data-pt-grant-member="' + esc(memberId) + '">อนุญาตแก้ไข 24 ชั่วโมง</button></div>';
+      (management() && !rounds.find(item=>item.id===roundId)?.archived_at &&
+        (rounds.find(item=>item.id===roundId)?.status === "closed" || Date.now() > new Date(rounds.find(item=>item.id===roundId)?.closes_at).getTime())
+        ? '<div class="portfolio-tracker-detail-item"><span class="portfolio-tracker-muted">อนุญาตให้สมาชิกส่งหรือเปลี่ยน Version หลังปิดรอบได้ 24 ชั่วโมง</span>' +
+          '<button type="button" class="btn btn-primary btn-sm" data-pt-grant-member="' + esc(memberId) + '">อนุญาตส่งล่าช้า 24 ชั่วโมง</button></div>'
+        : '');
 
     host.querySelectorAll("[data-pt-open-portfolio]").forEach(button =>
       button.addEventListener("click",() => openMemberPortfolio(button.dataset.ptOpenPortfolio))
@@ -343,12 +369,12 @@
       button.disabled = true;
       try {
         const expiresAt = await grantEdit(memberId,roundId,24);
-        alert("อนุญาตแก้ไขถึง " + dateLabel(expiresAt));
+        alert("อนุญาตส่ง Patch ล่าช้าถึง " + dateLabel(expiresAt));
         await loadData();
         render();
       } catch(error) {
         button.disabled = false;
-        alert("อนุญาตแก้ไขไม่สำเร็จ: " + error.message);
+        alert("อนุญาตไม่สำเร็จ: " + error.message);
       }
     });
   }
@@ -423,14 +449,15 @@
       if (!confirm('ต้องการตรวจสอบและลบรอบ “' + round.round_name + '” ถาวรใช่หรือไม่? ระบบจะตรวจสอบข้อมูลที่เชื่อมโยงก่อนดำเนินการ')) return;
       const checks = await Promise.all([
         supabaseClient.from("portfolio_versions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
+        supabaseClient.from("portfolio_patch_submissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
         supabaseClient.from("portfolio_update_submissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
         supabaseClient.from("portfolio_update_edit_requests").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
         supabaseClient.from("portfolio_update_edit_permissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId)
       ]);
       const failed = checks.find(result => result.error);
       if (failed) { alert("ตรวจสอบข้อมูลก่อนลบไม่สำเร็จ: " + failed.error.message); return; }
-      const [versions,submissions,requestsCount,permissions] = checks.map(result => result.count || 0);
-      const details = 'ข้อมูลที่พบในรอบนี้:\n• Portfolio Versions: ' + versions + '\n• Submissions: ' + submissions + '\n• คำขอแก้ไข: ' + requestsCount + '\n• สิทธิ์แก้ไข: ' + permissions + '\n\nการลบรอบจะลบข้อมูล Submission/คำขอ/สิทธิ์ที่ผูกกับรอบนี้ แต่จะเก็บตัว Version และรูปภาพในแฟ้ม Portfolio ไว้ โดยตัดเฉพาะความเชื่อมโยงกับรอบนี้';
+      const [legacyVersions,patchSubmissions,legacySubmissions,requestsCount,permissions] = checks.map(result => result.count || 0);
+      const details = 'ข้อมูลที่พบในรอบนี้:\n• Legacy-linked Versions: ' + legacyVersions + '\n• Patch Submissions ใหม่: ' + patchSubmissions + '\n• Submissions เดิม: ' + legacySubmissions + '\n• คำขอแก้ไข: ' + requestsCount + '\n• สิทธิ์แก้ไข: ' + permissions + '\n\nการลบรอบจะลบข้อมูล Submission/คำขอ/สิทธิ์ที่ผูกกับรอบนี้ ส่วน Version และรูปภาพ Portfolio จะยังคงอยู่';
       if (!confirm(details + '\n\nยืนยันลบถาวรหรือไม่? การกระทำนี้ย้อนกลับไม่ได้')) return;
       const {error} = await supabaseClient.from("portfolio_update_rounds").delete().eq("id",selectedRoundId);
       if (error) { alert("ลบรอบไม่สำเร็จ: " + error.message); return; }
@@ -439,6 +466,39 @@
       await loadData();
       render();
     });
+
+    root.querySelectorAll("[data-pt-submit]").forEach(button =>
+      button.addEventListener("click",async() => {
+        if (!selectedRoundId || !currentUser || !editable) return;
+        const portfolioId = button.dataset.ptSubmit;
+        const select = root.querySelector('[data-pt-version-select="' + portfolioId + '"]');
+        const versionId = select?.value;
+        if (!versionId) { alert("กรุณาเลือก Version ที่ต้องการส่ง"); return; }
+        const portfolio = portfolios.find(item=>item.id===portfolioId);
+        if (!portfolio || portfolio.member_id!==currentUser.id) { alert("ไม่พบแฟ้มผลงานของคุณ"); return; }
+        const existing = submissionForFolder(portfolioId,selectedRoundId);
+        const version = (portfolio.portfolio_versions || []).find(item=>item.id===versionId);
+        const prompt = existing
+          ? "ต้องการเปลี่ยน Version ที่ส่งของแฟ้ม “" + portfolio.title + "” เป็น Version " + version?.version_number + " ใช่หรือไม่?"
+          : "ยืนยันส่ง Version " + version?.version_number + " ของแฟ้ม “" + portfolio.title + "” เข้ารอบ Patch นี้ใช่หรือไม่?";
+        if (!confirm(prompt)) return;
+        button.disabled = true;
+        try {
+          const {error} = await supabaseClient.rpc("submit_portfolio_patch",{
+            target_round_id:selectedRoundId,
+            target_portfolio_id:portfolioId,
+            target_version_id:versionId
+          });
+          if (error) throw error;
+          await loadData();
+          render();
+          alert(existing ? "เปลี่ยน Version ที่ส่งเรียบร้อยแล้ว" : "ส่ง Version เข้ารอบ Patch เรียบร้อยแล้ว");
+        } catch(error) {
+          button.disabled = false;
+          alert("ส่ง Version ไม่สำเร็จ: " + (error.message || "Unknown error"));
+        }
+      })
+    );
 
     root.querySelector("#pt-refresh")?.addEventListener("click",async() => {
       try { await loadData(); render(); } catch(error) { alert(error.message); }
@@ -483,7 +543,7 @@
         if (!management()) return;
         try {
           const expiresAt = await grantEdit(button.dataset.ptGrantMember,selectedRoundId,24);
-          alert("อนุญาตแก้ไขถึง " + dateLabel(expiresAt));
+          alert("อนุญาตส่ง Patch ล่าช้าถึง " + dateLabel(expiresAt));
           await loadData();
           render();
         } catch(error) { alert("อนุญาตแก้ไขไม่สำเร็จ: " + error.message); }
@@ -501,7 +561,7 @@
             .update({status:"approved",reviewed_by:currentUser.id,reviewed_at:new Date().toISOString()})
             .eq("id",request.id);
           if (error) throw error;
-          alert("อนุมัติคำขอแล้ว · แก้ไขได้ถึง " + dateLabel(expiresAt));
+          alert("อนุมัติคำขอแล้ว · ส่ง Patch ล่าช้าได้ถึง " + dateLabel(expiresAt));
           await loadData();
           render();
         } catch(error) { alert("อนุมัติคำขอไม่สำเร็จ: " + error.message); }
