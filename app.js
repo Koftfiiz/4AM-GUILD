@@ -3838,7 +3838,7 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
     '<div class="portfolio-card-tags">' + classes.map(name => '<span class="portfolio-card-tag">' + escapeHTML(name) + '</span>').join("") + '</div>' +
     '<p class="portfolio-version-current-label">กำลังดู Version ' + Number(activeVersion?.version_number || 1) +
     (activeVersion?.version_name && activeVersion.version_name !== ("Version " + Number(activeVersion?.version_number || 1)) ? ' · ' + escapeHTML(activeVersion.version_name) : '') +
-    ' · ' + escapeHTML(activeVersion?.patch_label || "Portfolio Version") + '</p>'
+    ' · ' + escapeHTML(activeVersion?.patch_label || "Portfolio Version") + '</p>' +
     (portfolio.member_id === currentUser?.id ? '<button type="button" class="btn btn-primary" data-portfolio-add-version="' + escapeHTML(portfolio.id) + '">＋ เพิ่มเวอร์ชันใหม่</button>' : '') +
     '</div>' +
     (snapshot.description ? '<div class="portfolio-detail-description"><h3>Description</h3><p>' + escapeHTML(snapshot.description) + '</p></div>' : '') +
