@@ -748,7 +748,8 @@ function showManualMemberChooser(manualRows, errorMessage = "") {
     screen = document.createElement("div");
     screen.id = "manual-member-link-screen";
     screen.className = "login-card";
-    loginScreen.appendChild(screen);
+    // Mount outside the login screen so its overflow cannot clip the mobile modal.
+    document.body.appendChild(screen);
   }
 
   const identity = getDiscordOAuthIdentity();
