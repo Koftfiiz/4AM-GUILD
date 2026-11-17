@@ -1576,7 +1576,7 @@ async function loadDashboardGallery() {
 }
 
 async function prepareStorageImageForUpload(file,{maxDimension=1920,quality=0.86}={}){
-  if(!file||!/^image\\/(jpeg|png|webp)$/.test(file.type)||typeof createImageBitmap!=="function")return file;
+  if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type)||typeof createImageBitmap!=="function")return file;
   let bitmap;
   try{
     bitmap=await createImageBitmap(file);
@@ -1590,7 +1590,7 @@ async function prepareStorageImageForUpload(file,{maxDimension=1920,quality=0.86
     context.drawImage(bitmap,0,0,canvas.width,canvas.height);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",quality));
     if(!blob||blob.type!=="image/webp"||blob.size>=file.size*0.95)return file;
-    const baseName=file.name.replace(/\\.[^.]+$/,"")||"image";
+    const baseName=file.name.replace(/\.[^.]+$/,"")||"image";
     return new File([blob],baseName+".webp",{type:"image/webp",lastModified:Date.now()});
   }catch(error){
     console.warn("Image optimization skipped:",error);
