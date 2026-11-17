@@ -3821,9 +3821,10 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
       const selected = version.id === activeVersion?.id;
       const label = version.patch_label || "Portfolio Version";
       const versionName = version.version_name || ("Version " + Number(version.version_number));
+      const customVersionName = versionName !== ("Version " + Number(version.version_number));
       return '<div class="portfolio-version-row"><button type="button" class="portfolio-version-item ' + (selected ? 'is-active' : '') +
         '" data-portfolio-version-select="' + escapeHTML(version.id) + '" aria-pressed="' + selected + '">' +
-        '<strong>Version ' + Number(version.version_number) + ' · ' + escapeHTML(versionName) + '</strong><span>' + escapeHTML(label) +
+        '<strong>Version ' + Number(version.version_number) + '</strong><span>' + escapeHTML(customVersionName ? versionName : "ยังไม่ได้ตั้งชื่อ") + ' · ' + escapeHTML(label) +
         '</span><small>' + escapeHTML(formatDate(version.created_at)) + '</small></button>' +
         (portfolio.member_id === currentUser?.id ? '<button type="button" class="portfolio-version-rename" data-portfolio-version-rename="' + escapeHTML(version.id) + '" aria-label="เปลี่ยนชื่อ ' + escapeHTML(versionName) + '">เปลี่ยนชื่อ</button>' : '') +
         '</div>';
@@ -3836,8 +3837,8 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
     '<p class="portfolio-detail-owner">' + escapeHTML(owner ? getMemberName(owner) : "Guild Member") + '</p>' +
     '<div class="portfolio-card-tags">' + classes.map(name => '<span class="portfolio-card-tag">' + escapeHTML(name) + '</span>').join("") + '</div>' +
     '<p class="portfolio-version-current-label">กำลังดู Version ' + Number(activeVersion?.version_number || 1) +
-    ' · ' + escapeHTML(activeVersion?.version_name || ("Version " + Number(activeVersion?.version_number || 1))) +
-    ' · ' + escapeHTML(activeVersion?.patch_label || "Portfolio Version") + '</p>' +
+    (activeVersion?.version_name && activeVersion.version_name !== ("Version " + Number(activeVersion?.version_number || 1)) ? ' · ' + escapeHTML(activeVersion.version_name) : '') +
+    ' · ' + escapeHTML(activeVersion?.patch_label || "Portfolio Version") + '</p>'
     (portfolio.member_id === currentUser?.id ? '<button type="button" class="btn btn-primary" data-portfolio-add-version="' + escapeHTML(portfolio.id) + '">＋ เพิ่มเวอร์ชันใหม่</button>' : '') +
     '</div>' +
     (snapshot.description ? '<div class="portfolio-detail-description"><h3>Description</h3><p>' + escapeHTML(snapshot.description) + '</p></div>' : '') +
