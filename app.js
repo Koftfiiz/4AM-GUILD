@@ -3993,7 +3993,7 @@ async function renderPortfolios() {
               </button>
               <button type="button" class="portfolio-add-version-button" data-portfolio-action="add-version" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="เพิ่ม Version ใหม่" title="เพิ่ม Version ใหม่">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-                <span>เพิ่ม Version</span>
+                <span>อัปเดตแฟ้ม</span>
               </button>
               <button type="button" class="portfolio-delete-button" data-portfolio-action="delete" data-portfolio-id="${escapeHTML(portfolio.id)}" aria-label="ลบแฟ้มผลงาน" title="ลบแฟ้มผลงาน">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
