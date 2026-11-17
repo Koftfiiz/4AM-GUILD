@@ -5357,7 +5357,7 @@ async function handleWarCreate(event) {
   try{
     const rounds=mode==="official"?getOfficialWarRounds(eventDate):[startTime];
      const metadata=`[[WAR_CONFIG:${JSON.stringify({mode,raidCount,rounds})}]]`;
-    const {data:createdEvent,error:eventError}=await supabaseClient.from("war_events").insert({event_name:`4AM vs ${opponent}`,event_date:eventDate,start_time:startTime,description:metadata,status:"open",is_draft_confirmed:false,is_published:false}).select().single();
+    const {data:createdEvent,error:eventError}=await supabaseClient.from("war_events").insert({event_name:`4AM vs ${opponent}`,event_date:eventDate,start_time:startTime,registration_type:mode,description:metadata,status:"open",is_draft_confirmed:false,is_published:false}).select().single();
     if(eventError)throw eventError;
     const rows=[];["A","B","C","D"].slice(0,raidCount).forEach(raid=>{for(let n=1;n<=5;n++)rows.push({event_id:createdEvent.id,raid,party_number:n});});
     const {error:partyError}=await supabaseClient.from("war_parties").insert(rows);if(partyError)throw new Error("สร้างกิจกรรมแล้ว แต่สร้างช่องปาร์ตี้ไม่สำเร็จ: "+partyError.message);
