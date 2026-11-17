@@ -8705,12 +8705,29 @@ body.gallery-lightbox-open{overflow:hidden}
 /* Portfolio version names and independent rename action */
 .portfolio-version-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto auto;
   gap: 8px;
   align-items: stretch;
   min-width: 0;
 }
 .portfolio-version-item { width: 100%; }
+.portfolio-version-edit {
+  align-self: stretch;
+  min-width: 104px;
+  padding: 8px 12px;
+  border: 1px solid rgba(232, 51, 63, .62);
+  border-radius: 9px;
+  background: rgba(232, 51, 63, .16);
+  color: #ff9ca5;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.portfolio-version-edit:hover {
+  border-color: #ff5361;
+  background: rgba(232, 51, 63, .24);
+}
 .portfolio-version-rename {
   align-self: stretch;
   min-width: 82px;
@@ -8730,7 +8747,7 @@ body.gallery-lightbox-open{overflow:hidden}
 }
 @media (max-width: 420px) {
   .portfolio-version-row { grid-template-columns: minmax(0, 1fr); }
-  .portfolio-version-rename { min-height: 40px; }
+  .portfolio-version-edit, .portfolio-version-rename { min-height: 40px; }
 }
 
 
