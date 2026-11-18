@@ -32,6 +32,7 @@
     document.head.appendChild(style);
   }
 
+  if (typeof PAGE_TITLES !== "undefined") PAGE_TITLES[PAGE] = "Patch Submission Command Center";
   function ensurePage(){
     if($("page-patch-command-center"))return;
     const directoryNav=document.querySelector('.sidebar .nav-item[data-page="guild-directory"]');
