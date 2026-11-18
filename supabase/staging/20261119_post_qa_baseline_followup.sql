@@ -80,5 +80,3 @@ alter table public.portfolio_patch_submissions
     foreign key (version_id) references public.portfolio_versions(id) on delete restrict,
   add constraint portfolio_patch_submissions_member_id_fkey
     foreign key (member_id) references public.guild_members(user_id) on delete cascade;
-
-commit;
