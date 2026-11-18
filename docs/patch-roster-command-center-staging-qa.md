@@ -87,3 +87,6 @@ The Production migration now includes `manual_link` as a distinct roster source 
 ## Egress controls in the legacy submission page
 
 The member-facing Portfolio Tracker now fetches only the selected Patch's roster, the current member's affiliation, and the current member's folders (or the selected roster's folders for authorized management). It selects explicit fields, omits nested Portfolio image URLs entirely, and bounds round/roster/request/submission lists. It no longer downloads every member's Portfolio image metadata on every page load.
+
+
+The Member Workspace Files tab now loads up to 100 image metadata rows only when the reviewer opens that tab, then resolves signed URLs through the existing Portfolio URL cache. Thumbnails use lazy loading; the default Overview and Directory views do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
