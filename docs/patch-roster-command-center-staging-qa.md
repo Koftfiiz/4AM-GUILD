@@ -97,3 +97,10 @@ The member-facing Portfolio Tracker now fetches only the selected Patch's roster
 
 
 The Member Workspace now loads Portfolio folders and Version metadata in separate bounded queries (30 folders, 100 Versions), review and submission history are each capped at 50 events, and image metadata (maximum 100) is fetched only when Files is opened. Thumbnails are lazy-loaded; Overview and Directory do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
+
+
+## Submission history and RLS performance
+
+Patch submission and resubmission Version changes are recorded in `portfolio_patch_submission_events` with previous/new Version IDs. Workspace History and Command Center Recent Activity read both submission and review events. Audit rows are visible only to the submission owner or an authorized reviewer.
+
+The migration also replaces the legacy round/late-edit FOR ALL policies with explicit write policies, so SELECT checks are not evaluated through duplicate permissive paths. Staging advisor review reports no multiple-permissive-policy warnings and no unindexed foreign keys.
