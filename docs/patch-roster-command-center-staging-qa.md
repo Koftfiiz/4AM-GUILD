@@ -11,6 +11,7 @@ All tables and records below exist only in `4AM-GUILD-Staging`. They are synthet
 - `portfolio_patch_submissions`: one selected Version per Portfolio folder per Patch.
 - `portfolio_patch_submission_reviews`: Patch-specific review state (`pending`, `reviewing`, `approved`, `revision_required`).
 - `portfolio_patch_review_events`: append-only audit timeline of review status changes.
+- `portfolio_patch_submission_events`: append-only audit of first submissions and Version changes on resubmission, including previous/new Version IDs.
 - Existing neutral Portfolio Versions remain separate from Patch submission selection.
 
 ## Snapshot rules
@@ -44,6 +45,7 @@ Staging currently has one once-per-minute database-only `pg_cron` job. Its lates
 - Management review to `revision_required` succeeded with a required note.
 - Resubmission of a new Version reset status to `pending`.
 - Review audit events were written for the transitions.
+- Initial submission and Version resubmission events are retained separately; the Workspace History tab reads both audit streams.
 - Non-reviewer review attempt was rejected.
 - Targeted regression tests for affiliation transfer, manual-account merge, submission, review transitions, and archive/restore were run against synthetic Staging data. No Production data was touched; the Staging fixtures remain synthetic.
 
@@ -59,6 +61,9 @@ Staging currently has one once-per-minute database-only `pg_cron` job. Its lates
 | `portfolio_patch_submissions` | 5 |
 | `portfolio_patch_submission_reviews` | 5 |
 | `portfolio_patch_review_events` | 7 |
+| `portfolio_patch_submission_events` | 5 |
+| `portfolio_update_edit_permissions` | 0 |
+| `portfolio_update_edit_requests` | 0 |
 
 ## Important limitations
 
@@ -91,4 +96,4 @@ The Production migration now includes `manual_link` as a distinct roster source 
 The member-facing Portfolio Tracker now fetches only the selected Patch's roster, the current member's affiliation, and the current member's folders (or the selected roster's folders for authorized management). It selects explicit fields, omits nested Portfolio image URLs entirely, and bounds round/roster/request/submission lists. It no longer downloads every member's Portfolio image metadata on every page load.
 
 
-The Member Workspace now loads Portfolio folders and Version metadata in separate bounded queries (30 folders, 100 Versions), review history is capped at 50 events, and image metadata (maximum 100) is fetched only when Files is opened. Thumbnails are lazy-loaded; Overview and Directory do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
+The Member Workspace now loads Portfolio folders and Version metadata in separate bounded queries (30 folders, 100 Versions), review and submission history are each capped at 50 events, and image metadata (maximum 100) is fetched only when Files is opened. Thumbnails are lazy-loaded; Overview and Directory do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
