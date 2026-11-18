@@ -2288,12 +2288,15 @@ function getMemberAdminDiscordHealth(member) {
   const uid = String(member?.user_id || member?.linked_user_id || "");
   const account = uid ? discordAccountDirectory.get(uid) : null;
   const status = account?.discord_connection_status;
-  if (account?.verified === true && status === "connected_member") return {key:"verified",label:"เชื่อมต่อปกติ",detail:"เชื่อมต่อ Discord Server และมี Role 4AM Guild Member",tone:"good",account};
   if (status === "disconnected") return {key:"pending",label:"ออกจาก Discord Server",detail:"สมาชิกยังคงเข้าเว็บไซต์ได้ตามปกติ รอ Management ตรวจสอบสถานะในกิลด์เกม",tone:"pending",account};
   if (status === "guest_role") return {key:"pending",label:"Role: 4AM Guest",detail:"Discord Role เปลี่ยนเป็น 4AM Guest แต่ระบบไม่ระงับสิทธิ์เว็บไซต์",tone:"pending",account};
   if (status === "role_missing") return {key:"pending",label:"ไม่พบ Guild Member Role",detail:"ไม่พบ Role 4AM Guild Member แต่ระบบไม่ระงับสิทธิ์เว็บไซต์",tone:"pending",account};
   if (status === "identity_mismatch") return {key:"pending",label:"Discord ไม่ตรงบัญชี",detail:"Discord OAuth ไม่ตรงกับบัญชีที่ผูกไว้ กรุณาตรวจสอบ",tone:"pending",account};
-  if (account) return {key:"pending",label:"รอตรวจสอบ",detail:"พบข้อมูลบัญชี Discord แต่ยังไม่มีผลตรวจสอบล่าสุด",tone:"pending",account};
+  // Verified identity + verified guild membership are authoritative.
+  // "unknown" connection status means no current presence classification,
+  // not that the linked Discord account is unverified.
+  if (account?.verified === true && account?.guild_member_verified === true) return {key:"verified",label:"Verified",detail:"ยืนยันบัญชี Discord และการเป็นสมาชิก 4AM Guild แล้ว",tone:"good",account};
+  if (account) return {key:"pending",label:"รอตรวจสอบ",detail:"พบข้อมูลบัญชี Discord แต่ยังไม่มีผลยืนยันตัวตนหรือสมาชิกกิลด์ครบถ้วน",tone:"pending",account};
   if (member?._recordType === "account" || member?.linked_user_id) return {key:"unknown",label:"ตรวจสอบไม่ได้",detail:"สิทธิ์ฐานข้อมูลปัจจุบันไม่เปิดเผยผลตรวจสอบ Discord ของบัญชีนี้",tone:"muted",account:null};
   if (member?.discord_user_id) return {key:"pending",label:"รอสมาชิกยืนยัน",detail:"มีการกำหนด Discord Account ในรายชื่อ Manual แต่ยังไม่พบผลยืนยันจากบัญชีผู้ใช้",tone:"pending",account:null};
   return {key:"missing",label:"ยังไม่เชื่อมต่อ",detail:"ยังไม่พบข้อมูลบัญชี Discord ที่เชื่อมโยง",tone:"muted",account:null};
