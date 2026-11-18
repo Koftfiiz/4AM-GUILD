@@ -3276,6 +3276,17 @@ async function loadPortfolios() {
       })
       .sort((a, b) => Number(b.version_number) - Number(a.version_number));
 
+    const patchCounters = new Map();
+    [...versions].sort((a, b) =>
+      new Date(a.created_at || 0) - new Date(b.created_at || 0) ||
+      Number(a.version_number) - Number(b.version_number)
+    ).forEach(version => {
+      const key = getPortfolioPatchKey(version);
+      const next = (patchCounters.get(key) || 0) + 1;
+      patchCounters.set(key, next);
+      version.patch_sequence_number = next;
+    });
+
     const latest = versions[0] || null;
     return {
       ...portfolio,
@@ -3321,6 +3332,21 @@ function getPortfolioClasses(value) {
     .split(/[,|]/)
     .map((name) => name.trim())
     .filter(Boolean);
+}
+
+// Keep the database sequence unique; calculate the visible Snapshot number per Patch.
+function getPortfolioPatchName(version) {
+  let value = String(version?.version_name || "").trim();
+  if (/^Version\\s+\\d+$/i.test(value)) value = "";
+  if (!value) value = String(version?.patch_label || "").trim();
+  value = value.replace(/^Patch\\s*/i, "").trim();
+  return value || "ไม่ระบุ Patch";
+}
+function getPortfolioPatchKey(version) {
+  return getPortfolioPatchName(version).normalize("NFKC").toLocaleLowerCase("th").replace(/\\s+/g, " ");
+}
+function getPortfolioSnapshotLabel(version) {
+  return "Patch " + getPortfolioPatchName(version) + " (" + Number(version?.patch_sequence_number || 1) + ")";
 }
 
 function renderPortfolioClassChoices() {
@@ -3807,8 +3833,8 @@ async function renamePortfolioVersion(versionId, portfolioId) {
     alert("เปลี่ยนชื่อได้เฉพาะ Version ในแฟ้มของคุณเท่านั้น");
     return;
   }
-  const currentName = version.version_name || ("Version " + version.version_number);
-  const entered = prompt("ตั้งชื่อ Version (ไม่เกิน 80 ตัวอักษร)", currentName);
+  const currentName = "Patch " + getPortfolioPatchName(version);
+  const entered = prompt("ระบุเวอร์ชั่นแพทช์ (ไม่เกิน 80 ตัวอักษร)", currentName);
   if (entered === null) return;
   const newName = entered.trim();
   if (!newName || newName.length > 80) {
@@ -3834,7 +3860,7 @@ async function deletePortfolioVersion(versionId, portfolioId, button) {
   const portfolio = allPortfolios.find(item => item.id === portfolioId);
   const version = portfolio?.portfolio_versions?.find(item => item.id === versionId);
   if (!portfolio || portfolio.member_id !== currentUser?.id || !version) { alert("ลบได้เฉพาะ Version ในแฟ้มผลงานของคุณเท่านั้น"); return; }
-  const versionLabel = "Version " + Number(version.version_number) + (version.version_name && version.version_name !== ("Version " + Number(version.version_number)) ? " · " + version.version_name : "");
+  const versionLabel = getPortfolioSnapshotLabel(version);
   if (!confirm("ยืนยันลบ " + versionLabel + " ใช่หรือไม่?\n\nระบบจะลบเฉพาะ Version นี้ พร้อมรูปภาพและผลตรวจที่อยู่ภายใน Version นี้\n\nแฟ้ม Portfolio หลักและ Version อื่นจะไม่ถูกลบ\n\nหาก Version นี้ยังมีประวัติการส่ง PATCH ระบบจะไม่อนุญาตให้ลบ")) return;
   if (button) { button.disabled = true; button.textContent = "…"; }
   try {
@@ -3888,6 +3914,17 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
       }
       const deleteVersionButton = event.target.closest("[data-portfolio-version-delete]");
       if (deleteVersionButton) { event.stopPropagation(); void deletePortfolioVersion(deleteVersionButton.dataset.portfolioVersionDelete, modal.dataset.portfolioId, deleteVersionButton); return; }
+      const historyToggle = event.target.closest("[data-portfolio-history-toggle]");
+      if (historyToggle) {
+        const list = modal.querySelector("[data-portfolio-history-list]");
+        const expanded = historyToggle.getAttribute("aria-expanded") === "true";
+        historyToggle.setAttribute("aria-expanded", String(!expanded));
+        if (list) list.classList.toggle("hidden", expanded);
+        historyToggle.textContent = expanded
+          ? "ดูประวัติเวอร์ชั่นทั้งหมด (" + (historyToggle.dataset.count || "0") + ")"
+          : "ซ่อนประวัติเวอร์ชั่น";
+        return;
+      }
       const versionButton = event.target.closest("[data-portfolio-version-select]");
       if (versionButton) {
         void openPortfolioDetail(modal.dataset.portfolioId, versionButton.dataset.portfolioVersionSelect);
@@ -3931,17 +3968,14 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
   window.portfolioLightboxIndex = 0;
 
   const classes = getPortfolioClasses(snapshot.game_class || portfolio.game_class);
-  const history = versions.length ? '<section class="portfolio-version-history"><h3>ประวัติ Version</h3><div class="portfolio-version-list">' +
+  const history = versions.length ? '<section class="portfolio-version-history"><div class="portfolio-version-history-heading"><h3>ประวัติเวอร์ชั่น</h3><button type="button" class="btn btn-outline portfolio-history-toggle" data-portfolio-history-toggle data-count="' + versions.length + '" aria-expanded="false">ดูประวัติเวอร์ชั่นทั้งหมด (' + versions.length + ')</button></div><div class="portfolio-version-list hidden" data-portfolio-history-list>' +
     versions.map(version => {
       const selected = version.id === activeVersion?.id;
-      const label = version.patch_label || "Portfolio Version";
-      const versionName = version.version_name || ("Version " + Number(version.version_number));
-      const customVersionName = versionName !== ("Version " + Number(version.version_number));
+      const patchLabel = getPortfolioSnapshotLabel(version);
       return '<div class="portfolio-version-row"><button type="button" class="portfolio-version-item ' + (selected ? 'is-active' : '') +
         '" data-portfolio-version-select="' + escapeHTML(version.id) + '" aria-pressed="' + selected + '">' +
-        '<strong>' + escapeHTML(customVersionName ? versionName : ("ชุดที่ " + Number(version.version_number))) + '</strong><span>' + escapeHTML(label) +
-        '</span><small>' + escapeHTML(formatDate(version.created_at)) + '</small></button>' +
-        (portfolio.member_id === currentUser?.id ? '<button type="button" class="portfolio-version-edit" data-portfolio-version-edit="' + escapeHTML(version.id) + '">แก้ไขเนื้อหา</button><button type="button" class="portfolio-version-rename" data-portfolio-version-rename="' + escapeHTML(version.id) + '" aria-label="เปลี่ยนชื่อ ' + escapeHTML(versionName) + '">เปลี่ยนชื่อ</button><button type="button" class="portfolio-version-delete" data-portfolio-version-delete="' + escapeHTML(version.id) + '" aria-label="ลบ ' + escapeHTML(versionName) + '" title="ลบเฉพาะ Version นี้">−</button>' : '') +
+        '<strong>' + escapeHTML(patchLabel) + '</strong><small>' + escapeHTML(formatDate(version.created_at)) + '</small></button>' +
+        (portfolio.member_id === currentUser?.id ? '<button type="button" class="portfolio-version-edit" data-portfolio-version-edit="' + escapeHTML(version.id) + '">แก้ไข Snapshot</button><button type="button" class="portfolio-version-rename" data-portfolio-version-rename="' + escapeHTML(version.id) + '" aria-label="เปลี่ยนเวอร์ชั่นแพทช์ ' + escapeHTML(patchLabel) + '">เปลี่ยน Patch</button><button type="button" class="portfolio-version-delete" data-portfolio-version-delete="' + escapeHTML(version.id) + '" aria-label="ลบ ' + escapeHTML(patchLabel) + '" title="ลบเฉพาะ Snapshot นี้">−</button>' : '') +
         '</div>';
     }).join("") + '</div></section>' : "";
 
@@ -3951,9 +3985,7 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
     '</span><h2 id="portfolio-detail-title">' + escapeHTML(title) + '</h2>' +
     '<p class="portfolio-detail-owner">' + escapeHTML(owner ? getMemberName(owner) : "Guild Member") + '</p>' +
     '<div class="portfolio-card-tags">' + classes.map(name => '<span class="portfolio-card-tag">' + escapeHTML(name) + '</span>').join("") + '</div>' +
-    '<p class="portfolio-version-current-label">กำลังดู Version ' + Number(activeVersion?.version_number || 1) +
-    (activeVersion?.version_name && activeVersion.version_name !== ("Version " + Number(activeVersion?.version_number || 1)) ? ' · ' + escapeHTML(activeVersion.version_name) : '') +
-    ' · ' + escapeHTML(activeVersion?.patch_label || "Portfolio Version") + '</p>' +
+    '<p class="portfolio-version-current-label">กำลังดู ' + escapeHTML(getPortfolioSnapshotLabel(activeVersion || {})) + '</p>' +
     (portfolio.member_id === currentUser?.id ? '<button type="button" class="btn btn-primary" data-portfolio-add-version="' + escapeHTML(portfolio.id) + '">＋ เพิ่มเวอร์ชันใหม่</button>' : '') +
     '</div>' +
     (snapshot.description ? '<div class="portfolio-detail-description"><h3>Description</h3><p>' + escapeHTML(snapshot.description) + '</p></div>' : '') +
@@ -4457,7 +4489,7 @@ async function startPortfolioVersionEdit(portfolioId, versionId) {
     window.portfolioOriginalImages = [...(version.portfolio_images || [])];
     $("portfolio-title").value = portfolio.title || "";
     $("portfolio-title").readOnly = true;
-    $("portfolio-version-name").value = version.version_name || ("Version " + version.version_number);
+    $("portfolio-version-name").value = "Patch " + getPortfolioPatchName(version);
     $("portfolio-description").value = version.description || "";
     $("portfolio-type").value = version.portfolio_type || portfolio.portfolio_type || "pvp";
     setPortfolioTitleFieldVisibility($("portfolio-type").value);
@@ -4485,8 +4517,8 @@ async function startPortfolioVersionEdit(portfolioId, versionId) {
     renderPortfolioSelectedFiles();
     const heading = $("portfolio-form-heading");
     if (heading) {
-      heading.querySelector("h3").textContent = "แก้ไข Version " + Number(version.version_number);
-      heading.querySelector("p").textContent = "แก้ไขรายละเอียด Class Tags และรูปภาพของ Version นี้โดยตรง ประวัติ Version อื่นจะไม่เปลี่ยนแปลง";
+      heading.querySelector("h3").textContent = "แก้ไข Snapshot · " + getPortfolioSnapshotLabel(version);
+      heading.querySelector("p").textContent = "แก้ไขเวอร์ชั่นแพทช์ รายละเอียด Class Tags และรูปภาพของ Snapshot นี้ โดยไม่กระทบประวัติ Snapshot อื่น";
     }
     const submit = $("portfolio-create-submit");
     if (submit) submit.textContent = "บันทึกการแก้ไข";
