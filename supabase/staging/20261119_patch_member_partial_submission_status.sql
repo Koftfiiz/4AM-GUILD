@@ -36,7 +36,7 @@ begin
   where (nullif(trim(coalesce(p_search,'')),'') is null or m.character_name ilike '%'||trim(p_search)||'%' or coalesce(m.nickname,'') ilike '%'||trim(p_search)||'%' or coalesce(m.discord_name,'') ilike '%'||trim(p_search)||'%')
    and (p_status_filter='all' or m.member_status=p_status_filter)
  ), member_page as (
-  select * from filtered_members order by character_name limit greatest(1,least(coalesce(p_limit,50),100)) offset greatest(0,least(coalesce(p_offset,0),5000))
+  select * from filtered_members order by character_name,member_id limit greatest(1,least(coalesce(p_limit,50),100)) offset greatest(0,least(coalesce(p_offset,0),5000))
  ), queue_filtered as (
   select s.id as submission_id,s.member_id,pr.character_name,pr.game_class,p.title as portfolio_title,p.portfolio_type,pv.version_number,pv.version_name,s.submitted_at,s.updated_at,
    coalesce(rv.status,'pending') as review_status,rv.review_note,rv.reviewer_user_id,rv.reviewed_at
@@ -47,7 +47,7 @@ begin
   where s.round_id=v_round_id and (p_status_filter='all' or (p_status_filter not in ('not_submitted','partial') and coalesce(rv.status,'pending')=p_status_filter))
    and (nullif(trim(coalesce(p_search,'')),'') is null or pr.character_name ilike '%'||trim(p_search)||'%' or p.title ilike '%'||trim(p_search)||'%')
  ), queue_rows as (
-  select * from queue_filtered order by submitted_at desc
+  select * from queue_filtered order by submitted_at desc,submission_id
   limit greatest(1,least(coalesce(p_limit,50),100)) offset greatest(0,least(coalesce(p_offset,0),5000))
  )
  select jsonb_build_object(
