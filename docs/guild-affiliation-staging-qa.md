@@ -50,3 +50,10 @@ The fixture set includes one manual row linked to a registered account and three
 ## Follow-up security hardening
 
 The feature branch now tightens the management RPC helper to the same Developer/Leader/Management role set used by the existing application, requires an active membership status, and preserves the owner Developer allowlist. The corresponding SQL edits have not yet been re-applied/re-tested after the Staging project was paused; rerun the targeted QA suite after resuming Staging.
+
+
+## Latest feature-branch additions pending Staging revalidation
+
+- Guild Directory now exposes affiliation history on demand (maximum 50 rows per request); ordinary directory loads still fetch only one 50-member page and do not download history.
+- The production migrations now include the same role boundary as the app (active Developer/Leader/Management, plus the owner Developer allowlist), owner/reviewer-only review notes, and deterministic paginated Command Center results.
+- The Free Staging project is currently paused. These latest SQL/UI changes are committed but have not been applied or browser-tested since the pause.
