@@ -7,17 +7,20 @@
 - Staging contains synthetic fixtures only. Never copy Production members, Auth users, Discord credentials, Portfolio data, or Storage objects.
 - Do not connect the Staging project to Production Discord webhooks/bot secrets or Production Storage.
 - Restore Staging only for a focused migration/QA session, then pause it again. A pause reduces active compute; it does not erase Egress already used.
-- No scheduled cron job is installed on Staging. The Production migration's one-minute snapshot worker is intentionally excluded from Staging.
+- Staging currently has one database-only `pg_cron` job (`4am-patch-roster-snapshot`) running once per minute. It calls only `snapshot_due_patch_rosters()`; it makes no HTTP requests and downloads no Storage objects. Verify `cron.job_run_details` during QA, then pause Staging when the work session is complete.
 - Use SQL/schema tests and synthetic records before browser QA. Load Portfolio image URLs only when the Workspace Files tab is opened.
 
 ## Existing project versus clean rebuild
 
-The initial synthetic baseline has already been applied to the current Staging project. Do not rerun `guild_affiliation_staging_baseline.sql` against that project because it creates base tables and fixtures without `IF NOT EXISTS`.
+The synthetic baseline has already been applied to the current Staging project and now contains additional synthetic QA cases. Do not rerun `guild_affiliation_staging_baseline.sql` against that project because it creates base tables and fixtures without `IF NOT EXISTS`.
 
-For a new blank Free Staging project, use this order:
+For a new blank Free Staging project, use this order (the current Staging project already has this baseline and the canonical feature migrations applied):
 
 1. `guild_affiliation_staging_baseline.sql`
-2. `20261119_tighten_affiliation_rpc_permissions_and_idempotency.sql`
+2. `20261119000000_guild_affiliation_foundation.sql`
+3. `20261119000100_guild_affiliation_directory.sql`
+4. `20261119000200_patch_roster_command_center.sql`
+5. Apply only the remaining Staging-specific parity/fixture scripts listed below when rebuilding the synthetic test schema.
 3. `20261119_server_side_member_directory_rpc.sql`
 4. `20261119_patch_roster_snapshot_and_affiliation_sync.sql`
 5. `20261119_align_patch_permissions_with_portfolio_roles.sql`
