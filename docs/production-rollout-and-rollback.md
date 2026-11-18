@@ -34,7 +34,7 @@ Each canonical migration is transactional and additive. The Patch migration uses
 - Confirm `pg_cron` is installed and the existing two Guild War jobs are active.
 - Confirm the feature branch's latest GitHub Actions validation is green.
 - Confirm the Staging contract tests and authorization/workflow regressions are green.
-- Confirm no unassigned member has been silently mapped to 4AM or 4PM.
+- Confirm no unassigned member has been silently mapped to 4AM or 4PM. Latest read-only inventory: 58 active registered accounts + 14 active Manual-only records = 72 distinct active identities; 47 linked Manual records are excluded as duplicates; current affiliations = 0.
 
 ## Single-release sequence
 
