@@ -2215,9 +2215,9 @@ function resetManualMemberForm() {
 // WEBSITE MEMBER PRESENCE
 // ==========================================
 
-const GUILD_PRESENCE_STALE_MS = 4 * 60 * 1000;
-const GUILD_PRESENCE_HEARTBEAT_MS = 90 * 1000;
-const GUILD_PRESENCE_REFRESH_MS = 60 * 1000;
+const GUILD_PRESENCE_STALE_MS = 5 * 60 * 1000;
+const GUILD_PRESENCE_HEARTBEAT_MS = 120 * 1000;
+const GUILD_PRESENCE_REFRESH_MS = 120 * 1000;
 
 async function sendGuildPresenceHeartbeat() {
   if (!currentUser?.id || currentMember?.active !== true) return;
