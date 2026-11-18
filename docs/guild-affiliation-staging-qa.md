@@ -57,3 +57,8 @@ The feature branch now tightens the management RPC helper to the same Developer/
 - Guild Directory now exposes affiliation history on demand (maximum 50 rows per request); ordinary directory loads still fetch only one 50-member page and do not download history.
 - The production migrations now include the same role boundary as the app (active Developer/Leader/Management, plus the owner Developer allowlist), owner/reviewer-only review notes, and deterministic paginated Command Center results.
 - The Free Staging project is currently paused. These latest SQL/UI changes are committed but have not been applied or browser-tested since the pause.
+
+
+## Member Workspace follow-up
+
+The feature branch now loads Discord account identity/verification and the member's affiliation history only when Management opens a Workspace. The Workspace History tab combines affiliation history with Patch review events. Requests are bounded (50 affiliation rows, 30 folders/submissions) and do not run during the normal directory/dashboard load. These UI additions await Staging browser validation.
