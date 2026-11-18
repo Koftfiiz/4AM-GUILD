@@ -23,7 +23,7 @@ For a brand-new blank Free Staging project, use only this canonical sequence:
 5. `20261119000200_patch_roster_command_center.sql`
 6. `20261119_post_qa_baseline_followup.sql` (Staging-only synthetic Discord fixtures and legacy FK parity)
 7. `20261119_staging_app_grants_and_rls.sql` (app-compatible authenticated writes, Developer-only Discord account mutation, no anon table access)
-8. Run both files in `supabase/tests/`.
+8. Run all files in `supabase/tests/` (schema contracts plus transactional workflow regressions).
 
 The other files in `supabase/staging/` are historical incremental QA patches used while developing the prototype. They are not part of the clean rebuild path; do not replay them after the canonical migrations unless a specific schema inspection identifies a missing object.
 
