@@ -234,6 +234,10 @@
           <svg class="icon"><use href="#i-discord"/></svg>
           <span>Discord Integration Settings</span>
         </button>
+        <button class="nav-item developer-only is-role-hidden" data-page="developer-tools" data-developer-only data-owner-only aria-hidden="true">
+          <svg class="icon"><use href="#i-wrench"/></svg>
+          <span>Developer Tools</span>
+        </button>
       </nav>
 
       <div class="sidebar-divider"><span>ACCOUNT</span></div>
@@ -438,7 +442,6 @@
               </div>
               <div class="gallery-admin-tools hidden" id="dashboard-gallery-admin">
                 <input type="file" id="dashboard-gallery-upload-input" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" multiple hidden>
-                <button type="button" class="btn btn-secondary" id="dashboard-gallery-optimize-trigger" title="แปลงภาพ PNG/JPG เก่าเป็น WebP โดยเก็บไฟล์ต้นฉบับ">ลดขนาดรูปเก่า</button>
                 <button type="button" class="btn btn-primary gallery-upload-trigger" id="dashboard-gallery-upload-trigger">＋ เพิ่มรูปภาพ</button>
               </div>
             </header>
@@ -1124,6 +1127,18 @@
 <div class="rule-editor-actions"><button type="button" class="btn btn-outline" data-rule-cancel="discord">ยกเลิก</button><button type="button" class="btn btn-primary" data-rule-save="discord">บันทึกรายละเอียด</button></div><p class="message" data-rule-message="discord"></p></div></section></div></section>
 
       <!-- ============ DEVELOPER SYSTEM MANAGEMENT ============ -->
+      <section id="page-developer-tools" class="page page-padded hidden">
+        <div class="page-intro"><span class="section-kicker">DEVELOPER WORKSPACE</span><h1>Developer Tools</h1><p>เครื่องมือดูแลระบบและจัดการไฟล์สำหรับ Developer</p></div>
+        <section class="panel">
+          <div class="panel-heading"><div><span class="panel-kicker">STORAGE OPTIMIZATION</span><h3>ปรับขนาดรูปภาพเก่าใน Guild Gallery</h3><p>ค้นหารูป PNG/JPG ที่ยังใช้งานอยู่ แล้วแปลงเป็น WebP เพื่อลดปริมาณข้อมูลที่ส่งออกจาก Storage</p></div></div>
+          <div class="settings-card-body">
+            <p class="muted">ระบบจะเปลี่ยนเฉพาะ storage_path ของรายการที่แปลงสำเร็จ และเก็บไฟล์ต้นฉบับเดิมไว้ใน Storage ไม่ลบไฟล์เดิม</p>
+            <div class="settings-actions"><button type="button" class="btn btn-primary" id="developer-tools-optimize-gallery-trigger">ลดขนาดรูปเก่าใน Guild Gallery</button></div>
+            <p id="developer-tools-gallery-optimize-status" class="muted" role="status" aria-live="polite">เครื่องมือนี้แสดงเฉพาะบัญชี Developer เจ้าของโปรเจกต์</p>
+          </div>
+        </section>
+      </section>
+
       <section id="page-system-management" class="page page-padded hidden">
         <div class="page-intro">
           <span class="section-kicker">DEVELOPER CONTROL CENTER</span>
