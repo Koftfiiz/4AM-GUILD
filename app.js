@@ -546,8 +546,10 @@ async function logout(event) {
     currentUser = null;
     currentMember = null;
     allMembers = [];
+    memberDirectoryCacheExpiresAt = 0;
     discordAccount = null;
     allPortfolios = [];
+    portfolioDataCacheExpiresAt = 0;
     allWarEvents = [];
     if (feedbackRealtimeChannel) {
       supabaseClient.removeChannel(feedbackRealtimeChannel);
@@ -9477,7 +9479,13 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
     removeAppRealtimeChannels();
     currentUser = null;
     currentMember = null;
+    allMembers = [];
+    directoryMembers = [];
+    manualGuildMembers = [];
+    memberDirectoryCacheExpiresAt = 0;
     discordAccount = null;
+    allPortfolios = [];
+    portfolioDataCacheExpiresAt = 0;
     rolePreviewRole = null;
     applyRolePreviewState();
   }
