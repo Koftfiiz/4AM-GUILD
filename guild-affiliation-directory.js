@@ -51,6 +51,8 @@
     document.head.appendChild(style);
   }
 
+  if (typeof PAGE_TITLES !== "undefined") PAGE_TITLES[PAGE] = "Guild Directory";
+
   function ensurePage() {
     if ($("page-guild-directory")) return;
     const nav = document.querySelector(".sidebar-nav");
