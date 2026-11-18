@@ -58,6 +58,15 @@ begin
     raise exception 'Patch review event visibility must be restricted to owner/reviewer';
   end if;
 
+  if not (
+    select pg_get_functiondef('public.get_patch_command_center(uuid,text,text,integer,integer)'::regprocedure)
+      like '%review_queue_total%'
+      and pg_get_functiondef('public.get_patch_command_center(uuid,text,text,integer,integer)'::regprocedure)
+      like '%attention_members%'
+  ) then
+    raise exception 'Command Center read model must expose bounded review and attention summaries';
+  end if;
+
   if not exists (
     select 1 from pg_indexes
     where schemaname='public' and indexname='portfolio_update_rounds_snapshot_due_idx'
