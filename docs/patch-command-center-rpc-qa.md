@@ -92,7 +92,7 @@ The Member Workspace now loads Portfolio folders and Version metadata in separat
 
 ## Latest Staging regression pass
 
-- Both Guild Affiliation and Patch Command Center schema contract SQL tests pass against the active Free Staging project.
+- Both Guild Affiliation and Patch Command Center schema contract SQL tests pass against the Free Staging project before it was paused.
 - GitHub Actions run #150 passed on feature-branch head `5744edb`; JavaScript syntax, 15px typography, and black/red theme checks are green.
 - Targeted SQL regression tests passed for empty Patch state, bounded non-overlapping Review Queue pagination, immutable opening roster after a member leaves 4AM, 4PM/non-roster submission rejection, cross-owner Portfolio submission rejection, Version resubmission audit, and review reset to pending.
 - Manual-only 4AM affiliation was merged into the canonical account on account linking and inserted into the already-open Patch roster once; the test was rolled back.
