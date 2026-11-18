@@ -8840,3 +8840,21 @@ body.gallery-lightbox-open{overflow:hidden}
   background: rgba(37, 99, 235, .82);
   box-shadow: 0 0 14px rgba(37, 99, 235, .22);
 }
+
+/* Portfolio folder update action: violet to distinguish it from edit-blue and delete-red */
+.portfolio-card-management .portfolio-add-version-button {
+  color: #ddd6fe;
+  border-color: rgba(124, 58, 237, .78);
+  background: rgba(124, 58, 237, .22);
+  transition: color .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.portfolio-card-management .portfolio-add-version-button:hover {
+  color: #fff;
+  border-color: #a78bfa;
+  background: rgba(124, 58, 237, .82);
+  box-shadow: 0 0 14px rgba(124, 58, 237, .24);
+}
+.portfolio-card-management .portfolio-add-version-button:focus-visible {
+  outline: 2px solid #c4b5fd;
+  outline-offset: 3px;
+}
