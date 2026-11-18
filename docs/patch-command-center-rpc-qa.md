@@ -51,12 +51,12 @@ The Production application already defines `is_portfolio_management()` and `is_p
 - Staging role helpers now require `active = true` and `membership_status = 'active'`, with the project owner's explicit Developer allowlist preserved.
 - Patch read policies now scope review notes/events to the submission owner or an authorized reviewer; general Patch data is restricted to active guild members.
 - Staging submission FK delete behavior has been aligned with the inspected Production constraints (member cascade, portfolio restrict, round cascade, version restrict).
-- These follow-up SQL edits are committed on the feature branch but have not yet been re-applied/re-tested because the Free Staging project has been paused to conserve active resources. Re-run the targeted QA suite after resuming Staging.
+- These follow-up SQL edits have been applied to Staging and verified through the schema contract tests and targeted role/RPC checks.
 
 
 ## Review queue pagination follow-up
 
-The read RPC now exposes `review_queue_total`, and the Command Center UI includes Previous/Next controls using the same bounded page size as the member list. This follow-up change is committed but not yet re-applied/re-tested on Staging.
+The read RPC now exposes `review_queue_total`, and the Command Center UI includes Previous/Next controls using the same bounded page size as the member list. This follow-up change has been applied to Staging and the queue totals and bounded paging inputs were checked.
 
 
 ## Latest review fixes pending Staging revalidation
@@ -80,4 +80,4 @@ The legacy member-facing Portfolio Tracker has also been aligned with the 4AM ro
 Latest GitHub Actions validation: JavaScript syntax checks passed on the feature branch after the Workspace, pagination, and Portfolio Tracker updates. The workflow also enforces the 15px minimum and black/red theme; the newest workflow run for the follow-up SQL/docs commit is queued separately.
 
 
-The Member Workspace Files tab now loads up to 100 image metadata rows only when the reviewer opens that tab, then resolves signed URLs through the existing Portfolio URL cache. Thumbnails use lazy loading; the default Overview and Directory views do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
+The Member Workspace now loads Portfolio folders and Version metadata in separate bounded queries (30 folders, 100 Versions), review history is capped at 50 events, and image metadata (maximum 100) is fetched only when Files is opened. Thumbnails are lazy-loaded; Overview and Directory do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
