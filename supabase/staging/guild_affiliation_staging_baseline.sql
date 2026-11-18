@@ -57,7 +57,7 @@ create table public.guild_member_affiliations (
 );
 create unique index guild_member_affiliations_one_current_user on public.guild_member_affiliations(user_id) where user_id is not null and ended_at is null;
 create unique index guild_member_affiliations_one_current_manual on public.guild_member_affiliations(manual_member_id) where manual_member_id is not null and ended_at is null;
-create index guild_member_affiliations_guild_current_idx on public.guild_member_affiliations(guild_id) where ended_at is null;
+create index guild_member_affiliations_guild_current_idx on public.guild_member_affiliations(guild_id,started_at desc) where ended_at is null;
 insert into public.guilds(code,name) values ('4AM','4AM GUILD'),('4PM','4PM GUILD');
 create or replace function public.is_guild_member()
 returns boolean language sql stable security definer set search_path = ''
