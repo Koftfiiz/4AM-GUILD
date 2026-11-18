@@ -1634,7 +1634,7 @@ async function uploadDashboardGalleryFiles(files) {
     for(const file of selected){
       if(!["image/jpeg","image/png","image/webp","image/gif","image/svg+xml"].includes(file.type))throw new Error("รองรับเฉพาะ JPG, PNG, WEBP, GIF และ SVG");
       if(file.size>10*1024*1024)throw new Error("รูปภาพแต่ละไฟล์ต้องมีขนาดไม่เกิน 10 MB");
-      const uploadFile=await prepareStorageImageForUpload(file);
+      const uploadFile=await prepareStorageImageForUpload(file,{maxDimension:1600,quality:0.78,forceWebP:true});
       const safeName=uploadFile.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").slice(-90)||"guild-image";
       const path="gallery/"+crypto.randomUUID()+"-"+safeName;
       const {error:uploadError}=await supabaseClient.storage.from("guild-gallery-images").upload(path,uploadFile,{contentType:uploadFile.type,cacheControl:"86400",upsert:false});
@@ -1658,6 +1658,62 @@ async function uploadDashboardGalleryFiles(files) {
     dashboardGalleryBusy=false;
     if(trigger){trigger.disabled=false;trigger.textContent="＋ เพิ่มรูปภาพ";}
     const input=$("dashboard-gallery-upload-input");if(input)input.value="";
+  }
+}
+
+async function optimizeLegacyDashboardGalleryImages() {
+  if(!canManageDashboardGallery()||dashboardGalleryBusy)return;
+  const candidates=dashboardGalleryImages.filter(item=>/\\.(png|jpe?g)$/i.test(item.storage_path||""));
+  if(!candidates.length){alert("ไม่พบภาพ PNG/JPG เก่าที่ต้องปรับขนาดใน Guild Gallery");return;}
+  const estimated=candidates.length;
+  if(!window.confirm("พบภาพเก่า "+estimated+" ภาพ ต้องการแปลงเป็น WebP เพื่อลด Egress หรือไม่?\\n\\nระบบจะอัปโหลดไฟล์ WebP ใหม่และเปลี่ยนเฉพาะ storage_path ในฐานข้อมูล โดยเก็บไฟล์ต้นฉบับเดิมไว้ ไม่ลบไฟล์เดิม"))return;
+  dashboardGalleryBusy=true;
+  const status=$("dashboard-gallery-status"),trigger=$("dashboard-gallery-optimize-trigger");
+  if(trigger){trigger.disabled=true;trigger.textContent="กำลังปรับภาพ...";}
+  let completed=0,failed=0;
+  try{
+    for(const item of candidates){
+      let newPath=null;
+      try{
+        if(status)status.textContent="กำลังปรับภาพ "+(completed+failed+1)+"/"+estimated+" · "+(item.caption||"Guild Gallery");
+        const {data:signedData,error:signedError}=await supabaseClient.storage.from("guild-gallery-images").createSignedUrl(item.storage_path,300);
+        if(signedError)throw signedError;
+        const response=await fetch(signedData.signedUrl,{cache:"no-store"});
+        if(!response.ok)throw new Error("ดาวน์โหลดภาพต้นฉบับไม่สำเร็จ ("+response.status+")");
+        const sourceBlob=await response.blob();
+        if(!/^image\\/(png|jpeg)$/.test(sourceBlob.type))throw new Error("ชนิดไฟล์ต้นฉบับไม่ใช่ PNG/JPEG");
+        const bitmap=await createImageBitmap(sourceBlob);
+        const scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
+        const canvas=document.createElement("canvas");
+        canvas.width=Math.max(1,Math.round(bitmap.width*scale));
+        canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+        const context=canvas.getContext("2d");
+        if(!context)throw new Error("ไม่สามารถสร้าง Canvas สำหรับแปลงภาพได้");
+        context.drawImage(bitmap,0,0,canvas.width,canvas.height);
+        bitmap.close?.();
+        const webpBlob=await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error("แปลง WebP ไม่สำเร็จ")),"image/webp",0.78));
+        if(webpBlob.size>=sourceBlob.size*0.95)throw new Error("ขนาด WebP ลดลงไม่ถึง 5% จึงข้ามเพื่อรักษาคุณภาพ");
+        newPath="gallery/optimized-"+crypto.randomUUID()+".webp";
+        const {error:uploadError}=await supabaseClient.storage.from("guild-gallery-images").upload(newPath,webpBlob,{contentType:"image/webp",cacheControl:"31536000",upsert:false});
+        if(uploadError)throw uploadError;
+        const {data:verifyData,error:verifyError}=await supabaseClient.storage.from("guild-gallery-images").createSignedUrl(newPath,60);
+        if(verifyError||!verifyData?.signedUrl)throw verifyError||new Error("ตรวจสอบไฟล์ WebP ใหม่ไม่สำเร็จ");
+        const {error:updateError}=await supabaseClient.from("guild_gallery_images").update({storage_path:newPath,updated_at:new Date().toISOString()}).eq("id",item.id);
+        if(updateError)throw updateError;
+        dashboardGallerySignedUrlCache.delete(item.storage_path);
+        completed++;
+      }catch(error){
+        if(newPath)await supabaseClient.storage.from("guild-gallery-images").remove([newPath]);
+        failed++;
+        console.warn("Optimize Guild Gallery image failed:",item.storage_path,error);
+      }
+    }
+    if(status)status.textContent="ปรับภาพเสร็จ "+completed+" ภาพ · ข้าม/ไม่สำเร็จ "+failed+" ภาพ · เก็บไฟล์ต้นฉบับไว้ทั้งหมด";
+    await loadDashboardGallery();
+    alert("ปรับภาพ Guild Gallery เสร็จแล้ว\\nสำเร็จ: "+completed+" ภาพ\\nข้าม/ไม่สำเร็จ: "+failed+" ภาพ\\nไฟล์ต้นฉบับเดิมยังอยู่ใน Storage");
+  }finally{
+    dashboardGalleryBusy=false;
+    if(trigger){trigger.disabled=false;trigger.textContent="ลดขนาดรูปเก่า";}
   }
 }
 
@@ -9128,6 +9184,7 @@ function registerAppEventListeners() {
     openGuildPage("guild-news");
   });
 
+  $("dashboard-gallery-optimize-trigger")?.addEventListener("click",()=>{void optimizeLegacyDashboardGalleryImages();});
   $("dashboard-gallery-upload-trigger")?.addEventListener("click",()=> {
     if(canManageDashboardGallery())$("dashboard-gallery-upload-input")?.click();
   });
