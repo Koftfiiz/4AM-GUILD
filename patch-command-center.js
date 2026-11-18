@@ -206,7 +206,7 @@
       const [portfolioResult,submissionResult,profileResult,affiliationResult]=await Promise.all([
         supabaseClient.from("portfolios").select("id,title,game_class,portfolio_type,created_at")
           .eq("member_id",memberId).order("created_at",{ascending:false}).limit(30),
-        supabaseClient.from("portfolio_patch_submissions").select("id,portfolio_id,version_id,submitted_at,portfolio_patch_submission_reviews(status,review_note,reviewed_at),portfolio_patch_review_events(id,old_status,new_status,review_note,created_at)")
+        supabaseClient.from("portfolio_patch_submissions").select("id,portfolio_id,version_id,submitted_at,portfolio_patch_submission_reviews(status,review_note,reviewed_at)")
           .eq("member_id",memberId).eq("round_id",state.roundId).order("submitted_at",{ascending:false}).limit(30),
         supabaseClient.from("guild_members").select("user_id,character_name,game_class,nickname,discord_name,discord_accounts(discord_user_id,discord_username,discord_global_name,verified,guild_member_verified)")
           .eq("user_id",memberId).maybeSingle(),
@@ -226,7 +226,16 @@
       }
       folders.forEach(folder=>{folder.portfolio_versions=versions.filter(version=>version.portfolio_id===folder.id);});
       const subs=submissionResult.data||[];
-      state.workspace={member,folders,subs,profile:profileResult.data||null,affiliations:affiliationResult.data||[],images:[],imagesLoaded:false,imagesLoading:false,imagesError:"",versionsLimited:versions.length===100,memberIds:(state.data?.members||[]).map(x=>x.member_id)};
+      let reviewEvents=[];
+      if(subs.length){
+        const eventResult=await supabaseClient.from("portfolio_patch_review_events")
+          .select("id,submission_id,old_status,new_status,review_note,created_at")
+          .in("submission_id",subs.map(row=>row.id)).order("created_at",{ascending:false}).limit(50);
+        if(eventResult.error)throw eventResult.error;
+        reviewEvents=eventResult.data||[];
+      }
+      subs.forEach(row=>{row.portfolio_patch_review_events=reviewEvents.filter(event=>event.submission_id===row.id);});
+      state.workspace={member,folders,subs,profile:profileResult.data||null,affiliations:affiliationResult.data||[],images:[],imagesLoaded:false,imagesLoading:false,imagesError:"",versionsLimited:versions.length===100,reviewHistoryLimited:reviewEvents.length===50,memberIds:(state.data?.members||[]).map(x=>x.member_id)};
       state.workspaceTab="overview";renderWorkspace();
     }catch(error){host.innerHTML='<div class="pc-empty">เปิด Workspace ไม่สำเร็จ: '+esc(error.message||"Unknown error")+'</div>';}
   }
@@ -273,7 +282,7 @@
     const files=w.imagesLoading?'<div class="pc-empty">กำลังโหลดไฟล์ Portfolio...</div>':w.imagesError?'<div class="pc-empty">'+esc(w.imagesError)+'<br><button class="pc-btn" data-pc-retry-files>ลองอีกครั้ง</button></div>':(w.versionsLimited?'<div class="pc-muted">แสดง 100 Versions ล่าสุดเพื่อประหยัดการโหลดข้อมูล</div>':'')+'<div class="pc-workspace-grid">'+(w.folders.map(p=>'<article class="pc-file"><strong>'+esc(p.title)+'</strong><p class="pc-muted">'+esc(p.game_class)+' · '+esc(p.portfolio_type)+' · '+(p.portfolio_versions||[]).length+' Versions</p>'+(p.portfolio_versions||[]).map(v=>{const images=(w.images||[]).filter(img=>img.version_id===v.id);return '<div class="pc-event"><strong>'+esc(v.version_name||("Version "+v.version_number))+'</strong><small>'+dateLabel(v.created_at)+' · '+images.length+' รูปภาพ'+(images.length?" · แสดง "+images.length:"") +'</small><div class="pc-file-images">'+images.map(img=>img.signed_url?'<a class="pc-file-thumb-link" href="'+esc(img.signed_url)+'" target="_blank" rel="noopener"><img class="pc-file-thumb" loading="lazy" decoding="async" src="'+esc(img.signed_url)+'" alt="'+esc(img.caption||img.section_key||"Portfolio image")+'"></a>':'').join("")+'</div></div>'}).join("")+'<button class="pc-btn" data-pc-open-portfolio="'+esc(w.member.member_id)+'">เปิดแฟ้มใน Portfolio</button></article>').join("")||'<div class="pc-empty">สมาชิกยังไม่มี Portfolio</div>')+'</div>';
     const events=w.subs.flatMap(s=>(s.portfolio_patch_review_events||[]).map(e=>({...e,submission:s}))).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     const affiliationHistory=w.affiliations.map(a=>'<div class="pc-event"><strong>'+esc(a.guilds?.code||"ไม่ทราบสังกัด")+' · '+(a.ended_at?"สิ้นสุดแล้ว":"ปัจจุบัน")+'</strong><small>เริ่ม '+dateLabel(a.started_at)+' · '+(a.ended_at?"สิ้นสุด "+dateLabel(a.ended_at):"ยังเป็นสังกัดปัจจุบัน")+' · '+esc(a.change_reason||"ไม่ได้ระบุเหตุผล")+'</small></div>').join("");
-    const reviewHistory=events.map(e=>'<div class="pc-event"><strong>'+esc(statusText[e.new_status]||e.new_status)+'</strong><small>'+esc(e.review_note||"ไม่มีหมายเหตุ")+' · '+dateLabel(e.created_at)+'</small></div>').join("");
+    const reviewHistory=(w.reviewHistoryLimited?'<div class="pc-muted">แสดงประวัติการตรวจ 50 รายการล่าสุด</div>':'')+events.map(e=>'<div class="pc-event"><strong>'+esc(statusText[e.new_status]||e.new_status)+'</strong><small>'+esc(e.review_note||"ไม่มีหมายเหตุ")+' · '+dateLabel(e.created_at)+'</small></div>').join("");
     const history='<div class="pc-list"><h3>ประวัติสังกัด</h3>'+(affiliationHistory||'<div class="pc-empty">ยังไม่มีประวัติสังกัด</div>')+'<h3>ประวัติการตรวจ Patch</h3>'+(reviewHistory||'<div class="pc-empty">ยังไม่มีประวัติการตรวจใน Patch นี้</div>')+'</div>';
     host.innerHTML='<div class="pc-head"><div><span class="pc-kicker">MEMBER WORKSPACE</span><h2>'+esc(w.member.character_name)+'</h2><p class="pc-muted">'+esc(w.member.game_class)+' · '+esc(w.member.discord_name||"ไม่พบ Discord")+'</p></div><div class="pc-toolbar"><button class="pc-btn" id="pc-workspace-prev" '+(index<=0?"disabled":"")+'>← ก่อนหน้า</button><button class="pc-btn" id="pc-workspace-next" '+(index>=ids.length-1?"disabled":"")+'>ถัดไป →</button><button class="pc-btn" id="pc-workspace-close">ปิด</button></div></div><nav class="pc-tabs"><button class="pc-tab '+(state.workspaceTab==="overview"?"active":"")+'" data-pc-workspace-tab="overview">Overview</button><button class="pc-tab '+(state.workspaceTab==="files"?"active":"")+'" data-pc-workspace-tab="files">Files & Portfolio</button><button class="pc-tab '+(state.workspaceTab==="history"?"active":"")+'" data-pc-workspace-tab="history">History</button></nav><div>'+(state.workspaceTab==="overview"?overview:state.workspaceTab==="files"?files:history)+'</div>';
     host.querySelectorAll("[data-pc-workspace-tab]").forEach(b=>b.addEventListener("click",()=>{state.workspaceTab=b.dataset.pcWorkspaceTab;renderWorkspace()}));
