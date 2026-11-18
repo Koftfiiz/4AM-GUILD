@@ -1,0 +1,57 @@
+name: Portfolio image WebP — Migration
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type MIGRATE-47 to authorize the exact approved manifest'
+        required: true
+        type: string
+      target_count:
+        description: 'Must remain exactly 47'
+        required: true
+        default: '47'
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: portfolio-webp-migration
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Convert, upload and update approved 47 images
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+
+      - name: Install pinned dependencies
+        working-directory: tools/portfolio-image-migration
+        run: npm install --no-save --no-package-lock --ignore-scripts=false --no-audit --no-fund @supabase/supabase-js@2.81.1 sharp@0.34.5
+
+      - name: Run guarded migration
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          CONFIRM_MIGRATION: ${{ inputs.confirmation }}
+          TARGET_COUNT: ${{ inputs.target_count }}
+        working-directory: tools/portfolio-image-migration
+        run: node migrate.mjs
+
+      - name: Upload migration report
+        if: always() && hashFiles('tools/portfolio-image-migration/portfolio-webp-migration-report.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: portfolio-webp-migration-report
+          path: tools/portfolio-image-migration/portfolio-webp-migration-report.json
+          if-no-files-found: warn
+          retention-days: 30
