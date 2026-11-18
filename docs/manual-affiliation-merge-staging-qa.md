@@ -14,3 +14,9 @@ Two synthetic scenarios were tested:
 2. Manual 4PM member linked to an account already in 4AM: registered 4AM affiliation remained current; Manual 4PM history was closed and retained against the canonical account.
 
 All test changes were rolled back. Production data and account-link records were not modified.
+
+## Additional Patch roster edge case
+
+The feature branch now handles a Manual-only 4AM member who links an account after an active Patch opening snapshot has already been created. The trigger transfers affiliation history to the canonical `user_id`, then adds the newly eligible account to the active Patch roster once with source `manual_link`. This prevents a linked member from being omitted simply because the opening snapshot predates account linking.
+
+This follow-up SQL change is committed but has not yet been applied/re-tested on Staging after the project was paused. Add this case to the next transactional QA run.
