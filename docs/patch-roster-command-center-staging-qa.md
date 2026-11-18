@@ -27,7 +27,7 @@ The final Production release will schedule the snapshot function using the exist
 
 - Submission is allowed only for a registered active member in the Patch roster, for their own Portfolio folder and a Version belonging to that folder.
 - Submission creates a Patch-specific review row with `pending` status.
-- A reviewer with management/admin permissions can set `reviewing`, `approved`, or `revision_required`.
+- A reviewer with Developer/Leader/Management permissions can set `reviewing`, `approved`, or `revision_required`.
 - `revision_required` requires a non-empty review note.
 - Selecting a different Version and resubmitting resets the Patch review state to `pending`; previous review events remain in the audit table.
 - A non-roster member cannot submit.
