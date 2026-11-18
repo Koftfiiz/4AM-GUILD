@@ -75,3 +75,8 @@ The feature branch now loads Discord identity/verification and affiliation histo
 ## Staging baseline follow-up
 
 The Staging-only follow-up has been applied. It adds synthetic Discord Account fixtures, aligns affiliation indexes/policies with Production, permits the `manual_link` Patch roster source, and aligns Patch Submission FK delete actions. It contains no Production data or secrets.
+
+
+## RPC-only write boundary
+
+The final Guild Affiliation migration revokes direct `INSERT`, `UPDATE`, and `DELETE` privileges on `guilds` and `guild_member_affiliations` from client roles. Authenticated users retain `SELECT`; affiliation changes go only through `set_guild_member_affiliation`, which validates the active Developer/Leader/Management role and performs the write as the function owner. Staging privilege checks confirm authenticated cannot write directly, authenticated can execute the guarded RPC, and anon cannot execute it.
