@@ -37,7 +37,7 @@ begin
    and (p_status_filter='all' or m.member_status=p_status_filter)
  ), member_page as (
   select * from filtered_members order by character_name limit greatest(1,least(coalesce(p_limit,50),100)) offset greatest(0,least(coalesce(p_offset,0),5000))
- ), queue_rows as (
+ ), queue_filtered as (
   select s.id as submission_id,s.member_id,pr.character_name,pr.game_class,p.title as portfolio_title,p.portfolio_type,pv.version_number,pv.version_name,s.submitted_at,s.updated_at,
    coalesce(rv.status,'pending') as review_status,rv.review_note,rv.reviewer_user_id,rv.reviewed_at
   from public.portfolio_patch_submissions s
@@ -46,7 +46,9 @@ begin
   left join public.portfolio_patch_submission_reviews rv on rv.submission_id=s.id
   where s.round_id=v_round_id and (p_status_filter='all' or (p_status_filter not in ('not_submitted','partial') and coalesce(rv.status,'pending')=p_status_filter))
    and (nullif(trim(coalesce(p_search,'')),'') is null or pr.character_name ilike '%'||trim(p_search)||'%' or p.title ilike '%'||trim(p_search)||'%')
-  order by s.submitted_at desc limit greatest(1,least(coalesce(p_limit,50),100)) offset greatest(0,least(coalesce(p_offset,0),5000))
+ ), queue_rows as (
+  select * from queue_filtered order by submitted_at desc
+  limit greatest(1,least(coalesce(p_limit,50),100)) offset greatest(0,least(coalesce(p_offset,0),5000))
  )
  select jsonb_build_object(
   'rounds',(select coalesce(jsonb_agg(to_jsonb(r)),'[]'::jsonb) from (select id,round_name,starts_at,closes_at,status,archived_at,roster_snapshot_at from public.portfolio_update_rounds order by archived_at nulls first,starts_at desc limit 12) r),
@@ -54,6 +56,7 @@ begin
   'summary',(select jsonb_build_object('roster_count',count(*),'submitted_members',count(*) filter(where submitted_folder_count>0),'not_submitted',count(*) filter(where member_status='not_submitted'),'partial_members',count(*) filter(where member_status='partial'),'pending',coalesce(sum(pending_count),0),'reviewing',coalesce(sum(reviewing_count),0),'approved',coalesce(sum(approved_count),0),'revision_required',coalesce(sum(revision_count),0)) from roster_stats),
   'members',(select coalesce(jsonb_agg(to_jsonb(m)),'[]'::jsonb) from member_page m),'member_total',(select count(*) from filtered_members),
   'review_queue',(select coalesce(jsonb_agg(to_jsonb(q)),'[]'::jsonb) from queue_rows q),
+  'review_queue_total',(select count(*) from queue_filtered),
   'recent_activity',(select coalesce(jsonb_agg(to_jsonb(a)),'[]'::jsonb) from (select e.id,e.submission_id,e.old_status,e.new_status,e.review_note,e.created_at,pr.character_name,s.member_id
     from public.portfolio_patch_review_events e join public.portfolio_patch_submissions s on s.id=e.submission_id
     join public.portfolio_patch_roster pr on pr.round_id=s.round_id and pr.member_id=s.member_id
