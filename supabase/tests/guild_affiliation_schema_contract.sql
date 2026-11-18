@@ -32,13 +32,17 @@ begin
 
   if not exists (
     select 1 from pg_policies
-    where schemaname = 'public'
-      and tablename = 'guild_member_affiliations'
-      and policyname = 'Leaders, Management, and Developers can manage member affiliations'
+    where schemaname='public' and tablename='guild_member_affiliations'
+      and policyname='Affiliation managers can insert member affiliations'
+      and with_check like '%can_manage_guild_affiliations%'
+  ) or not exists (
+    select 1 from pg_policies
+    where schemaname='public' and tablename='guild_member_affiliations'
+      and policyname='Affiliation managers can update member affiliations'
       and qual like '%can_manage_guild_affiliations%'
       and with_check like '%can_manage_guild_affiliations%'
   ) then
-    raise exception 'Affiliation write policy is missing or uses the wrong authorization helper';
+    raise exception 'Affiliation write policies are missing or use the wrong authorization helper';
   end if;
 
   if not exists (
