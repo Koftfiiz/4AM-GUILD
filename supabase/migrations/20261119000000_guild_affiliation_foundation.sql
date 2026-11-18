@@ -59,15 +59,19 @@ grant execute on function public.can_manage_guild_affiliations() to authenticate
 alter table public.guilds enable row level security;
 alter table public.guild_member_affiliations enable row level security;
 
+drop policy if exists guilds_read_active on public.guilds;
 drop policy if exists "Authenticated users can view active guilds" on public.guilds;
 create policy "Authenticated users can view active guilds"
   on public.guilds for select to authenticated
   using (is_active=true or public.can_manage_guild_affiliations());
 drop policy if exists "Leaders, Management, and Developers can manage guilds" on public.guilds;
-create policy "Leaders, Management, and Developers can manage guilds"
-  on public.guilds for all to authenticated
-  using (public.can_manage_guild_affiliations())
+create policy "Affiliation managers can insert guilds" on public.guilds
+  for insert to authenticated with check (public.can_manage_guild_affiliations());
+create policy "Affiliation managers can update guilds" on public.guilds
+  for update to authenticated using (public.can_manage_guild_affiliations())
   with check (public.can_manage_guild_affiliations());
+create policy "Affiliation managers can delete guilds" on public.guilds
+  for delete to authenticated using (public.can_manage_guild_affiliations());
 
 drop policy if exists "Members can view own guild affiliation" on public.guild_member_affiliations;
 create policy "Members can view own guild affiliation"
@@ -78,12 +82,16 @@ create policy "Members can view own guild affiliation"
       where mm.id=guild_member_affiliations.manual_member_id
         and mm.linked_user_id=(select auth.uid()))
     or public.can_manage_guild_affiliations()
+    or (ended_at is null and public.is_guild_member())
   );
 drop policy if exists "Leaders, Management, and Developers can manage member affiliations" on public.guild_member_affiliations;
-create policy "Leaders, Management, and Developers can manage member affiliations"
-  on public.guild_member_affiliations for all to authenticated
-  using (public.can_manage_guild_affiliations())
+create policy "Affiliation managers can insert member affiliations" on public.guild_member_affiliations
+  for insert to authenticated with check (public.can_manage_guild_affiliations());
+create policy "Affiliation managers can update member affiliations" on public.guild_member_affiliations
+  for update to authenticated using (public.can_manage_guild_affiliations())
   with check (public.can_manage_guild_affiliations());
+create policy "Affiliation managers can delete member affiliations" on public.guild_member_affiliations
+  for delete to authenticated using (public.can_manage_guild_affiliations());
 
 grant select,insert,update,delete on public.guilds to authenticated;
 grant select,insert,update,delete on public.guild_member_affiliations to authenticated;
