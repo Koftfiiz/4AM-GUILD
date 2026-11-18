@@ -38,7 +38,9 @@ create index portfolio_update_rounds_snapshot_due_idx
 
 alter table public.portfolio_update_rounds enable row level security;
 alter table public.portfolio_patch_roster enable row level security;
+drop policy if exists patch_rounds_read on public.portfolio_update_rounds;
 create policy patch_rounds_read on public.portfolio_update_rounds for select to authenticated using (true);
+drop policy if exists patch_roster_read on public.portfolio_patch_roster;
 create policy patch_roster_read on public.portfolio_patch_roster for select to authenticated using (public.is_guild_member());
 grant select on public.portfolio_update_rounds,public.portfolio_patch_roster to authenticated;
 
