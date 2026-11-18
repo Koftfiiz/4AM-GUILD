@@ -265,7 +265,7 @@ as $$
 declare current_member_id uuid:=(select auth.uid()); saved_submission_id uuid; saved_submitted_at timestamptz;
 begin
  if current_member_id is null then raise exception 'Authentication required'; end if;
- if not exists(select 1 from public.guild_members gm where gm.user_id=current_member_id and gm.active=true) then
+ if not exists(select 1 from public.guild_members gm where gm.user_id=current_member_id and gm.active=true and gm.membership_status='active') then
   raise exception 'Active guild membership required';
  end if;
  if not exists(select 1 from public.portfolio_patch_roster pr where pr.round_id=target_round_id and pr.member_id=current_member_id) then
@@ -424,7 +424,7 @@ begin
    join public.portfolio_patch_roster pr on pr.round_id=s.round_id and pr.member_id=s.member_id
    where s.round_id=v_round_id order by e.created_at desc limit 10
   ) a)
- ) into v_result from roster_stats;
+ ) into v_result;
  return v_result;
 end; $$;
 revoke all on function public.get_patch_command_center(uuid,text,text,integer,integer) from public,anon;
