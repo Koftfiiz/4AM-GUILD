@@ -15,8 +15,6 @@ create table if not exists public.guild_member_affiliations (
 );
 insert into public.guilds(code,name) values('4AM','4AM GUILD'),('4PM','4PM GUILD')
 on conflict(code) do update set name=excluded.name;
-create unique index if not exists guild_member_affiliations_current_user_uidx on public.guild_member_affiliations(user_id) where user_id is not null and ended_at is null;
-create unique index if not exists guild_member_affiliations_current_manual_uidx on public.guild_member_affiliations(manual_member_id) where manual_member_id is not null and ended_at is null;
 create index if not exists guild_member_affiliations_guild_current_idx on public.guild_member_affiliations(guild_id,started_at desc) where ended_at is null;
 create index if not exists guild_member_affiliations_user_history_idx on public.guild_member_affiliations(user_id,started_at desc) where user_id is not null;
 create index if not exists guild_member_affiliations_manual_history_idx on public.guild_member_affiliations(manual_member_id,started_at desc) where manual_member_id is not null;
