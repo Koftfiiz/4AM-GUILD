@@ -367,8 +367,11 @@
     if(target===PAGE&&!allowed())target="dashboard";
     originalOpen.call(this,target);
     if(target===PAGE){
-      activate();
       showTab(reviewTarget?"queue":"overview");
+      state.search=reviewTarget?($("pc-queue-search")?.value.trim()||""):"";
+      state.status=reviewTarget?($("pc-queue-status")?.value||"all"):"all";
+      state.page=0;
+      activate();
       document.querySelector('.sidebar .nav-item[data-page="'+PAGE+'"]')?.classList.toggle("active",!reviewTarget);
       document.querySelector('.sidebar .nav-item[data-page="'+REVIEW_PAGE+'"]')?.classList.toggle("active",reviewTarget);
     }
