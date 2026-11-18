@@ -4,6 +4,7 @@
   let submissions = [];
   let requests = [];
   let editPermissions = [];
+  let patchRoster = [];
   let selectedRoundId = "";
   let showArchivedRounds = false;
   let busy = false;
@@ -141,6 +142,16 @@
       selectedRoundId = preferred?.id || "";
       showArchivedRounds = !!preferred?.archived_at;
     }
+    await loadRosterForRound(selectedRoundId);
+  }
+
+  async function loadRosterForRound(roundId) {
+    if (!roundId) { patchRoster = []; return; }
+    const {data,error}=await supabaseClient.from("portfolio_patch_roster")
+      .select("round_id,member_id,character_name,game_class,nickname,discord_name,roster_source")
+      .eq("round_id",roundId).order("character_name").limit(100);
+    if(error)throw error;
+    patchRoster=data||[];
   }
 
   function submissionForFolder(portfolioId, roundId) {
@@ -148,7 +159,10 @@
   }
 
   function roundStats(roundId) {
-    const members = (allMembers || []).filter(member => member.active !== false);
+    const members = patchRoster.filter(row=>row.round_id===roundId).map(row=>({
+      user_id:row.member_id,character_name:row.character_name,game_class:row.game_class,
+      nickname:row.nickname,discord_name:row.discord_name,active:true,roster_source:row.roster_source
+    }));
     let completeMembers = 0;
     const detail = members.map(member => {
       const own = portfolios.filter(portfolio => portfolio.member_id === member.user_id);
@@ -200,7 +214,15 @@
     const selected = rounds.find(round => round.id === selectedRoundId);
     const visibleRounds = rounds.filter(round => showArchivedRounds ? !!round.archived_at : !round.archived_at);
     const stats = selected ? roundStats(selected.id) : null;
-    const ownRow = stats ? stats.detail.find(row => row.member.user_id === currentUser?.id) : null;
+    const rosterOwnRow = stats ? stats.detail.find(row => row.member.user_id === currentUser?.id) : null;
+    const ownFolders = selected ? portfolios.filter(portfolio=>portfolio.member_id===currentUser?.id) : [];
+    const ownRow = rosterOwnRow || (selected && currentUser ? {
+      member:{user_id:currentUser.id},portfolios:ownFolders,total:ownFolders.length,
+      submitted:ownFolders.filter(portfolio=>!!submissionForFolder(portfolio.id,selected.id)).length
+    } : null);
+    const memberInRoster = !!selected && patchRoster.some(row=>row.round_id===selected.id&&row.member_id===currentUser?.id);
+    const rosterSnapshotReady = !!selected?.roster_snapshot_at;
+    const canSubmitForRoster = !rosterSnapshotReady || memberInRoster;
     const ownPermission = selected ? editPermissions.find(permission =>
       permission.round_id === selected.id && new Date(permission.expires_at).getTime() > Date.now()
     ) : null;
@@ -278,15 +300,18 @@
             esc(portfolio.game_class || "ไม่ระบุคลาส") + ' · ' + esc(portfolio.portfolio_type || "Portfolio") + '</p>' +
             statusHtml + '</div><div class="portfolio-tracker-submit-controls">' +
             '<label>เลือก Version<select data-pt-version-select="' + esc(portfolio.id) + '" ' +
-            (!editable || !versions.length ? "disabled" : "") + '>' + options + '</select></label>' +
+            (!editable || !canSubmitForRoster || !versions.length ? "disabled" : "") + '>' + options + '</select></label>' +
             '<button type="button" class="btn btn-primary btn-sm" data-pt-submit="' + esc(portfolio.id) + '" ' +
-            (!editable || !versions.length ? "disabled" : "") + '>' +
-            (submission ? "เปลี่ยนเวอร์ชันที่ส่ง" : "ส่งเวอร์ชันนี้เข้าระบบ") + '</button></div></div>';
+            (!editable || !canSubmitForRoster || !versions.length ? "disabled" : "") + '>' +
+            (!canSubmitForRoster ? "ไม่อยู่ใน Roster 4AM" : submission ? "เปลี่ยนเวอร์ชันที่ส่ง" : "ส่งเวอร์ชันนี้เข้าระบบ") + '</button></div></div>';
         }).join("") + '</div>'
       : '<div class="portfolio-tracker-empty">คุณยังไม่มีแฟ้ม Portfolio สามารถสร้างแฟ้มและ Version ได้ทุกเวลา แล้วกลับมาเลือกส่งเข้ารอบนี้ได้</div>';
 
     const latePermissionNote = ownPermission && !isRoundEditable(selected)
       ? '<div class="portfolio-tracker-note">คุณได้รับอนุญาตให้ส่งหรือเปลี่ยน Version ในรอบนี้ถึง ' + esc(dateLabel(ownPermission.expires_at)) + '</div>'
+      : "";
+    const rosterEligibilityNote = selected && rosterSnapshotReady && !memberInRoster
+      ? '<div class="portfolio-tracker-note">รอบนี้ใช้ 4AM Patch Roster และบัญชีของคุณไม่ได้อยู่ในรายชื่อ Snapshot จึงไม่สามารถส่ง Version ในรอบนี้ได้</div>'
       : "";
     const lateRequestPanel = !editable && canRequestLate
       ? '<div class="portfolio-tracker-request"><strong>รอบนี้ปิดรับการส่งแล้ว</strong>' +
@@ -310,11 +335,11 @@
             (selected.archived_at
               ? '<button id="pt-restore-round" class="btn btn-outline btn-sm" type="button">กู้คืนรอบ</button>'
               : '<button id="pt-archive-round" class="btn btn-outline btn-sm" type="button">เก็บเข้าคลัง</button>') +
-            '<button id="pt-delete-round" class="btn btn-outline btn-sm portfolio-tracker-danger" type="button">ลบถาวร</button></div>'
+            '</div>'
           : "") +
         '</div>' + managementStats + requestQueue +
         '<div class="portfolio-tracker-own"><h4>แฟ้ม Portfolio ของคุณในรอบนี้</h4>' +
-        ownFoldersHtml + latePermissionNote +
+        ownFoldersHtml + latePermissionNote + rosterEligibilityNote +
         '<div><button type="button" class="btn btn-outline" data-pt-open-portfolio="' + esc(currentUser?.id || "") + '">ไปยังแฟ้ม Portfolio</button></div>' +
         lateRequestPanel + archivedNote + '</div>'
       : '<div class="portfolio-tracker-empty">เลือกหรือสร้างรอบ Patch เพื่อดูสถานะการส่งผลงาน</div>';
@@ -478,31 +503,6 @@
       render();
     });
 
-    root.querySelector("#pt-delete-round")?.addEventListener("click",async() => {
-      if (!management() || !selectedRoundId) return;
-      const round = rounds.find(item => item.id === selectedRoundId);
-      if (!round) return;
-      if (!confirm('ต้องการตรวจสอบและลบรอบ “' + round.round_name + '” ถาวรใช่หรือไม่? ระบบจะตรวจสอบข้อมูลที่เชื่อมโยงก่อนดำเนินการ')) return;
-      const checks = await Promise.all([
-        supabaseClient.from("portfolio_versions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
-        supabaseClient.from("portfolio_patch_submissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
-        supabaseClient.from("portfolio_update_submissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
-        supabaseClient.from("portfolio_update_edit_requests").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
-        supabaseClient.from("portfolio_update_edit_permissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId)
-      ]);
-      const failed = checks.find(result => result.error);
-      if (failed) { alert("ตรวจสอบข้อมูลก่อนลบไม่สำเร็จ: " + failed.error.message); return; }
-      const [legacyVersions,patchSubmissions,legacySubmissions,requestsCount,permissions] = checks.map(result => result.count || 0);
-      const details = 'ข้อมูลที่พบในรอบนี้:\n• Legacy-linked Versions: ' + legacyVersions + '\n• Patch Submissions ใหม่: ' + patchSubmissions + '\n• Submissions เดิม: ' + legacySubmissions + '\n• คำขอแก้ไข: ' + requestsCount + '\n• สิทธิ์แก้ไข: ' + permissions + '\n\nการลบรอบจะลบข้อมูล Submission/คำขอ/สิทธิ์ที่ผูกกับรอบนี้ ส่วน Version และรูปภาพ Portfolio จะยังคงอยู่';
-      if (!confirm(details + '\n\nยืนยันลบถาวรหรือไม่? การกระทำนี้ย้อนกลับไม่ได้')) return;
-      const {error} = await supabaseClient.from("portfolio_update_rounds").delete().eq("id",selectedRoundId);
-      if (error) { alert("ลบรอบไม่สำเร็จ: " + error.message); return; }
-      alert("ลบรอบอัปเดตเรียบร้อยแล้ว โดยข้อมูล Version และรูปภาพ Portfolio ยังคงอยู่");
-      selectedRoundId = "";
-      await loadData();
-      render();
-    });
-
     root.querySelectorAll("[data-pt-submit]").forEach(button =>
       button.addEventListener("click",async() => {
         if (!currentUser) {
@@ -563,7 +563,11 @@
       try { await loadData(); render(); } catch(error) { alert(error.message); }
     });
     root.querySelectorAll("[data-pt-round]").forEach(button =>
-      button.addEventListener("click",() => { selectedRoundId = button.dataset.ptRound; render(); })
+      button.addEventListener("click",async() => {
+        selectedRoundId=button.dataset.ptRound;
+        try { await loadRosterForRound(selectedRoundId); render(); }
+        catch(error) { alert("โหลด Patch Roster ไม่สำเร็จ: "+(error.message||"Unknown error")); }
+      })
     );
     root.querySelector("#pt-toggle-round")?.addEventListener("click",async() => {
       if (!management() || !selectedRoundId) return;
