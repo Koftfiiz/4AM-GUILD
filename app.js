@@ -162,6 +162,7 @@ const PAGE_TITLES = {
   "guild-activities": "Guild Activities",
   feedback: "แจ้งปัญหา / Feedback",
   settings: "ตั้งค่าบัญชี",
+  "developer-tools": "Developer Tools",
   "system-management": "System Management",
   "discord-integration": "Discord Integration Settings",
   appearance: "Appearance"
@@ -1660,16 +1661,19 @@ async function uploadDashboardGalleryFiles(files) {
 }
 
 async function optimizeLegacyDashboardGalleryImages() {
-  if(!canManageDashboardGallery()||dashboardGalleryBusy)return;
-  const candidates=dashboardGalleryImages.filter(item=>/\.(png|jpe?g)$/i.test(item.storage_path||""));
-  if(!candidates.length){alert("ไม่พบภาพ PNG/JPG เก่าที่ต้องปรับขนาดใน Guild Gallery");return;}
-  const estimated=candidates.length;
-  if(!window.confirm("พบภาพเก่า "+estimated+" ภาพ ต้องการแปลงเป็น WebP เพื่อลด Egress หรือไม่?\n\nระบบจะอัปโหลดไฟล์ WebP ใหม่และเปลี่ยนเฉพาะ storage_path ในฐานข้อมูล โดยเก็บไฟล์ต้นฉบับเดิมไว้ ไม่ลบไฟล์เดิม"))return;
+  if(!isDeveloper()||isRolePreviewActive()||currentMember?.active!==true||dashboardGalleryBusy)return;
+  const trigger=$("developer-tools-optimize-gallery-trigger");
+  const status=$("developer-tools-gallery-optimize-status");
   dashboardGalleryBusy=true;
-  const status=$("dashboard-gallery-status"),trigger=$("dashboard-gallery-optimize-trigger");
-  if(trigger){trigger.disabled=true;trigger.textContent="กำลังปรับภาพ...";}
-  let completed=0,failed=0;
+  if(trigger){trigger.disabled=true;trigger.textContent="กำลังตรวจสอบภาพ...";}
   try{
+    await loadDashboardGallery();
+    const candidates=dashboardGalleryImages.filter(item=>/\.(png|jpe?g)$/i.test(item.storage_path||""));
+    if(!candidates.length){if(status)status.textContent="ไม่พบภาพ PNG/JPG เก่าที่ต้องปรับขนาดใน Guild Gallery";return;}
+    const estimated=candidates.length;
+    if(!window.confirm("พบภาพเก่า "+estimated+" ภาพ ต้องการแปลงเป็น WebP เพื่อลด Egress หรือไม่?\n\nระบบจะอัปโหลดไฟล์ WebP ใหม่และเปลี่ยนเฉพาะ storage_path ในฐานข้อมูล โดยเก็บไฟล์ต้นฉบับเดิมไว้ ไม่ลบไฟล์เดิม"))return;
+    if(trigger)trigger.textContent="กำลังปรับภาพ...";
+    let completed=0,failed=0;
     for(const item of candidates){
       let newPath=null;
       try{
@@ -1711,7 +1715,7 @@ async function optimizeLegacyDashboardGalleryImages() {
     alert("ปรับภาพ Guild Gallery เสร็จแล้ว\nสำเร็จ: "+completed+" ภาพ\nข้าม/ไม่สำเร็จ: "+failed+" ภาพ\nไฟล์ต้นฉบับเดิมยังอยู่ใน Storage");
   }finally{
     dashboardGalleryBusy=false;
-    if(trigger){trigger.disabled=false;trigger.textContent="ลดขนาดรูปเก่า";}
+    if(trigger){trigger.disabled=false;trigger.textContent="ลดขนาดรูปเก่าใน Guild Gallery";}
   }
 }
 
@@ -8761,6 +8765,9 @@ function openGuildPage(pageName) {
   if (pageName === "system-management" && !isDeveloper()) {
     pageName = "dashboard";
   }
+  if (pageName === "developer-tools" && (!isDeveloper() || isRolePreviewActive() || currentMember?.active !== true)) {
+    pageName = "dashboard";
+  }
   if (pageName === "appearance" && (!isDeveloper() || isRolePreviewActive())) {
     pageName = "dashboard";
   }
@@ -9442,7 +9449,7 @@ function registerAppEventListeners() {
     openGuildPage("guild-news");
   });
 
-  $("dashboard-gallery-optimize-trigger")?.addEventListener("click",()=>{void optimizeLegacyDashboardGalleryImages();});
+  $("developer-tools-optimize-gallery-trigger")?.addEventListener("click",()=>{void optimizeLegacyDashboardGalleryImages();});
   $("dashboard-gallery-upload-trigger")?.addEventListener("click",()=> {
     if(canManageDashboardGallery())$("dashboard-gallery-upload-input")?.click();
   });
