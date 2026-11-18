@@ -35,7 +35,7 @@ create unique index if not exists guild_member_affiliations_one_current_user
 create unique index if not exists guild_member_affiliations_one_current_manual
   on public.guild_member_affiliations(manual_member_id)
   where manual_member_id is not null and ended_at is null;
-create index if not exists guild_member_affiliations_current_guild_idx
+create index if not exists guild_member_affiliations_guild_current_idx
   on public.guild_member_affiliations(guild_id,started_at desc) where ended_at is null;
 create index if not exists guild_member_affiliations_user_history_idx
   on public.guild_member_affiliations(user_id,started_at desc) where user_id is not null;
