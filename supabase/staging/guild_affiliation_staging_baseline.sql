@@ -8,8 +8,17 @@ create table public.guilds (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+insert into auth.users(id,aud,role,email,encrypted_password,email_confirmed_at,raw_app_meta_data,raw_user_meta_data,created_at,updated_at) values
+('10000000-0000-4000-8000-000000000001','authenticated','authenticated','staging-developer@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now()),
+('10000000-0000-4000-8000-000000000002','authenticated','authenticated','staging-member-2@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now()),
+('10000000-0000-4000-8000-000000000003','authenticated','authenticated','staging-member-3@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now()),
+('10000000-0000-4000-8000-000000000004','authenticated','authenticated','staging-leader@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now()),
+('10000000-0000-4000-8000-000000000005','authenticated','authenticated','staging-management@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now()),
+('10000000-0000-4000-8000-000000000006','authenticated','authenticated','staging-manual-link@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now())
+on conflict(id) do nothing;
+
 create table public.guild_members (
-  user_id uuid primary key,
+  user_id uuid primary key references auth.users(id) on delete cascade,
   character_name text not null,
   game_class text not null,
   nickname text,
@@ -36,7 +45,7 @@ create table public.guild_manual_members (
   nickname text,
   discord_name text,
   active boolean not null default true,
-  linked_user_id uuid,
+  linked_user_id uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now()
 );
 create table public.guild_member_affiliations (
@@ -47,7 +56,7 @@ create table public.guild_member_affiliations (
   started_at timestamptz not null default now(),
   ended_at timestamptz,
   change_reason text,
-  created_by uuid,
+  created_by uuid references auth.users(id) on delete set null,
   created_at timestamptz not null default now(),
   constraint guild_member_affiliations_one_identity check (
     (user_id is not null and manual_member_id is null) or
