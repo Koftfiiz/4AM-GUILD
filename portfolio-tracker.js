@@ -593,8 +593,8 @@
     root.querySelectorAll("[data-pt-round]").forEach(button =>
       button.addEventListener("click",async() => {
         selectedRoundId=button.dataset.ptRound;
-        try { await loadRosterForRound(selectedRoundId); render(); }
-        catch(error) { alert("โหลด Patch Roster ไม่สำเร็จ: "+(error.message||"Unknown error")); }
+        try { await loadData(); render(); }
+        catch(error) { alert("โหลด Patch และ Roster ไม่สำเร็จ: "+(error.message||"Unknown error")); }
       })
     );
     root.querySelector("#pt-toggle-round")?.addEventListener("click",async() => {
