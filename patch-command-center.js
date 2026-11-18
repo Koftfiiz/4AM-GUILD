@@ -116,7 +116,10 @@
   function renderQueue(){
     const rows=state.data?.review_queue||[];
     $("pc-queue-rows").innerHTML=rows.length?rows.map(r=>'<tr><td><span class="pc-name">'+esc(r.character_name)+'</span><span class="pc-sub">'+esc(r.game_class)+'</span></td><td>'+esc(r.portfolio_title)+'</td><td>'+esc(r.version_name||("Version "+r.version_number))+'</td><td>'+dateLabel(r.submitted_at)+'</td><td>'+statusPill(r.review_status)+'</td><td>'+esc(r.review_note||"—")+'</td><td><button class="pc-btn primary" data-pc-review="'+esc(r.submission_id)+'">ตรวจ</button></td></tr>').join(""):'<tr><td colspan="7" class="pc-empty">ไม่มี Submission ในคิวนี้</td></tr>';
-    const total=Number(state.data?.review_queue_total||0),pages=Math.max(1,Math.ceil(total/PAGE_SIZE));\n    $("pc-queue-count").textContent="พบ "+total.toLocaleString("th-TH")+" Submission";\n    $("pc-queue-page-label").textContent="หน้า "+(state.page+1)+" / "+pages;\n    $("pc-queue-prev").disabled=state.page<=0||state.busy;$("pc-queue-next").disabled=(state.page+1)*PAGE_SIZE>=total||state.busy;
+    const total=Number(state.data?.review_queue_total||0),pages=Math.max(1,Math.ceil(total/PAGE_SIZE));
+    $("pc-queue-count").textContent="พบ "+total.toLocaleString("th-TH")+" Submission";
+    $("pc-queue-page-label").textContent="หน้า "+(state.page+1)+" / "+pages;
+    $("pc-queue-prev").disabled=state.page<=0||state.busy;$("pc-queue-next").disabled=(state.page+1)*PAGE_SIZE>=total||state.busy;
   }
 
   function renderHistory(){
@@ -235,7 +238,8 @@
     $("pc-toggle-create")?.addEventListener("click",()=>{$("pc-create-form").classList.toggle("pc-hidden");$("pc-toggle-create").textContent=$("pc-create-form").classList.contains("pc-hidden")?"แสดงแบบฟอร์ม":"ซ่อนแบบฟอร์ม"});
     $("pc-create-form")?.addEventListener("submit",createRound);
     $("pc-member-search-btn")?.addEventListener("click",()=>{state.search=$("pc-member-search").value.trim();state.status=$("pc-member-status").value;state.page=0;void loadCommandCenter(true)});
-    $("pc-queue-search-btn")?.addEventListener("click",()=>{state.search=$("pc-queue-search").value.trim();state.status=$("pc-queue-status").value;state.page=0;void loadCommandCenter(true)});\n    $("pc-queue-prev")?.addEventListener("click",()=>{if(state.page>0){state.page--;void loadCommandCenter(true)}});\n    $("pc-queue-next")?.addEventListener("click",()=>{if((state.page+1)*PAGE_SIZE<Number(state.data?.review_queue_total||0)){state.page++;void loadCommandCenter(true)}});
+    $("pc-queue-search-btn")?.addEventListener("click",()=>{state.search=$("pc-queue-search").value.trim();state.status=$("pc-queue-status").value;state.page=0;void loadCommandCenter(true)});
+    $("pc-queue-prev")?.addEventListener("click",()=>{if(state.page>0){state.page--;void loadCommandCenter(true)}});\n    $("pc-queue-next")?.addEventListener("click",()=>{if((state.page+1)*PAGE_SIZE<Number(state.data?.review_queue_total||0)){state.page++;void loadCommandCenter(true)}});
     $("pc-member-prev")?.addEventListener("click",()=>{if(state.page>0){state.page--;void loadCommandCenter(true)}});
     $("pc-member-next")?.addEventListener("click",()=>{state.page++;void loadCommandCenter(true)});
     $("pc-member-rows")?.addEventListener("click",e=>{const b=e.target.closest("[data-pc-workspace]");if(b)void openWorkspace(b.dataset.pcWorkspace)});
