@@ -1,5 +1,5 @@
 -- Staging-only: align the directory/Command Center with existing Production roles.
-create or replace function public.is_portfolio_management()
+create or replace function public.can_manage_guild_affiliations()
 returns boolean language sql stable security definer set search_path=''
 as $$
  select
@@ -8,10 +8,10 @@ as $$
    and gm.active=true and gm.membership_status='active'
    and lower(coalesce(gm.role,'')) in ('developer','leader','management'));
 $$;
-revoke all on function public.is_portfolio_management() from public,anon;
-grant execute on function public.is_portfolio_management() to authenticated;
+revoke all on function public.can_manage_guild_affiliations() from public,anon;
+grant execute on function public.can_manage_guild_affiliations() to authenticated;
 
-create or replace function public.is_portfolio_reviewer()
+create or replace function public.can_manage_guild_affiliations()
 returns boolean language sql stable security definer set search_path=''
 as $$
  select
@@ -20,18 +20,18 @@ as $$
    and gm.active=true and gm.membership_status='active'
    and gm.role in ('developer','leader','management'));
 $$;
-revoke all on function public.is_portfolio_reviewer() from public,anon;
-grant execute on function public.is_portfolio_reviewer() to authenticated;
-
-create or replace function public.is_guild_admin()
-returns boolean language sql stable security definer set search_path=''
-as $$ select public.is_portfolio_management(); $$;
-revoke all on function public.is_guild_admin() from public,anon;
-grant execute on function public.is_guild_admin() to authenticated;
+revoke all on function public.can_manage_guild_affiliations() from public,anon;
+grant execute on function public.can_manage_guild_affiliations() to authenticated;
 
 create or replace function public.can_manage_guild_affiliations()
 returns boolean language sql stable security definer set search_path=''
-as $ select public.is_portfolio_management(); $;
+as $$ select public.is_portfolio_management(); $$;
+revoke all on function public.can_manage_guild_affiliations() from public,anon;
+grant execute on function public.can_manage_guild_affiliations() to authenticated;
+
+create or replace function public.can_manage_guild_affiliations()
+returns boolean language sql stable security definer set search_path=''
+as $ select public.can_manage_guild_affiliations(); $;
 revoke all on function public.can_manage_guild_affiliations() from public,anon;
 grant execute on function public.can_manage_guild_affiliations() to authenticated;
 
@@ -91,7 +91,7 @@ returns uuid language plpgsql security definer set search_path=''
 as $$
 declare v_review_id uuid;
 begin
- if (select auth.uid()) is null or not public.is_portfolio_reviewer() then raise exception 'Not authorized to review Patch submissions'; end if;
+ if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Not authorized to review Patch submissions'; end if;
  if p_status not in ('pending','reviewing','approved','revision_required') then raise exception 'Invalid review status'; end if;
  if p_status='revision_required' and nullif(trim(p_review_note),'') is null then raise exception 'A revision note is required'; end if;
  update public.portfolio_patch_submission_reviews
