@@ -57,7 +57,7 @@ Staging validation does not deploy or mutate Production. Production migration fi
 
 ## Preview isolation
 
-- `app.js` selects Production only for the verified hostname `4am-guild.vercel.app`. Every other hostname, including Vercel Preview URLs and localhost, selects the isolated Staging Supabase project and its publishable key.
+- `app.js` and the standalone Duck Race page select Production only for the verified hostname `4am-guild.vercel.app`. Every other hostname, including Vercel Preview URLs and localhost, selects the isolated Staging Supabase project and its publishable key.
 - Do not open or share the older Preview deployment built from commit `8993d0e`; it predates the host-routing safeguard and still points to Production.
 - The latest feature-branch commit contains the safeguard and passed GitHub Actions. A new Preview build is currently blocked by Vercel's Free daily deployment API quota (100 deployments/24h); no plan upgrade or paid deployment was requested. Retry after the quota window resets.
 - No Production deployment was triggered.
