@@ -1578,7 +1578,7 @@ async function loadDashboardGallery() {
   renderDashboardGallery();
 }
 
-async function prepareStorageImageForUpload(file,{maxDimension=1920,quality=0.86,forceWebP=false}={}){
+async function prepareStorageImageForUpload(file,{maxDimension=1920,quality=0.86,forceWebP=true}={}){
   if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type))return file;
   if(typeof createImageBitmap!=="function"){
     if(forceWebP)throw new Error("เบราว์เซอร์นี้ไม่รองรับการแปลงภาพเป็น WebP");
