@@ -101,3 +101,6 @@ The Member Workspace now loads Portfolio folders and Version metadata in separat
 - No Production data, schema, secrets, or deployment were changed.
 
 Browser validation with a real Staging login, responsive/accessibility checks, and the final legacy Portfolio Tracker regression remain open gates before merge/deploy.
+
+
+The Review Queue is also exposed as its own Management-only sidebar entry. It opens the same Command Center data context directly on the queue view, avoiding a duplicate page or duplicate data loader.
