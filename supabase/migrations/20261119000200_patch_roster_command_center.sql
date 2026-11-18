@@ -410,7 +410,7 @@ begin
   limit greatest(1,least(coalesce(p_limit,50),100)) offset greatest(0,least(coalesce(p_offset,0),5000))
  )
  select jsonb_build_object(
-  'rounds',(select coalesce(jsonb_agg(to_jsonb(r)),'[]'::jsonb) from (select id,round_name,starts_at,closes_at,status,archived_at,roster_snapshot_at from public.portfolio_update_rounds order by archived_at nulls first,starts_at desc limit 12) r),
+  'rounds',(select coalesce(jsonb_agg(to_jsonb(r)),'[]'::jsonb) from (select id,round_name,starts_at,closes_at,status,archived_at,roster_snapshot_at from public.portfolio_update_rounds order by archived_at nulls first,starts_at desc limit 50) r),
   'selected_round',(select to_jsonb(r) from (select id,round_name,starts_at,closes_at,status,archived_at,roster_snapshot_at from public.portfolio_update_rounds where id=v_round_id) r),
   'summary',(select jsonb_build_object('roster_count',count(*),'submitted_members',count(*) filter(where submitted_folder_count>0),'not_submitted',count(*) filter(where member_status='not_submitted'),'partial_members',count(*) filter(where member_status='partial'),'pending',coalesce(sum(pending_count),0),'reviewing',coalesce(sum(reviewing_count),0),'approved',coalesce(sum(approved_count),0),'revision_required',coalesce(sum(revision_count),0)) from roster_stats),
   'members',(select coalesce(jsonb_agg(to_jsonb(m)),'[]'::jsonb) from member_page m),
