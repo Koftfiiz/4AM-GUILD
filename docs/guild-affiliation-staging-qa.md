@@ -80,3 +80,8 @@ The Staging-only follow-up has been applied. It adds synthetic Discord Account f
 ## RPC-only write boundary
 
 The final Guild Affiliation migration revokes direct `INSERT`, `UPDATE`, and `DELETE` privileges on `guilds` and `guild_member_affiliations` from client roles. Authenticated users retain `SELECT`; affiliation changes go only through `set_guild_member_affiliation`, which validates the active Developer/Leader/Management role and performs the write as the function owner. Staging privilege checks confirm authenticated cannot write directly, authenticated can execute the guarded RPC, and anon cannot execute it.
+
+
+## Staging app permission parity
+
+The Staging app grant/RLS follow-up now restores the authenticated write privileges required by the existing Management member editor and Manual directory, while keeping row-level policies as the authorization boundary. Discord Account writes remain Developer-only. Anonymous table privileges are revoked for the feature schema. The Guild Affiliation and Patch schema contract tests still pass after this alignment.
