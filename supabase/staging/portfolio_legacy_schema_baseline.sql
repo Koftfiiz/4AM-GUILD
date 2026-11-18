@@ -106,6 +106,19 @@ create table if not exists public.portfolio_update_edit_requests (
  created_at timestamptz not null default now()
 );
 
+-- Bring the already-created Staging fixture tables up to the inspected Production column contract.
+alter table public.portfolio_versions
+ add column if not exists round_id uuid references public.portfolio_update_rounds(id) on delete set null,
+ add column if not exists patch_label text,
+ add column if not exists description text,
+ add column if not exists created_by uuid references public.guild_members(user_id) on delete set null;
+alter table public.portfolio_version_images
+ add column if not exists cover_image_url text,
+ add column if not exists crop_settings jsonb,
+ add column if not exists image_type text not null default 'other' check(image_type in ('stats','equipment','inner_power','other')),
+ add column if not exists caption text,
+ add column if not exists sort_order integer not null default 0;
+
 create index if not exists portfolio_update_rounds_active_created_idx
  on public.portfolio_update_rounds(created_at desc) where archived_at is null;
 create index if not exists idx_portfolios_member on public.portfolios(member_id);
