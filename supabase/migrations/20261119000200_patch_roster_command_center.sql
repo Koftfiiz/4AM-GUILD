@@ -13,7 +13,7 @@ create table if not exists public.portfolio_patch_roster (
   nickname text,
   discord_name text,
   affiliation_id uuid references public.guild_member_affiliations(id) on delete set null,
-  roster_source text not null check (roster_source in ('opening_snapshot','affiliation_transfer')),
+  roster_source text not null check (roster_source in ('opening_snapshot','affiliation_transfer','manual_link')),
   added_at timestamptz not null default now(),
   unique(round_id,member_id)
 );
@@ -61,10 +61,22 @@ create policy patch_roster_read_members on public.portfolio_patch_roster
 for select to authenticated using (public.is_guild_member());
 drop policy if exists patch_submission_reviews_read_members on public.portfolio_patch_submission_reviews;
 create policy patch_submission_reviews_read_members on public.portfolio_patch_submission_reviews
-for select to authenticated using (public.is_guild_member());
+for select to authenticated using (
+ exists (
+  select 1 from public.portfolio_patch_submissions s
+  where s.id=portfolio_patch_submission_reviews.submission_id
+   and (s.member_id=(select auth.uid()) or public.can_manage_guild_affiliations())
+ )
+);
 drop policy if exists patch_review_events_read_members on public.portfolio_patch_review_events;
 create policy patch_review_events_read_members on public.portfolio_patch_review_events
-for select to authenticated using (public.is_guild_member());
+for select to authenticated using (
+ exists (
+  select 1 from public.portfolio_patch_submissions s
+  where s.id=portfolio_patch_review_events.submission_id
+   and (s.member_id=(select auth.uid()) or public.can_manage_guild_affiliations())
+ )
+);
 
 revoke all on public.portfolio_patch_roster,public.portfolio_patch_submission_reviews,public.portfolio_patch_review_events
 from public,anon,authenticated;
@@ -147,7 +159,7 @@ begin
  -- A Manual-only 4AM member who links during an active Patch becomes eligible for its roster.
  insert into public.portfolio_patch_roster
   (round_id,member_id,character_name,game_class,nickname,discord_name,affiliation_id,roster_source)
- select r.id,gm.user_id,gm.character_name,gm.game_class,gm.nickname,gm.discord_name,aff.id,'affiliation_transfer'
+ select r.id,gm.user_id,gm.character_name,gm.game_class,gm.nickname,gm.discord_name,aff.id,'manual_link'
  from public.guild_member_affiliations aff
  join public.guilds g on g.id=aff.guild_id and g.code='4AM'
  join public.guild_members gm on gm.user_id=aff.user_id and gm.active=true and gm.membership_status='active'
@@ -172,7 +184,7 @@ declare v_guild_id uuid; v_current_guild_id uuid; v_new_id uuid;
  v_started_at timestamptz:=clock_timestamp(); v_manual_linked_user uuid;
 begin
  if (p_user_id is null)=(p_manual_member_id is null) then raise exception 'Provide exactly one member identity'; end if;
- if (select auth.uid()) is null or not public.is_portfolio_management() then raise exception 'Not authorized to change guild affiliation'; end if;
+ if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Not authorized to change guild affiliation'; end if;
  select id into v_guild_id from public.guilds where code=p_guild_code and is_active=true;
  if v_guild_id is null then raise exception 'Unknown or inactive guild'; end if;
  perform public.snapshot_due_patch_rosters();
@@ -289,7 +301,7 @@ returns uuid language plpgsql security definer set search_path=''
 as $$
 declare v_review_id uuid;
 begin
- if (select auth.uid()) is null or not public.is_portfolio_reviewer() then raise exception 'Not authorized to review Patch submissions'; end if;
+ if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Not authorized to review Patch submissions'; end if;
  if p_status not in ('pending','reviewing','approved','revision_required') then raise exception 'Invalid review status'; end if;
  if p_status='revision_required' and nullif(trim(p_review_note),'') is null then raise exception 'A revision note is required'; end if;
  update public.portfolio_patch_submission_reviews
@@ -307,11 +319,12 @@ returns uuid language plpgsql security definer set search_path=''
 as $$
 declare v_id uuid;
 begin
- if (select auth.uid()) is null or not public.is_portfolio_management() then raise exception 'Management access required'; end if;
+ if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Management access required'; end if;
  if nullif(trim(p_round_name),'') is null or length(trim(p_round_name))>120 then raise exception 'Patch name must be 1–120 characters'; end if;
  if p_starts_at is null or p_closes_at is null or p_closes_at<=p_starts_at then raise exception 'Invalid Patch date range'; end if;
  insert into public.portfolio_update_rounds(round_name,starts_at,closes_at,status,created_by)
  values(trim(p_round_name),p_starts_at,p_closes_at,'open',(select auth.uid())) returning id into v_id;
+ if p_starts_at <= clock_timestamp() then perform public.snapshot_due_patch_rosters(); end if;
  return v_id;
 end; $$;
 revoke all on function public.create_portfolio_patch_round(text,timestamptz,timestamptz) from public,anon;
@@ -321,8 +334,9 @@ create or replace function public.update_portfolio_patch_round(p_round_id uuid,p
 returns uuid language plpgsql security definer set search_path=''
 as $$
 begin
- if (select auth.uid()) is null or not public.is_portfolio_management() then raise exception 'Management access required'; end if;
+ if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Management access required'; end if;
  if p_action not in ('open','close','archive','restore') then raise exception 'Invalid Patch action'; end if;
+ perform public.snapshot_due_patch_rosters();
  update public.portfolio_update_rounds
  set status=case when p_action='open' then 'open' when p_action='close' then 'closed' else status end,
   archived_at=case when p_action='archive' then clock_timestamp() when p_action='restore' then null else archived_at end,
@@ -342,7 +356,7 @@ create or replace function public.get_patch_command_center(
 as $$
 declare v_round_id uuid; v_result jsonb;
 begin
- if (select auth.uid()) is null or not public.is_portfolio_management() then raise exception 'Management access required'; end if;
+ if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Management access required'; end if;
  if length(trim(coalesce(p_search,'')))>80 then raise exception 'Search text is too long'; end if;
  if p_status_filter not in ('all','not_submitted','partial','pending','reviewing','approved','revision_required') then raise exception 'Invalid Patch status filter'; end if;
  select r.id into v_round_id from public.portfolio_update_rounds r
@@ -351,7 +365,7 @@ begin
  if v_round_id is null then
   return jsonb_build_object('rounds','[]'::jsonb,'selected_round',null,
    'summary',jsonb_build_object('roster_count',0,'submitted_members',0,'not_submitted',0,'partial_members',0,'pending',0,'reviewing',0,'approved',0,'revision_required',0),
-   'members','[]'::jsonb,'review_queue','[]'::jsonb,'recent_activity','[]'::jsonb);
+   'members','[]'::jsonb,'review_queue','[]'::jsonb,'review_queue_total',0,'recent_activity','[]'::jsonb);
  end if;
  with roster_stats as (
   select pr.member_id,pr.character_name,pr.game_class,pr.nickname,pr.discord_name,pr.roster_source,pr.added_at,
@@ -379,7 +393,7 @@ begin
  ), member_page as (
   select * from filtered_members order by character_name
   limit greatest(1,least(coalesce(p_limit,50),100)) offset greatest(0,least(coalesce(p_offset,0),5000))
- ), queue_rows as (
+ ), queue_filtered as (
   select s.id as submission_id,s.member_id,pr.character_name,pr.game_class,p.title as portfolio_title,p.portfolio_type,
    pv.version_number,pv.version_name,s.submitted_at,s.updated_at,coalesce(rv.status,'pending') as review_status,
    rv.review_note,rv.reviewer_user_id,rv.reviewed_at
@@ -391,7 +405,8 @@ begin
   where s.round_id=v_round_id
    and (p_status_filter='all' or (p_status_filter not in ('not_submitted','partial') and coalesce(rv.status,'pending')=p_status_filter))
    and (nullif(trim(coalesce(p_search,'')),'') is null or pr.character_name ilike '%'||trim(p_search)||'%' or p.title ilike '%'||trim(p_search)||'%')
-  order by s.submitted_at desc
+ ), queue_rows as (
+  select * from queue_filtered order by submitted_at desc
   limit greatest(1,least(coalesce(p_limit,50),100)) offset greatest(0,least(coalesce(p_offset,0),5000))
  )
  select jsonb_build_object(
@@ -401,6 +416,7 @@ begin
   'members',(select coalesce(jsonb_agg(to_jsonb(m)),'[]'::jsonb) from member_page m),
   'member_total',(select count(*) from filtered_members),
   'review_queue',(select coalesce(jsonb_agg(to_jsonb(q)),'[]'::jsonb) from queue_rows q),
+  'review_queue_total',(select count(*) from queue_filtered),
   'recent_activity',(select coalesce(jsonb_agg(to_jsonb(a)),'[]'::jsonb) from (
    select e.id,e.submission_id,e.old_status,e.new_status,e.review_note,e.created_at,pr.character_name,s.member_id
    from public.portfolio_patch_review_events e
