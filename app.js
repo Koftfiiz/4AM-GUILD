@@ -537,8 +537,9 @@ async function logout(event) {
   if (menuLogout) menuLogout.disabled = true;
 
   try {
-    // Clear only this application's Supabase session.
+    // Clear presence and all app-scoped Realtime channels before signing out.
     await stopGuildPresence();
+    removeAppRealtimeChannels();
     const { error } = await supabaseClient.auth.signOut({ scope: "local" });
     if (error) throw error;
 
@@ -6566,22 +6567,46 @@ function registerWarRecordAndAttendanceEvents(){
   $("war-record-form")?.addEventListener("submit",async e=>{e.preventDefault();await saveWarMatchRecord(e.currentTarget);});
   $("war-attendance-stats-load")?.addEventListener("click",loadWarAttendanceEditor);$("war-attendance-stats-event")?.addEventListener("change",loadWarAttendanceEditor);$("war-attendance-stats-save")?.addEventListener("click",saveWarAttendanceStatistics);$("war-attendance-stats-finalize")?.addEventListener("click",finalizeWarAttendanceStatistics);
 }
+function isWarRealtimePageActive() {
+  return Boolean(document.querySelector(".page[id^='page-war']:not(.hidden)"));
+}
+
+function removeAppRealtimeChannels() {
+  for (const channel of [warRealtimeChannel, guildActivityRealtimeChannel, feedbackRealtimeChannel]) {
+    if (channel) void supabaseClient.removeChannel(channel);
+  }
+  warRealtimeChannel = null;
+  guildActivityRealtimeChannel = null;
+  feedbackRealtimeChannel = null;
+}
+
 function subscribeToWarRealtime() {
   if (warRealtimeChannel) {
-    supabaseClient.removeChannel(warRealtimeChannel);
+    void supabaseClient.removeChannel(warRealtimeChannel);
     warRealtimeChannel = null;
   }
 
   warRealtimeChannel = supabaseClient
     .channel("guild-war-live-updates")
-    .on("postgres_changes", { event: "*", schema: "public", table: "war_events" }, () => loadWarEvents())
+    .on("postgres_changes", { event: "*", schema: "public", table: "war_events" }, () => {
+      if (isWarRealtimePageActive()) void loadWarEvents();
+    })
     .on("postgres_changes", { event: "*", schema: "public", table: "war_parties" }, async () => {
+      if (!isWarRealtimePageActive()) return;
       const eventId = currentWarAssignmentEventId || selectedWarEventId;
       if (eventId) await loadSelectedWarEvent(eventId);
     })
-    .on("postgres_changes", { event: "*", schema: "public", table: "war_skill_catalog" }, () => loadWarSkillData())
-    .on("postgres_changes", { event: "*", schema: "public", table: "guild_member_skills" }, async () => { await loadWarSkillData(); const eventId=currentWarAssignmentEventId||selectedWarEventId; if(eventId) renderAllWarParties(); })
+    .on("postgres_changes", { event: "*", schema: "public", table: "war_skill_catalog" }, () => {
+      if (isWarRealtimePageActive()) void loadWarSkillData();
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "guild_member_skills" }, async () => {
+      if (!isWarRealtimePageActive()) return;
+      await loadWarSkillData();
+      const eventId = currentWarAssignmentEventId || selectedWarEventId;
+      if (eventId) renderAllWarParties();
+    })
     .on("postgres_changes", { event: "*", schema: "public", table: "war_party_members" }, async () => {
+      if (!isWarRealtimePageActive()) return;
       const eventId = currentWarAssignmentEventId || selectedWarEventId;
       if (eventId) await loadSelectedWarEvent(eventId);
     })
@@ -9449,6 +9474,7 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
   }
 
   if (event === "SIGNED_OUT") {
+    removeAppRealtimeChannels();
     currentUser = null;
     currentMember = null;
     discordAccount = null;
