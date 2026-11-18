@@ -227,7 +227,7 @@
       permission.round_id === selected.id && new Date(permission.expires_at).getTime() > Date.now()
     ) : null;
     const editable = !!selected && !selected.archived_at && (isRoundEditable(selected) || !!ownPermission);
-    const canRequestLate = !!selected && !selected.archived_at && !editable &&
+    const canRequestLate = !!selected && !selected.archived_at && (!rosterSnapshotReady || memberInRoster) && !editable &&
       (selected.status === "closed" || Date.now() > new Date(selected.closes_at).getTime());
     const pendingRequest = selected ? requests.find(request =>
       request.round_id === selected.id && request.member_id === currentUser?.id && request.status === "pending"
