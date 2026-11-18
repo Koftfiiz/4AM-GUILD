@@ -176,9 +176,9 @@ where p.member_id in ('10000000-0000-4000-8000-000000000001'::uuid,'10000000-000
   and not exists(select 1 from public.portfolio_versions pv where pv.portfolio_id=p.id and pv.version_number=1);
 
 insert into public.portfolio_version_images(version_id,image_url,section_key)
-select pv.id,'mock://synthetic-webp/fixture-01.webp','stats'
+select pv.id,'https://placehold.co/96x96/webp?text=QA','stats'
 from public.portfolio_versions pv
-where not exists(select 1 from public.portfolio_version_images i where i.version_id=pv.id and i.image_url='mock://synthetic-webp/fixture-01.webp')
+where not exists(select 1 from public.portfolio_version_images i where i.version_id=pv.id and i.image_url='https://placehold.co/96x96/webp?text=QA')
 order by pv.created_at
 limit 1;
 
