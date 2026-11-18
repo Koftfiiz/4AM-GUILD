@@ -402,7 +402,7 @@
     $("pc-review-form")?.addEventListener("submit",saveReview);
   }
 
-  function activate(){ensurePage();if(!allowed())return;void loadCommandCenter(true);}
+  function activate(){ensurePage();if(!allowed())return;window.setPatchCommandCenterRealtime?.(true);void loadCommandCenter(true);}
   const originalOpen=window.openGuildPage||openGuildPage;
   window.openGuildPage=function(pageName){
     const reviewTarget=pageName===REVIEW_PAGE;
