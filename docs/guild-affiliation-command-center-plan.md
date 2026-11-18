@@ -6,7 +6,7 @@
 - Do not merge to `main`, deploy the Vercel production site, or enable new production workflows until all phases pass acceptance tests.
 - Keep the existing production application and data operational throughout development.
 - Production currently contains the initial `guilds` and `guild_member_affiliations` foundation. Its affiliation history is intentionally empty; never infer a member's guild from whether their record is in `guild_members` or `guild_manual_members`.
-- Staging project: `jmuxbomowtqcigesbimz` (Supabase Free, Singapore). It is a blank project and must use synthetic test data only.
+- Staging project: `jmuxbomowtqcigesbimz` (Supabase Free, Singapore). It has been restored for active QA and contains synthetic fixtures only; no Production member, Portfolio, Storage, Discord, or credential data was copied.
 
 ## Identity and affiliation rules
 
@@ -44,9 +44,7 @@
 
 ## Staging setup and schema parity
 
-The Staging Supabase project is currently blank. Do not apply feature migrations until a reproducible schema baseline for the existing application has been prepared and reviewed. The repository currently contains only a subset of the migrations recorded by Production, so blindly replaying the checked-in migrations is not a valid way to create a working Staging database.
-
-Create a schema-only baseline from reviewed DDL (no production rows, Auth users, Storage objects, secrets, or Discord credentials), then apply feature migrations in order. Verify RLS, functions, triggers, and constraints before using Staging for workflow tests.
+The Staging Supabase project now has a reviewed synthetic baseline for the member, affiliation, Portfolio, Patch, and review tables. The canonical feature migrations (`20261119000000`, `20261119000100`, `20261119000200`) have been applied and re-applied successfully. Contract tests and targeted transactional RPC tests pass. Keep Staging isolated: no Production rows, Portfolio images, Storage objects, Discord credentials, or webhooks are copied. A synthetic Auth identity is used only for RLS/RPC tests.
 
 ## Release gates
 
