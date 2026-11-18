@@ -2,14 +2,14 @@
 -- Apply after the Guild Affiliation and Patch Roster staging migrations.
 -- All inserted records are synthetic. Do not apply this file to Production as-is.
 
-create table public.portfolios (
+create table if not exists public.portfolios (
  id uuid primary key default gen_random_uuid(),
  member_id uuid not null references public.guild_members(user_id) on delete cascade,
  title text not null, description text, game_class text not null,
  portfolio_type text not null check(portfolio_type in ('pvp','pve','cultivation_skills')),
  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
-create table public.portfolio_versions (
+create table if not exists public.portfolio_versions (
  id uuid primary key default gen_random_uuid(),
  portfolio_id uuid not null references public.portfolios(id) on delete restrict,
  version_number integer not null check(version_number>=1), version_name text not null default 'Version',
@@ -17,13 +17,13 @@ create table public.portfolio_versions (
  portfolio_type text not null check(portfolio_type in ('pvp','pve','cultivation_skills')),
  created_at timestamptz not null default now(), unique(portfolio_id,version_number)
 );
-create table public.portfolio_version_images (
+create table if not exists public.portfolio_version_images (
  id uuid primary key default gen_random_uuid(),
  version_id uuid not null references public.portfolio_versions(id) on delete cascade,
  image_url text not null, section_key text not null default 'stats',
  sort_order integer not null default 0, created_at timestamptz not null default now()
 );
-create table public.portfolio_patch_submissions (
+create table if not exists public.portfolio_patch_submissions (
  id uuid primary key default gen_random_uuid(),
  round_id uuid not null references public.portfolio_update_rounds(id) on delete cascade,
  portfolio_id uuid not null references public.portfolios(id) on delete cascade,
@@ -32,10 +32,10 @@ create table public.portfolio_patch_submissions (
  submitted_at timestamptz not null default now(), updated_at timestamptz not null default now(),
  constraint portfolio_patch_submissions_one_per_folder unique(round_id,portfolio_id)
 );
-create index portfolio_patch_submissions_round_idx on public.portfolio_patch_submissions(round_id,submitted_at desc);
-create index portfolio_patch_submissions_member_idx on public.portfolio_patch_submissions(member_id,round_id);
+create index if not exists portfolio_patch_submissions_round_idx on public.portfolio_patch_submissions(round_id,submitted_at desc);
+create index if not exists portfolio_patch_submissions_member_idx on public.portfolio_patch_submissions(member_id,round_id);
 
-create table public.portfolio_patch_submission_reviews (
+create table if not exists public.portfolio_patch_submission_reviews (
  id uuid primary key default gen_random_uuid(),
  submission_id uuid not null unique references public.portfolio_patch_submissions(id) on delete cascade,
  status text not null default 'pending' check(status in ('pending','reviewing','approved','revision_required')),
@@ -43,15 +43,15 @@ create table public.portfolio_patch_submission_reviews (
  created_at timestamptz not null default now(), updated_at timestamptz not null default now(),
  check(status <> 'revision_required' or nullif(trim(review_note),'') is not null)
 );
-create index portfolio_patch_submission_reviews_status_idx on public.portfolio_patch_submission_reviews(status,updated_at desc);
+create index if not exists portfolio_patch_submission_reviews_status_idx on public.portfolio_patch_submission_reviews(status,updated_at desc);
 
-create table public.portfolio_patch_review_events (
+create table if not exists public.portfolio_patch_review_events (
  id bigint generated always as identity primary key,
  submission_id uuid not null references public.portfolio_patch_submissions(id) on delete restrict,
  old_status text, new_status text not null, review_note text, actor_user_id uuid,
  created_at timestamptz not null default now()
 );
-create index portfolio_patch_review_events_submission_idx on public.portfolio_patch_review_events(submission_id,created_at desc);
+create index if not exists portfolio_patch_review_events_submission_idx on public.portfolio_patch_review_events(submission_id,created_at desc);
 
 alter table public.portfolios enable row level security;
 alter table public.portfolio_versions enable row level security;
