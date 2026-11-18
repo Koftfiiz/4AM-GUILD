@@ -121,7 +121,7 @@ begin
   raise exception 'Active guild membership required'; end if;
  perform public.snapshot_due_patch_rosters();
  if not exists(select 1 from public.portfolio_patch_roster where round_id=target_round_id and member_id=v_member_id) then
-  raise exception 'Member is not included in this Patch roster'; end if;
+  raise exception 'Member is not included in this 4AM Patch roster'; end if;
  if not exists(select 1 from public.portfolios where id=target_portfolio_id and member_id=v_member_id) then
   raise exception 'You can submit only your own Portfolio folder'; end if;
  if not exists(select 1 from public.portfolio_versions where id=target_version_id and portfolio_id=target_portfolio_id) then
