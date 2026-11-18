@@ -22,7 +22,7 @@ All tables and records below exist only in `4AM-GUILD-Staging`. They are synthet
 4. Manual-only records are not added to the submission roster because they have no website account and cannot own/submit Portfolio folders. A linked Manual row uses its canonical registered `user_id`. If it links after an active Patch snapshot already exists, it is added once with source `manual_link`; if the Patch snapshot is still due, the post-link snapshot includes it normally.
 5. A member already present is never duplicated due to repeated moves.
 
-Staging currently has one once-per-minute database-only `pg_cron` job. Its latest run records succeeded and returned `1 row`; it makes no HTTP calls and does not touch Storage. The affiliation-change, round lifecycle, and submission RPCs also snapshot any due Patch before mutation/submission, protecting the opening roster if a member moves around the scheduled start.
+When Staging is restored, it has one once-per-minute database-only `pg_cron` job. Its latest run records succeeded and returned `1 row`; it makes no HTTP calls and does not touch Storage. The affiliation-change, round lifecycle, and submission RPCs also snapshot any due Patch before mutation/submission, protecting the opening roster if a member moves around the scheduled start.
 
 ## Command Center workflow
 
@@ -76,7 +76,7 @@ Staging currently has one once-per-minute database-only `pg_cron` job. Its lates
 ## Additional regression case pending
 
 - Manual-only 4AM member links an account after a Patch opening snapshot; affiliation history is transferred to the canonical user and the account is added once to the active Patch roster as `manual_link`.
-- This trigger change has been applied and tested transactionally on the active Free Staging project.
+- This trigger change has been applied and tested transactionally on the Free Staging project before it was paused.
 
 
 The Production migration now includes `manual_link` as a distinct roster source so the UI can distinguish account linking from an actual 4PM-to-4AM transfer. Review queue pagination also returns a total count for bounded Previous/Next navigation. These changes have been applied to Staging and passed the targeted roster/merge regression tests.
