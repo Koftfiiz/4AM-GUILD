@@ -2,8 +2,8 @@ import { createClient } from "@supabase/supabase-js";
 import sharp from "sharp";
 import { readFile, writeFile } from "node:fs/promises";
 
-const REQUIRED_CONFIRMATION = "MIGRATE-47";
-const TARGET_COUNT = 47;
+const REQUIRED_CONFIRMATION = "MIGRATE-46";
+const TARGET_COUNT = 46;
 const BUCKET = "portfolio-images";
 const PAGE_SIZE = 100;
 const report = { mode: "MIGRATION", startedAt: new Date().toISOString(), bucket: BUCKET, uploaded: [], updatedRows: [], errors: [], rollbackErrors: [] };
@@ -13,11 +13,11 @@ function assert(condition, message) { if (!condition) throw new Error(message); 
 const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 assert(url && key, "Missing Supabase secrets.");
-assert(process.env.CONFIRM_MIGRATION === REQUIRED_CONFIRMATION, "Safety stop: confirmation input must equal MIGRATE-47.");
+assert(process.env.CONFIRM_MIGRATION === REQUIRED_CONFIRMATION, "Safety stop: confirmation input must equal MIGRATE-46.");
 assert(Number(process.env.TARGET_COUNT) === TARGET_COUNT, "Safety stop: TARGET_COUNT must equal 47.");
 
 const manifest = JSON.parse(await readFile(new URL("./approved-manifest.json", import.meta.url), "utf8"));
-assert(manifest.bucket === BUCKET && manifest.files.length === TARGET_COUNT, "Manifest does not match the approved 47-file scope.");
+assert(manifest.bucket === BUCKET && manifest.files.length === TARGET_COUNT, "Manifest does not match the approved 46-file scope.");
 const unique = new Set(manifest.files.map((f) => f.path));
 assert(unique.size === TARGET_COUNT, "Manifest contains duplicate paths.");
 for (const f of manifest.files) {
@@ -91,8 +91,8 @@ for (const rows of rowsByTable.values()) {
 }
 for (const f of manifest.files) assert(referenced.has(f.path), "Safety stop: source is no longer referenced: " + f.path);
 
-console.log("Preflight passed: exactly 47 approved sources are still referenced.");
-console.log("Expected source download: approximately 178.42 MiB. No other files will be downloaded.");
+console.log("Preflight passed: exactly 46 approved sources are still referenced.");
+console.log("Expected source download: approximately 174.97 MiB. No other files will be downloaded.");
 
 const prepared = [];
 for (let index = 0; index < manifest.files.length; index++) {
