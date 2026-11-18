@@ -246,6 +246,19 @@
         reviewEvents=reviewEventResult.data||[];
         submissionEvents=submissionEventResult.data||[];
       }
+      const knownVersionIds=new Set(versions.map(version=>version.id));
+      const historyVersionIds=[...new Set(submissionEvents.flatMap(event=>[event.previous_version_id,event.new_version_id]).filter(Boolean))]
+        .filter(id=>!knownVersionIds.has(id)).slice(0,100);
+      if(historyVersionIds.length){
+        const historyVersionResult=await supabaseClient.from("portfolio_versions")
+          .select("id,portfolio_id,version_number,version_name,created_at")
+          .in("id",historyVersionIds).limit(100);
+        if(historyVersionResult.error)throw historyVersionResult.error;
+        (historyVersionResult.data||[]).forEach(version=>{
+          const folder=folders.find(item=>item.id===version.portfolio_id);
+          if(folder)folder.portfolio_versions.push(version);
+        });
+      }
       subs.forEach(row=>{
         row.portfolio_patch_review_events=reviewEvents.filter(event=>event.submission_id===row.id);
         row.portfolio_patch_submission_events=submissionEvents.filter(event=>event.submission_id===row.id);
