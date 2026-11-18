@@ -6708,6 +6708,15 @@ function syncAppRealtimeSubscriptions(pageName) {
   const shouldSubscribeToWar = pageName === "war-center";
   const shouldSubscribeToActivity = pageName === "dashboard" || communityPages.includes(pageName);
   const shouldSubscribeToFeedback = pageName === "feedback";
+  const shouldSubscribeToGuildDirectory = pageName === "guild-directory";
+  const shouldSubscribeToPatchCenter = pageName === "patch-command-center";
+
+  if (typeof window.setGuildAffiliationRealtime === "function") {
+    window.setGuildAffiliationRealtime(shouldSubscribeToGuildDirectory);
+  }
+  if (typeof window.setPatchCommandCenterRealtime === "function") {
+    window.setPatchCommandCenterRealtime(shouldSubscribeToPatchCenter);
+  }
 
   // Keep high-volume table subscriptions active only while their pages are open.
   if (shouldSubscribeToWar) {
@@ -6745,6 +6754,8 @@ function syncAppRealtimeSubscriptions(pageName) {
 }
 
 function removeAppRealtimeChannels() {
+  if (typeof window.setGuildAffiliationRealtime === "function") window.setGuildAffiliationRealtime(false);
+  if (typeof window.setPatchCommandCenterRealtime === "function") window.setPatchCommandCenterRealtime(false);
   for (const channel of [warRealtimeChannel, guildActivityRealtimeChannel, guildActivityCommentsRealtimeChannel, feedbackRealtimeChannel]) {
     if (channel) void supabaseClient.removeChannel(channel);
   }
