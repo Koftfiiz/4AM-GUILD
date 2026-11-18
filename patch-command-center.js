@@ -153,22 +153,21 @@
     if(!name||Number.isNaN(start.getTime())||Number.isNaN(close.getTime())||close<=start){$("pc-create-status").textContent="กรุณาตรวจสอบชื่อ Patch และช่วงเวลา";return;}
     const button=form.querySelector("button[type='submit']");button.disabled=true;button.textContent="กำลังสร้าง...";
     try{
-      const {data,error}=await supabaseClient.from("portfolio_update_rounds").insert({
-        round_name:name,starts_at:start.toISOString(),closes_at:close.toISOString(),created_by:currentUser.id
-      }).select("id").single();
+      const {data,error}=await supabaseClient.rpc("create_portfolio_patch_round",{
+        p_round_name:name,p_starts_at:start.toISOString(),p_closes_at:close.toISOString()
+      });
       if(error)throw error;
-      state.roundId=data.id;state.page=0;form.reset();form.classList.add("pc-hidden");$("pc-toggle-create").textContent="แสดงแบบฟอร์ม";
+      state.roundId=data;state.page=0;form.reset();form.classList.add("pc-hidden");$("pc-toggle-create").textContent="แสดงแบบฟอร์ม";
       $("pc-create-status").textContent="สร้าง Patch สำเร็จ · ระบบจะสร้าง Opening Snapshot เมื่อถึงเวลาเริ่ม";
       await loadCommandCenter(true);
     }catch(error){$("pc-create-status").textContent=error.message||"สร้าง Patch ไม่สำเร็จ";}
     finally{button.disabled=false;button.textContent="＋ สร้าง Patch";}
   }
 
-  async function updateRound(patch){
+  async function updateRound(action){
     if(!allowed()||!state.roundId)return;
-    const round=state.data?.selected_round;if(!round)return;
     try{
-      const {error}=await supabaseClient.from("portfolio_update_rounds").update(patch).eq("id",state.roundId);
+      const {error}=await supabaseClient.rpc("update_portfolio_patch_round",{p_round_id:state.roundId,p_action:action});
       if(error)throw error;
       await loadCommandCenter(true);
     }catch(error){alert("อัปเดต Patch ไม่สำเร็จ: "+(error.message||"Unknown error"));}
@@ -243,9 +242,9 @@
     $("pc-queue-rows")?.addEventListener("click",e=>{const b=e.target.closest("[data-pc-review]");if(b)openReview(b.dataset.pcReview)});
     $("pc-history-list")?.addEventListener("click",e=>{const b=e.target.closest("[data-pc-history]");if(b)setRound(b.dataset.pcHistory)});
     $("pc-round-actions")?.addEventListener("click",e=>{
-      if(e.target.id==="pc-toggle-round"){const r=state.data?.selected_round;if(r)void updateRound({status:r.status==="open"?"closed":"open"});}
-      if(e.target.id==="pc-archive-round"&&confirm("ยืนยันเก็บ Patch นี้เข้าคลัง โดยคง Snapshot และประวัติทั้งหมดไว้?"))void updateRound({archived_at:new Date().toISOString(),archived_by:currentUser.id});
-      if(e.target.id==="pc-restore-round")void updateRound({archived_at:null,archived_by:null});
+      if(e.target.id==="pc-toggle-round"){const r=state.data?.selected_round;if(r)void updateRound(r.status==="open"?"close":"open");}
+      if(e.target.id==="pc-archive-round"&&confirm("ยืนยันเก็บ Patch นี้เข้าคลัง โดยคง Snapshot และประวัติทั้งหมดไว้?"))void updateRound("archive");
+      if(e.target.id==="pc-restore-round")void updateRound("restore");
     });
     $("pc-review-status")?.addEventListener("change",()=>{$("pc-review-note-wrap").classList.toggle("pc-hidden",$("pc-review-status").value!=="revision_required")});
     $("pc-review-cancel")?.addEventListener("click",closeReview);
