@@ -139,6 +139,46 @@
     $("pc-history-list").innerHTML=rounds.length?rounds.map(r=>'<div class="pc-event"><div class="pc-head" style="margin:0"><div><strong>'+esc(r.round_name)+'</strong><small>'+dateLabel(r.starts_at)+' – '+dateLabel(r.closes_at)+' · '+roundStatusLabel(r)+'</small></div><button class="pc-btn" data-pc-history="'+esc(r.id)+'">เปิดรอบนี้</button></div></div>').join(""):'<div class="pc-empty">ยังไม่มีประวัติ Patch</div>';
   }
 
+  let patchRealtimeEnabled=false,patchRealtimeChannel=null,patchRealtimeRoundId=null,patchRealtimeTimer=null,patchRealtimePending=false;
+  function queuePatchRealtimeRefresh(){
+    const page=$("page-patch-command-center");
+    if(!patchRealtimeEnabled||!page||page.classList.contains("hidden"))return;
+    if(patchRealtimeTimer)window.clearTimeout(patchRealtimeTimer);
+    patchRealtimeTimer=window.setTimeout(()=>{
+      patchRealtimeTimer=null;
+      if(state.busy){patchRealtimePending=true;return;}
+      void loadCommandCenter(true);
+    },300);
+  }
+  function syncPatchRealtimeChannel(){
+    if(!patchRealtimeEnabled)return;
+    const roundId=state.roundId||null;
+    if(patchRealtimeChannel&&patchRealtimeRoundId===roundId)return;
+    if(patchRealtimeChannel){void supabaseClient.removeChannel(patchRealtimeChannel);patchRealtimeChannel=null;}
+    patchRealtimeRoundId=roundId;
+    let channel=supabaseClient.channel("patch-command-center-live")
+      .on("postgres_changes",{event:"*",schema:"public",table:"portfolio_update_rounds",...(roundId?{filter:"id=eq."+roundId}:{})},queuePatchRealtimeRefresh)
+      .on("postgres_changes",{event:"*",schema:"public",table:"portfolio_patch_submission_reviews"},queuePatchRealtimeRefresh)
+      .on("postgres_changes",{event:"*",schema:"public",table:"portfolio_patch_review_events"},queuePatchRealtimeRefresh)
+      .on("postgres_changes",{event:"*",schema:"public",table:"portfolio_patch_submission_events"},queuePatchRealtimeRefresh);
+    if(roundId){
+      channel=channel
+        .on("postgres_changes",{event:"*",schema:"public",table:"portfolio_patch_roster",filter:"round_id=eq."+roundId},queuePatchRealtimeRefresh)
+        .on("postgres_changes",{event:"*",schema:"public",table:"portfolio_patch_submissions",filter:"round_id=eq."+roundId},queuePatchRealtimeRefresh);
+    }
+    patchRealtimeChannel=channel.subscribe();
+  }
+  window.setPatchCommandCenterRealtime=function(active){
+    patchRealtimeEnabled=!!active;
+    if(!patchRealtimeEnabled){
+      if(patchRealtimeTimer)window.clearTimeout(patchRealtimeTimer);
+      patchRealtimeTimer=null;patchRealtimePending=false;patchRealtimeRoundId=null;
+      if(patchRealtimeChannel){void supabaseClient.removeChannel(patchRealtimeChannel);patchRealtimeChannel=null;}
+      return;
+    }
+    syncPatchRealtimeChannel();
+  };
+
   async function loadCommandCenter(force=true){
     if(!allowed()||state.busy)return;
     state.busy=true;
@@ -156,7 +196,10 @@
       console.error("[Patch Command Center]",error);
       $("pc-round-title").textContent="โหลดข้อมูลไม่สำเร็จ";
       $("pc-round-dates").textContent=error.message||"Unknown error";
-    }finally{state.busy=false;renderMembers();}
+    }finally{
+      state.busy=false;renderMembers();syncPatchRealtimeChannel();
+      if(patchRealtimePending){patchRealtimePending=false;queuePatchRealtimeRefresh();}
+    }
   }
 
   function setRound(id){state.roundId=id||null;state.page=0;state.search="";state.status="all";void loadCommandCenter(true);}
