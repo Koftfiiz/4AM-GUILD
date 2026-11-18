@@ -212,9 +212,34 @@
       if(portfolioResult.error)throw portfolioResult.error;if(submissionResult.error)throw submissionResult.error;
       if(profileResult.error)throw profileResult.error;if(affiliationResult.error)throw affiliationResult.error;
       const folders=portfolioResult.data||[],subs=submissionResult.data||[];
-      state.workspace={member,folders,subs,profile:profileResult.data||null,affiliations:affiliationResult.data||[],memberIds:(state.data?.members||[]).map(x=>x.member_id)};
+      state.workspace={member,folders,subs,profile:profileResult.data||null,affiliations:affiliationResult.data||[],images:[],imagesLoaded:false,imagesLoading:false,imagesError:"",memberIds:(state.data?.members||[]).map(x=>x.member_id)};
       state.workspaceTab="overview";renderWorkspace();
     }catch(error){host.innerHTML='<div class="pc-empty">เปิด Workspace ไม่สำเร็จ: '+esc(error.message||"Unknown error")+'</div>';}
+  }
+
+  async function loadWorkspaceImages(){
+    const w=state.workspace;if(!w||w.imagesLoading||w.imagesLoaded)return;
+    w.imagesLoading=true;w.imagesError="";renderWorkspace();
+    try{
+      const versionIds=w.folders.flatMap(p=>(p.portfolio_versions||[]).map(v=>v.id)).filter(Boolean);
+      if(!versionIds.length){w.images=[];w.imagesLoaded=true;return;}
+      const {data,error}=await supabaseClient.from("portfolio_version_images")
+        .select("id,version_id,image_url,section_key,sort_order,caption,image_type")
+        .in("version_id",versionIds).order("sort_order").limit(100);
+      if(error)throw error;
+      const images=await Promise.all((data||[]).map(async item=>{
+        let url="";
+        if(typeof getPortfolioImageUrl==="function")url=await getPortfolioImageUrl(item.image_url);
+        else if(/^https?:\\/\\//i.test(item.image_url||""))url=item.image_url;
+        return {...item,signed_url:url};
+      }));
+      w.images=images;w.imagesLoaded=true;
+    }catch(error){
+      w.imagesError="โหลดไฟล์ไม่สำเร็จ: "+(error.message||"Unknown error");
+      w.imagesLoaded=true;
+    }finally{
+      w.imagesLoading=false;renderWorkspace();
+    }
   }
 
   function renderWorkspace(){
@@ -231,16 +256,18 @@
     const affiliationLabel=currentAffiliation?.guilds?.code||"ยังไม่กำหนดสังกัด";
     const sourceLabel=w.member.roster_source==="affiliation_transfer"?"เพิ่มจากการย้ายเข้า 4AM":w.member.roster_source==="manual_link"?"เพิ่มหลังเชื่อมบัญชี Manual":"Opening Snapshot";
     const overview='<div class="pc-stats"><article class="pc-stat"><span>แฟ้มผลงาน</span><strong>'+w.folders.length+'</strong></article><article class="pc-stat"><span>Portfolio Versions</span><strong>'+totalVersions+'</strong></article><article class="pc-stat"><span>รูปภาพทั้งหมด</span><strong>'+totalImages+'</strong></article><article class="pc-stat"><span>Patch Submissions</span><strong>'+w.subs.length+'</strong></article></div><div class="pc-member"><h3>ข้อมูลสมาชิก</h3><p>สังกัดปัจจุบัน: <strong>'+esc(affiliationLabel)+'</strong> · '+esc(sourceLabel)+'</p><p>Discord: <strong>'+esc(discordName)+'</strong> · ID: '+esc(discordId)+'</p><p>สถานะ Discord: '+esc(discordStatus)+' · Guild Member Verified: '+(discord?.guild_member_verified?"ยืนยันแล้ว":"ยังไม่ยืนยัน")+'</p></div>';
-    const files='<div class="pc-workspace-grid">'+(w.folders.map(p=>'<article class="pc-file"><strong>'+esc(p.title)+'</strong><p class="pc-muted">'+esc(p.game_class)+' · '+esc(p.portfolio_type)+' · '+(p.portfolio_versions||[]).length+' Versions</p>'+(p.portfolio_versions||[]).map(v=>'<div class="pc-event"><strong>'+esc(v.version_name||("Version "+v.version_number))+'</strong><small>'+dateLabel(v.created_at)+' · '+(v.portfolio_version_images||[]).length+' รูปภาพ</small></div>').join("")+'<button class="pc-btn" data-pc-open-portfolio="'+esc(w.member.member_id)+'">เปิดแฟ้มใน Portfolio</button></article>').join("")||'<div class="pc-empty">สมาชิกยังไม่มี Portfolio</div>')+'</div>';
+    const files=w.imagesLoading?'<div class="pc-empty">กำลังโหลดไฟล์ Portfolio...</div>':w.imagesError?'<div class="pc-empty">'+esc(w.imagesError)+'<br><button class="pc-btn" data-pc-retry-files>ลองอีกครั้ง</button></div>':'<div class="pc-workspace-grid">'+(w.folders.map(p=>'<article class="pc-file"><strong>'+esc(p.title)+'</strong><p class="pc-muted">'+esc(p.game_class)+' · '+esc(p.portfolio_type)+' · '+(p.portfolio_versions||[]).length+' Versions</p>'+(p.portfolio_versions||[]).map(v=>{const images=(w.images||[]).filter(img=>img.version_id===v.id);return '<div class="pc-event"><strong>'+esc(v.version_name||("Version "+v.version_number))+'</strong><small>'+dateLabel(v.created_at)+' · '+(v.portfolio_version_images||[]).length+' รูปภาพ'+(images.length?" · แสดง "+images.length:"") +'</small><div class="pc-file-images">'+images.map(img=>img.signed_url?'<a class="pc-file-thumb-link" href="'+esc(img.signed_url)+'" target="_blank" rel="noopener"><img class="pc-file-thumb" loading="lazy" decoding="async" src="'+esc(img.signed_url)+'" alt="'+esc(img.caption||img.section_key||"Portfolio image")+'"></a>':'').join("")+'</div></div>'}).join("")+'<button class="pc-btn" data-pc-open-portfolio="'+esc(w.member.member_id)+'">เปิดแฟ้มใน Portfolio</button></article>').join("")||'<div class="pc-empty">สมาชิกยังไม่มี Portfolio</div>')+'</div>';
     const events=w.subs.flatMap(s=>(s.portfolio_patch_review_events||[]).map(e=>({...e,submission:s}))).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     const affiliationHistory=w.affiliations.map(a=>'<div class="pc-event"><strong>'+esc(a.guilds?.code||"ไม่ทราบสังกัด")+' · '+(a.ended_at?"สิ้นสุดแล้ว":"ปัจจุบัน")+'</strong><small>เริ่ม '+dateLabel(a.started_at)+' · '+(a.ended_at?"สิ้นสุด "+dateLabel(a.ended_at):"ยังเป็นสังกัดปัจจุบัน")+' · '+esc(a.change_reason||"ไม่ได้ระบุเหตุผล")+'</small></div>').join("");
     const reviewHistory=events.map(e=>'<div class="pc-event"><strong>'+esc(statusText[e.new_status]||e.new_status)+'</strong><small>'+esc(e.review_note||"ไม่มีหมายเหตุ")+' · '+dateLabel(e.created_at)+'</small></div>').join("");
     const history='<div class="pc-list"><h3>ประวัติสังกัด</h3>'+(affiliationHistory||'<div class="pc-empty">ยังไม่มีประวัติสังกัด</div>')+'<h3>ประวัติการตรวจ Patch</h3>'+(reviewHistory||'<div class="pc-empty">ยังไม่มีประวัติการตรวจใน Patch นี้</div>')+'</div>';
     host.innerHTML='<div class="pc-head"><div><span class="pc-kicker">MEMBER WORKSPACE</span><h2>'+esc(w.member.character_name)+'</h2><p class="pc-muted">'+esc(w.member.game_class)+' · '+esc(w.member.discord_name||"ไม่พบ Discord")+'</p></div><div class="pc-toolbar"><button class="pc-btn" id="pc-workspace-prev" '+(index<=0?"disabled":"")+'>← ก่อนหน้า</button><button class="pc-btn" id="pc-workspace-next" '+(index>=ids.length-1?"disabled":"")+'>ถัดไป →</button><button class="pc-btn" id="pc-workspace-close">ปิด</button></div></div><nav class="pc-tabs"><button class="pc-tab '+(state.workspaceTab==="overview"?"active":"")+'" data-pc-workspace-tab="overview">Overview</button><button class="pc-tab '+(state.workspaceTab==="files"?"active":"")+'" data-pc-workspace-tab="files">Files & Portfolio</button><button class="pc-tab '+(state.workspaceTab==="history"?"active":"")+'" data-pc-workspace-tab="history">History</button></nav><div>'+(state.workspaceTab==="overview"?overview:state.workspaceTab==="files"?files:history)+'</div>';
     host.querySelectorAll("[data-pc-workspace-tab]").forEach(b=>b.addEventListener("click",()=>{state.workspaceTab=b.dataset.pcWorkspaceTab;renderWorkspace()}));
+    host.querySelector("[data-pc-retry-files]")?.addEventListener("click",()=>{w.imagesLoaded=false;w.imagesError="";void loadWorkspaceImages()});
     $("pc-workspace-close")?.addEventListener("click",()=>host.classList.add("pc-hidden"));
     $("pc-workspace-prev")?.addEventListener("click",()=>{if(index>0)void openWorkspace(ids[index-1])});
     $("pc-workspace-next")?.addEventListener("click",()=>{if(index<ids.length-1)void openWorkspace(ids[index+1])});
+    if(state.workspaceTab==="files"&&!w.imagesLoaded&&!w.imagesLoading)void loadWorkspaceImages();
     host.querySelectorAll("[data-pc-open-portfolio]").forEach(button=>button.addEventListener("click",()=>{currentPortfolioMemberId=w.member.member_id;portfolioClassFilter="all";portfolioManageMode=false;window.openGuildPage("portfolio");if(typeof renderPortfolios==="function")void renderPortfolios()}));
   }
 
