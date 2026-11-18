@@ -40,7 +40,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=avatar-public-url-cache-bust-20261119-r1";
+          app.src = "app.js?v=portfolio-webp-migration-20261119-r1";
           app.onload = () => {
             const tracker = document.createElement("script");
             tracker.src = "portfolio-tracker.js?v=portfolio-schedule-labels-20261118-r1";
@@ -1130,6 +1130,32 @@
           <h1>System Management</h1>
           <p>จัดการ System Role ของสมาชิกและบัญชีที่สมัครเข้ามาใน 4AM GUILD</p>
         </div>
+
+        <section class="panel portfolio-webp-migration-panel" aria-labelledby="portfolio-webp-migration-title">
+          <div class="panel-heading">
+            <div>
+              <span class="panel-kicker">STORAGE OPTIMIZATION</span>
+              <h3 id="portfolio-webp-migration-title">Portfolio WebP Migration</h3>
+              <p>แปลงภาพ PNG/JPEG เก่าใน Portfolio และประวัติ Version เป็น WebP เพื่อลดขนาดไฟล์ที่โหลด</p>
+            </div>
+            <span class="role-preview-lock">DEVELOPER ONLY</span>
+          </div>
+          <div class="portfolio-webp-migration-notice">
+            <strong>ปลอดภัยต่อข้อมูลเดิม</strong>
+            <span>ระบบทำทีละไฟล์ · อัปโหลด WebP ก่อนเปลี่ยน Reference · เก็บไฟล์ต้นฉบับไว้ทั้งหมด · ไม่ลบข้อมูลหรือไฟล์เดิม</span>
+          </div>
+          <div class="portfolio-webp-migration-summary" id="portfolio-webp-migration-summary">ยังไม่ได้ตรวจสอบรายการ</div>
+          <div class="portfolio-webp-migration-progress" id="portfolio-webp-migration-track" role="progressbar" aria-label="Portfolio WebP migration progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span id="portfolio-webp-migration-progress"></span>
+          </div>
+          <div class="portfolio-webp-migration-progress-label" id="portfolio-webp-migration-progress-label">ยังไม่ได้เริ่ม</div>
+          <p class="portfolio-webp-migration-status" id="portfolio-webp-migration-status" data-tone="muted" aria-live="polite">กดปุ่มเพื่อสแกนรายการและเริ่ม Migration ระบบจะถามยืนยันจำนวนไฟล์ก่อนเริ่มแปลง</p>
+          <p class="portfolio-webp-migration-details" id="portfolio-webp-migration-details"></p>
+          <p class="portfolio-webp-migration-failures" id="portfolio-webp-migration-failures"></p>
+          <div class="portfolio-webp-migration-actions">
+            <button class="btn btn-primary" id="portfolio-webp-migration-start" type="button">เริ่ม Migration</button>
+          </div>
+        </section>
 
         <section class="panel role-preview-panel" aria-labelledby="role-preview-title">
           <div class="role-preview-panel-heading">

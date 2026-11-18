@@ -7021,6 +7021,211 @@ async function saveSystemRole(selectElement) {
   }
 }
 
+// ==========================================
+// DEVELOPER — PORTFOLIO WEBP MIGRATION
+// ==========================================
+let portfolioWebpMigrationBusy = false;
+
+function setPortfolioWebpMigrationStatus(message, tone = "muted") {
+  const node = $("portfolio-webp-migration-status");
+  if (node) {
+    node.textContent = message;
+    node.dataset.tone = tone;
+  }
+}
+
+function setPortfolioWebpMigrationProgress(done, total) {
+  const bar = $("portfolio-webp-migration-progress");
+  const track = $("portfolio-webp-migration-track");
+  const label = $("portfolio-webp-migration-progress-label");
+  const percent = total ? Math.round((done / total) * 100) : 0;
+  if (bar) bar.style.width = percent + "%";
+  if (track) track.setAttribute("aria-valuenow", String(percent));
+  if (label) label.textContent = total ? done + " / " + total + " · " + percent + "%" : "ยังไม่ได้เริ่ม";
+}
+
+async function invokePortfolioWebpMigration(body) {
+  const { data, error } = await supabaseClient.functions.invoke("portfolio-webp-migration", { body });
+  if (error) {
+    const details = data?.message || error.message || "เรียก Migration Service ไม่สำเร็จ";
+    throw new Error(details);
+  }
+  if (!data?.success) throw new Error(data?.message || "Migration Service ตอบกลับไม่สำเร็จ");
+  return data;
+}
+
+async function getPortfolioWebpPathHash(path) {
+  const bytes = new TextEncoder().encode(path);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, "0")).join("");
+}
+
+async function convertPortfolioImageToWebp(blob) {
+  if (typeof createImageBitmap !== "function") throw new Error("เบราว์เซอร์นี้ไม่รองรับการอ่านภาพเพื่อแปลง WebP");
+  const bitmap = await createImageBitmap(blob);
+  try {
+    const canvas = document.createElement("canvas");
+    canvas.width = bitmap.width;
+    canvas.height = bitmap.height;
+    const context = canvas.getContext("2d", { alpha: true });
+    if (!context) throw new Error("ไม่สามารถสร้าง Canvas สำหรับแปลงภาพได้");
+    context.drawImage(bitmap, 0, 0);
+    const webp = await new Promise((resolve, reject) => {
+      canvas.toBlob(result => result ? resolve(result) : reject(new Error("แปลงภาพเป็น WebP ไม่สำเร็จ")), "image/webp", 0.84);
+    });
+    if (!(webp instanceof Blob) || webp.type !== "image/webp" || !webp.size) {
+      throw new Error("เบราว์เซอร์ไม่สามารถสร้างไฟล์ WebP ที่ถูกต้องได้");
+    }
+    return { blob: webp, width: bitmap.width, height: bitmap.height };
+  } finally {
+    bitmap.close?.();
+  }
+}
+
+async function migrateOnePortfolioWebpFile(file) {
+  const { data: signed, error: signedError } = await supabaseClient.storage
+    .from("portfolio-images").createSignedUrl(file.path, 300);
+  if (signedError || !signed?.signedUrl) throw new Error(signedError?.message || "สร้างลิงก์อ่านไฟล์ต้นฉบับไม่สำเร็จ");
+
+  const response = await fetch(signed.signedUrl, { cache: "no-store" });
+  if (!response.ok) throw new Error("ดาวน์โหลดภาพต้นฉบับไม่สำเร็จ (HTTP " + response.status + ")");
+  const sourceBlob = await response.blob();
+  if (!sourceBlob.size) throw new Error("ไฟล์ต้นฉบับว่างเปล่า");
+
+  const converted = await convertPortfolioImageToWebp(sourceBlob);
+  const hash = await getPortfolioWebpPathHash(file.path);
+  const newPath = currentUser.id + "/portfolio-migration/" + hash + ".webp";
+  const { error: uploadError } = await supabaseClient.storage.from("portfolio-images").upload(newPath, converted.blob, {
+    contentType: "image/webp",
+    cacheControl: "31536000",
+    upsert: true
+  });
+  if (uploadError) throw new Error("อัปโหลด WebP ไม่สำเร็จ: " + uploadError.message);
+
+  let updatedReferences = 0;
+  for (let offset = 0; offset < file.rawValues.length; offset += 30) {
+    const committed = await invokePortfolioWebpMigration({
+      action: "commit",
+      oldValues: file.rawValues.slice(offset, offset + 30),
+      newPath
+    });
+    updatedReferences += Number(committed.updatedReferences || 0);
+  }
+  return {
+    updatedReferences,
+    originalBytes: sourceBlob.size,
+    webpBytes: converted.blob.size,
+    width: converted.width,
+    height: converted.height
+  };
+}
+
+async function runPortfolioWebpMigration() {
+  if (portfolioWebpMigrationBusy) return;
+  if (!isDeveloper() || isRolePreviewActive()) {
+    alert("เครื่องมือนี้อนุญาตเฉพาะ Developer ที่ไม่ได้อยู่ใน Role Preview");
+    return;
+  }
+  if (!currentUser?.id) {
+    alert("ไม่พบเซสชันผู้ใช้ กรุณาเข้าสู่ระบบใหม่");
+    return;
+  }
+  const button = $("portfolio-webp-migration-start");
+  portfolioWebpMigrationBusy = true;
+  if (button) { button.disabled = true; button.textContent = "กำลังตรวจสอบ..."; }
+  setPortfolioWebpMigrationProgress(0, 0);
+  setPortfolioWebpMigrationStatus("กำลังอ่านรายการภาพ Portfolio ที่ยังเป็น PNG/JPEG...", "working");
+
+  let scan;
+  try {
+    scan = await invokePortfolioWebpMigration({ action: "scan" });
+  } catch (error) {
+    setPortfolioWebpMigrationStatus("ตรวจสอบรายการไม่สำเร็จ: " + error.message, "error");
+    if (button) { button.disabled = false; button.textContent = "เริ่ม Migration"; }
+    portfolioWebpMigrationBusy = false;
+    return;
+  }
+
+  const files = Array.isArray(scan.files) ? scan.files : [];
+  if (!files.length) {
+    setPortfolioWebpMigrationProgress(0, 0);
+    setPortfolioWebpMigrationStatus("ไม่พบภาพ PNG/JPEG ที่ต้องแปลงแล้ว · ไม่ต้องดำเนินการเพิ่มเติม", "success");
+    const summary = $("portfolio-webp-migration-summary");
+    if (summary) summary.textContent = "0 ไฟล์ · 0 References";
+    if (button) { button.disabled = false; button.textContent = "ตรวจสอบอีกครั้ง"; }
+    portfolioWebpMigrationBusy = false;
+    return;
+  }
+
+  const confirmed = confirm(
+    "ตรวจพบภาพที่ต้องแปลง\n\n" +
+    "ไฟล์ไม่ซ้ำกัน: " + files.length + " ไฟล์\n" +
+    "References: " + Number(scan.totalReferences || 0) + " จุด\n\n" +
+    "ระบบจะแปลงทีละไฟล์เป็น WebP อัปโหลดไฟล์ใหม่ และเปลี่ยน Reference หลังตรวจสอบว่าไฟล์ใหม่ถูกอัปโหลดแล้วเท่านั้น\n\n" +
+    "ไฟล์ต้นฉบับจะไม่ถูกลบ"
+  );
+  if (!confirmed) {
+    setPortfolioWebpMigrationStatus("ยกเลิกก่อนเริ่มแปลงไฟล์ · ไม่มีการเปลี่ยนแปลงข้อมูล", "muted");
+    if (button) { button.disabled = false; button.textContent = "เริ่ม Migration"; }
+    portfolioWebpMigrationBusy = false;
+    return;
+  }
+
+  let succeeded = 0, failed = 0, updatedRefs = 0, originalBytes = 0, webpBytes = 0;
+  const failures = [];
+  const summary = $("portfolio-webp-migration-summary");
+  if (summary) summary.textContent = files.length + " ไฟล์ · " + Number(scan.totalReferences || 0) + " References";
+  if (button) button.textContent = "กำลังแปลงภาพ...";
+  setPortfolioWebpMigrationProgress(0, files.length);
+
+  for (let index = 0; index < files.length; index++) {
+    const file = files[index];
+    setPortfolioWebpMigrationStatus(
+      "กำลังแปลง " + (index + 1) + "/" + files.length + " · " + file.path.split("/").pop(),
+      "working"
+    );
+    try {
+      const result = await migrateOnePortfolioWebpFile(file);
+      succeeded++;
+      updatedRefs += result.updatedReferences;
+      originalBytes += result.originalBytes;
+      webpBytes += result.webpBytes;
+    } catch (error) {
+      failed++;
+      failures.push({ name: file.path.split("/").pop(), message: error.message || "Unknown error" });
+      console.error("Portfolio WebP migration failed:", file.path, error);
+    }
+    setPortfolioWebpMigrationProgress(index + 1, files.length);
+    if (summary) summary.textContent =
+      "สำเร็จ " + succeeded + " · ล้มเหลว " + failed + " · อัปเดต " + updatedRefs + " References";
+  }
+
+  const savedBytes = Math.max(0, originalBytes - webpBytes);
+  const savedPercent = originalBytes ? Math.round((savedBytes / originalBytes) * 100) : 0;
+  const finalMessage = failed
+    ? "เสร็จบางส่วน · สำเร็จ " + succeeded + " ไฟล์ · ล้มเหลว " + failed + " ไฟล์ · สามารถกดเริ่มใหม่เพื่อทำรายการที่เหลือได้"
+    : "Migration เสร็จสมบูรณ์ · แปลง " + succeeded + " ไฟล์ · อัปเดต " + updatedRefs + " References";
+  setPortfolioWebpMigrationStatus(finalMessage, failed ? "warning" : "success");
+  const details = $("portfolio-webp-migration-details");
+  if (details) {
+    details.textContent = "ขนาดต้นฉบับ " + (originalBytes / 1048576).toFixed(2) + " MB · WebP " +
+      (webpBytes / 1048576).toFixed(2) + " MB · ลดลง " + (originalBytes ? savedPercent + "%" : "—") +
+      " · เก็บไฟล์ต้นฉบับไว้ครบ";
+  }
+  const failureList = $("portfolio-webp-migration-failures");
+  if (failureList) {
+    failureList.textContent = failures.length
+      ? "รายการที่ต้องลองใหม่: " + failures.slice(0, 8).map(item => item.name + " (" + item.message + ")").join(" · ")
+      : "";
+  }
+  if (button) { button.disabled = false; button.textContent = failed ? "ลอง Migration รายการที่เหลืออีกครั้ง" : "ตรวจสอบอีกครั้ง"; }
+  portfolioWebpMigrationBusy = false;
+}
+
+function registerPortfolioWebpMigrationEvents() {
+  $("portfolio-webp-migration-start")?.addEventListener("click", () => { void runPortfolioWebpMigration(); });
+}
+
 function registerSystemRoleEvents() {
   $("system-role-search")?.addEventListener("input", renderSystemRoleMembers);
   $("system-role-filter")?.addEventListener("change", event => {
@@ -9410,6 +9615,7 @@ function registerAppEventListeners() {
 
   registerPortfolioEvents();
   registerSystemRoleEvents();
+  registerPortfolioWebpMigrationEvents();
   initializeGlobalDateTimePickers();
   registerWarCreationEvents();
   registerWarRecordAndAttendanceEvents();
