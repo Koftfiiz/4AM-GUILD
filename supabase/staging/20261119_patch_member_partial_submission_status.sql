@@ -11,7 +11,7 @@ begin
  if p_status_filter not in ('all','not_submitted','partial','pending','reviewing','approved','revision_required') then raise exception 'Invalid Patch status filter'; end if;
  select r.id into v_round_id from public.portfolio_update_rounds r
  where (p_round_id is null or r.id=p_round_id) order by r.archived_at nulls first,r.starts_at desc,r.created_at desc limit 1;
- if v_round_id is null then return jsonb_build_object('rounds','[]'::jsonb,'selected_round',null,'summary',jsonb_build_object('roster_count',0,'submitted_members',0,'not_submitted',0,'partial_members',0,'pending',0,'reviewing',0,'approved',0,'revision_required',0),'members','[]'::jsonb,'review_queue','[]'::jsonb,'recent_activity','[]'::jsonb); end if;
+ if v_round_id is null then return jsonb_build_object('rounds','[]'::jsonb,'selected_round',null,'summary',jsonb_build_object('roster_count',0,'submitted_members',0,'not_submitted',0,'partial_members',0,'pending',0,'reviewing',0,'approved',0,'revision_required',0),'members','[]'::jsonb,'attention_members','[]'::jsonb,'review_queue','[]'::jsonb,'recent_activity','[]'::jsonb); end if;
  with roster_stats as (
   select pr.member_id,pr.character_name,pr.game_class,pr.nickname,pr.discord_name,pr.roster_source,pr.added_at,
    count(distinct p.id)::int as folder_count,count(distinct s.id)::int as submitted_folder_count,
@@ -54,7 +54,14 @@ begin
   'rounds',(select coalesce(jsonb_agg(to_jsonb(r)),'[]'::jsonb) from (select id,round_name,starts_at,closes_at,status,archived_at,roster_snapshot_at from public.portfolio_update_rounds order by archived_at nulls first,starts_at desc limit 12) r),
   'selected_round',(select to_jsonb(r) from (select id,round_name,starts_at,closes_at,status,archived_at,roster_snapshot_at from public.portfolio_update_rounds where id=v_round_id) r),
   'summary',(select jsonb_build_object('roster_count',count(*),'submitted_members',count(*) filter(where submitted_folder_count>0),'not_submitted',count(*) filter(where member_status='not_submitted'),'partial_members',count(*) filter(where member_status='partial'),'pending',coalesce(sum(pending_count),0),'reviewing',coalesce(sum(reviewing_count),0),'approved',coalesce(sum(approved_count),0),'revision_required',coalesce(sum(revision_count),0)) from roster_stats),
-  'members',(select coalesce(jsonb_agg(to_jsonb(m)),'[]'::jsonb) from member_page m),'member_total',(select count(*) from filtered_members),
+  'members',(select coalesce(jsonb_agg(to_jsonb(m)),'[]'::jsonb) from member_page m),
+  'attention_members',(select coalesce(jsonb_agg(to_jsonb(a)),'[]'::jsonb) from (
+   select member_id,character_name,game_class,folder_count,submitted_folder_count,member_status
+   from roster_stats
+   where member_status in ('not_submitted','partial','revision_required')
+   order by case member_status when 'revision_required' then 1 when 'not_submitted' then 2 else 3 end,lower(character_name),member_id
+   limit 10
+  ) a),'member_total',(select count(*) from filtered_members),
   'review_queue',(select coalesce(jsonb_agg(to_jsonb(q)),'[]'::jsonb) from queue_rows q),
   'review_queue_total',(select count(*) from queue_filtered),
   'recent_activity',(select coalesce(jsonb_agg(to_jsonb(a)),'[]'::jsonb) from (select e.id,e.submission_id,e.old_status,e.new_status,e.review_note,e.created_at,pr.character_name,s.member_id
