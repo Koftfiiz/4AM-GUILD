@@ -35,8 +35,8 @@ declare v_result jsonb;
 begin
  if not public.is_guild_member() then raise exception 'Active guild membership required'; end if;
  if length(trim(coalesce(p_search,'')))>80 then raise exception 'Search text is too long'; end if;
- if p_guild_filter not in ('all','4AM','4PM','unassigned') then raise exception 'Invalid guild filter'; end if;
- if p_record_type not in ('all','account','manual') then raise exception 'Invalid record type filter'; end if;
+ if p_guild_filter is null or p_guild_filter not in ('all','4AM','4PM','unassigned') then raise exception 'Invalid guild filter'; end if;
+ if p_record_type is null or p_record_type not in ('all','account','manual') then raise exception 'Invalid record type filter'; end if;
  with combined as (
   select gm.user_id as member_id,null::uuid as manual_member_id,gm.character_name,gm.game_class,gm.nickname,gm.discord_name,
    'account'::text as record_type,gm.active,gm.membership_status,gm.role,g.code as guild_code,aff.started_at as affiliation_started_at
