@@ -3337,7 +3337,7 @@ function getPortfolioClasses(value) {
 // Keep the database sequence unique; calculate the visible Snapshot number per Patch.
 function getPortfolioPatchName(version) {
   let value = String(version?.version_name || "").trim();
-  if (/^Version\s+\\d+$/i.test(value)) value = "";
+  if (/^Version\s+\d+$/i.test(value)) value = "";
   if (!value) value = String(version?.patch_label || "").trim();
   value = value.replace(/^Patch\s*/i, "").trim();
   return value || "ไม่ระบุ Patch";
