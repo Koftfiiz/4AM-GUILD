@@ -53,3 +53,11 @@ The other files in `supabase/staging/` are historical incremental QA patches use
 ## Release rule
 
 Staging validation does not deploy or mutate Production. Production migration files are applied only after all seven phases and acceptance tests are complete. The 4AM/4PM assignments for existing members must be supplied/confirmed by guild Management; never infer them from source tables.
+
+
+## Preview isolation
+
+- `app.js` selects Production only for the verified hostname `4am-guild.vercel.app`. Every other hostname, including Vercel Preview URLs and localhost, selects the isolated Staging Supabase project and its publishable key.
+- Do not open or share the older Preview deployment built from commit `8993d0e`; it predates the host-routing safeguard and still points to Production.
+- The latest feature-branch commit contains the safeguard and passed GitHub Actions. A new Preview build is currently blocked by Vercel's Free daily deployment API quota (100 deployments/24h); no plan upgrade or paid deployment was requested. Retry after the quota window resets.
+- No Production deployment was triggered.
