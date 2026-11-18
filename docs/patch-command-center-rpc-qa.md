@@ -52,3 +52,8 @@ The Production application already defines `is_portfolio_management()` and `is_p
 - Patch read policies now scope review notes/events to the submission owner or an authorized reviewer; general Patch data is restricted to active guild members.
 - Staging submission FK delete behavior has been aligned with the inspected Production constraints (member cascade, portfolio restrict, round cascade, version restrict).
 - These follow-up SQL edits are committed on the feature branch but have not yet been re-applied/re-tested because the Free Staging project has been paused to conserve active resources. Re-run the targeted QA suite after resuming Staging.
+
+
+## Review queue pagination follow-up
+
+The read RPC now exposes `review_queue_total`, and the Command Center UI includes Previous/Next controls using the same bounded page size as the member list. This follow-up change is committed but not yet re-applied/re-tested on Staging.
