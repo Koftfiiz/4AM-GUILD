@@ -8,16 +8,22 @@
 - Production data copied: none
 - Storage objects copied: none
 - Discord credentials/webhooks connected: none
-- Schema scope: isolated Guild Affiliation prototype schema only; this is not a complete mirror of the existing Production application schema.
+- Schema scope: synthetic feature schema covering Guild Affiliation, Member Directory, Patch roster, Portfolio submissions, review workflow, and small Portfolio image fixtures; this is not a complete mirror of the Production application.
 
 ## Synthetic fixture counts
 
 | Table | Rows |
 |---|---:|
 | guilds | 2 |
-| guild_members | 6 |
+| guild_members | 7 |
 | guild_manual_members | 4 |
-| guild_member_affiliations | 5 |
+| guild_member_affiliations | 9 |
+| discord_accounts | 7 |
+| portfolio_update_rounds | 5 |
+| portfolio_patch_roster | 14 |
+| portfolio_patch_submissions | 5 |
+| portfolio_patch_submission_reviews | 5 |
+| portfolio_patch_review_events | 7 |
 
 The fixture set includes one manual row linked to a registered account and three manual-only rows. It uses invented character names and fixed synthetic UUIDs.
 
@@ -32,19 +38,19 @@ The fixture set includes one manual row linked to a registered account and three
 - A linked manual row is rejected and must use its canonical registered `user_id`.
 - A manual-only record can receive an affiliation.
 - Transactional QA changes were rolled back; fixture state remains unchanged.
-- `anon` cannot execute either SECURITY DEFINER function. Authenticated execution is intentional: both functions enforce role checks, and the mutation RPC validates caller authorization internally.
+- `anon` cannot execute the feature SECURITY DEFINER RPCs. Authenticated execution is intentional for the role-check helper and controlled mutation RPCs; each mutation checks `auth.uid()` and the active Developer/Leader/Management permission helper. The internal snapshot and trigger functions are not directly executable by `anon` or `authenticated`.
 
 ## Advisor notes
 
-- Supabase security advisor still reports the two SECURITY DEFINER functions as callable by authenticated users. This is intentional for the authenticated RLS helper and controlled RPC; the RPC enforces admin membership and the helper only returns the caller's own authorization status.
-- Performance advisor reports the guild/current index as unused in the small synthetic test. Keep it for the intended directory query; do not remove an index solely because a tiny fixture did not exercise production-scale access patterns.
+- Supabase security advisor reports authenticated-callable SECURITY DEFINER functions. These are the intentionally exposed authorization helper and guarded RPCs; the internal snapshot/trigger functions are not exposed. The advisor also reports the Staging Auth leaked-password-protection setting; this is an inherited project Auth configuration, not a new schema exposure.
+- Performance advisor no longer reports duplicate permissive RLS policies after policy consolidation. It reports nine unused indexes on the tiny synthetic dataset; keep the FK, roster snapshot, review queue, and history indexes for their production query paths rather than removing them based on a small fixture.
 
 ## Limitations / next work
 
-- This schema is not yet the complete application Staging baseline. The Production database contains more legacy tables, policies, triggers, RPCs, and Edge Function dependencies than the migration files currently checked into the repository.
-- Do not point the production app at this partial Staging schema.
-- Continue by completing the schema inventory and reviewing existing member-directory/portfolio patch data contracts before implementing the integrated Member Directory and Patch Roster.
-- No Production schema or data was modified during this staging work. The earlier Guild Affiliation foundation already exists in Production and has zero assigned affiliation rows.
+- Staging remains a focused feature schema, not a full clone of the Production application or its Edge Functions/Discord integrations.
+- Do not point the production app at this feature-only Staging schema.
+- The new pages still need browser QA with real authenticated Staging users, responsive/accessibility checks, and legacy Portfolio Tracker regression testing.
+- No Production schema or data was modified during this Staging QA. Production still has zero assigned affiliation rows and no Patch roster/review tables.
 
 
 ## Follow-up security hardening
