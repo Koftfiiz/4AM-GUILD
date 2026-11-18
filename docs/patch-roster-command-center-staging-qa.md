@@ -21,7 +21,7 @@ All tables and records below exist only in `4AM-GUILD-Staging`. They are synthet
 4. Manual-only records are not added to the submission roster because they have no website account and cannot own/submit Portfolio folders. A linked Manual row uses its canonical registered `user_id`. If it links after an active Patch snapshot already exists, it is added once with source `manual_link`; if the Patch snapshot is still due, the post-link snapshot includes it normally.
 5. A member already present is never duplicated due to repeated moves.
 
-The final Production release will schedule the snapshot function using the existing `pg_cron` capability at a low frequency (once per minute). No recurring cron job is running in Free Staging, to avoid keeping an otherwise idle Free project awake. The affiliation-change RPC also snapshots any due Patch before mutating affiliation history, protecting the opening roster if a member moves around the scheduled start.
+Staging currently has one once-per-minute database-only `pg_cron` job. Its latest run records succeeded and returned `1 row`; it makes no HTTP calls and does not touch Storage. The affiliation-change, round lifecycle, and submission RPCs also snapshot any due Patch before mutation/submission, protecting the opening roster if a member moves around the scheduled start.
 
 ## Command Center workflow
 
@@ -45,23 +45,25 @@ The final Production release will schedule the snapshot function using the exist
 - Resubmission of a new Version reset status to `pending`.
 - Review audit events were written for the transitions.
 - Non-reviewer review attempt was rejected.
-- All behavior-changing QA was wrapped in a transaction and rolled back. The permanent Staging fixtures remain synthetic.
+- Targeted regression tests for affiliation transfer, manual-account merge, submission, review transitions, and archive/restore were run against synthetic Staging data. No Production data was touched; the Staging fixtures remain synthetic.
 
 ## Current Staging fixture counts
 
 | Table | Rows |
 |---|---:|
-| `portfolio_update_rounds` | 1 |
-| `portfolio_patch_roster` | 2 |
-| `portfolios` | 2 |
-| `portfolio_patch_submissions` | 1 |
-| `portfolio_patch_submission_reviews` | 1 |
-| `portfolio_patch_review_events` | 1 |
+| `portfolio_update_rounds` | 5 |
+| `portfolio_patch_roster` | 14 |
+| `portfolios` | 3 |
+| `portfolio_versions` | 3 |
+| `portfolio_version_images` | 2 |
+| `portfolio_patch_submissions` | 5 |
+| `portfolio_patch_submission_reviews` | 5 |
+| `portfolio_patch_review_events` | 7 |
 
 ## Important limitations
 
 - Staging remains a focused feature schema, not a complete mirror of the existing Production application.
-- The new UI is still an offline prototype; it does not yet replace the existing Portfolio Tracker.
+- The new Directory and Command Center UI modules are integrated on the feature branch; browser QA with an actual authenticated Staging session remains outstanding.
 - No production migrations, production member affiliations, production submissions, or Production deployment were performed in this work.
 - Production already contains `portfolio_update_rounds` (0 rows), `portfolio_patch_submissions` (0 rows), 61 Portfolio folders, and 64 Portfolio Versions at the latest schema inventory. The existing Production `portfolio_patch_submissions` table has the same core columns, one-submission-per-folder unique constraint, and FK delete behavior now represented in Staging (member cascade, portfolio restrict, round cascade, version restrict). Before release, still compare all grants, RLS policies, indexes, and triggers on the live table; do not recreate or replace the existing table. Existing rows were only counted, not modified.
 
@@ -81,7 +83,7 @@ The Production migration now includes `manual_link` as a distinct roster source 
 - A member outside the 4AM snapshot sees a clear ineligible state instead of being counted as a missing submission; members can still view their own Portfolio folders.
 - The submit RPC snapshots due rounds before checking roster eligibility, so a 4AM member can submit at the exact opening even if the minute worker has not run yet.
 - Permanent Patch deletion was removed from the legacy tracker; archive/restore preserves the immutable roster and audit history.
-- These integration changes are committed but await Staging revalidation.
+- These integration changes have been applied to Staging and passed targeted SQL regression tests; browser QA remains outstanding.
 
 
 ## Egress controls in the legacy submission page
@@ -89,4 +91,4 @@ The Production migration now includes `manual_link` as a distinct roster source 
 The member-facing Portfolio Tracker now fetches only the selected Patch's roster, the current member's affiliation, and the current member's folders (or the selected roster's folders for authorized management). It selects explicit fields, omits nested Portfolio image URLs entirely, and bounds round/roster/request/submission lists. It no longer downloads every member's Portfolio image metadata on every page load.
 
 
-The Member Workspace Files tab now loads up to 100 image metadata rows only when the reviewer opens that tab, then resolves signed URLs through the existing Portfolio URL cache. Thumbnails use lazy loading; the default Overview and Directory views do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
+The Member Workspace now loads Portfolio folders and Version metadata in separate bounded queries (30 folders, 100 Versions), review history is capped at 50 events, and image metadata (maximum 100) is fetched only when Files is opened. Thumbnails are lazy-loaded; Overview and Directory do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
