@@ -1453,8 +1453,15 @@ $('bAgain').onclick=()=>{
   reset();S.st='run';$('bGo').textContent='Ⅱ PAUSE';if(musOn)startMus();
 };
 $('trophy').onclick=()=>$('resM').classList.remove('hide');
-const DUCK_RACE_SUPABASE_URL="https://qbjixpcbzklrkcneluej.supabase.co";
-const DUCK_RACE_SUPABASE_KEY="sb_publishable_4nOj0RDz_BuIt-lIWNvGAg_NmABI3a0";
+// Keep standalone Duck Race pages isolated too: only the verified Production
+// hostname may connect to Production; Preview and local hosts use Staging.
+const DUCK_RACE_IS_PRODUCTION = String(window.location.hostname || "").toLowerCase()==="4am-guild.vercel.app";
+const DUCK_RACE_SUPABASE_URL=DUCK_RACE_IS_PRODUCTION
+  ?"https://qbjixpcbzklrkcneluej.supabase.co"
+  :"https://jmuxbomowtqcigesbimz.supabase.co";
+const DUCK_RACE_SUPABASE_KEY=DUCK_RACE_IS_PRODUCTION
+  ?"sb_publishable_4nOj0RDz_BuIt-lIWNvGAg_NmABI3a0"
+  :"sb_publishable_iive09cpDKs7AV45AbvIKw_vO4Acr80";
 const duckRaceSupabase=window.supabase?.createClient(DUCK_RACE_SUPABASE_URL,DUCK_RACE_SUPABASE_KEY,{
   auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}
 });
