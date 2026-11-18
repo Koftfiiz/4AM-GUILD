@@ -69,39 +69,16 @@ drop policy if exists "Leaders, Management, and Developers can manage guilds" on
 drop policy if exists "Affiliation managers can insert guilds" on public.guilds;
 drop policy if exists "Affiliation managers can update guilds" on public.guilds;
 drop policy if exists "Affiliation managers can delete guilds" on public.guilds;
-create policy "Affiliation managers can insert guilds" on public.guilds
-  for insert to authenticated with check (public.can_manage_guild_affiliations());
-create policy "Affiliation managers can update guilds" on public.guilds
-  for update to authenticated using (public.can_manage_guild_affiliations())
-  with check (public.can_manage_guild_affiliations());
-create policy "Affiliation managers can delete guilds" on public.guilds
-  for delete to authenticated using (public.can_manage_guild_affiliations());
 
-drop policy if exists "Members can view own guild affiliation" on public.guild_member_affiliations;
-create policy "Members can view own guild affiliation"
-  on public.guild_member_affiliations for select to authenticated
-  using (
-    user_id=(select auth.uid())
-    or exists(select 1 from public.guild_manual_members mm
-      where mm.id=guild_member_affiliations.manual_member_id
-        and mm.linked_user_id=(select auth.uid()))
-    or public.can_manage_guild_affiliations()
-    or (ended_at is null and public.is_guild_member())
-  );
-drop policy if exists "Guild admins can manage member affiliations" on public.guild_member_affiliations;
-drop policy if exists "Leaders, Management, and Developers can manage member affiliations" on public.guild_member_affiliations;
-drop policy if exists "Affiliation managers can insert member affiliations" on public.guild_member_affiliations;
+revoke all on public.guilds from public,anon,authenticated;
+grant select on public.guilds to authenticated;
+revoke all on public.guild_member_affiliations from public,anon,authenticated;
+grant select on public.guild_member_affiliations to authenticated;
+
+commit;drop policy if exists "Affiliation managers can insert member affiliations" on public.guild_member_affiliations;
 drop policy if exists "Affiliation managers can update member affiliations" on public.guild_member_affiliations;
 drop policy if exists "Affiliation managers can delete member affiliations" on public.guild_member_affiliations;
-create policy "Affiliation managers can insert member affiliations" on public.guild_member_affiliations
-  for insert to authenticated with check (public.can_manage_guild_affiliations());
-create policy "Affiliation managers can update member affiliations" on public.guild_member_affiliations
-  for update to authenticated using (public.can_manage_guild_affiliations())
-  with check (public.can_manage_guild_affiliations());
-create policy "Affiliation managers can delete member affiliations" on public.guild_member_affiliations
-  for delete to authenticated using (public.can_manage_guild_affiliations());
 
-grant select,insert,update,delete on public.guilds to authenticated;
 grant select,insert,update,delete on public.guild_member_affiliations to authenticated;
 
 commit;
