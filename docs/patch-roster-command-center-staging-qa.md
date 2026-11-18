@@ -82,3 +82,8 @@ The Production migration now includes `manual_link` as a distinct roster source 
 - The submit RPC snapshots due rounds before checking roster eligibility, so a 4AM member can submit at the exact opening even if the minute worker has not run yet.
 - Permanent Patch deletion was removed from the legacy tracker; archive/restore preserves the immutable roster and audit history.
 - These integration changes are committed but await Staging revalidation.
+
+
+## Egress controls in the legacy submission page
+
+The member-facing Portfolio Tracker now fetches only the selected Patch's roster, the current member's affiliation, and the current member's folders (or the selected roster's folders for authorized management). It selects explicit fields, omits nested Portfolio image URLs entirely, and bounds round/roster/request/submission lists. It no longer downloads every member's Portfolio image metadata on every page load.
