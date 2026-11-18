@@ -59,12 +59,12 @@ alter table public.portfolio_version_images enable row level security;
 alter table public.portfolio_patch_submissions enable row level security;
 alter table public.portfolio_patch_submission_reviews enable row level security;
 alter table public.portfolio_patch_review_events enable row level security;
-create policy portfolios_read_members on public.portfolios for select to authenticated using(true);
-create policy versions_read_members on public.portfolio_versions for select to authenticated using(true);
-create policy version_images_read_members on public.portfolio_version_images for select to authenticated using(true);
-create policy patch_submissions_read_members on public.portfolio_patch_submissions for select to authenticated using(true);
-create policy patch_reviews_read_members on public.portfolio_patch_submission_reviews for select to authenticated using(true);
-create policy patch_review_events_read_members on public.portfolio_patch_review_events for select to authenticated using(true);
+create policy portfolios_read_members on public.portfolios for select to authenticated using(public.is_guild_member());
+create policy versions_read_members on public.portfolio_versions for select to authenticated using(public.is_guild_member());
+create policy version_images_read_members on public.portfolio_version_images for select to authenticated using(public.is_guild_member());
+create policy patch_submissions_read_members on public.portfolio_patch_submissions for select to authenticated using(public.is_guild_member());
+create policy patch_reviews_read_members on public.portfolio_patch_submission_reviews for select to authenticated using(\n exists(select 1 from public.portfolio_patch_submissions s where s.id=submission_id\n  and (s.member_id=(select auth.uid()) or public.is_portfolio_reviewer()))\n);
+create policy patch_review_events_read_members on public.portfolio_patch_review_events for select to authenticated using(\n exists(select 1 from public.portfolio_patch_submissions s where s.id=submission_id\n  and (s.member_id=(select auth.uid()) or public.is_portfolio_reviewer()))\n);
 grant select on public.portfolios,public.portfolio_versions,public.portfolio_version_images,
  public.portfolio_patch_submissions,public.portfolio_patch_submission_reviews,public.portfolio_patch_review_events to authenticated;
 
