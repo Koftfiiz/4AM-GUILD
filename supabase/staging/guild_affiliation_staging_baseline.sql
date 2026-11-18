@@ -91,14 +91,13 @@ create policy guilds_read_active on public.guilds for select to authenticated us
 create policy guild_members_read_directory on public.guild_members for select to authenticated using (active = true);
 create policy guild_manual_members_read_directory on public.guild_manual_members for select to authenticated using (active = true);
 create policy discord_accounts_read_owner_or_management on public.discord_accounts for select to authenticated using (user_id=(select auth.uid()) or public.is_guild_admin());
-create policy affiliations_read_self_or_admin on public.guild_member_affiliations for select to authenticated using (
+create policy "Members can view own guild affiliation" on public.guild_member_affiliations for select to authenticated using (
   public.is_guild_admin() or user_id = (select auth.uid()) or exists (
     select 1 from public.guild_manual_members mm
     where mm.id = guild_member_affiliations.manual_member_id and mm.linked_user_id = (select auth.uid())
   )
 );
-create policy affiliations_admin_insert on public.guild_member_affiliations for insert to authenticated with check (public.is_guild_admin());
-create policy affiliations_admin_update on public.guild_member_affiliations for update to authenticated using (public.is_guild_admin()) with check (public.is_guild_admin());
+create policy "Leaders, Management, and Developers can manage member affiliations" on public.guild_member_affiliations for all to authenticated using (public.is_guild_admin()) with check (public.is_guild_admin());
 grant select on public.guilds, public.guild_members, public.guild_manual_members, public.guild_member_affiliations, public.discord_accounts to authenticated;
 grant insert, update, delete on public.guild_member_affiliations to authenticated;
 create or replace function public.set_guild_member_affiliation(
