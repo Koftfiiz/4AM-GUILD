@@ -71,3 +71,11 @@ The Staging Supabase project now has a reviewed synthetic baseline for the membe
 ## Production affiliation mapping remains a user/Management decision
 
 Latest read-only Production counts: 58 active registered accounts, 14 active Manual-only records, 47 linked Manual records (excluded as duplicates), and 0 current affiliations. The Directory will therefore show 72 distinct active identities as unassigned. No source-table-to-guild assumption is made; each of those 72 identities must be assigned to 4AM or 4PM based on the real guild roster.
+
+
+## Latest QA and preview safety
+
+- The feature branch now routes the verified Production hostname to Production and all Preview/local hostnames to isolated Staging; this safeguard is covered by the passing JavaScript CI workflow.
+- Staging schema contracts and targeted SQL tests cover directory canonical identity/pagination, affiliation privacy and role permissions, immutable Patch roster, late manual-account linking, submission/resubmission history, reviewer-only transitions, and app-compatible table grants.
+- Staging's RLS advisor has no multiple-permissive-policy or unindexed-FK warning. Remaining notices are the expected authenticated SECURITY DEFINER helpers/RPCs, inherited leaked-password-protection setting, and unused indexes on the small synthetic dataset.
+- Real browser QA is still open. The previous Vercel Preview predates the Staging-routing safeguard; a new Preview build is blocked by the Free daily deployment API quota until its 24-hour window resets. Do not use the old Preview URL.
