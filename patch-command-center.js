@@ -6,7 +6,7 @@
   const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const activeMember=()=>!!currentUser&&!!currentMember&&currentMember.active===true&&currentMember.membership_status==="active";
   const allowed=()=>activeMember()&&typeof isManagement==="function"&&isManagement()&&!(typeof isRolePreviewActive==="function"&&isRolePreviewActive());
-  const statusText={not_submitted:"ยังไม่ส่ง",partial:"ส่งไม่ครบ",pending:"รอตรวจ",reviewing:"กำลังตรวจ",approved:"ผ่านแล้ว",revision_required:"ต้องแก้ไข"};
+  const statusText={not_submitted:"ยังไม่ส่ง",partial:"ส่งไม่ครบ",pending:"รอตรวจ",reviewing:"กำลังตรวจ",approved:"ผ่านแล้ว",revision_required:"ต้องแก้ไข",submitted:"ส่ง Patch",resubmitted:"ส่ง Version ใหม่"};
   const statusPill=s=>'<span class="pc-pill pc-'+esc(s)+'">'+esc(statusText[s]||s||"—")+'</span>';
   const dateLabel=v=>{if(!v)return "—";const d=new Date(v);return Number.isNaN(d.getTime())?"—":d.toLocaleString("th-TH",{dateStyle:"medium",timeStyle:"short"});};
 
@@ -102,7 +102,11 @@
     const attention=state.data?.attention_members||[];
     $("pc-attention").innerHTML=attention.length?attention.slice(0,10).map(m=>'<div class="pc-event"><strong>'+esc(m.character_name)+' · '+esc(statusText[m.member_status])+'</strong><small>'+esc(m.game_class)+' · '+(m.submitted_folder_count||0)+'/'+(m.folder_count||0)+' แฟ้ม</small></div>').join(""):'<div class="pc-empty">ไม่มีรายการที่ต้องติดตามในหน้านี้</div>';
     const activity=state.data?.recent_activity||[];
-    $("pc-activity").innerHTML=activity.length?activity.map(a=>'<div class="pc-event"><strong>'+esc(a.character_name)+' · '+esc(statusText[a.new_status]||a.new_status)+'</strong><small>'+esc(a.review_note||"ไม่มีหมายเหตุ")+' · '+dateLabel(a.created_at)+'</small></div>').join(""):'<div class="pc-empty">ยังไม่มีกิจกรรมตรวจสอบ</div>';
+    $("pc-activity").innerHTML=activity.length?activity.map(a=>{
+      const label=a.activity_type==="submission"?(a.new_status==="resubmitted"?"ส่ง Version ใหม่":"ส่ง Patch"):statusText[a.new_status]||a.new_status;
+      const detail=a.activity_type==="submission"?(a.version_name||("Version "+(a.version_number||""))) : (a.review_note||"อัปเดตสถานะการตรวจ");
+      return '<div class="pc-event"><strong>'+esc(a.character_name)+' · '+esc(label)+'</strong><small>'+esc(detail)+' · '+dateLabel(a.created_at)+'</small></div>';
+    }).join(""):'<div class="pc-empty">ยังไม่มีกิจกรรม Patch</div>';
   }
 
   function renderMembers(){
