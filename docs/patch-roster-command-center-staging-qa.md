@@ -68,7 +68,7 @@ Staging currently has one once-per-minute database-only `pg_cron` job. Its lates
 ## Important limitations
 
 - Staging remains a focused feature schema, not a complete mirror of the existing Production application.
-- The new Directory and Command Center UI modules are integrated on the feature branch; browser QA with an actual authenticated Staging session remains outstanding.
+- The new Directory and Command Center UI modules are integrated on the feature branch. Review Queue has its own Management-only sidebar entry and reuses the same Command Center loader; browser QA with an actual authenticated Staging session remains outstanding.
 - No production migrations, production member affiliations, production submissions, or Production deployment were performed in this work.
 - Production already contains `portfolio_update_rounds` (0 rows), `portfolio_patch_submissions` (0 rows), 61 Portfolio folders, and 64 Portfolio Versions at the latest schema inventory. The existing Production `portfolio_patch_submissions` table has the same core columns, one-submission-per-folder unique constraint, and FK delete behavior now represented in Staging (member cascade, portfolio restrict, round cascade, version restrict). Before release, still compare all grants, RLS policies, indexes, and triggers on the live table; do not recreate or replace the existing table. Existing rows were only counted, not modified.
 
