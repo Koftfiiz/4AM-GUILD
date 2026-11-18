@@ -34,7 +34,7 @@ The other files in `supabase/staging/` are historical incremental QA patches use
 - The post-QA fixture/FK follow-up has been applied.
 - Both schema contract tests pass.
 - Staging grants are aligned to the app's direct-write workflows while preserving RLS; anon has no table privileges on the feature schema.
-- One database-only snapshot cron job is active once per minute and has successful run records. It does not call external services or Storage.
+- One database-only snapshot cron job remains configured at once per minute; it is not running while the project is paused. It makes no HTTP calls and does not touch Storage.
 - The current fixtures include synthetic accounts, manual-only/link cases, Patch rounds, roster entries, submissions, and review events. They are not Production data.
 - After the remaining Staging QA is complete, pause the Free Staging project to conserve active compute. Do not pause it while a test session is still running.
 
