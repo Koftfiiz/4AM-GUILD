@@ -81,3 +81,11 @@ Latest GitHub Actions validation: JavaScript syntax checks passed on the feature
 
 
 The Member Workspace now loads Portfolio folders and Version metadata in separate bounded queries (30 folders, 100 Versions), review and submission history are each capped at 50 events, and image metadata (maximum 100) is fetched only when Files is opened. Thumbnails are lazy-loaded; Overview and Directory do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
+
+
+## Latest database performance and policy review
+
+- Duplicate permissive SELECT policies on the Guild, affiliation, Patch roster, legacy Portfolio, and late-edit tables were consolidated or removed. The Staging performance advisor no longer reports multiple permissive policies.
+- Indexes now cover the new submission audit Version/actor foreign keys and the existing late-edit permission/request and Portfolio Version creator foreign keys.
+- The advisor still reports unused indexes on the tiny synthetic Staging dataset. These indexes support real member counts, Patch lookups, history, and FK maintenance in Production; do not remove them based on the small fixture.
+- The security advisor's authenticated SECURITY DEFINER notices are intentional for the guarded RPCs and caller-specific authorization helpers. The internal snapshot/audit trigger functions are not executable by anon/authenticated. Leaked-password protection is a separate inherited Staging Auth setting.
