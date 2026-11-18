@@ -78,3 +78,6 @@ The legacy member-facing Portfolio Tracker has also been aligned with the 4AM ro
 
 
 Latest GitHub Actions validation: JavaScript syntax checks passed on the feature branch after the Workspace, pagination, and Portfolio Tracker updates. The workflow also enforces the 15px minimum and black/red theme; the newest workflow run for the follow-up SQL/docs commit is queued separately.
+
+
+The Member Workspace Files tab now loads up to 100 image metadata rows only when the reviewer opens that tab, then resolves signed URLs through the existing Portfolio URL cache. Thumbnails use lazy loading; the default Overview and Directory views do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
