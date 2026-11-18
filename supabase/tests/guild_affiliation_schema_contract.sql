@@ -30,19 +30,16 @@ begin
     raise exception 'Missing unique current-manual affiliation index';
   end if;
 
-  if not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='guild_member_affiliations'
-      and policyname='Affiliation managers can insert member affiliations'
-      and with_check like '%can_manage_guild_affiliations%'
-  ) or not exists (
-    select 1 from pg_policies
-    where schemaname='public' and tablename='guild_member_affiliations'
-      and policyname='Affiliation managers can update member affiliations'
-      and qual like '%can_manage_guild_affiliations%'
-      and with_check like '%can_manage_guild_affiliations%'
-  ) then
-    raise exception 'Affiliation write policies are missing or use the wrong authorization helper';
+  if has_table_privilege('authenticated','public.guild_member_affiliations','INSERT')
+     or has_table_privilege('authenticated','public.guild_member_affiliations','UPDATE')
+     or has_table_privilege('authenticated','public.guild_member_affiliations','DELETE')
+     or has_table_privilege('authenticated','public.guilds','INSERT')
+     or has_table_privilege('authenticated','public.guilds','UPDATE')
+     or has_table_privilege('authenticated','public.guilds','DELETE') then
+    raise exception 'Guild affiliation tables must be read-only to clients; mutations must use guarded RPCs';
+  end if;
+  if to_regprocedure('public.set_guild_member_affiliation(text,uuid,uuid,text)') is null then
+    raise exception 'Missing guarded set_guild_member_affiliation RPC';
   end if;
 
   if not exists (
