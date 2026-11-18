@@ -92,6 +92,7 @@ begin
   return new;
 end; $$;
 revoke all on function public.add_member_to_active_patch_rosters() from public,anon,authenticated;
+drop trigger if exists guild_affiliation_add_to_patch_roster on public.guild_member_affiliations;
 create trigger guild_affiliation_add_to_patch_roster
 after insert on public.guild_member_affiliations
 for each row execute function public.add_member_to_active_patch_rosters();
