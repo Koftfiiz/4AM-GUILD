@@ -8668,6 +8668,23 @@ body.gallery-lightbox-open{overflow:hidden}
   color: #f4f4f5;
   font-size: 17px;
 }
+
+.portfolio-version-history-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.portfolio-version-history-heading h3 {
+  margin: 0;
+  color: #f4f4f5;
+  font-size: 17px;
+}
+.portfolio-history-toggle {
+  min-height: 40px;
+  font-size: 15px;
+}
 .portfolio-version-list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
