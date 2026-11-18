@@ -4,7 +4,7 @@ returns uuid language plpgsql security definer set search_path=''
 as $$
 declare v_id uuid;
 begin
- if (select auth.uid()) is null or not public.is_portfolio_management() then raise exception 'Management access required'; end if;
+ if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Management access required'; end if;
  if nullif(trim(p_round_name),'') is null or length(trim(p_round_name))>120 then raise exception 'Patch name must be 1–120 characters'; end if;
  if p_starts_at is null or p_closes_at is null or p_closes_at<=p_starts_at then raise exception 'Invalid Patch date range'; end if;
  insert into public.portfolio_update_rounds(round_name,starts_at,closes_at,status,created_by)
@@ -19,7 +19,7 @@ create or replace function public.update_portfolio_patch_round(p_round_id uuid,p
 returns uuid language plpgsql security definer set search_path=''
 as $$
 begin
- if (select auth.uid()) is null or not public.is_portfolio_management() then raise exception 'Management access required'; end if;
+ if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Management access required'; end if;
  if p_action not in ('open','close','archive','restore') then raise exception 'Invalid Patch action'; end if;
  perform public.snapshot_due_patch_rosters();
  update public.portfolio_update_rounds
