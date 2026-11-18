@@ -480,11 +480,23 @@ begin
   'review_queue',(select coalesce(jsonb_agg(to_jsonb(q)),'[]'::jsonb) from queue_rows q),
   'review_queue_total',(select count(*) from queue_filtered),
   'recent_activity',(select coalesce(jsonb_agg(to_jsonb(a)),'[]'::jsonb) from (
-   select e.id,e.submission_id,e.old_status,e.new_status,e.review_note,e.created_at,pr.character_name,s.member_id
-   from public.portfolio_patch_review_events e
-   join public.portfolio_patch_submissions s on s.id=e.submission_id
-   join public.portfolio_patch_roster pr on pr.round_id=s.round_id and pr.member_id=s.member_id
-   where s.round_id=v_round_id order by e.created_at desc limit 10
+   select activity.* from (
+    select e.id,e.submission_id,'review'::text as activity_type,e.old_status,e.new_status,e.review_note,
+     e.created_at,pr.character_name,s.member_id,null::text as version_name,null::integer as version_number
+    from public.portfolio_patch_review_events e
+    join public.portfolio_patch_submissions s on s.id=e.submission_id
+    join public.portfolio_patch_roster pr on pr.round_id=s.round_id and pr.member_id=s.member_id
+    where s.round_id=v_round_id
+    union all
+    select se.id,se.submission_id,'submission'::text as activity_type,null::text as old_status,
+     se.event_type as new_status,null::text as review_note,se.created_at,pr.character_name,s.member_id,
+     pv.version_name,pv.version_number
+    from public.portfolio_patch_submission_events se
+    join public.portfolio_patch_submissions s on s.id=se.submission_id
+    join public.portfolio_patch_roster pr on pr.round_id=s.round_id and pr.member_id=s.member_id
+    join public.portfolio_versions pv on pv.id=se.new_version_id
+    where s.round_id=v_round_id
+   ) activity order by activity.created_at desc,activity.id desc limit 10
   ) a)
  ) into v_result;
  return v_result;
