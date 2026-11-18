@@ -29,6 +29,26 @@ as $$ select public.is_portfolio_management(); $$;
 revoke all on function public.is_guild_admin() from public,anon;
 grant execute on function public.is_guild_admin() to authenticated;
 
+create or replace function public.can_manage_guild_affiliations()
+returns boolean language sql stable security definer set search_path=''
+as $ select public.is_portfolio_management(); $;
+revoke all on function public.can_manage_guild_affiliations() from public,anon;
+grant execute on function public.can_manage_guild_affiliations() to authenticated;
+
+drop policy if exists "Members can view own guild affiliation" on public.guild_member_affiliations;
+create policy "Members can view own guild affiliation" on public.guild_member_affiliations
+for select to authenticated using (
+ user_id=(select auth.uid())
+ or exists(select 1 from public.guild_manual_members mm
+  where mm.id=guild_member_affiliations.manual_member_id and mm.linked_user_id=(select auth.uid()))
+ or public.can_manage_guild_affiliations()
+);
+drop policy if exists "Leaders, Management, and Developers can manage member affiliations" on public.guild_member_affiliations;
+create policy "Leaders, Management, and Developers can manage member affiliations"
+on public.guild_member_affiliations for all to authenticated
+using (public.can_manage_guild_affiliations())
+with check (public.can_manage_guild_affiliations());
+
 -- Replace the RPC role check so assignment matches the UI's Developer/Leader/Management rule.
 create or replace function public.set_guild_member_affiliation(
  p_guild_code text,p_user_id uuid default null,p_manual_member_id uuid default null,p_reason text default null
@@ -38,7 +58,7 @@ declare v_guild_id uuid; v_current_guild_id uuid; v_new_id uuid;
 v_started_at timestamptz:=clock_timestamp(); v_manual_linked_user uuid;
 begin
  if (p_user_id is null)=(p_manual_member_id is null) then raise exception 'Provide exactly one member identity'; end if;
- if (select auth.uid()) is null or not public.is_portfolio_management() then raise exception 'Not authorized to change guild affiliation'; end if;
+ if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Not authorized to change guild affiliation'; end if;
  select id into v_guild_id from public.guilds where code=p_guild_code and is_active=true;
  if v_guild_id is null then raise exception 'Unknown or inactive guild'; end if;
  perform public.snapshot_due_patch_rosters();
