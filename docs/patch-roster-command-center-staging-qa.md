@@ -63,7 +63,7 @@ The final Production release will schedule the snapshot function using the exist
 - Staging remains a focused feature schema, not a complete mirror of the existing Production application.
 - The new UI is still an offline prototype; it does not yet replace the existing Portfolio Tracker.
 - No production migrations, production member affiliations, production submissions, or Production deployment were performed in this work.
-- Production already contains `portfolio_update_rounds` (0 rows), `portfolio_patch_submissions` (0 rows), 61 Portfolio folders, and 64 Portfolio Versions at the latest schema inventory. The existing Production `portfolio_patch_submissions` table has a legacy schema and must be reconciled with the Staging prototype before any Production migration is written. Existing rows were only counted, not modified.
+- Production already contains `portfolio_update_rounds` (0 rows), `portfolio_patch_submissions` (0 rows), 61 Portfolio folders, and 64 Portfolio Versions at the latest schema inventory. The existing Production `portfolio_patch_submissions` table has the same core columns, one-submission-per-folder unique constraint, and FK delete behavior now represented in Staging (member cascade, portfolio restrict, round cascade, version restrict). Before release, still compare all grants, RLS policies, indexes, and triggers on the live table; do not recreate or replace the existing table. Existing rows were only counted, not modified.
 
 
 ## Additional regression case pending
