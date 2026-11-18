@@ -12,7 +12,7 @@
 
 ## Existing project versus clean rebuild
 
-The current Staging project has already been initialized with synthetic-only schema and fixtures. Do not rerun `guild_affiliation_staging_baseline.sql` against it because it creates base tables and fixture rows without `IF NOT EXISTS`.
+The current Staging project has already been initialized with synthetic-only schema and fixtures, passed SQL/RLS QA, and is now paused. Do not rerun `guild_affiliation_staging_baseline.sql` against it because it creates base tables and fixture rows without `IF NOT EXISTS`.
 
 For a brand-new blank Free Staging project, use only this canonical sequence:
 
@@ -29,7 +29,7 @@ The other files in `supabase/staging/` are historical incremental QA patches use
 
 ## Current Staging state
 
-- The project is active for this QA session.
+- The project has been paused after successful SQL/RLS QA to conserve Free-plan active resources. Restore it only for the remaining browser QA session.
 - The synthetic baseline and three canonical feature migrations have been applied successfully.
 - The post-QA fixture/FK follow-up has been applied.
 - Both schema contract tests pass.
