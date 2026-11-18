@@ -62,6 +62,7 @@ If the new role boundary must be reverted, restore the original Production polic
 
 - `Guild admins can manage guilds` — `FOR ALL`, `USING (is_guild_admin())`, `WITH CHECK (is_guild_admin())`.
 - `Guild admins can manage member affiliations` — `FOR ALL`, `USING (is_guild_admin())`, `WITH CHECK (is_guild_admin())`.
+- `Members can view own guild affiliation` — restore the pre-release predicate: own `user_id`, linked Manual row for the current user, or `is_guild_admin()`; remove the added current-directory branch.
 - `portfolio update rounds managed by management` — `FOR ALL`, `USING (is_portfolio_management())`, `WITH CHECK (is_portfolio_management())`.
 - `portfolio update permissions managed by management` — `FOR ALL`, `USING (is_portfolio_management())`, `WITH CHECK (is_portfolio_management())`.
 
