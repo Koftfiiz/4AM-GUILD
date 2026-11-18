@@ -67,6 +67,15 @@ begin
     raise exception 'Command Center read model must expose bounded review and attention summaries';
   end if;
 
+  if not (
+    select pg_get_functiondef('public.submit_portfolio_patch(uuid,uuid,uuid)'::regprocedure)
+      like '%snapshot_due_patch_rosters%'
+      and pg_get_functiondef('public.submit_portfolio_patch(uuid,uuid,uuid)'::regprocedure)
+      like '%membership_status%'
+  ) then
+    raise exception 'Submission RPC must snapshot due roster and require active membership';
+  end if;
+
   if not exists (
     select 1 from pg_indexes
     where schemaname='public' and indexname='portfolio_update_rounds_snapshot_due_idx'
