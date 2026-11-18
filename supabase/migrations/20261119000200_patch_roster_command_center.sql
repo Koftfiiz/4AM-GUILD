@@ -264,7 +264,7 @@ for each row execute function public.sync_patch_submission_review();
 
 create or replace function public.audit_patch_submission_event()
 returns trigger language plpgsql security definer set search_path=''
-as $
+as $$
 begin
  if tg_op='INSERT' then
   insert into public.portfolio_patch_submission_events(submission_id,previous_version_id,new_version_id,event_type,actor_user_id)
@@ -274,7 +274,7 @@ begin
   values(new.id,old.version_id,new.version_id,'resubmitted',(select auth.uid()));
  end if;
  return new;
-end; $;
+end; $$;
 revoke all on function public.audit_patch_submission_event() from public,anon,authenticated;
 drop trigger if exists patch_submission_version_audit on public.portfolio_patch_submissions;
 create trigger patch_submission_version_audit
