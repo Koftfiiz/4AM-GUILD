@@ -5136,10 +5136,11 @@ async function saveWarSkillDefinition(event){
  if(!file.type.startsWith("image/")||file.size>3*1024*1024){if(status)status.textContent="ไฟล์ต้องเป็นรูปภาพและมีขนาดไม่เกิน 3 MB";return;}
  if(button){button.disabled=true;button.textContent="กำลังเพิ่ม Skill...";}
  if(status)status.textContent="กำลังอัปโหลดไอคอนและบันทึกข้อมูล...";
- const extension=(file.name.split(".").pop()||"png").toLowerCase().replace(/[^a-z0-9]/g,"")||"png";
+ const uploadFile=/^image\/(svg\+xml|gif)$/.test(file.type)?file:await prepareStorageImageForUpload(file,{maxDimension:512,quality:0.88,forceWebP:true});
+ const extension=(uploadFile.name.split(".").pop()||"png").toLowerCase().replace(/[^a-z0-9]/g,"")||"png";
  const path=`skills/${Date.now()}-${Math.random().toString(36).slice(2,9)}.${extension}`;
  try{
-  const upload=await supabaseClient.storage.from(WAR_SKILL_BUCKET).upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+  const upload=await supabaseClient.storage.from(WAR_SKILL_BUCKET).upload(path,uploadFile,{cacheControl:"3600",upsert:false,contentType:uploadFile.type});
   if(upload.error)throw upload.error;
   const insert=await supabaseClient.from("war_skill_catalog").insert({skill_name:name,icon_path:path,created_by:currentUser?.id}).select("id").single();
   if(insert.error){await supabaseClient.storage.from(WAR_SKILL_BUCKET).remove([path]);throw insert.error;}
@@ -5188,9 +5189,10 @@ async function saveWarSkillEdit(event){
  let newPath=null;
  try{
   if(file){
-   const extension=(file.name.split(".").pop()||"png").toLowerCase().replace(/[^a-z0-9]/g,"")||"png";
+   const uploadFile=/^image\/(svg\+xml|gif)$/.test(file.type)?file:await prepareStorageImageForUpload(file,{maxDimension:512,quality:0.88,forceWebP:true});
+   const extension=(uploadFile.name.split(".").pop()||"png").toLowerCase().replace(/[^a-z0-9]/g,"")||"png";
    newPath=`skills/${Date.now()}-${Math.random().toString(36).slice(2,9)}.${extension}`;
-   const upload=await supabaseClient.storage.from(WAR_SKILL_BUCKET).upload(newPath,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+   const upload=await supabaseClient.storage.from(WAR_SKILL_BUCKET).upload(newPath,uploadFile,{cacheControl:"3600",upsert:false,contentType:uploadFile.type});
    if(upload.error)throw upload.error;
   }
   const update=await supabaseClient.from("war_skill_catalog").update({skill_name:name,...(newPath?{icon_path:newPath}:{})}).eq("id",skillId);
@@ -5237,10 +5239,11 @@ async function saveWarMemberSkillFromEditor(event){
   if(!file.type.startsWith("image/")||file.size>3*1024*1024){if(status)status.textContent="ไฟล์ต้องเป็นรูปภาพและมีขนาดไม่เกิน 3 MB";return;}
   if(button){button.disabled=true;button.textContent="กำลังเพิ่ม...";}
   if(status)status.textContent="กำลังอัปโหลดไอคอน...";
-  const extension=(file.name.split(".").pop()||"png").toLowerCase().replace(/[^a-z0-9]/g,"")||"png";
+  const uploadFile=/^image\/(svg\+xml|gif)$/.test(file.type)?file:await prepareStorageImageForUpload(file,{maxDimension:512,quality:0.88,forceWebP:true});
+  const extension=(uploadFile.name.split(".").pop()||"png").toLowerCase().replace(/[^a-z0-9]/g,"")||"png";
   const path=`skills/${Date.now()}-${Math.random().toString(36).slice(2,9)}.${extension}`;
   try{
-    const upload=await supabaseClient.storage.from(WAR_SKILL_BUCKET).upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type});
+    const upload=await supabaseClient.storage.from(WAR_SKILL_BUCKET).upload(path,uploadFile,{cacheControl:"3600",upsert:false,contentType:uploadFile.type});
     if(upload.error)throw upload.error;
     const insert=await supabaseClient.from("war_skill_catalog").insert({skill_name:name,icon_path:path,created_by:currentUser?.id}).select("id").single();
     if(insert.error){await supabaseClient.storage.from(WAR_SKILL_BUCKET).remove([path]);throw insert.error;}
@@ -8312,7 +8315,7 @@ function registerAppearanceEvents(){
  $("appearance-reset-custom")?.addEventListener("click",async()=>{appearanceState.customTokens={};applyAppearanceTheme(appearanceState.themeId);renderAppearancePage();await saveAppearancePreferences()});
  $("appearance-save-default")?.addEventListener("click",async()=>{if(!isManagement())return;appearanceState.defaultThemeId=$("appearance-default-theme").value;try{await saveGuildAppearanceSettings();showMessage("appearance-admin-message","บันทึก Default Theme แล้ว","success")}catch(e){showMessage("appearance-admin-message","บันทึกไม่สำเร็จ: "+e.message)}});
  $("appearance-save-logo")?.addEventListener("click",async()=>{if(!isManagement())return;const url=$("appearance-logo-url").value.trim();if(!/^https:\/\//i.test(url)){showMessage("appearance-brand-message","กรุณาใช้ URL ที่ขึ้นต้นด้วย https://");return}appearanceState.activeLogoUrl=url;if(!appearanceState.logoLibrary.some(x=>x.url===url))appearanceState.logoLibrary.unshift({name:"Guild logo",url});updateGuildLogo(url);try{await saveGuildAppearanceSettings();renderAppearancePage();showMessage("appearance-brand-message","ตั้งโลโก้หลักแล้ว","success")}catch(e){showMessage("appearance-brand-message","บันทึกไม่สำเร็จ: "+e.message)}});
- $("appearance-logo-upload")?.addEventListener("change",async e=>{if(!isManagement())return;const file=e.target.files?.[0];if(!file)return;if(!/^image\/(png|jpeg|webp|gif)$/.test(file.type)||file.size>5242880){showMessage("appearance-brand-message","รองรับ PNG/JPG/WEBP/GIF ไม่เกิน 5 MB");e.target.value="";return}try{const path="guild-logos/"+Date.now()+"-"+file.name.replace(/[^a-zA-Z0-9._-]/g,"-");const {error}=await supabaseClient.storage.from("guild-assets").upload(path,file,{contentType:file.type});if(error)throw error;const url=supabaseClient.storage.from("guild-assets").getPublicUrl(path).data.publicUrl;appearanceState.activeLogoUrl=url;appearanceState.logoLibrary.unshift({name:file.name,url,storage_path:path});updateGuildLogo(url);await saveGuildAppearanceSettings();renderAppearancePage();showMessage("appearance-brand-message","อัปโหลดและตั้งโลโก้สำเร็จ","success")}catch(err){showMessage("appearance-brand-message","อัปโหลดไม่สำเร็จ: "+err.message+" — ตรวจสอบ SQL Migration / Storage policy")}finally{e.target.value=""}});
+ $("appearance-logo-upload")?.addEventListener("change",async e=>{if(!isManagement())return;const file=e.target.files?.[0];if(!file)return;if(!/^image\/(png|jpeg|webp|gif|svg\+xml)$/.test(file.type)||file.size>5242880){showMessage("appearance-brand-message","รองรับ PNG/JPG/WEBP/GIF/SVG ไม่เกิน 5 MB");e.target.value="";return}try{const uploadFile=/^image\/(svg\+xml|gif)$/.test(file.type)?file:await prepareStorageImageForUpload(file,{maxDimension:1200,quality:0.9,forceWebP:true});const path="guild-logos/"+Date.now()+"-"+uploadFile.name.replace(/[^a-zA-Z0-9._-]/g,"-");const {error}=await supabaseClient.storage.from("guild-assets").upload(path,uploadFile,{contentType:uploadFile.type,cacheControl:"31536000",upsert:false});if(error)throw error;const url=supabaseClient.storage.from("guild-assets").getPublicUrl(path).data.publicUrl;appearanceState.activeLogoUrl=url;appearanceState.logoLibrary.unshift({name:file.name,url,storage_path:path});updateGuildLogo(url);await saveGuildAppearanceSettings();renderAppearancePage();showMessage("appearance-brand-message","อัปโหลดและตั้งโลโก้สำเร็จ","success")}catch(err){showMessage("appearance-brand-message","อัปโหลดไม่สำเร็จ: "+err.message+" — ตรวจสอบ SQL Migration / Storage policy")}finally{e.target.value=""}});
 }
 
 function syncManagementMenuVisibility() {
