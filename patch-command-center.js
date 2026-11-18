@@ -6,7 +6,7 @@
   const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const activeMember=()=>!!currentUser&&!!currentMember&&currentMember.active===true&&currentMember.membership_status==="active";
   const allowed=()=>activeMember()&&typeof isManagement==="function"&&isManagement()&&!(typeof isRolePreviewActive==="function"&&isRolePreviewActive());
-  const statusText={not_submitted:"ยังไม่ส่ง",pending:"รอตรวจ",reviewing:"กำลังตรวจ",approved:"ผ่านแล้ว",revision_required:"ต้องแก้ไข"};
+  const statusText={not_submitted:"ยังไม่ส่ง",partial:"ส่งไม่ครบ",pending:"รอตรวจ",reviewing:"กำลังตรวจ",approved:"ผ่านแล้ว",revision_required:"ต้องแก้ไข"};
   const statusPill=s=>'<span class="pc-pill pc-'+esc(s)+'">'+esc(statusText[s]||s||"—")+'</span>';
   const dateLabel=v=>{if(!v)return "—";const d=new Date(v);return Number.isNaN(d.getTime())?"—":d.toLocaleString("th-TH",{dateStyle:"medium",timeStyle:"short"});};
 
@@ -67,7 +67,7 @@
           <div class="pc-stats" id="pc-stats"></div>
           <div class="pc-split" style="margin-top:14px"><section class="pc-panel"><div class="pc-head"><div><h2>ต้องติดตาม</h2><p class="pc-muted">สมาชิกที่ยังไม่ส่งหรือมีรายการต้องแก้ไข</p></div></div><div id="pc-attention" class="pc-list"></div></section><section class="pc-panel"><div class="pc-head"><div><h2>กิจกรรมล่าสุด</h2><p class="pc-muted">การเปลี่ยนสถานะ Submission</p></div></div><div id="pc-activity" class="pc-list"></div></section></div>
         </section>
-        <section id="pc-view-members" class="pc-view pc-hidden"><section class="pc-panel"><div class="pc-head"><div><h2>Patch Member Roster</h2><p class="pc-muted">Snapshot สมาชิก 4AM ณ เวลาเริ่ม Patch และสมาชิกที่ย้ายเข้า 4AM ระหว่าง Patch</p></div></div><div class="pc-toolbar"><input class="pc-field" id="pc-member-search" maxlength="80" placeholder="ค้นหาสมาชิก"><select class="pc-field" id="pc-member-status"><option value="all">ทุกสถานะ</option><option value="not_submitted">ยังไม่ส่ง</option><option value="pending">รอตรวจ</option><option value="reviewing">กำลังตรวจ</option><option value="approved">ผ่านแล้ว</option><option value="revision_required">ต้องแก้ไข</option></select><button class="pc-btn" id="pc-member-search-btn" type="button">ค้นหา</button></div><div class="pc-table-wrap"><table class="pc-table"><thead><tr><th>สมาชิก</th><th>Class</th><th>Roster Source</th><th>แฟ้มทั้งหมด</th><th>ส่งแล้ว</th><th>สถานะ</th><th></th></tr></thead><tbody id="pc-member-rows"></tbody></table></div><div class="pc-toolbar" style="justify-content:space-between;margin-top:12px"><span class="pc-muted" id="pc-member-page-label">—</span><div class="pc-toolbar"><button class="pc-btn" id="pc-member-prev" type="button">← ก่อนหน้า</button><button class="pc-btn" id="pc-member-next" type="button">ถัดไป →</button></div></div></section></section>
+        <section id="pc-view-members" class="pc-view pc-hidden"><section class="pc-panel"><div class="pc-head"><div><h2>Patch Member Roster</h2><p class="pc-muted">Snapshot สมาชิก 4AM ณ เวลาเริ่ม Patch และสมาชิกที่ย้ายเข้า 4AM ระหว่าง Patch</p></div></div><div class="pc-toolbar"><input class="pc-field" id="pc-member-search" maxlength="80" placeholder="ค้นหาสมาชิก"><select class="pc-field" id="pc-member-status"><option value="all">ทุกสถานะ</option><option value="not_submitted">ยังไม่ส่ง</option><option value="partial">ส่งไม่ครบ</option><option value="pending">รอตรวจ</option><option value="reviewing">กำลังตรวจ</option><option value="approved">ผ่านแล้ว</option><option value="revision_required">ต้องแก้ไข</option></select><button class="pc-btn" id="pc-member-search-btn" type="button">ค้นหา</button></div><div class="pc-table-wrap"><table class="pc-table"><thead><tr><th>สมาชิก</th><th>Class</th><th>Roster Source</th><th>แฟ้มทั้งหมด</th><th>ส่งแล้ว</th><th>สถานะ</th><th></th></tr></thead><tbody id="pc-member-rows"></tbody></table></div><div class="pc-toolbar" style="justify-content:space-between;margin-top:12px"><span class="pc-muted" id="pc-member-page-label">—</span><div class="pc-toolbar"><button class="pc-btn" id="pc-member-prev" type="button">← ก่อนหน้า</button><button class="pc-btn" id="pc-member-next" type="button">ถัดไป →</button></div></div></section></section>
         <section id="pc-view-queue" class="pc-view pc-hidden"><section class="pc-panel"><div class="pc-head"><div><h2>Review Queue</h2><p class="pc-muted">ตรวจสอบ Submission ทีละรายการ พร้อมบันทึกผลและเหตุผลการแก้ไข</p></div></div><div class="pc-toolbar"><input class="pc-field" id="pc-queue-search" maxlength="80" placeholder="ค้นหาสมาชิกหรือชื่อแฟ้ม"><select class="pc-field" id="pc-queue-status"><option value="all">ทุกสถานะ</option><option value="pending">รอตรวจ</option><option value="reviewing">กำลังตรวจ</option><option value="approved">ผ่านแล้ว</option><option value="revision_required">ต้องแก้ไข</option></select><button class="pc-btn" id="pc-queue-search-btn" type="button">ค้นหา</button></div><div class="pc-table-wrap"><table class="pc-table"><thead><tr><th>สมาชิก</th><th>แฟ้ม</th><th>Version</th><th>วันที่ส่ง</th><th>สถานะ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody id="pc-queue-rows"></tbody></table></div><div class="pc-muted" id="pc-queue-count"></div></section></section>
         <section id="pc-view-history" class="pc-view pc-hidden"><section class="pc-panel"><div class="pc-head"><div><h2>Patch History & Archive</h2><p class="pc-muted">ดูรอบก่อนหน้าและเรียกดู Snapshot เดิม โดยไม่แก้ไขข้อมูลสมาชิกในประวัติ</p></div></div><div id="pc-history-list" class="pc-list"></div></section></section>
         <section id="pc-workspace" class="pc-panel pc-hidden"></section>
@@ -96,9 +96,9 @@
 
   function renderOverview(){
     const s=state.data?.summary||{};
-    const stats=[["สมาชิกใน Roster",s.roster_count||0],["สมาชิกที่ส่งแล้ว",s.submitted_members||0],["Submission รอตรวจ",s.pending||0],["ต้องแก้ไข",s.revision_required||0]];
+    const stats=[["สมาชิกใน Roster",s.roster_count||0],["ส่งแล้ว",s.submitted_members||0],["ยังไม่ส่ง",s.not_submitted||0],["ส่งไม่ครบ",s.partial_members||0],["Submission รอตรวจ",s.pending||0],["ต้องแก้ไข",s.revision_required||0]];
     $("pc-stats").innerHTML=stats.map(([label,value])=>'<article class="pc-stat"><span>'+esc(label)+'</span><strong>'+Number(value).toLocaleString("th-TH")+'</strong></article>').join("");
-    const attention=(state.data?.members||[]).filter(m=>["not_submitted","revision_required"].includes(m.member_status));
+    const attention=(state.data?.members||[]).filter(m=>["not_submitted","partial","revision_required"].includes(m.member_status));
     $("pc-attention").innerHTML=attention.length?attention.slice(0,10).map(m=>'<div class="pc-event"><strong>'+esc(m.character_name)+' · '+esc(statusText[m.member_status])+'</strong><small>'+esc(m.game_class)+' · '+(m.submitted_folder_count||0)+'/'+(m.folder_count||0)+' แฟ้ม</small></div>').join(""):'<div class="pc-empty">ไม่มีรายการที่ต้องติดตามในหน้านี้</div>';
     const activity=state.data?.recent_activity||[];
     $("pc-activity").innerHTML=activity.length?activity.map(a=>'<div class="pc-event"><strong>'+esc(a.character_name)+' · '+esc(statusText[a.new_status]||a.new_status)+'</strong><small>'+esc(a.review_note||"ไม่มีหมายเหตุ")+' · '+dateLabel(a.created_at)+'</small></div>').join(""):'<div class="pc-empty">ยังไม่มีกิจกรรมตรวจสอบ</div>';
@@ -177,7 +177,7 @@
     const row=(state.data?.review_queue||[]).find(x=>x.submission_id===submissionId);if(!row)return;
     state.reviewTarget=row;$("pc-review-member").textContent=row.character_name+" · "+row.portfolio_title+" · "+(row.version_name||"Version "+row.version_number);
     $("pc-review-status").value=row.review_status==="revision_required"?"revision_required":row.review_status==="approved"?"approved":"reviewing";
-    $("pc-review-note").value=row.review_note||"";$("pc-review-error").textContent="";
+    $("pc-review-note").value=row.review_note||"";$("pc-review-error").textContent="";$("pc-review-note-wrap").classList.toggle("pc-hidden",$("pc-review-status").value!=="revision_required");
     $("pc-review-modal").classList.remove("pc-hidden");
   }
   function closeReview(){$("pc-review-modal").classList.add("pc-hidden");state.reviewTarget=null;}
@@ -225,7 +225,7 @@
     $("pc-workspace-close")?.addEventListener("click",()=>host.classList.add("pc-hidden"));
     $("pc-workspace-prev")?.addEventListener("click",()=>{if(index>0)void openWorkspace(ids[index-1])});
     $("pc-workspace-next")?.addEventListener("click",()=>{if(index<ids.length-1)void openWorkspace(ids[index+1])});
-    host.querySelector("[data-pc-open-portfolio]")?.addEventListener("click",()=>{currentPortfolioMemberId=w.member.member_id;portfolioClassFilter="all";portfolioManageMode=false;window.openGuildPage("portfolio");if(typeof renderPortfolios==="function")void renderPortfolios()});
+    host.querySelectorAll("[data-pc-open-portfolio]").forEach(button=>button.addEventListener("click",()=>{currentPortfolioMemberId=w.member.member_id;portfolioClassFilter="all";portfolioManageMode=false;window.openGuildPage("portfolio");if(typeof renderPortfolios==="function")void renderPortfolios()}));
   }
 
   function bindEvents(){
