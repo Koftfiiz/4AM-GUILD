@@ -7,7 +7,7 @@ All tables and records below exist only in `4AM-GUILD-Staging`. They are synthet
 ## Implemented Staging data model
 
 - `portfolio_update_rounds.roster_snapshot_at`: marks that the opening snapshot has been created.
-- `portfolio_patch_roster`: immutable member snapshot per Patch, including display-name/Class snapshots and source (`opening_snapshot` or `affiliation_transfer`).
+- `portfolio_patch_roster`: immutable member snapshot per Patch, including display-name/Class snapshots and source (`opening_snapshot`, `affiliation_transfer`, or `manual_link`).
 - `portfolio_patch_submissions`: one selected Version per Portfolio folder per Patch.
 - `portfolio_patch_submission_reviews`: Patch-specific review state (`pending`, `reviewing`, `approved`, `revision_required`).
 - `portfolio_patch_review_events`: append-only audit timeline of review status changes.
@@ -70,3 +70,6 @@ The final Production release will schedule the snapshot function using the exist
 
 - Manual-only 4AM member links an account after a Patch opening snapshot; affiliation history is transferred to the canonical user and the account is added once to the active Patch roster as `manual_link`.
 - This trigger change is committed but not yet re-applied/re-tested on the paused Free Staging project.
+
+
+The Production migration now includes `manual_link` as a distinct roster source so the UI can distinguish account linking from an actual 4PM-to-4AM transfer. Review queue pagination also returns a total count for bounded Previous/Next navigation. These latest changes are pending Staging revalidation.
