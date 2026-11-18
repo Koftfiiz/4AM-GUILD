@@ -57,3 +57,13 @@ The Production application already defines `is_portfolio_management()` and `is_p
 ## Review queue pagination follow-up
 
 The read RPC now exposes `review_queue_total`, and the Command Center UI includes Previous/Next controls using the same bounded page size as the member list. This follow-up change is committed but not yet re-applied/re-tested on Staging.
+
+
+## Latest review fixes pending Staging revalidation
+
+- Review Queue now has bounded Previous/Next pagination and a server-provided total count.
+- The Command Center RPC returns a valid empty-state payload when a Patch has no roster rows.
+- Pagination ordering includes stable tie-breakers to avoid duplicate/skipped rows between pages.
+- Review notes and audit events are visible only to the submission owner or authorized Developer/Leader/Management reviewers.
+- Creating an already-started Patch or closing/archiving a due Patch first snapshots its roster, preventing lifecycle timing races.
+- These changes are committed on the feature branch but not yet re-applied to the paused Staging project.
