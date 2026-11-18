@@ -72,3 +72,6 @@ The read RPC now exposes `review_queue_total`, and the Command Center UI include
 ## Member Workspace follow-up
 
 The feature branch now loads Discord account identity/verification and the member's affiliation history only when Management opens a Workspace. The Workspace History tab combines affiliation history with Patch review events. Requests are bounded (50 affiliation rows, 30 folders/submissions) and do not run during the normal directory/dashboard load. These UI additions await Staging browser validation.
+
+
+The legacy member-facing Portfolio Tracker has also been aligned with the 4AM roster: progress totals use the selected Patch snapshot, out-of-roster accounts are not offered submission actions after the snapshot is ready, and the delete-round action is removed in favor of archive/restore. The submission RPC performs a due snapshot before roster validation. Pending Staging QA.
