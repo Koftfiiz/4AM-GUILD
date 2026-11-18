@@ -104,6 +104,7 @@ begin
  if v_member_id is null then raise exception 'Authentication required'; end if;
  if not exists(select 1 from public.guild_members where user_id=v_member_id and active=true and membership_status='active') then
   raise exception 'Active guild membership required'; end if;
+ perform public.snapshot_due_patch_rosters();
  if not exists(select 1 from public.portfolio_patch_roster where round_id=target_round_id and member_id=v_member_id) then
   raise exception 'Member is not included in this Patch roster'; end if;
  if not exists(select 1 from public.portfolios where id=target_portfolio_id and member_id=v_member_id) then
