@@ -44,6 +44,12 @@
           app.onload = () => {
             const tracker = document.createElement("script");
             tracker.src = "portfolio-tracker.js?v=portfolio-schedule-labels-20261118-r1";
+            tracker.onload = () => {
+              const directory = document.createElement("script");
+              directory.src = "guild-affiliation-directory.js?v=20261119-r1";
+              directory.onerror = () => console.error("Guild affiliation directory script failed to load.");
+              document.head.appendChild(directory);
+            };
             tracker.onerror = () => console.error("Portfolio tracker script failed to load.");
             document.head.appendChild(tracker);
           };
