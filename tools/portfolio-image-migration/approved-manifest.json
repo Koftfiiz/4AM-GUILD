@@ -1,0 +1,197 @@
+{
+  "sourceRunId": "44321402557",
+  "bucket": "portfolio-images",
+  "quality": 88,
+  "effort": 5,
+  "minimumSavingPercent": 5,
+  "files": [
+    {
+      "path": "f05ded8f-ac56-4f22-8f8f-b96723d20a9b/9ad989ff-c9e9-473d-9562-d4e99a495a21/1794670261851-k33fig.png",
+      "originalBytes": 5823008
+    },
+    {
+      "path": "91b37006-19ca-4b41-92ac-0848d1d4851a/bf66a9d3-bf8e-498e-af9d-8359dc951e78/versions/1794909612172-3r5xuc.png",
+      "originalBytes": 5517521
+    },
+    {
+      "path": "378b09df-16a0-4d01-8908-2604c2c210a9/ba1d11d4-9a65-4c4f-be16-b71788b03837/1794672804081-rlfwif.png",
+      "originalBytes": 5175863
+    },
+    {
+      "path": "2211960c-ab31-44f3-af1d-144da25bfe3c/74c28a4e-14ba-4a0a-aaa6-b1fe64954779/versions/1794990827071-70trd0.png",
+      "originalBytes": 4999664
+    },
+    {
+      "path": "ae05ca88-bc32-4258-a151-06584db014b9/16642184-4e8a-4b8d-8af4-bcc07cc69f86/versions/1794929131758-864sqx.png",
+      "originalBytes": 4904750
+    },
+    {
+      "path": "7bc77500-a54f-4afc-9e55-96c97680db90/88114d34-43d9-4364-9717-3a018c390e04/versions/1794928693733-fmo4o6.png",
+      "originalBytes": 4867307
+    },
+    {
+      "path": "91b37006-19ca-4b41-92ac-0848d1d4851a/bf66a9d3-bf8e-498e-af9d-8359dc951e78/versions/1794904378650-d1z8k7.png",
+      "originalBytes": 4738490
+    },
+    {
+      "path": "378b09df-16a0-4d01-8908-2604c2c210a9/29ffdc46-4bed-41fc-9e85-d9b9f7d156a4/1794670467590-vi9nud.png",
+      "originalBytes": 4668194
+    },
+    {
+      "path": "7bc77500-a54f-4afc-9e55-96c97680db90/989ea687-37c9-40ac-b8e9-9528fbe27cc0/versions/1794928509929-wk20hw.png",
+      "originalBytes": 4516029
+    },
+    {
+      "path": "28325f52-9a62-433b-a03c-ddee413de4a2/a5533f78-8f1b-403d-ac52-dad98d427e03/versions/1794942454251-txkac2.png",
+      "originalBytes": 4359103
+    },
+    {
+      "path": "378b09df-16a0-4d01-8908-2604c2c210a9/430c7f3a-788f-4573-bf15-9a12ed4174f1/1794671430376-fwgx7j.png",
+      "originalBytes": 4343869
+    },
+    {
+      "path": "2211960c-ab31-44f3-af1d-144da25bfe3c/01c9776e-2323-4afe-817b-1f5d19f0d17b/versions/1794991466217-c6gcrv.png",
+      "originalBytes": 4341741
+    },
+    {
+      "path": "378b09df-16a0-4d01-8908-2604c2c210a9/ba1d11d4-9a65-4c4f-be16-b71788b03837/1794672808040-guxe19.png",
+      "originalBytes": 4336050
+    },
+    {
+      "path": "46aedc5b-b061-42af-a02f-87cf1c7ba9ff/f633d1d8-e74f-4541-9c20-71b322789a71/versions/1794912493211-k481u8.png",
+      "originalBytes": 4325936
+    },
+    {
+      "path": "378b09df-16a0-4d01-8908-2604c2c210a9/430c7f3a-788f-4573-bf15-9a12ed4174f1/1794671431820-v867td.png",
+      "originalBytes": 4317033
+    },
+    {
+      "path": "378b09df-16a0-4d01-8908-2604c2c210a9/430c7f3a-788f-4573-bf15-9a12ed4174f1/1794671433311-3xv3g4.png",
+      "originalBytes": 4236417
+    },
+    {
+      "path": "35f09fc4-ead5-413c-a2c9-38169af5f2d6/eca4d186-b9c6-4b23-b1db-84718eebe104/1794752147137-xl351v.png",
+      "originalBytes": 4215037
+    },
+    {
+      "path": "378b09df-16a0-4d01-8908-2604c2c210a9/29ffdc46-4bed-41fc-9e85-d9b9f7d156a4/1794670471004-g9r6g8.png",
+      "originalBytes": 4173969
+    },
+    {
+      "path": "28325f52-9a62-433b-a03c-ddee413de4a2/2c580fd9-a57c-4ca0-856a-08383a2bfcaf/versions/1794940838457-8ua52r.png",
+      "originalBytes": 4057917
+    },
+    {
+      "path": "378b09df-16a0-4d01-8908-2604c2c210a9/430c7f3a-788f-4573-bf15-9a12ed4174f1/1794671434417-ca157m.png",
+      "originalBytes": 3916734
+    },
+    {
+      "path": "7bc77500-a54f-4afc-9e55-96c97680db90/989ea687-37c9-40ac-b8e9-9528fbe27cc0/versions/1794928513334-3o0r1e.png",
+      "originalBytes": 3771793
+    },
+    {
+      "path": "7bc77500-a54f-4afc-9e55-96c97680db90/88114d34-43d9-4364-9717-3a018c390e04/versions/1794928697066-5leeln.png",
+      "originalBytes": 3763431
+    },
+    {
+      "path": "378b09df-16a0-4d01-8908-2604c2c210a9/430c7f3a-788f-4573-bf15-9a12ed4174f1/1794671435494-mjgtlx.png",
+      "originalBytes": 3737035
+    },
+    {
+      "path": "d8206375-d27c-49ed-b3db-a6b0f7fe9645/a4bafaee-407d-40b2-9a81-21f81e68eb6a/1794750042158-l8qgh6.png",
+      "originalBytes": 3726368
+    },
+    {
+      "path": "ae05ca88-bc32-4258-a151-06584db014b9/16642184-4e8a-4b8d-8af4-bcc07cc69f86/versions/1794929137473-ehg879.png",
+      "originalBytes": 3725561
+    },
+    {
+      "path": "f05ded8f-ac56-4f22-8f8f-b96723d20a9b/9ad989ff-c9e9-473d-9562-d4e99a495a21/1794670266389-h7y1v2.png",
+      "originalBytes": 3722611
+    },
+    {
+      "path": "a91c9093-7250-4f6e-b901-cb3eb19646ec/b3b93e84-490e-4485-92d2-2a262e2bf288/versions/1794943378424-l96tm4.png",
+      "originalBytes": 3718365
+    },
+    {
+      "path": "f05ded8f-ac56-4f22-8f8f-b96723d20a9b/d78e0040-96cb-44fe-81ba-272e7de4ba0a/1794650485432-ivuk0m.png",
+      "originalBytes": 3714928
+    },
+    {
+      "path": "a91c9093-7250-4f6e-b901-cb3eb19646ec/b3bbbf05-9e83-4464-9f43-a365bdacd097/versions/1794943114003-usheoj.png",
+      "originalBytes": 3696922
+    },
+    {
+      "path": "a91c9093-7250-4f6e-b901-cb3eb19646ec/b3bbbf05-9e83-4464-9f43-a365bdacd097/versions/1794943108640-egmt9w.png",
+      "originalBytes": 3637778
+    },
+    {
+      "path": "f05ded8f-ac56-4f22-8f8f-b96723d20a9b/d78e0040-96cb-44fe-81ba-272e7de4ba0a/1794650482262-z2hpwg.png",
+      "originalBytes": 3609160
+    },
+    {
+      "path": "378b09df-16a0-4d01-8908-2604c2c210a9/ba1d11d4-9a65-4c4f-be16-b71788b03837/1794672811888-6m5ku1.png",
+      "originalBytes": 3607926
+    },
+    {
+      "path": "dc05acc3-123f-4e63-a2bc-92a51ce90cb9/420ef92b-6169-4a58-98be-8ea4f5702487/versions/1794925412597-c9dvwl.png",
+      "originalBytes": 3576189
+    },
+    {
+      "path": "378b09df-16a0-4d01-8908-2604c2c210a9/29ffdc46-4bed-41fc-9e85-d9b9f7d156a4/1794670473208-onlapy.png",
+      "originalBytes": 3555656
+    },
+    {
+      "path": "a91c9093-7250-4f6e-b901-cb3eb19646ec/b3b93e84-490e-4485-92d2-2a262e2bf288/versions/1794943382327-pvovfg.png",
+      "originalBytes": 3493541
+    },
+    {
+      "path": "a91c9093-7250-4f6e-b901-cb3eb19646ec/b3bbbf05-9e83-4464-9f43-a365bdacd097/versions/1794943115615-plvbvk.png",
+      "originalBytes": 3482799
+    },
+    {
+      "path": "7bc77500-a54f-4afc-9e55-96c97680db90/a0aa8f0f-2a6d-4979-9649-f936d4e839a7/versions/1794928049484-odcuv2.png",
+      "originalBytes": 3478534
+    },
+    {
+      "path": "a91c9093-7250-4f6e-b901-cb3eb19646ec/b3b93e84-490e-4485-92d2-2a262e2bf288/versions/1794943381145-utsxng.png",
+      "originalBytes": 3415680
+    },
+    {
+      "path": "a91c9093-7250-4f6e-b901-cb3eb19646ec/b3b93e84-490e-4485-92d2-2a262e2bf288/versions/1794943383559-7iwsdv.png",
+      "originalBytes": 3414699
+    },
+    {
+      "path": "7bc77500-a54f-4afc-9e55-96c97680db90/989ea687-37c9-40ac-b8e9-9528fbe27cc0/versions/1794928515113-zheogi.png",
+      "originalBytes": 3387239
+    },
+    {
+      "path": "a91c9093-7250-4f6e-b901-cb3eb19646ec/b3b93e84-490e-4485-92d2-2a262e2bf288/versions/1794943379845-zq65t8.png",
+      "originalBytes": 3374245
+    },
+    {
+      "path": "7bc77500-a54f-4afc-9e55-96c97680db90/a0aa8f0f-2a6d-4979-9649-f936d4e839a7/versions/1794928050796-va6vrv.png",
+      "originalBytes": 3354604
+    },
+    {
+      "path": "3764b1a2-7286-4904-bdd0-9a807d585a99/79d423d9-74f6-47c1-8ca4-e66d71fcafdb/1794857058944-30jsto.png",
+      "originalBytes": 3328441
+    },
+    {
+      "path": "d8206375-d27c-49ed-b3db-a6b0f7fe9645/a4bafaee-407d-40b2-9a81-21f81e68eb6a/1794750045241-ewu9u5.png",
+      "originalBytes": 3317000
+    },
+    {
+      "path": "28325f52-9a62-433b-a03c-ddee413de4a2/2c580fd9-a57c-4ca0-856a-08383a2bfcaf/versions/1794940576682-3hbuvi.png",
+      "originalBytes": 3237160
+    },
+    {
+      "path": "a91c9093-7250-4f6e-b901-cb3eb19646ec/b3b93e84-490e-4485-92d2-2a262e2bf288/versions/1794943376958-w0dzl3.png",
+      "originalBytes": 3208786
+    },
+    {
+      "path": "28325f52-9a62-433b-a03c-ddee413de4a2/a5533f78-8f1b-403d-ac52-dad98d427e03/versions/1794942443196-imqna7.png",
+      "originalBytes": 3194150
+    }
+  ]
+}
