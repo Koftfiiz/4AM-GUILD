@@ -84,8 +84,8 @@ create policy "Authenticated users can view active guilds"
   on public.guilds for select to authenticated
   using (is_active = true or public.can_manage_guild_affiliations());
 
-drop policy if exists "Guild admins can manage guilds" on public.guilds;
-create policy "Guild admins can manage guilds"
+drop policy if exists "Management and Developers can manage guilds" on public.guilds;
+create policy "Management and Developers can manage guilds"
   on public.guilds for all to authenticated
   using (public.can_manage_guild_affiliations())
   with check (public.can_manage_guild_affiliations());
@@ -104,8 +104,8 @@ create policy "Members can view own guild affiliation"
     or public.can_manage_guild_affiliations()
   );
 
-drop policy if exists "Guild admins can manage member affiliations" on public.guild_member_affiliations;
-create policy "Guild admins can manage member affiliations"
+drop policy if exists "Management and Developers can manage member affiliations" on public.guild_member_affiliations;
+create policy "Management and Developers can manage member affiliations"
   on public.guild_member_affiliations for all to authenticated
   using (public.can_manage_guild_affiliations())
   with check (public.can_manage_guild_affiliations());
