@@ -8858,3 +8858,30 @@ body.gallery-lightbox-open{overflow:hidden}
   outline: 2px solid #c4b5fd;
   outline-offset: 3px;
 }
+
+
+/* Dashboard Guild Gallery: cyan accent only for the legacy-image optimization action. */
+#dashboard-gallery-optimize-trigger {
+  background: #0891B2;
+  border: 1px solid #06B6D4;
+  color: #FFFFFF;
+  font-weight: 600;
+  box-shadow: 0 3px 12px rgba(8, 145, 178, .22);
+}
+#dashboard-gallery-optimize-trigger:hover:not(:disabled) {
+  background: #0E7490;
+  border-color: #22D3EE;
+  color: #FFFFFF;
+  box-shadow: 0 0 18px rgba(8, 145, 178, .32);
+  transform: translateY(-1px);
+}
+#dashboard-gallery-optimize-trigger:active:not(:disabled) {
+  background: #155E75;
+  transform: translateY(0);
+}
+#dashboard-gallery-optimize-trigger:disabled {
+  background: #164E63;
+  border-color: #164E63;
+  color: #D1D5DB;
+  opacity: .7;
+}
