@@ -40,10 +40,21 @@ create table if not exists public.portfolio_patch_review_events (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.portfolio_patch_submission_events (
+  id bigint generated always as identity primary key,
+  submission_id uuid not null references public.portfolio_patch_submissions(id) on delete restrict,
+  previous_version_id uuid references public.portfolio_versions(id) on delete restrict,
+  new_version_id uuid not null references public.portfolio_versions(id) on delete restrict,
+  event_type text not null check(event_type in ('submitted','resubmitted')),
+  actor_user_id uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists portfolio_patch_roster_round_idx on public.portfolio_patch_roster(round_id,added_at);
 create index if not exists portfolio_patch_roster_member_idx on public.portfolio_patch_roster(member_id,round_id);
 create index if not exists portfolio_patch_submission_reviews_status_idx on public.portfolio_patch_submission_reviews(status,updated_at desc);
 create index if not exists portfolio_patch_review_events_submission_idx on public.portfolio_patch_review_events(submission_id,created_at desc);
+create index if not exists portfolio_patch_submission_events_submission_idx on public.portfolio_patch_submission_events(submission_id,created_at desc);
 create index if not exists portfolio_patch_submissions_portfolio_idx on public.portfolio_patch_submissions(portfolio_id);
 create index if not exists portfolio_patch_submissions_version_idx on public.portfolio_patch_submissions(version_id);
 create index if not exists portfolio_version_images_version_idx on public.portfolio_version_images(version_id,sort_order);
@@ -54,6 +65,7 @@ create index if not exists portfolio_update_rounds_snapshot_due_idx
 alter table public.portfolio_patch_roster enable row level security;
 alter table public.portfolio_patch_submission_reviews enable row level security;
 alter table public.portfolio_patch_review_events enable row level security;
+alter table public.portfolio_patch_submission_events enable row level security;
 
 drop policy if exists patch_roster_read on public.portfolio_patch_roster;
 drop policy if exists patch_roster_read_members on public.portfolio_patch_roster;
@@ -77,10 +89,19 @@ for select to authenticated using (
    and (s.member_id=(select auth.uid()) or public.can_manage_guild_affiliations())
  )
 );
+drop policy if exists patch_submission_events_read_members on public.portfolio_patch_submission_events;
+create policy patch_submission_events_read_members on public.portfolio_patch_submission_events
+for select to authenticated using (
+ exists (
+  select 1 from public.portfolio_patch_submissions s
+  where s.id=portfolio_patch_submission_events.submission_id
+   and (s.member_id=(select auth.uid()) or public.can_manage_guild_affiliations())
+ )
+);
 
-revoke all on public.portfolio_patch_roster,public.portfolio_patch_submission_reviews,public.portfolio_patch_review_events
+revoke all on public.portfolio_patch_roster,public.portfolio_patch_submission_reviews,public.portfolio_patch_review_events,public.portfolio_patch_submission_events
 from public,anon,authenticated;
-grant select on public.portfolio_patch_roster,public.portfolio_patch_submission_reviews,public.portfolio_patch_review_events
+grant select on public.portfolio_patch_roster,public.portfolio_patch_submission_reviews,public.portfolio_patch_review_events,public.portfolio_patch_submission_events
 to authenticated;
 
 create or replace function public.snapshot_due_patch_rosters()
@@ -241,9 +262,28 @@ create trigger patch_submission_sync_review
 after insert or update of version_id on public.portfolio_patch_submissions
 for each row execute function public.sync_patch_submission_review();
 
+create or replace function public.audit_patch_submission_event()
+returns trigger language plpgsql security definer set search_path=''
+as $
+begin
+ if tg_op='INSERT' then
+  insert into public.portfolio_patch_submission_events(submission_id,previous_version_id,new_version_id,event_type,actor_user_id)
+  values(new.id,null,new.version_id,'submitted',(select auth.uid()));
+ elsif new.version_id is distinct from old.version_id then
+  insert into public.portfolio_patch_submission_events(submission_id,previous_version_id,new_version_id,event_type,actor_user_id)
+  values(new.id,old.version_id,new.version_id,'resubmitted',(select auth.uid()));
+ end if;
+ return new;
+end; $;
+revoke all on function public.audit_patch_submission_event() from public,anon,authenticated;
+drop trigger if exists patch_submission_version_audit on public.portfolio_patch_submissions;
+create trigger patch_submission_version_audit
+after insert or update of version_id on public.portfolio_patch_submissions
+for each row execute function public.audit_patch_submission_event();
+
 create or replace function public.audit_patch_submission_review()
 returns trigger language plpgsql security definer set search_path=''
-as $$
+as $
 begin
  insert into public.portfolio_patch_review_events(submission_id,old_status,new_status,review_note,actor_user_id)
  values(new.submission_id,case when tg_op='INSERT' then null else old.status end,new.status,new.review_note,(select auth.uid()));
