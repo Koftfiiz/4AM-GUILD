@@ -268,7 +268,7 @@
     $("pc-workspace-prev")?.addEventListener("click",()=>{if(index>0)void openWorkspace(ids[index-1])});
     $("pc-workspace-next")?.addEventListener("click",()=>{if(index<ids.length-1)void openWorkspace(ids[index+1])});
     if(state.workspaceTab==="files"&&!w.imagesLoaded&&!w.imagesLoading)void loadWorkspaceImages();
-    host.querySelectorAll("[data-pc-open-portfolio]").forEach(button=>button.addEventListener("click",()=>{currentPortfolioMemberId=w.member.member_id;portfolioClassFilter="all";portfolioManageMode=false;window.openGuildPage("portfolio");if(typeof renderPortfolios==="function")void renderPortfolios()}));
+    host.querySelectorAll("[data-pc-open-portfolio]").forEach(button=>button.addEventListener("click",()=>{currentPortfolioMemberId=w.member.member_id;portfolioClassFilter="all";portfolioManageMode=typeof isManagement==="function"&&isManagement();window.openGuildPage("portfolio");if(typeof renderPortfolios==="function")void renderPortfolios()}));
   }
 
   function bindEvents(){
