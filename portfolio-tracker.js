@@ -389,7 +389,7 @@
         (submission ? ' · ' + esc(dateLabel(submission.submitted_at)) : "") + '</p></div>' +
         '<button type="button" class="btn btn-outline btn-sm" data-pt-open-portfolio="' + esc(memberId) + '">เปิดแฟ้ม</button></div>';
     }).join("");
-    host.innerHTML = '<div class="portfolio-tracker-detail-item"><strong>' + esc(memberName(memberId)) +
+    host.innerHTML = '<div class="portfolio-tracker-detail-item"><strong>' + esc(memberName(memberId,row.member.character_name)) +
       '</strong><span>' + pill(row.status,row.submitted + "/" + row.total + " แฟ้ม") + '</span></div>' +
       (items || '<div class="portfolio-tracker-empty">สมาชิกยังไม่มีแฟ้ม Portfolio</div>') +
       (management() && !rounds.find(item=>item.id===roundId)?.archived_at &&
