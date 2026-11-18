@@ -16,12 +16,13 @@ The current Staging project has already been initialized with synthetic-only sch
 
 For a brand-new blank Free Staging project, use only this canonical sequence:
 
-1. `guild_affiliation_staging_baseline.sql` (synthetic-only legacy schema and fixtures)
+1. `guild_affiliation_staging_baseline.sql` (synthetic-only guild schema, Auth identities, and member fixtures)
 2. `20261119000000_guild_affiliation_foundation.sql`
-3. `20261119000100_guild_affiliation_directory.sql`
-4. `20261119000200_patch_roster_command_center.sql`
-5. `20261119_post_qa_baseline_followup.sql` (Staging-only synthetic Discord fixtures and legacy FK parity)
-6. Run both files in `supabase/tests/`.
+3. `portfolio_legacy_schema_baseline.sql` (synthetic legacy Portfolio/Patch tables and RLS)
+4. `20261119000100_guild_affiliation_directory.sql`
+5. `20261119000200_patch_roster_command_center.sql`
+6. `20261119_post_qa_baseline_followup.sql` (Staging-only synthetic Discord fixtures and legacy FK parity)
+7. Run both files in `supabase/tests/`.
 
 The other files in `supabase/staging/` are historical incremental QA patches used while developing the prototype. They are not part of the clean rebuild path; do not replay them after the canonical migrations unless a specific schema inspection identifies a missing object.
 
