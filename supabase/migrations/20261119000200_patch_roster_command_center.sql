@@ -295,7 +295,7 @@ where not exists(
 
 create or replace function public.audit_patch_submission_review()
 returns trigger language plpgsql security definer set search_path=''
-as $
+as $$
 begin
  insert into public.portfolio_patch_review_events(submission_id,old_status,new_status,review_note,actor_user_id)
  values(new.submission_id,case when tg_op='INSERT' then null else old.status end,new.status,new.review_note,(select auth.uid()));
