@@ -24,12 +24,17 @@ jobs:
         with:
           node-version: 22
 
-      - name: Check JavaScript syntax
-        run: |
-          node --check app.js
-          node --check portfolio-tracker.js
-          node --check guild-affiliation-directory.js
-          node --check patch-command-center.js
+      - name: Check app.js syntax
+        run: node --check app.js
+
+      - name: Check Portfolio Tracker syntax
+        run: node --check portfolio-tracker.js
+
+      - name: Check Guild Directory syntax
+        run: node --check guild-affiliation-directory.js
+
+      - name: Check Patch Command Center syntax
+        run: node --check patch-command-center.js
 
       - name: Enforce 15px minimum in new feature modules
         run: |
