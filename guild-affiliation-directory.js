@@ -165,8 +165,38 @@
     } catch(error) {
       console.error("[Guild Directory]",error);
       if (tbody) tbody.innerHTML='<tr><td colspan="6" class="gd-empty">โหลดข้อมูลไม่สำเร็จ: '+esc(error.message||"Unknown error")+'</td></tr>';
-    } finally { state.busy=false; renderRows(); }
+    } finally {
+      state.busy=false;
+      renderRows();
+      if(directoryRealtimePending){directoryRealtimePending=false;queueDirectoryRealtimeRefresh();}
+    }
   }
+
+  let directoryRealtimeChannel=null,directoryRealtimeTimer=null,directoryRealtimePending=false;
+  function queueDirectoryRealtimeRefresh(){
+    const page=$("page-guild-directory");
+    if(!page||page.classList.contains("hidden"))return;
+    if(directoryRealtimeTimer)window.clearTimeout(directoryRealtimeTimer);
+    directoryRealtimeTimer=window.setTimeout(()=>{
+      directoryRealtimeTimer=null;
+      if(state.busy){directoryRealtimePending=true;return;}
+      cache.clear();void loadDirectory(true);
+    },250);
+  }
+  window.setGuildAffiliationRealtime=function(active){
+    if(!active){
+      if(directoryRealtimeTimer)window.clearTimeout(directoryRealtimeTimer);
+      directoryRealtimeTimer=null;directoryRealtimePending=false;
+      if(directoryRealtimeChannel){void supabaseClient.removeChannel(directoryRealtimeChannel);directoryRealtimeChannel=null;}
+      return;
+    }
+    if(directoryRealtimeChannel)return;
+    directoryRealtimeChannel=supabaseClient.channel("guild-affiliation-directory-live")
+      .on("postgres_changes",{event:"*",schema:"public",table:"guild_member_affiliations"},queueDirectoryRealtimeRefresh)
+      .on("postgres_changes",{event:"*",schema:"public",table:"guild_members"},queueDirectoryRealtimeRefresh)
+      .on("postgres_changes",{event:"*",schema:"public",table:"guild_manual_members"},queueDirectoryRealtimeRefresh)
+      .subscribe();
+  };
 
   let editing = null;
   function openAssign(identity,kind) {
