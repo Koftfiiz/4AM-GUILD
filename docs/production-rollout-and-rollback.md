@@ -66,7 +66,9 @@ If the new role boundary must be reverted, restore the original Production polic
 - `portfolio update rounds managed by management` — `FOR ALL`, `USING (is_portfolio_management())`, `WITH CHECK (is_portfolio_management())`.
 - `portfolio update permissions managed by management` — `FOR ALL`, `USING (is_portfolio_management())`, `WITH CHECK (is_portfolio_management())`.
 
-Do not run this policy rollback unless the product decision is to restore the previous broader authorization model. The new model intentionally excludes HR/Admin-only accounts from affiliation management.
+Also restore the previous table grants only if restoring the legacy direct-write model: `GRANT SELECT, INSERT, UPDATE, DELETE ON public.guilds, public.guild_member_affiliations TO authenticated`. The new release deliberately revokes direct client writes and permits affiliation changes only through the guarded RPC.
+
+Do not run this policy/grant rollback unless the product decision is to restore the previous broader authorization model. The new model intentionally excludes HR/Admin-only accounts from affiliation management and prevents direct table mutations.
 
 ## Free-plan and Egress controls
 
