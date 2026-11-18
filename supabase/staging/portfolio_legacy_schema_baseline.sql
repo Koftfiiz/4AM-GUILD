@@ -130,6 +130,11 @@ create index if not exists portfolio_patch_submissions_member_idx on public.port
 create index if not exists portfolio_patch_submissions_round_idx on public.portfolio_patch_submissions(round_id,submitted_at desc);
 create index if not exists portfolio_patch_submissions_version_idx on public.portfolio_patch_submissions(version_id);
 create index if not exists portfolio_update_requests_round_idx on public.portfolio_update_edit_requests(round_id,status);
+create index if not exists portfolio_update_edit_permissions_granted_by_idx on public.portfolio_update_edit_permissions(granted_by);
+create index if not exists portfolio_update_edit_permissions_member_idx on public.portfolio_update_edit_permissions(member_id);
+create index if not exists portfolio_update_edit_requests_member_idx on public.portfolio_update_edit_requests(member_id);
+create index if not exists portfolio_update_edit_requests_reviewed_by_idx on public.portfolio_update_edit_requests(reviewed_by);
+create index if not exists portfolio_versions_created_by_idx on public.portfolio_versions(created_by);
 
 alter table public.portfolio_update_rounds enable row level security;
 alter table public.portfolios enable row level security;
@@ -143,8 +148,15 @@ drop policy if exists "portfolio update rounds visible to members" on public.por
 create policy "portfolio update rounds visible to members" on public.portfolio_update_rounds
  for select to authenticated using(true);
 drop policy if exists "portfolio update rounds managed by management" on public.portfolio_update_rounds;
-create policy "portfolio update rounds managed by management" on public.portfolio_update_rounds
- for all to authenticated using(public.is_portfolio_management()) with check(public.is_portfolio_management());
+drop policy if exists "portfolio update rounds management insert" on public.portfolio_update_rounds;
+drop policy if exists "portfolio update rounds management update" on public.portfolio_update_rounds;
+drop policy if exists "portfolio update rounds management delete" on public.portfolio_update_rounds;
+create policy "portfolio update rounds management insert" on public.portfolio_update_rounds
+ for insert to authenticated with check(public.is_portfolio_management());
+create policy "portfolio update rounds management update" on public.portfolio_update_rounds
+ for update to authenticated using(public.is_portfolio_management()) with check(public.is_portfolio_management());
+create policy "portfolio update rounds management delete" on public.portfolio_update_rounds
+ for delete to authenticated using(public.is_portfolio_management());
 
 drop policy if exists "Members can view portfolios" on public.portfolios;
 create policy "Members can view portfolios" on public.portfolios for select to authenticated using(public.is_guild_member());
@@ -178,6 +190,13 @@ drop policy if exists "Owners can add version images" on public.portfolio_versio
 create policy "Owners can add version images" on public.portfolio_version_images for insert to authenticated
  with check(public.is_guild_member() and exists(select 1 from public.portfolio_versions v join public.portfolios p on p.id=v.portfolio_id where v.id=version_id and p.member_id=(select auth.uid())));
 
+-- Remove duplicate policies from the historical Staging-only prototype patch files.
+drop policy if exists patch_submissions_read_members on public.portfolio_patch_submissions;
+drop policy if exists portfolios_read_members on public.portfolios;
+drop policy if exists versions_read_members on public.portfolio_versions;
+drop policy if exists version_images_read_members on public.portfolio_version_images;
+drop policy if exists patch_rounds_read on public.portfolio_update_rounds;
+
 drop policy if exists "portfolio patch submissions visible to guild members" on public.portfolio_patch_submissions;
 create policy "portfolio patch submissions visible to guild members" on public.portfolio_patch_submissions
  for select to authenticated using(public.is_guild_member());
@@ -186,8 +205,15 @@ drop policy if exists "portfolio update permissions visible to owner or manageme
 create policy "portfolio update permissions visible to owner or management" on public.portfolio_update_edit_permissions
  for select to authenticated using(member_id=(select auth.uid()) or public.is_portfolio_management());
 drop policy if exists "portfolio update permissions managed by management" on public.portfolio_update_edit_permissions;
-create policy "portfolio update permissions managed by management" on public.portfolio_update_edit_permissions
- for all to authenticated using(public.is_portfolio_management()) with check(public.is_portfolio_management());
+drop policy if exists "portfolio update permissions management insert" on public.portfolio_update_edit_permissions;
+drop policy if exists "portfolio update permissions management update" on public.portfolio_update_edit_permissions;
+drop policy if exists "portfolio update permissions management delete" on public.portfolio_update_edit_permissions;
+create policy "portfolio update permissions management insert" on public.portfolio_update_edit_permissions
+ for insert to authenticated with check(public.is_portfolio_management());
+create policy "portfolio update permissions management update" on public.portfolio_update_edit_permissions
+ for update to authenticated using(public.is_portfolio_management()) with check(public.is_portfolio_management());
+create policy "portfolio update permissions management delete" on public.portfolio_update_edit_permissions
+ for delete to authenticated using(public.is_portfolio_management());
 
 drop policy if exists "portfolio update requests visible to owner or management" on public.portfolio_update_edit_requests;
 create policy "portfolio update requests visible to owner or management" on public.portfolio_update_edit_requests
