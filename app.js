@@ -1628,7 +1628,7 @@ async function uploadDashboardGalleryFiles(files) {
   let uploaded=0;
   try{
     for(const file of selected){
-      if(!["image/jpeg","image/png","image/webp","image/gif"].includes(file.type))throw new Error("รองรับเฉพาะ JPG, PNG, WEBP และ GIF");
+      if(!["image/jpeg","image/png","image/webp","image/gif","image/svg+xml"].includes(file.type))throw new Error("รองรับเฉพาะ JPG, PNG, WEBP, GIF และ SVG");
       if(file.size>10*1024*1024)throw new Error("รูปภาพแต่ละไฟล์ต้องมีขนาดไม่เกิน 10 MB");
       const uploadFile=await prepareStorageImageForUpload(file);
       const safeName=uploadFile.name.normalize("NFKD").replace(/[^a-zA-Z0-9._-]+/g,"-").replace(/^-+|-+$/g,"").slice(-90)||"guild-image";
@@ -4276,8 +4276,8 @@ async function uploadPortfolioImage(file, portfolioId, caption="", sortOrder=0, 
   const uploadFile = file.type === "image/gif"
     ? file
     : await prepareStorageImageForUpload(file, { maxDimension: 2880, quality: 0.92, forceWebP: true });
-  if (file.type !== "image/gif" && uploadFile.type !== "image/webp") {
-    throw new Error("รองรับภาพ Portfolio เป็น JPG, PNG, WEBP หรือ GIF เท่านั้น");
+  if (!["image/webp","image/gif","image/svg+xml"].includes(uploadFile.type)) {
+    throw new Error("รองรับภาพ Portfolio เป็น JPG, PNG, WEBP, GIF หรือ SVG เท่านั้น");
   }
   const ext = (uploadFile.name.split(".").pop() || "jpg").toLowerCase();
   const safe = /^[a-z0-9]+$/.test(ext) ? ext : "jpg";
@@ -7306,10 +7306,10 @@ function openGuildActivityEditor(id=null){
 }
 async function uploadGuildActivityImage(file){
  if(!isManagement())throw new Error("ไม่มีสิทธิ์อัปโหลดรูป");
- if(!file||!/^image\/(png|jpeg|webp|gif)$/.test(file.type))throw new Error("รองรับ PNG, JPG, WEBP และ GIF");
+ if(!file||!/^image\/(png|jpeg|webp|gif|svg\+xml)$/.test(file.type))throw new Error("รองรับ PNG, JPG, WEBP, GIF และ SVG");
  if(file.size>8*1024*1024)throw new Error("รูปต้องมีขนาดไม่เกิน 8 MB");
- const uploadFile=file.type==="image/gif"?file:await prepareStorageImageForUpload(file,{maxDimension:1920,quality:0.88,forceWebP:true});
- const ext=uploadFile.type==="image/gif"?"gif":"webp";
+ const uploadFile=/^image\/(gif|svg\+xml)$/.test(file.type)?file:await prepareStorageImageForUpload(file,{maxDimension:1920,quality:0.88,forceWebP:true});
+ const ext=uploadFile.type==="image/gif"?"gif":uploadFile.type==="image/svg+xml"?"svg":"webp";
  const path=currentUser.id+"/activities/"+crypto.randomUUID()+"."+ext;
  const {error}=await supabaseClient.storage.from(GUILD_ACTIVITY_BUCKET).upload(path,uploadFile,{contentType:uploadFile.type,cacheControl:"3600",upsert:false});
  if(error)throw error;
@@ -7464,10 +7464,10 @@ function sanitizeFeedbackHTML(html) {
 
 async function uploadGuildFeedbackImage(file){
  if(!currentUser)throw new Error("กรุณาเข้าสู่ระบบก่อน");
- if(!file||!/^image\/(png|jpeg|webp|gif)$/.test(file.type))throw new Error("รองรับ PNG, JPG, WEBP และ GIF");
+ if(!file||!/^image\/(png|jpeg|webp|gif|svg\+xml)$/.test(file.type))throw new Error("รองรับ PNG, JPG, WEBP, GIF และ SVG");
  if(file.size>8*1024*1024)throw new Error("รูปต้องมีขนาดไม่เกิน 8 MB");
- const uploadFile=file.type==="image/gif"?file:await prepareStorageImageForUpload(file,{maxDimension:1920,quality:0.88,forceWebP:true});
- const ext=uploadFile.type==="image/gif"?"gif":"webp";
+ const uploadFile=/^image\/(gif|svg\+xml)$/.test(file.type)?file:await prepareStorageImageForUpload(file,{maxDimension:1920,quality:0.88,forceWebP:true});
+ const ext=uploadFile.type==="image/gif"?"gif":uploadFile.type==="image/svg+xml"?"svg":"webp";
  const path=currentUser.id+"/feedback/"+crypto.randomUUID()+"."+ext;
  const {error}=await supabaseClient.storage.from(GUILD_ACTIVITY_BUCKET).upload(path,uploadFile,{contentType:uploadFile.type,cacheControl:"3600",upsert:false});
  if(error)throw error;
@@ -8038,10 +8038,10 @@ function closeGuildGuideEditor() {
 
 async function uploadGuildGuideImage(file) {
   if (!currentUser || !currentMember || currentMember.active !== true) throw new Error("ไม่มีสิทธิ์อัปโหลดรูป");
-  if (!file || !/^image\/(png|jpeg|webp|gif)$/.test(file.type)) throw new Error("รองรับ PNG, JPG, WEBP และ GIF");
+  if (!file || !/^image\/(png|jpeg|webp|gif|svg\+xml)$/.test(file.type)) throw new Error("รองรับ PNG, JPG, WEBP, GIF และ SVG");
   if (file.size > 8*1024*1024) throw new Error("รูปต้องมีขนาดไม่เกิน 8 MB");
-  const uploadFile=file.type==="image/gif"?file:await prepareStorageImageForUpload(file,{maxDimension:1920,quality:0.88,forceWebP:true});
-  const ext=uploadFile.type==="image/gif"?"gif":"webp";
+  const uploadFile=/^image\/(gif|svg\+xml)$/.test(file.type)?file:await prepareStorageImageForUpload(file,{maxDimension:1920,quality:0.88,forceWebP:true});
+  const ext=uploadFile.type==="image/gif"?"gif":uploadFile.type==="image/svg+xml"?"svg":"webp";
   const path=currentUser.id+"/guides/"+crypto.randomUUID()+"."+ext;
   const { error } = await supabaseClient.storage.from(GUILD_GUIDE_BUCKET).upload(path,uploadFile,{contentType:uploadFile.type,cacheControl:"3600",upsert:false});
   if (error) throw error;
@@ -8247,10 +8247,10 @@ function openGuildRuleEditor(key){
 }
 async function uploadGuildRuleImage(key,file){
  if(!isManagement())throw new Error("ไม่มีสิทธิ์อัปโหลดรูป");
- if(!file||!/^image\/(png|jpeg|webp|gif)$/.test(file.type))throw new Error("รองรับ PNG, JPG, WEBP และ GIF");
+ if(!file||!/^image\/(png|jpeg|webp|gif|svg\+xml)$/.test(file.type))throw new Error("รองรับ PNG, JPG, WEBP, GIF และ SVG");
  if(file.size>8*1024*1024)throw new Error("รูปต้องมีขนาดไม่เกิน 8 MB");
- const uploadFile=file.type==="image/gif"?file:await prepareStorageImageForUpload(file,{maxDimension:1920,quality:0.88,forceWebP:true});
- const ext=uploadFile.type==="image/gif"?"gif":"webp",path=currentUser.id+"/"+key+"/"+crypto.randomUUID()+"."+ext;
+ const uploadFile=/^image\/(gif|svg\+xml)$/.test(file.type)?file:await prepareStorageImageForUpload(file,{maxDimension:1920,quality:0.88,forceWebP:true});
+ const ext=uploadFile.type==="image/gif"?"gif":uploadFile.type==="image/svg+xml"?"svg":"webp",path=currentUser.id+"/"+key+"/"+crypto.randomUUID()+"."+ext;
  const {error}=await supabaseClient.storage.from(GUILD_RULE_BUCKET).upload(path,uploadFile,{contentType:uploadFile.type,cacheControl:"86400",upsert:false});if(error)throw error;
  return supabaseClient.storage.from(GUILD_RULE_BUCKET).getPublicUrl(path).data.publicUrl;
 }
