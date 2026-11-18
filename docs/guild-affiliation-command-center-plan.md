@@ -66,3 +66,8 @@ The Staging Supabase project now has a reviewed synthetic baseline for the membe
 - Supabase Free projects may be automatically paused after a week of low activity. Staging must not be kept artificially busy just to avoid pausing; resume it only when active development/testing is needed.
 - Pause Staging between work sessions when it is not needed. Pausing reduces active compute time but does not erase egress already consumed in the billing period.
 - Prefer local mocked UI/data tests first, then short targeted Staging integration tests. Avoid repeated full-page reloads against Staging and avoid downloading production assets.
+
+
+## Production affiliation mapping remains a user/Management decision
+
+Latest read-only Production counts: 58 active registered accounts, 14 active Manual-only records, 47 linked Manual records (excluded as duplicates), and 0 current affiliations. The Directory will therefore show 72 distinct active identities as unassigned. No source-table-to-guild assumption is made; each of those 72 identities must be assigned to 4AM or 4PM based on the real guild roster.
