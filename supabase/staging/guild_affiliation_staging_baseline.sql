@@ -14,7 +14,8 @@ insert into auth.users(id,aud,role,email,encrypted_password,email_confirmed_at,r
 ('10000000-0000-4000-8000-000000000003','authenticated','authenticated','staging-member-3@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now()),
 ('10000000-0000-4000-8000-000000000004','authenticated','authenticated','staging-leader@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now()),
 ('10000000-0000-4000-8000-000000000005','authenticated','authenticated','staging-management@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now()),
-('10000000-0000-4000-8000-000000000006','authenticated','authenticated','staging-manual-link@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now())
+('10000000-0000-4000-8000-000000000006','authenticated','authenticated','staging-manual-link@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now()),
+('10000000-0000-4000-8000-000000000007','authenticated','authenticated','staging-manual-linked-user@example.test','',now(),'{"provider":"email","providers":["email"]}'::jsonb,'{"staging_fixture":true}'::jsonb,now(),now())
 on conflict(id) do nothing;
 
 create table public.guild_members (
