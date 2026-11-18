@@ -386,7 +386,7 @@ as $$
 declare v_review_id uuid;
 begin
  if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Not authorized to review Patch submissions'; end if;
- if p_status not in ('pending','reviewing','approved','revision_required') then raise exception 'Invalid review status'; end if;
+ if p_status is null or p_status not in ('pending','reviewing','approved','revision_required') then raise exception 'Invalid review status'; end if;
  if p_status='revision_required' and nullif(trim(p_review_note),'') is null then raise exception 'A revision note is required'; end if;
  update public.portfolio_patch_submission_reviews
  set status=p_status,review_note=case when p_status='revision_required' then trim(p_review_note) else null end,
@@ -419,7 +419,7 @@ returns uuid language plpgsql security definer set search_path=''
 as $$
 begin
  if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Management access required'; end if;
- if p_action not in ('open','close','archive','restore') then raise exception 'Invalid Patch action'; end if;
+ if p_action is null or p_action not in ('open','close','archive','restore') then raise exception 'Invalid Patch action'; end if;
  perform public.snapshot_due_patch_rosters();
  update public.portfolio_update_rounds
  set status=case when p_action='open' then 'open' when p_action='close' then 'closed' else status end,
@@ -444,7 +444,7 @@ declare v_round_id uuid; v_result jsonb;
 begin
  if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Management access required'; end if;
  if length(trim(coalesce(p_search,'')))>80 then raise exception 'Search text is too long'; end if;
- if p_status_filter not in ('all','not_submitted','partial','pending','reviewing','approved','revision_required') then raise exception 'Invalid Patch status filter'; end if;
+ if p_status_filter is null or p_status_filter not in ('all','not_submitted','partial','pending','reviewing','approved','revision_required') then raise exception 'Invalid Patch status filter'; end if;
  select r.id into v_round_id from public.portfolio_update_rounds r
  where (p_round_id is null or r.id=p_round_id)
  order by r.archived_at nulls first,r.starts_at desc,r.created_at desc limit 1;
