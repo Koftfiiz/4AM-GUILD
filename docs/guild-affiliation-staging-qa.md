@@ -52,11 +52,13 @@ The fixture set includes one manual row linked to a registered account and three
 The feature branch now tightens the management RPC helper to the same Developer/Leader/Management role set used by the existing application, requires an active membership status, and preserves the owner Developer allowlist. The corresponding SQL edits have not yet been re-applied/re-tested after the Staging project was paused; rerun the targeted QA suite after resuming Staging.
 
 
-## Latest feature-branch additions pending Staging revalidation
+## Latest Staging revalidation
 
-- Guild Directory now exposes affiliation history on demand (maximum 50 rows per request); ordinary directory loads still fetch only one 50-member page and do not download history.
-- The production migrations now include the same role boundary as the app (active Developer/Leader/Management, plus the owner Developer allowlist), owner/reviewer-only review notes, and deterministic paginated Command Center results.
-- The Free Staging project is currently paused. These latest SQL/UI changes are committed but have not been applied or browser-tested since the pause.
+- The canonical migrations `20261119000000`, `20261119000100`, and `20261119000200` were applied successfully to the Free Staging project.
+- Guild Affiliation and Patch Command Center schema contract tests both pass.
+- Directory and Command Center read RPCs return data for an authorized synthetic Developer.
+- Function privileges were checked: no new privileged RPC is executable by `anon`; member-facing functions are executable by `authenticated`; the internal snapshot worker is not directly executable by either public role.
+- A normal synthetic Member cannot change affiliations or open the management-only Command Center and cannot read another member's historical affiliation rows.
 
 
 ## Member Workspace follow-up
@@ -66,4 +68,4 @@ The feature branch now loads Discord account identity/verification and the membe
 
 ## Staging baseline follow-up
 
-A new additive Staging-only follow-up migration adds six synthetic Discord Account rows for Workspace testing, aligns affiliation index/policy names with the production contract, permits the `manual_link` Patch roster source, and aligns Patch Submission FK delete actions. It contains no production data or secrets. Apply it only after the existing Staging Patch schema is present.
+The Staging-only follow-up has been applied. It adds synthetic Discord Account fixtures, aligns affiliation indexes/policies with Production, permits the `manual_link` Patch roster source, and aligns Patch Submission FK delete actions. It contains no Production data or secrets.
