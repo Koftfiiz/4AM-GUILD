@@ -1886,7 +1886,8 @@ async function loadMembers(forceRefresh = false) {
       .select("user_id,character_name,game_class,nickname,discord_name,age,role,active,created_at,updated_at,display_position,avatar_url,guild_position,game_uid,member_cover_crop_settings,member_cover_url,membership_status,reviewed_at,avatar_crop_settings")
       .order("created_at", { ascending: true })),
     fetchAllRowsPaged(() => supabaseClient.from("guild_manual_members")
-      .select("*").eq("active", true).is("linked_user_id", null)
+      .select("id,character_name,game_class,nickname,discord_name,age,guild_position,active,discord_user_id,discord_username,discord_global_name,discord_server_nickname,discord_avatar_url,linked_user_id,linked_at,created_at,updated_at")
+      .eq("active", true).is("linked_user_id", null)
       .order("character_name", { ascending: true }))
   ]);
 
