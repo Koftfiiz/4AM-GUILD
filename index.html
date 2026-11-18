@@ -40,16 +40,16 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=staging-test-login-20261119-r1";
+          app.src = "app.js?v=staging-realtime-20261119-r1";
           app.onload = () => {
             const tracker = document.createElement("script");
             tracker.src = "portfolio-tracker.js?v=portfolio-roster-snapshot-20261119-r2";
             tracker.onload = () => {
               const directory = document.createElement("script");
-              directory.src = "guild-affiliation-directory.js?v=20261119-r2";
+              directory.src = "guild-affiliation-directory.js?v=20261119-r3";
               directory.onload = () => {
                 const commandCenter = document.createElement("script");
-                commandCenter.src = "patch-command-center.js?v=20261119-r8";
+                commandCenter.src = "patch-command-center.js?v=20261119-r9";
                 commandCenter.onerror = () => console.error("Patch Command Center script failed to load.");
                 document.head.appendChild(commandCenter);
               };
