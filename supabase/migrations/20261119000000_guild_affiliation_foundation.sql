@@ -60,6 +60,7 @@ alter table public.guilds enable row level security;
 alter table public.guild_member_affiliations enable row level security;
 
 drop policy if exists guilds_read_active on public.guilds;
+drop policy if exists "Guild admins can manage guilds" on public.guilds;
 drop policy if exists "Authenticated users can view active guilds" on public.guilds;
 create policy "Authenticated users can view active guilds"
   on public.guilds for select to authenticated
@@ -84,6 +85,7 @@ create policy "Members can view own guild affiliation"
     or public.can_manage_guild_affiliations()
     or (ended_at is null and public.is_guild_member())
   );
+drop policy if exists "Guild admins can manage member affiliations" on public.guild_member_affiliations;
 drop policy if exists "Leaders, Management, and Developers can manage member affiliations" on public.guild_member_affiliations;
 create policy "Affiliation managers can insert member affiliations" on public.guild_member_affiliations
   for insert to authenticated with check (public.can_manage_guild_affiliations());
