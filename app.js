@@ -540,6 +540,8 @@ async function logout(event) {
     // Clear presence and all app-scoped Realtime channels before signing out.
     await stopGuildPresence();
     removeAppRealtimeChannels();
+    if (window.__warSignupRefreshTimer) window.clearInterval(window.__warSignupRefreshTimer);
+    window.__warSignupRefreshTimer = null;
     const { error } = await supabaseClient.auth.signOut({ scope: "local" });
     if (error) throw error;
 
@@ -5990,7 +5992,7 @@ function renderWarSignupSummary(rows,members=allMembers){
 async function loadWarSignups(){
   const box=$("war-signup-content");
   if(!box||!currentUser)return;
-  if(!window.__warSignupRefreshTimer){window.__warSignupRefreshTimer=window.setInterval(()=>{if(!$("page-war-signup")?.classList.contains("hidden"))loadWarSignups();},30000);}
+  if(!window.__warSignupRefreshTimer){window.__warSignupRefreshTimer=window.setInterval(()=>{if(currentUser&&document.visibilityState==="visible"&&!$("page-war-signup")?.classList.contains("hidden"))loadWarSignups();},60000);}
   $("war-signup-management")?.classList.toggle("hidden",!isManagement());
   $("war-signup-add")?.classList.toggle("hidden",!isManagement());
   box.innerHTML='<p class="muted">กำลังโหลดกิจกรรมวอร์...</p>';
@@ -9477,6 +9479,8 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 
   if (event === "SIGNED_OUT") {
     removeAppRealtimeChannels();
+    if (window.__warSignupRefreshTimer) window.clearInterval(window.__warSignupRefreshTimer);
+    window.__warSignupRefreshTimer = null;
     currentUser = null;
     currentMember = null;
     allMembers = [];
