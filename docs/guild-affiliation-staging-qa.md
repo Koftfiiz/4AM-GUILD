@@ -45,3 +45,8 @@ The fixture set includes one manual row linked to a registered account and three
 - Do not point the production app at this partial Staging schema.
 - Continue by completing the schema inventory and reviewing existing member-directory/portfolio patch data contracts before implementing the integrated Member Directory and Patch Roster.
 - No Production schema or data was modified during this staging work. The earlier Guild Affiliation foundation already exists in Production and has zero assigned affiliation rows.
+
+
+## Follow-up security hardening
+
+The feature branch now tightens the management RPC helper to the same Developer/Leader/Management role set used by the existing application, requires an active membership status, and preserves the owner Developer allowlist. The corresponding SQL edits have not yet been re-applied/re-tested after the Staging project was paused; rerun the targeted QA suite after resuming Staging.
