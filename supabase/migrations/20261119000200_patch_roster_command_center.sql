@@ -268,6 +268,7 @@ begin
  if not exists(select 1 from public.guild_members gm where gm.user_id=current_member_id and gm.active=true and gm.membership_status='active') then
   raise exception 'Active guild membership required';
  end if;
+ perform public.snapshot_due_patch_rosters();
  if not exists(select 1 from public.portfolio_patch_roster pr where pr.round_id=target_round_id and pr.member_id=current_member_id) then
   raise exception 'Member is not included in this 4AM Patch roster';
  end if;
