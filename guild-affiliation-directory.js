@@ -44,7 +44,7 @@
       ".gd-empty{padding:28px;text-align:center;color:#aaa;font-size:15px}.gd-modal{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:16px}",
       ".gd-dialog{width:min(500px,100%);padding:21px;border:1px solid rgba(232,51,63,.4);border-radius:16px;background:#1c1c21;box-shadow:0 24px 70px #000a}",
       ".gd-dialog h2{margin:0 0 4px;font-size:20px}.gd-dialog label{display:grid;gap:6px;margin:14px 0;color:#ddd;font-size:15px}",
-      ".gd-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.gd-status{min-height:22px;color:#ff9da5;font-size:15px}",
+      ".gd-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.gd-status{min-height:22px;color:#ff9da5;font-size:15px}.gd-modal[hidden]{display:none}.gd-history-list{display:grid;gap:9px;max-height:min(55vh,520px);overflow:auto}.gd-history-item{padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#151519}.gd-history-item strong{font-size:16px}.gd-history-item p{margin:5px 0 0;color:#aaa;font-size:15px;line-height:1.5}",
       "@media(max-width:900px){.gd-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.gd-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}",
       "@media(max-width:520px){.gd-toolbar{grid-template-columns:1fr}.gd-panel{padding:14px}.gd-stats{gap:8px}.gd-stat strong{font-size:21px}}"
     ].join("");
@@ -91,7 +91,7 @@
           <div class="gd-pagination"><span class="gd-muted" id="gd-page-label">—</span><div class="gd-actions"><button class="gd-button" id="gd-prev" type="button">← ก่อนหน้า</button><button class="gd-button" id="gd-next" type="button">ถัดไป →</button></div></div>
         </section>
       </div>
-      <div class="gd-modal" id="gd-modal" hidden><form class="gd-dialog" id="gd-assign-form"><h2>กำหนดสังกัดสมาชิก</h2><p class="gd-muted" id="gd-member-label"></p><label>สังกัดใหม่<select class="gd-field" id="gd-new-guild" required><option value="">เลือกสังกัด</option><option value="4AM">4AM</option><option value="4PM">4PM</option></select></label><label>เหตุผลในการเปลี่ยนสังกัด<input class="gd-field" id="gd-reason" maxlength="160" placeholder="ระบุเหตุผล (ไม่บังคับ)"></label><p class="gd-status" id="gd-assign-status" role="status" aria-live="polite"></p><div class="gd-dialog-actions"><button class="gd-button" id="gd-cancel" type="button">ยกเลิก</button><button class="gd-button primary" id="gd-save" type="submit">บันทึกสังกัด</button></div></form></div>`;
+      <div class="gd-modal" id="gd-modal" hidden><form class="gd-dialog" id="gd-assign-form"><h2>กำหนดสังกัดสมาชิก</h2><p class="gd-muted" id="gd-member-label"></p><label>สังกัดใหม่<select class="gd-field" id="gd-new-guild" required><option value="">เลือกสังกัด</option><option value="4AM">4AM</option><option value="4PM">4PM</option></select></label><label>เหตุผลในการเปลี่ยนสังกัด<input class="gd-field" id="gd-reason" maxlength="160" placeholder="ระบุเหตุผล (ไม่บังคับ)"></label><p class="gd-status" id="gd-assign-status" role="status" aria-live="polite"></p><div class="gd-dialog-actions"><button class="gd-button" id="gd-cancel" type="button">ยกเลิก</button><button class="gd-button primary" id="gd-save" type="submit">บันทึกสังกัด</button></div></form></div>\n      <div class="gd-modal" id="gd-history-modal" hidden><section class="gd-dialog" role="dialog" aria-modal="true" aria-labelledby="gd-history-title"><h2 id="gd-history-title">ประวัติสังกัดสมาชิก</h2><p class="gd-muted" id="gd-history-member"></p><div class="gd-history-list" id="gd-history-list" aria-live="polite"><p class="gd-muted">กำลังโหลดประวัติ...</p></div><div class="gd-dialog-actions"><button class="gd-button" id="gd-history-close" type="button">ปิด</button></div></section></div>`;
     main.appendChild(page);
     styles();
     bindEvents();
@@ -123,7 +123,12 @@
         const guildLabel = row.guild_code || "ยังไม่กำหนด";
         const assign = canAssign()
           ? '<button class="gd-button" type="button" data-gd-assign="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">กำหนดสังกัด</button>'
-          : '<span class="gd-muted">—</span>';
+          : '';
+        const canViewHistory = canAssign() || (row.record_type==="account" && String(currentUser?.id)===String(row.member_id));
+        const history = canViewHistory
+          ? '<button class="gd-button" type="button" data-gd-history="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">ประวัติ</button>'
+          : '';
+        const actions = assign || history ? '<div class="gd-actions">'+assign+history+'</div>' : '<span class="gd-muted">—</span>';
         return '<tr><td><span class="gd-name">'+esc(row.character_name)+'</span><span class="gd-sub">'+esc(row.nickname || "ไม่ระบุชื่อเล่น")+'</span></td>'+
           '<td>'+esc(row.game_class)+'</td><td>'+esc(row.discord_name || "—")+'</td>'+
           '<td><span class="gd-pill '+(row.record_type==="manual"?"manual":"")+'">'+(row.record_type==="manual"?"Manual":"บัญชีเว็บไซต์")+'</span></td>'+
@@ -178,6 +183,36 @@
   }
   function closeAssign() { $("gd-modal").hidden=true; editing=null; }
 
+  function closeHistory() { $("gd-history-modal").hidden=true; }
+
+  async function openHistory(identity,kind) {
+    const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity));
+    if(!row)return;
+    const isOwner=row.record_type==="account"&&String(currentUser?.id)===String(row.member_id);
+    if(!canAssign()&&!isOwner)return;
+    $("gd-history-member").textContent=row.character_name+" · "+row.game_class;
+    $("gd-history-list").innerHTML='<p class="gd-muted">กำลังโหลดประวัติ...</p>';
+    $("gd-history-modal").hidden=false;
+    try {
+      let query=supabaseClient.from("guild_member_affiliations")
+        .select("id,started_at,ended_at,change_reason,created_at,guild_id,guilds(code,name)")
+        .order("started_at",{ascending:false}).limit(50);
+      query=kind==="account"?query.eq("user_id",identity):query.eq("manual_member_id",identity);
+      const {data,error}=await query;
+      if(error)throw error;
+      const rows=data||[];
+      $("gd-history-list").innerHTML=rows.length?rows.map(item=>{
+        const code=item.guilds?.code||"สังกัดไม่พร้อมใช้งาน";
+        const status=item.ended_at?"สิ้นสุดแล้ว":"สังกัดปัจจุบัน";
+        const start=item.started_at?new Date(item.started_at).toLocaleString("th-TH"):"—";
+        const end=item.ended_at?new Date(item.ended_at).toLocaleString("th-TH"):"ปัจจุบัน";
+        return '<article class="gd-history-item"><div class="gd-head" style="margin:0"><strong>'+esc(code)+'</strong><span class="gd-pill '+(item.ended_at?"none":"am")+'">'+status+'</span></div><p>เริ่ม: '+esc(start)+'<br>สิ้นสุด: '+esc(end)+'</p><p>เหตุผล: '+esc(item.change_reason||"ไม่ได้ระบุ")+'</p></article>';
+      }).join(""):'<p class="gd-muted">ยังไม่มีประวัติการกำหนดสังกัด</p>';
+    } catch(error) {
+      $("gd-history-list").innerHTML='<p class="gd-status">โหลดประวัติไม่สำเร็จ: '+esc(error.message||"Unknown error")+'</p>';
+    }
+  }
+
   async function saveAssign(event) {
     event.preventDefault();
     if (!editing || !canAssign()) return;
@@ -211,8 +246,13 @@
     $("gd-cancel")?.addEventListener("click",closeAssign);
     $("gd-modal")?.addEventListener("click",event=>{if(event.target===$("gd-modal"))closeAssign()});
     $("gd-assign-form")?.addEventListener("submit",saveAssign);
+    $("gd-history-close")?.addEventListener("click",closeHistory);
+    $("gd-history-modal")?.addEventListener("click",event=>{if(event.target===$("gd-history-modal"))closeHistory()});
     $("gd-rows")?.addEventListener("click",event=>{
-      const button=event.target.closest("[data-gd-assign]"); if(button)openAssign(button.dataset.gdAssign,button.dataset.gdKind);
+      const assignButton=event.target.closest("[data-gd-assign]");
+      const historyButton=event.target.closest("[data-gd-history]");
+      if(assignButton)openAssign(assignButton.dataset.gdAssign,assignButton.dataset.gdKind);
+      else if(historyButton)void openHistory(historyButton.dataset.gdHistory,historyButton.dataset.gdKind);
     });
   }
 
