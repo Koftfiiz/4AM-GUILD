@@ -142,6 +142,7 @@ console.log("Preflight passed: exactly 46 approved sources are still referenced.
 console.log("Expected source download: approximately 174.97 MiB. No other files will be downloaded.");
 
 const prepared = [];
+try {
 for (let index = 0; index < manifest.files.length; index++) {
   const item = manifest.files[index];
   const destination = item.path.replace(/\.png$/i, ".webp");
@@ -179,6 +180,14 @@ if (prepared.length !== TARGET_COUNT) throw new Error("Safety stop: not all 46 W
 report.resumed = prepared.filter((item) => item.resumed).length;
 report.newlyUploaded = prepared.filter((item) => !item.resumed).length;
 console.log("All 46 WebP destinations verified. Existing reused: " + report.resumed + "; newly uploaded: " + report.newlyUploaded + ". Database URL updates may now begin.");
+
+} catch (error) {
+  report.errors.push(String(error?.message ?? error));
+  report.finishedAt = new Date().toISOString();
+  report.status = "FAILED_PREPARING_WEBP";
+  await writeFile("portfolio-webp-migration-report.json", JSON.stringify(report, null, 2));
+  throw error;
+}
 
 const changes = [];
 for (const table of tableNames) {
