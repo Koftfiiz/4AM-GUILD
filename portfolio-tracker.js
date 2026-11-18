@@ -12,9 +12,9 @@
   const $ = (id) => document.getElementById(id);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const management = () => typeof isManagement === "function" && isManagement();
-  const memberName = (id) => {
+  const memberName = (id,fallback) => {
     const member = (allMembers || []).find(m => m.user_id === id);
-    return member && typeof getMemberName === "function" ? getMemberName(member) : (member?.character_name || id);
+    return member && typeof getMemberName === "function" ? getMemberName(member) : (member?.character_name || fallback || id);
   };
   const dateLabel = (value) => {
     if (!value) return "—";
@@ -261,7 +261,7 @@
       '<div class="portfolio-tracker-stat"><strong>' + stats.pendingFolders + '</strong><span>แฟ้มที่ยังไม่ส่ง</span></div></div>' +
       '<div class="portfolio-tracker-table-wrap"><table class="portfolio-tracker-table"><thead><tr><th>สมาชิก</th><th>แฟ้มทั้งหมด</th><th>ส่งแล้ว</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>' +
       stats.detail.map(row =>
-        '<tr><td><strong>' + esc(memberName(row.member.user_id)) + '</strong></td>' +
+        '<tr><td><strong>' + esc(memberName(row.member.user_id,row.member.character_name)) + '</strong></td>' +
         '<td>' + row.total + '</td><td>' + row.submitted + '/' + row.total + '</td>' +
         '<td>' + pill(row.status, row.total === 0 ? "ยังไม่มีแฟ้ม" : row.submitted + "/" + row.total + " แฟ้ม") + '</td>' +
         '<td><button class="btn btn-outline btn-sm" type="button" data-pt-member="' + esc(row.member.user_id) + '">ดูรายละเอียด</button></td></tr>'
