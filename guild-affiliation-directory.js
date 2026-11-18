@@ -206,7 +206,7 @@
         const status=item.ended_at?"สิ้นสุดแล้ว":"สังกัดปัจจุบัน";
         const start=item.started_at?new Date(item.started_at).toLocaleString("th-TH"):"—";
         const end=item.ended_at?new Date(item.ended_at).toLocaleString("th-TH"):"ปัจจุบัน";
-        return '<article class="gd-history-item"><div class="gd-head" style="margin:0"><strong>'+esc(code)+'</strong><span class="gd-pill '+(item.ended_at?"none":"am")+'">'+status+'</span></div><p>เริ่ม: '+esc(start)+'<br>สิ้นสุด: '+esc(end)+'</p><p>เหตุผล: '+esc(item.change_reason||"ไม่ได้ระบุ")+'</p></article>';
+        return '<article class="gd-history-item"><div class="gd-head" style="margin:0"><strong>'+esc(code)+'</strong><span class="gd-pill '+(item.ended_at?"none":code==="4PM"?"pm":"am")+'">'+status+'</span></div><p>เริ่ม: '+esc(start)+'<br>สิ้นสุด: '+esc(end)+'</p><p>เหตุผล: '+esc(item.change_reason||"ไม่ได้ระบุ")+'</p></article>';
       }).join(""):'<p class="gd-muted">ยังไม่มีประวัติการกำหนดสังกัด</p>';
     } catch(error) {
       $("gd-history-list").innerHTML='<p class="gd-status">โหลดประวัติไม่สำเร็จ: '+esc(error.message||"Unknown error")+'</p>';
