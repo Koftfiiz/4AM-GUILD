@@ -47,7 +47,6 @@ create index if not exists portfolio_patch_review_events_submission_idx on publi
 create index if not exists portfolio_patch_submissions_portfolio_idx on public.portfolio_patch_submissions(portfolio_id);
 create index if not exists portfolio_patch_submissions_version_idx on public.portfolio_patch_submissions(version_id);
 create index if not exists portfolio_version_images_version_idx on public.portfolio_version_images(version_id,sort_order);
-create index if not exists portfolios_member_idx on public.portfolios(member_id,created_at desc);
 create index if not exists portfolio_update_rounds_snapshot_due_idx
   on public.portfolio_update_rounds(starts_at)
   where archived_at is null and roster_snapshot_at is null;
