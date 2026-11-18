@@ -213,7 +213,7 @@
 
     const managementPanel = management()
       ? '<section class="portfolio-tracker-panel">' +
-        '<div class="portfolio-tracker-heading"><div><span class="panel-kicker">PORTFOLIO PATCH SCHEDULE</span><h3>จัดการรอบ Patch</h3><p>กำหนดช่วงเปิดรับและติดตามรายการ Version ที่สมาชิกเลือกส่ง</p></div>' +
+        '<div class="portfolio-tracker-heading"><div><span class="panel-kicker">PORTFOLIO SCHEDULE</span><h3>จัดการรอบส่งแฟ้มผลงาน</h3><p>กำหนดช่วงเปิดรับและติดตามรายการ Version ที่สมาชิกเลือกส่ง</p></div>' +
         '<span class="portfolio-tracker-pill is-complete">Management</span></div>' +
         '<form id="pt-create-round" class="portfolio-tracker-form">' +
         '<label>ชื่อ Patch / รอบ<input name="round_name" maxlength="120" required placeholder="เช่น Patch 2.1.1 (เดือนพฤศจิกายน)"></label>' +
@@ -321,8 +321,8 @@
 
     root.innerHTML = managementPanel +
       '<section class="portfolio-tracker-panel">' +
-      '<div class="portfolio-tracker-heading"><div><span class="panel-kicker">PATCH SUBMISSION TRACKER</span>' +
-      '<h3>ติดตามการส่ง Version เข้ารอบ Patch</h3>' +
+      '<div class="portfolio-tracker-heading"><div><span class="panel-kicker">SUBMISSION TRACKER</span>' +
+      '<h3>ติดตามการส่งแฟ้มเข้ารอบตรวจ</h3>' +
       '<p>หนึ่งแฟ้มส่งได้หนึ่ง Version ต่อรอบ และเปลี่ยน Version ที่เลือกได้ก่อนปิดรับหรือภายในเวลาที่ได้รับอนุญาต</p></div>' +
       '<button id="pt-refresh" class="btn btn-outline btn-sm" type="button">รีเฟรช</button></div>' +
       '<div class="portfolio-tracker-round-list">' +
