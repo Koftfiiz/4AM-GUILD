@@ -95,8 +95,9 @@ revoke all on public.guilds,public.guild_members,public.guild_manual_members,
  public.portfolio_patch_review_events,public.portfolio_patch_submission_events
 from public,anon,authenticated;
 
-grant select,insert,update,delete on public.guilds,public.guild_members,
- public.guild_manual_members,public.discord_accounts,public.guild_member_affiliations,
+grant select on public.guilds,public.guild_member_affiliations to authenticated;
+grant select,insert,update,delete on public.guild_members,
+ public.guild_manual_members,public.discord_accounts,
  public.portfolio_update_rounds,public.portfolio_update_edit_permissions,
  public.portfolio_update_edit_requests,public.portfolios,public.portfolio_version_images
 to authenticated;
