@@ -1,0 +1,10 @@
+{
+  "name": "4am-portfolio-image-migration-dry-run",
+  "private": true,
+  "type": "module",
+  "description": "Read-only Portfolio image WebP conversion assessment",
+  "dependencies": {
+    "@supabase/supabase-js": "2.81.1",
+    "sharp": "0.34.5"
+  }
+}
