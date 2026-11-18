@@ -3936,7 +3936,7 @@ async function openPortfolioDetail(portfolioId, selectedVersionId = null) {
       const customVersionName = versionName !== ("Version " + Number(version.version_number));
       return '<div class="portfolio-version-row"><button type="button" class="portfolio-version-item ' + (selected ? 'is-active' : '') +
         '" data-portfolio-version-select="' + escapeHTML(version.id) + '" aria-pressed="' + selected + '">' +
-        '<strong>Version ' + Number(version.version_number) + '</strong><span>' + escapeHTML(customVersionName ? versionName : "ยังไม่ได้ตั้งชื่อ") + ' · ' + escapeHTML(label) +
+        '<strong>' + Number(version.version_number) + '</strong><span>' + escapeHTML(customVersionName ? versionName : "ยังไม่ได้ตั้งชื่อ") + ' · ' + escapeHTML(label) +
         '</span><small>' + escapeHTML(formatDate(version.created_at)) + '</small></button>' +
         (portfolio.member_id === currentUser?.id ? '<button type="button" class="portfolio-version-edit" data-portfolio-version-edit="' + escapeHTML(version.id) + '">แก้ไขเนื้อหา</button><button type="button" class="portfolio-version-rename" data-portfolio-version-rename="' + escapeHTML(version.id) + '" aria-label="เปลี่ยนชื่อ ' + escapeHTML(versionName) + '">เปลี่ยนชื่อ</button><button type="button" class="portfolio-version-delete" data-portfolio-version-delete="' + escapeHTML(version.id) + '" aria-label="ลบ ' + escapeHTML(versionName) + '" title="ลบเฉพาะ Version นี้">−</button>' : '') +
         '</div>';
