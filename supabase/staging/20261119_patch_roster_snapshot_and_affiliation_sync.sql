@@ -32,9 +32,9 @@ create table public.portfolio_patch_roster (
 );
 create index portfolio_patch_roster_round_idx on public.portfolio_patch_roster(round_id,added_at);
 create index portfolio_patch_roster_member_idx on public.portfolio_patch_roster(member_id,round_id);
-create index portfolio_update_rounds_snapshot_due_idx
+create index if not exists portfolio_update_rounds_snapshot_due_idx
   on public.portfolio_update_rounds(starts_at)
-  where status='open' and archived_at is null and roster_snapshot_at is null;
+  where archived_at is null and roster_snapshot_at is null;
 
 alter table public.portfolio_update_rounds enable row level security;
 alter table public.portfolio_patch_roster enable row level security;
