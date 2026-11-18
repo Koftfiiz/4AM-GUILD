@@ -1,7 +1,8 @@
 -- Phase 1: Guild Affiliation foundation.
 -- Additive and idempotent so it can reconcile the already-created Production
 -- foundation without changing any existing member assignments or history.
--- Requires the existing application tables and public.is_guild_admin() helper.
+-- Requires the existing application tables. Writes are restricted to the project owner,
+-- active Management, and active Developer accounts.
 
 begin;
 
@@ -54,19 +55,40 @@ create index if not exists guild_member_affiliations_manual_history_idx
   on public.guild_member_affiliations(manual_member_id, started_at desc)
   where manual_member_id is not null;
 
+create or replace function public.can_manage_guild_affiliations()
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $
+  select
+    (select auth.uid()) = '378b09df-16a0-4d01-8908-2604c2c210a9'::uuid
+    or exists (
+      select 1
+      from public.guild_members gm
+      where gm.user_id = (select auth.uid())
+        and gm.active = true
+        and gm.membership_status = 'active'
+        and gm.role in ('management', 'developer')
+    );
+$;
+
+grant execute on function public.can_manage_guild_affiliations() to authenticated;
+
 alter table public.guilds enable row level security;
 alter table public.guild_member_affiliations enable row level security;
 
 drop policy if exists "Authenticated users can view active guilds" on public.guilds;
 create policy "Authenticated users can view active guilds"
   on public.guilds for select to authenticated
-  using (is_active = true or public.is_guild_admin());
+  using (is_active = true or public.can_manage_guild_affiliations());
 
 drop policy if exists "Guild admins can manage guilds" on public.guilds;
 create policy "Guild admins can manage guilds"
   on public.guilds for all to authenticated
-  using (public.is_guild_admin())
-  with check (public.is_guild_admin());
+  using (public.can_manage_guild_affiliations())
+  with check (public.can_manage_guild_affiliations());
 
 drop policy if exists "Members can view own guild affiliation" on public.guild_member_affiliations;
 create policy "Members can view own guild affiliation"
@@ -79,14 +101,14 @@ create policy "Members can view own guild affiliation"
       where mm.id = guild_member_affiliations.manual_member_id
         and mm.linked_user_id = (select auth.uid())
     )
-    or public.is_guild_admin()
+    or public.can_manage_guild_affiliations()
   );
 
 drop policy if exists "Guild admins can manage member affiliations" on public.guild_member_affiliations;
 create policy "Guild admins can manage member affiliations"
   on public.guild_member_affiliations for all to authenticated
-  using (public.is_guild_admin())
-  with check (public.is_guild_admin());
+  using (public.can_manage_guild_affiliations())
+  with check (public.can_manage_guild_affiliations());
 
 grant select, insert, update, delete on public.guilds to authenticated;
 grant select, insert, update, delete on public.guild_member_affiliations to authenticated;
