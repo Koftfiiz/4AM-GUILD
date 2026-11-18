@@ -70,12 +70,12 @@ create policy patch_submissions_read_members on public.portfolio_patch_submissio
 drop policy if exists patch_reviews_read_members on public.portfolio_patch_submission_reviews;
 create policy patch_reviews_read_members on public.portfolio_patch_submission_reviews for select to authenticated using(
  exists(select 1 from public.portfolio_patch_submissions s where s.id=submission_id
-  and (s.member_id=(select auth.uid()) or public.is_portfolio_reviewer()))
+  and (s.member_id=(select auth.uid()) or public.can_manage_guild_affiliations()))
 );
 drop policy if exists patch_review_events_read_members on public.portfolio_patch_review_events;
 create policy patch_review_events_read_members on public.portfolio_patch_review_events for select to authenticated using(
  exists(select 1 from public.portfolio_patch_submissions s where s.id=submission_id
-  and (s.member_id=(select auth.uid()) or public.is_portfolio_reviewer()))
+  and (s.member_id=(select auth.uid()) or public.can_manage_guild_affiliations()))
 );
 grant select on public.portfolios,public.portfolio_versions,public.portfolio_version_images,
  public.portfolio_patch_submissions,public.portfolio_patch_submission_reviews,public.portfolio_patch_review_events to authenticated;
@@ -140,7 +140,7 @@ returns uuid language plpgsql security definer set search_path=''
 as $$
 declare v_review_id uuid;
 begin
- if (select auth.uid()) is null or not public.is_guild_admin() then raise exception 'Not authorized to review Patch submissions'; end if;
+ if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Not authorized to review Patch submissions'; end if;
  if p_status not in ('pending','reviewing','approved','revision_required') then raise exception 'Invalid review status'; end if;
  if p_status='revision_required' and nullif(trim(p_review_note),'') is null then raise exception 'A revision note is required'; end if;
  update public.portfolio_patch_submission_reviews
