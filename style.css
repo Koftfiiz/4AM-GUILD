@@ -8885,3 +8885,24 @@ body.gallery-lightbox-open{overflow:hidden}
   color: #D1D5DB;
   opacity: .7;
 }
+
+
+/* PORTFOLIO WEBP MIGRATION TOOL */
+.portfolio-webp-migration-panel{border:1px solid rgba(232,51,63,.28);background:linear-gradient(145deg,rgba(28,12,14,.72),rgba(12,12,14,.96));}
+.portfolio-webp-migration-panel .panel-heading{align-items:flex-start;gap:16px;}
+.portfolio-webp-migration-panel .panel-heading p{margin-top:7px;color:var(--text-muted,#aaa);font-size:15px;line-height:1.65;}
+.portfolio-webp-migration-notice{display:flex;flex-direction:column;gap:5px;padding:13px 15px;margin:14px 0;border:1px solid rgba(232,51,63,.22);border-radius:12px;background:rgba(232,51,63,.07);font-size:15px;line-height:1.6;}
+.portfolio-webp-migration-notice strong{color:#ff6872;font-size:15px;}
+.portfolio-webp-migration-notice span{color:var(--text-muted,#bbb);}
+.portfolio-webp-migration-summary{font-size:15px;font-weight:700;margin:14px 0 10px;}
+.portfolio-webp-migration-progress{height:10px;border-radius:999px;overflow:hidden;background:rgba(255,255,255,.09);}
+.portfolio-webp-migration-progress span{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#a91624,#f04452);transition:width .2s ease;}
+.portfolio-webp-migration-progress-label{margin-top:7px;font-size:15px;color:var(--text-muted,#aaa);font-variant-numeric:tabular-nums;}
+.portfolio-webp-migration-status,.portfolio-webp-migration-details,.portfolio-webp-migration-failures{font-size:15px;line-height:1.65;margin:12px 0 0;overflow-wrap:anywhere;}
+.portfolio-webp-migration-status[data-tone="success"]{color:#63d69a;}
+.portfolio-webp-migration-status[data-tone="error"],.portfolio-webp-migration-failures{color:#ff727c;}
+.portfolio-webp-migration-status[data-tone="warning"]{color:#ffbd69;}
+.portfolio-webp-migration-status[data-tone="working"]{color:#ff6872;}
+.portfolio-webp-migration-actions{display:flex;justify-content:flex-start;margin-top:16px;}
+.portfolio-webp-migration-actions .btn{min-height:44px;font-size:15px;}
+@media(max-width:640px){.portfolio-webp-migration-panel .panel-heading{flex-direction:column;}.portfolio-webp-migration-actions .btn{width:100%;}}
