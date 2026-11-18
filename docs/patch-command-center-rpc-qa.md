@@ -104,3 +104,8 @@ Browser validation with a real Staging login, responsive/accessibility checks, a
 
 
 The Review Queue is also exposed as its own Management-only sidebar entry. It opens the same Command Center data context directly on the queue view, avoiding a duplicate page or duplicate data loader.
+
+
+## Reproducible workflow regression suite
+
+Added `supabase/tests/patch_command_center_workflow_regression.sql`. It uses only the synthetic fixture IDs, exercises directory canonical identity/pagination, empty Patch state, queue paging, immutable roster, non-roster and cross-owner submission rejection, Version resubmission audit, reviewer note/authorization rules, post-snapshot Manual linking, Developer-only Discord writes, and affiliation-history privacy. Every scenario runs in a transaction and rolls back. Run it only in Staging; it has not yet been re-run after the latest null-input validation hardening.
