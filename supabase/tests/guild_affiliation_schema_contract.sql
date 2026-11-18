@@ -34,7 +34,7 @@ begin
     select 1 from pg_policies
     where schemaname = 'public'
       and tablename = 'guild_member_affiliations'
-      and policyname = 'Management and Developers can manage member affiliations'
+      and policyname = 'Leaders, Management, and Developers can manage member affiliations'
       and qual like '%can_manage_guild_affiliations%'
       and with_check like '%can_manage_guild_affiliations%'
   ) then
