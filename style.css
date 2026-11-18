@@ -8731,35 +8731,37 @@ body.gallery-lightbox-open{overflow:hidden}
   align-self: stretch;
   min-width: 104px;
   padding: 8px 12px;
-  border: 1px solid rgba(232, 51, 63, .62);
+  border: 1px solid rgba(37, 99, 235, .78);
   border-radius: 9px;
-  background: rgba(232, 51, 63, .16);
-  color: #ff9ca5;
+  background: rgba(37, 99, 235, .22);
+  color: #bfdbfe;
   font: inherit;
   font-size: 15px;
   font-weight: 800;
   cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
 }
 .portfolio-version-edit:hover {
-  border-color: #ff5361;
-  background: rgba(232, 51, 63, .24);
+  border-color: #60a5fa;
+  background: rgba(37, 99, 235, .34);
 }
 .portfolio-version-rename {
   align-self: stretch;
   min-width: 82px;
   padding: 8px 12px;
-  border: 1px solid rgba(232, 51, 63, .42);
+  border: 1px solid rgba(124, 58, 237, .78);
   border-radius: 9px;
-  background: rgba(232, 51, 63, .08);
-  color: #ff727b;
+  background: rgba(124, 58, 237, .2);
+  color: #ddd6fe;
   font: inherit;
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
 }
 .portfolio-version-rename:hover {
-  border-color: #e8333f;
-  background: rgba(232, 51, 63, .16);
+  border-color: #a78bfa;
+  background: rgba(124, 58, 237, .34);
 }
 @media (max-width: 420px) {
   .portfolio-version-row { grid-template-columns: minmax(0, 1fr); }
