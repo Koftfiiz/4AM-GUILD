@@ -61,7 +61,7 @@ begin
     from public.portfolio_patch_review_events e join public.portfolio_patch_submissions s on s.id=e.submission_id
     join public.portfolio_patch_roster pr on pr.round_id=s.round_id and pr.member_id=s.member_id
     where s.round_id=v_round_id order by e.created_at desc limit 10) a)
- ) into v_result from roster_stats;
+ ) into v_result;
  return v_result;
 end; $$;
 revoke all on function public.get_patch_command_center(uuid,text,text,integer,integer) from public,anon;
