@@ -160,15 +160,31 @@ update public.guild_members set role='management' where user_id='10000000-0000-4
 insert into public.portfolio_update_rounds(round_name,starts_at,closes_at,status)
 values('Synthetic Patch 2.1',now()-interval '1 day',now()+interval '7 days','open');
 select public.snapshot_due_patch_rosters();
-insert into public.portfolios(member_id,title,description,game_class,portfolio_type) values
-('10000000-0000-4000-8000-000000000001','Astra PvP Build','Synthetic build fixture','Ironclad','pvp'),
-('10000000-0000-4000-8000-000000000004','Oracle PvE Build','Synthetic build fixture','Numina','pve');
+insert into public.portfolios(member_id,title,description,game_class,portfolio_type)
+select v.member_id,v.title,v.description,v.game_class,v.portfolio_type
+from (values
+ ('10000000-0000-4000-8000-000000000001'::uuid,'Astra PvP Build','Synthetic build fixture','Ironclad','pvp'),
+ ('10000000-0000-4000-8000-000000000004'::uuid,'Oracle PvE Build','Synthetic build fixture','Numina','pve')
+) as v(member_id,title,description,game_class,portfolio_type)
+where not exists(select 1 from public.portfolios p where p.member_id=v.member_id and p.title=v.title);
+
 insert into public.portfolio_versions(portfolio_id,version_number,version_name,title,game_class,portfolio_type)
-select p.id,1,'Version 1',p.title,p.game_class,p.portfolio_type from public.portfolios p;
+select p.id,1,'Version 1',p.title,p.game_class,p.portfolio_type
+from public.portfolios p
+where p.member_id in ('10000000-0000-4000-8000-000000000001'::uuid,'10000000-0000-4000-8000-000000000004'::uuid)
+  and not exists(select 1 from public.portfolio_versions pv where pv.portfolio_id=p.id and pv.version_number=1);
+
 insert into public.portfolio_version_images(version_id,image_url,section_key)
-select pv.id,'mock://synthetic-webp/fixture-01.webp','stats' from public.portfolio_versions pv limit 1;
+select pv.id,'mock://synthetic-webp/fixture-01.webp','stats'
+from public.portfolio_versions pv
+where not exists(select 1 from public.portfolio_version_images i where i.version_id=pv.id and i.image_url='mock://synthetic-webp/fixture-01.webp')
+order by pv.created_at
+limit 1;
+
 insert into public.portfolio_patch_submissions(round_id,portfolio_id,version_id,member_id)
-select r.id,p.id,pv.id,p.member_id from public.portfolio_update_rounds r
-join public.portfolios p on p.member_id='10000000-0000-4000-8000-000000000001'
+select r.id,p.id,pv.id,p.member_id
+from public.portfolio_update_rounds r
+join public.portfolios p on p.member_id='10000000-0000-4000-8000-000000000001'::uuid
 join public.portfolio_versions pv on pv.portfolio_id=p.id
-where r.round_name='Synthetic Patch 2.1';
+where r.round_name='Synthetic Patch 2.1'
+on conflict(round_id,portfolio_id) do nothing;
