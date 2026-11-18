@@ -1578,25 +1578,37 @@ async function loadDashboardGallery() {
   renderDashboardGallery();
 }
 
-async function prepareStorageImageForUpload(file,{maxDimension=1920,quality=0.86}={}){
-  if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type)||typeof createImageBitmap!=="function")return file;
+async function prepareStorageImageForUpload(file,{maxDimension=1920,quality=0.86,forceWebP=false}={}){
+  if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type))return file;
+  if(typeof createImageBitmap!=="function"){
+    if(forceWebP)throw new Error("เบราว์เซอร์นี้ไม่รองรับการแปลงภาพเป็น WebP");
+    return file;
+  }
   let bitmap;
   try{
     bitmap=await createImageBitmap(file);
     const scale=Math.min(1,maxDimension/Math.max(bitmap.width,bitmap.height));
-    if(scale>=1&&file.size<500*1024)return file;
+    if(!forceWebP&&scale>=1&&file.size<500*1024)return file;
     const canvas=document.createElement("canvas");
     canvas.width=Math.max(1,Math.round(bitmap.width*scale));
     canvas.height=Math.max(1,Math.round(bitmap.height*scale));
     const context=canvas.getContext("2d");
-    if(!context)return file;
+    if(!context){
+      if(forceWebP)throw new Error("เบราว์เซอร์ไม่สามารถประมวลผลรูปภาพได้");
+      return file;
+    }
     context.drawImage(bitmap,0,0,canvas.width,canvas.height);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/webp",quality));
-    if(!blob||blob.type!=="image/webp"||blob.size>=file.size*0.95)return file;
+    if(!blob||blob.type!=="image/webp"){
+      if(forceWebP)throw new Error("ไม่สามารถสร้างไฟล์ WebP ได้");
+      return file;
+    }
+    if(!forceWebP&&blob.size>=file.size*0.95)return file;
     const baseName=file.name.replace(/\.[^.]+$/,"")||"image";
     return new File([blob],baseName+".webp",{type:"image/webp",lastModified:Date.now()});
   }catch(error){
     console.warn("Image optimization skipped:",error);
+    if(forceWebP)throw new Error("แปลงภาพเป็น WebP ไม่สำเร็จ: "+(error.message||"กรุณาลองใหม่"));
     return file;
   }finally{
     bitmap?.close?.();
@@ -4218,9 +4230,14 @@ async function uploadPortfolioImage(file, portfolioId, caption="", sortOrder=0, 
   if (!currentUser) throw new Error("กรุณาเข้าสู่ระบบก่อน");
   if (!file || !file.type.startsWith("image/")) throw new Error("กรุณาเลือกรูปภาพ");
 
-  // Keep portfolio screenshots detailed while reducing oversized PNG/JPEG uploads.
-  // GIF and unsupported formats safely fall back to the original file.
-  const uploadFile = await prepareStorageImageForUpload(file, { maxDimension: 2880, quality: 0.92 });
+  // Convert supported static portfolio images to WebP consistently.
+  // Animated GIF files are kept unchanged to preserve their animation.
+  const uploadFile = file.type === "image/gif"
+    ? file
+    : await prepareStorageImageForUpload(file, { maxDimension: 2880, quality: 0.92, forceWebP: true });
+  if (file.type !== "image/gif" && uploadFile.type !== "image/webp") {
+    throw new Error("รองรับภาพ Portfolio เป็น JPG, PNG, WEBP หรือ GIF เท่านั้น");
+  }
   const ext = (uploadFile.name.split(".").pop() || "jpg").toLowerCase();
   const safe = /^[a-z0-9]+$/.test(ext) ? ext : "jpg";
   const base = `${currentUser.id}/${portfolioId}/versions/${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
