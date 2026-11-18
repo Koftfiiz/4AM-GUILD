@@ -69,10 +69,10 @@ The final Production release will schedule the snapshot function using the exist
 ## Additional regression case pending
 
 - Manual-only 4AM member links an account after a Patch opening snapshot; affiliation history is transferred to the canonical user and the account is added once to the active Patch roster as `manual_link`.
-- This trigger change is committed but not yet re-applied/re-tested on the paused Free Staging project.
+- This trigger change has been applied and tested transactionally on the active Free Staging project.
 
 
-The Production migration now includes `manual_link` as a distinct roster source so the UI can distinguish account linking from an actual 4PM-to-4AM transfer. Review queue pagination also returns a total count for bounded Previous/Next navigation. These latest changes are pending Staging revalidation.
+The Production migration now includes `manual_link` as a distinct roster source so the UI can distinguish account linking from an actual 4PM-to-4AM transfer. Review queue pagination also returns a total count for bounded Previous/Next navigation. These changes have been applied to Staging and passed the targeted roster/merge regression tests.
 
 
 ## Legacy Portfolio Tracker integration
