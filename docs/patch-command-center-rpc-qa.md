@@ -5,7 +5,7 @@
 Added `get_patch_command_center` on Staging as a bounded, management-only, `SECURITY INVOKER` RPC.
 
 It returns:
-- Up to 12 Patch rounds for the selector/archive view.
+- Up to 50 Patch rounds for the selector/archive view.
 - Selected Patch metadata.
 - Aggregate roster/submission/review counts.
 - One bounded page of roster members.
