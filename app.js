@@ -1879,6 +1879,7 @@ async function loadMembers(forceRefresh = false) {
     if ($("portfolio-member-grid")) await renderPortfolioMemberDirectory();
     return;
   }
+  memberDirectoryCacheExpiresAt = 0;
   if (container) container.innerHTML = `<p class="muted">กำลังโหลดรายชื่อสมาชิก...</p>`;
 
   const [accountsResult, manualResult] = await Promise.all([
@@ -3282,6 +3283,7 @@ async function loadPortfolios(forceRefresh = false) {
     renderPortfolioReviewCenter();
     return;
   }
+  portfolioDataCacheExpiresAt = 0;
   const pageSize = 50;
   const rows = [];
   let error = null;
