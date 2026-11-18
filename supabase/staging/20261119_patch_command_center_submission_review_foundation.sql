@@ -4,14 +4,14 @@
 
 create table public.portfolios (
  id uuid primary key default gen_random_uuid(),
- member_id uuid not null references public.guild_members(user_id) on delete restrict,
+ member_id uuid not null references public.guild_members(user_id) on delete cascade,
  title text not null, description text, game_class text not null,
  portfolio_type text not null check(portfolio_type in ('pvp','pve','cultivation_skills')),
  created_at timestamptz not null default now(), updated_at timestamptz not null default now()
 );
 create table public.portfolio_versions (
  id uuid primary key default gen_random_uuid(),
- portfolio_id uuid not null references public.portfolios(id) on delete cascade,
+ portfolio_id uuid not null references public.portfolios(id) on delete restrict,
  version_number integer not null check(version_number>=1), version_name text not null default 'Version',
  title text not null, game_class text not null,
  portfolio_type text not null check(portfolio_type in ('pvp','pve','cultivation_skills')),
@@ -30,7 +30,7 @@ create table public.portfolio_patch_submissions (
  version_id uuid not null references public.portfolio_versions(id) on delete restrict,
  member_id uuid not null references public.guild_members(user_id) on delete restrict,
  submitted_at timestamptz not null default now(), updated_at timestamptz not null default now(),
- unique(round_id,portfolio_id)
+ constraint portfolio_patch_submissions_one_per_folder unique(round_id,portfolio_id)
 );
 create index portfolio_patch_submissions_round_idx on public.portfolio_patch_submissions(round_id,submitted_at desc);
 create index portfolio_patch_submissions_member_idx on public.portfolio_patch_submissions(member_id,round_id);
