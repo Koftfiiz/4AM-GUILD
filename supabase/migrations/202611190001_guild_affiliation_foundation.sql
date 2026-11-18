@@ -70,11 +70,11 @@ as $
       where gm.user_id = (select auth.uid())
         and gm.active = true
         and gm.membership_status = 'active'
-        and gm.role in ('management', 'developer')
+        and gm.role in ('management', 'leader', 'developer')
     );
 $;
 
-grant execute on function public.can_manage_guild_affiliations() to authenticated;
+revoke all on function public.can_manage_guild_affiliations() from public, anon;\ngrant execute on function public.can_manage_guild_affiliations() to authenticated;
 
 alter table public.guilds enable row level security;
 alter table public.guild_member_affiliations enable row level security;
