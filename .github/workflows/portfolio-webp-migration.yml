@@ -4,13 +4,13 @@ on:
   workflow_dispatch:
     inputs:
       confirmation:
-        description: 'Type MIGRATE-47 to authorize the exact approved manifest'
+        description: 'Type MIGRATE-46 to authorize the exact approved manifest'
         required: true
         type: string
       target_count:
-        description: 'Must remain exactly 47'
+        description: 'Must remain exactly 46'
         required: true
-        default: '47'
+        default: '46'
         type: string
 
 permissions:
@@ -22,7 +22,7 @@ concurrency:
 
 jobs:
   migrate:
-    name: Convert, upload and update approved 47 images
+    name: Convert, upload and update approved 46 images
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
