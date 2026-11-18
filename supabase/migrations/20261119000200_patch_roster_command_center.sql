@@ -55,6 +55,7 @@ alter table public.portfolio_patch_roster enable row level security;
 alter table public.portfolio_patch_submission_reviews enable row level security;
 alter table public.portfolio_patch_review_events enable row level security;
 
+drop policy if exists patch_roster_read on public.portfolio_patch_roster;
 drop policy if exists patch_roster_read_members on public.portfolio_patch_roster;
 create policy patch_roster_read_members on public.portfolio_patch_roster
 for select to authenticated using (public.is_guild_member());
