@@ -114,36 +114,53 @@
   }
 
   async function loadData() {
-    const [roundResult, portfolioResult, requestResult, permissionResult, submissionResult] = await Promise.all([
-      supabaseClient.from("portfolio_update_rounds").select("*").order("created_at",{ascending:false}),
-      supabaseClient.from("portfolios").select(
-        "id,member_id,title,game_class,portfolio_type,created_at,updated_at," +
-        "portfolio_versions(id,version_number,version_name,round_id,patch_label,created_at," +
-        "portfolio_version_images(id,section_key,image_url,sort_order))"
-      ).order("created_at",{ascending:false}),
-      supabaseClient.from("portfolio_update_edit_requests").select("*").order("created_at",{ascending:false}),
-      supabaseClient.from("portfolio_update_edit_permissions").select("*").eq("member_id",currentUser.id),
-      supabaseClient.from("portfolio_patch_submissions").select("id,round_id,portfolio_id,version_id,member_id,submitted_at,updated_at").order("submitted_at",{ascending:false})
-    ]);
-    const failure = [roundResult,portfolioResult,requestResult,permissionResult,submissionResult].find(result => result.error);
-    if (failure) throw failure.error;
-    rounds = roundResult.data || [];
-    requests = requestResult.data || [];
-    editPermissions = permissionResult.data || [];
-    submissions = submissionResult.data || [];
-    portfolios = (portfolioResult.data || []).map(portfolio => ({
-      ...portfolio,
-      portfolio_versions: (portfolio.portfolio_versions || []).map(version => ({
-        ...version,
-        portfolio_version_images: version.portfolio_version_images || []
-      }))
-    }));
-    if (!selectedRoundId || !rounds.some(round => round.id === selectedRoundId)) {
-      const preferred = rounds.find(round => !round.archived_at) || rounds[0];
-      selectedRoundId = preferred?.id || "";
-      showArchivedRounds = !!preferred?.archived_at;
+    const roundResult=await supabaseClient.from("portfolio_update_rounds")
+      .select("id,round_name,starts_at,closes_at,status,created_at,archived_at,archived_by,roster_snapshot_at")
+      .order("created_at",{ascending:false}).limit(50);
+    if(roundResult.error)throw roundResult.error;
+    rounds=roundResult.data||[];
+    if(!selectedRoundId||!rounds.some(round=>round.id===selectedRoundId)){
+      const preferred=rounds.find(round=>!round.archived_at)||rounds[0];
+      selectedRoundId=preferred?.id||"";
+      showArchivedRounds=!!preferred?.archived_at;
     }
+
     await Promise.all([loadRosterForRound(selectedRoundId),loadCurrentGuild()]);
+    if(!selectedRoundId){
+      portfolios=[];requests=[];editPermissions=[];submissions=[];
+      return;
+    }
+
+    const rosterIds=patchRoster.map(row=>row.member_id);
+    const memberIds=management()
+      ? [...new Set([...rosterIds,currentUser?.id].filter(Boolean))]
+      : [currentUser.id];
+    const [portfolioResult,requestResult,permissionResult,submissionResult]=await Promise.all([
+      memberIds.length
+        ? supabaseClient.from("portfolios").select(
+            "id,member_id,title,game_class,portfolio_type,created_at,updated_at,"+
+            "portfolio_versions(id,version_number,version_name,round_id,patch_label,created_at)"
+          ).in("member_id",memberIds).order("created_at",{ascending:false}).limit(1000)
+        : Promise.resolve({data:[],error:null}),
+      supabaseClient.from("portfolio_update_edit_requests")
+        .select("id,round_id,member_id,reason,status,created_at,reviewed_by,reviewed_at")
+        .eq("round_id",selectedRoundId).order("created_at",{ascending:false}).limit(100),
+      supabaseClient.from("portfolio_update_edit_permissions")
+        .select("id,round_id,member_id,expires_at")
+        .eq("member_id",currentUser.id).eq("round_id",selectedRoundId).limit(1),
+      memberIds.length
+        ? supabaseClient.from("portfolio_patch_submissions")
+            .select("id,round_id,portfolio_id,version_id,member_id,submitted_at,updated_at")
+            .eq("round_id",selectedRoundId).in("member_id",memberIds)
+            .order("submitted_at",{ascending:false}).limit(1000)
+        : Promise.resolve({data:[],error:null})
+    ]);
+    const failure=[portfolioResult,requestResult,permissionResult,submissionResult].find(result=>result.error);
+    if(failure)throw failure.error;
+    portfolios=portfolioResult.data||[];
+    requests=requestResult.data||[];
+    editPermissions=permissionResult.data||[];
+    submissions=submissionResult.data||[];
   }
 
   async function loadCurrentGuild() {
