@@ -87,8 +87,12 @@ begin
       like '%review_queue_total%'
       and pg_get_functiondef('public.get_patch_command_center(uuid,text,text,integer,integer)'::regprocedure)
       like '%attention_members%'
+      and pg_get_functiondef('public.get_patch_command_center(uuid,text,text,integer,integer)'::regprocedure)
+      like '%portfolio_patch_submission_events%'
+      and pg_get_functiondef('public.get_patch_command_center(uuid,text,text,integer,integer)'::regprocedure)
+      like '%activity_type%'
   ) then
-    raise exception 'Command Center read model must expose bounded review and attention summaries';
+    raise exception 'Command Center read model must expose bounded review, attention, and submission activity summaries';
   end if;
 
   if not (
