@@ -230,7 +230,7 @@
       const images=await Promise.all((data||[]).map(async item=>{
         let url="";
         if(typeof getPortfolioImageUrl==="function")url=await getPortfolioImageUrl(item.image_url);
-        else if(/^https?:\\/\\//i.test(item.image_url||""))url=item.image_url;
+        else if(/^https?:\/\//i.test(item.image_url||""))url=item.image_url;
         return {...item,signed_url:url};
       }));
       w.images=images;w.imagesLoaded=true;
