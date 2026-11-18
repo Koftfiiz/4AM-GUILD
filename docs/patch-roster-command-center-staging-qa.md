@@ -18,7 +18,7 @@ All tables and records below exist only in `4AM-GUILD-Staging`. They are synthet
 1. When a Patch reaches its scheduled start, `snapshot_due_patch_rosters()` records all active registered members with a current 4AM affiliation.
 2. A member moved from 4PM into 4AM during an active Patch is added once with source `affiliation_transfer`.
 3. A member who leaves 4AM after the opening snapshot remains in the roster.
-4. Manual-only records are not added to the submission roster because they have no website account and cannot own/submit Portfolio folders. A linked Manual row uses its canonical registered `user_id`.
+4. Manual-only records are not added to the submission roster because they have no website account and cannot own/submit Portfolio folders. A linked Manual row uses its canonical registered `user_id`. If it links after an active Patch snapshot already exists, it is added once with source `manual_link`; if the Patch snapshot is still due, the post-link snapshot includes it normally.
 5. A member already present is never duplicated due to repeated moves.
 
 The final Production release will schedule the snapshot function using the existing `pg_cron` capability at a low frequency (once per minute). No recurring cron job is running in Free Staging, to avoid keeping an otherwise idle Free project awake. The affiliation-change RPC also snapshots any due Patch before mutating affiliation history, protecting the opening roster if a member moves around the scheduled start.
@@ -64,3 +64,9 @@ The final Production release will schedule the snapshot function using the exist
 - The new UI is still an offline prototype; it does not yet replace the existing Portfolio Tracker.
 - No production migrations, production member affiliations, production submissions, or Production deployment were performed in this work.
 - Production already contains `portfolio_update_rounds` (0 rows), `portfolio_patch_submissions` (0 rows), 61 Portfolio folders, and 64 Portfolio Versions at the latest schema inventory. The existing Production `portfolio_patch_submissions` table has a legacy schema and must be reconciled with the Staging prototype before any Production migration is written. Existing rows were only counted, not modified.
+
+
+## Additional regression case pending
+
+- Manual-only 4AM member links an account after a Patch opening snapshot; affiliation history is transferred to the canonical user and the account is added once to the active Patch roster as `manual_link`.
+- This trigger change is committed but not yet re-applied/re-tested on the paused Free Staging project.
