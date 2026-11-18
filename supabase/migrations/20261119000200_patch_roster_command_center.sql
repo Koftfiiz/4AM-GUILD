@@ -281,6 +281,18 @@ create trigger patch_submission_version_audit
 after insert or update of version_id on public.portfolio_patch_submissions
 for each row execute function public.audit_patch_submission_event();
 
+-- Backfill one initial submission event for legacy rows; future resubmissions are trigger-audited.
+insert into public.portfolio_patch_submission_events
+  (submission_id,previous_version_id,new_version_id,event_type,actor_user_id,created_at)
+select s.id,null,s.version_id,'submitted',
+  case when exists(select 1 from auth.users u where u.id=s.member_id) then s.member_id else null end,
+  s.submitted_at
+from public.portfolio_patch_submissions s
+where not exists(
+  select 1 from public.portfolio_patch_submission_events e
+  where e.submission_id=s.id and e.event_type='submitted'
+);
+
 create or replace function public.audit_patch_submission_review()
 returns trigger language plpgsql security definer set search_path=''
 as $
