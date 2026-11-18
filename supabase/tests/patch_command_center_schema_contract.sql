@@ -110,5 +110,24 @@ begin
   ) then
     raise exception 'Missing due-snapshot index';
   end if;
+  if not exists(select 1 from pg_indexes where schemaname='public' and indexname='portfolio_patch_submission_events_new_version_idx')
+     or not exists(select 1 from pg_indexes where schemaname='public' and indexname='portfolio_patch_submission_events_previous_version_idx')
+     or not exists(select 1 from pg_indexes where schemaname='public' and indexname='portfolio_patch_submission_events_actor_idx')
+     or not exists(select 1 from pg_indexes where schemaname='public' and indexname='portfolio_update_edit_permissions_member_idx')
+     or not exists(select 1 from pg_indexes where schemaname='public' and indexname='portfolio_update_edit_requests_member_idx')
+     or not exists(select 1 from pg_indexes where schemaname='public' and indexname='portfolio_versions_created_by_idx') then
+    raise exception 'Missing indexes for Patch audit and legacy foreign keys';
+  end if;
+  if exists (
+    select tablename from pg_policies
+    where schemaname='public' and roles @> array['authenticated']::name[]
+      and cmd='SELECT'
+      and tablename in ('guilds','guild_member_affiliations','portfolio_patch_roster',
+        'portfolio_update_rounds','portfolio_update_edit_permissions','portfolios',
+        'portfolio_versions','portfolio_version_images','portfolio_patch_submissions')
+    group by tablename having count(*)>1
+  ) then
+    raise exception 'Duplicate permissive SELECT policies remain on the Patch/Portfolio feature tables';
+  end if;
 end;
 $$;
