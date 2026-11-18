@@ -231,6 +231,6 @@
   ensurePage();
   window.addEventListener("4am:app-ready",()=> {
     if (typeof syncManagementMenuVisibility==="function") syncManagementMenuVisibility();
-    if (typeof openGuildPage==="function" && window.localStorage?.getItem("4am-guild-last-page")==PAGE) activate();
+    if ($("page-guild-directory") && !$("page-guild-directory").classList.contains("hidden")) activate();
   });
 })();
