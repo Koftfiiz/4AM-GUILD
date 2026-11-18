@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const PAGE="patch-command-center", PAGE_SIZE=50;
+  const PAGE="patch-command-center", REVIEW_PAGE="patch-review-queue", PAGE_SIZE=50;
   const state={roundId:null,tab:"overview",search:"",status:"all",page:0,data:null,busy:false,workspace:null,workspaceTab:"overview",reviewTarget:null};
   const $=id=>document.getElementById(id);
   const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
