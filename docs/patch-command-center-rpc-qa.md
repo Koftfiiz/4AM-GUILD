@@ -67,3 +67,8 @@ The read RPC now exposes `review_queue_total`, and the Command Center UI include
 - Review notes and audit events are visible only to the submission owner or authorized Developer/Leader/Management reviewers.
 - Creating an already-started Patch or closing/archiving a due Patch first snapshots its roster, preventing lifecycle timing races.
 - These changes are committed on the feature branch but not yet re-applied to the paused Staging project.
+
+
+## Member Workspace follow-up
+
+The feature branch now loads Discord account identity/verification and the member's affiliation history only when Management opens a Workspace. The Workspace History tab combines affiliation history with Patch review events. Requests are bounded (50 affiliation rows, 30 folders/submissions) and do not run during the normal directory/dashboard load. These UI additions await Staging browser validation.
