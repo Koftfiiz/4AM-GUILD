@@ -689,8 +689,6 @@ async function loadApplication() {
       loadWarEvents()
     ]);
 
-    subscribeToWarRealtime();
-    subscribeToFeedbackRealtime();
 
     // Re-render after member records are available so each portfolio shows its owner.
     await renderPortfolios();
@@ -6639,6 +6637,35 @@ function isWarRealtimePageActive() {
   return Boolean(document.querySelector(".page[id^='page-war']:not(.hidden)"));
 }
 
+function syncAppRealtimeSubscriptions(pageName) {
+  const communityPages = ["community-board", "guild-news", "guild-activities"];
+  const shouldSubscribeToWar = pageName === "war-center";
+  const shouldSubscribeToActivity = pageName === "dashboard" || communityPages.includes(pageName);
+  const shouldSubscribeToFeedback = pageName === "feedback";
+
+  // Keep high-volume table subscriptions active only while their pages are open.
+  if (shouldSubscribeToWar) {
+    if (!warRealtimeChannel) subscribeToWarRealtime();
+  } else if (warRealtimeChannel) {
+    void supabaseClient.removeChannel(warRealtimeChannel);
+    warRealtimeChannel = null;
+  }
+
+  if (shouldSubscribeToActivity) {
+    if (!guildActivityRealtimeChannel) subscribeToGuildActivityRealtime();
+  } else if (guildActivityRealtimeChannel) {
+    void supabaseClient.removeChannel(guildActivityRealtimeChannel);
+    guildActivityRealtimeChannel = null;
+  }
+
+  if (shouldSubscribeToFeedback) {
+    if (!feedbackRealtimeChannel) subscribeToFeedbackRealtime();
+  } else if (feedbackRealtimeChannel) {
+    void supabaseClient.removeChannel(feedbackRealtimeChannel);
+    feedbackRealtimeChannel = null;
+  }
+}
+
 function removeAppRealtimeChannels() {
   for (const channel of [warRealtimeChannel, guildActivityRealtimeChannel, feedbackRealtimeChannel]) {
     if (channel) void supabaseClient.removeChannel(channel);
@@ -8739,6 +8766,7 @@ function openGuildPage(pageName) {
   const isCommunityView = communityViews.includes(pageName);
   const targetPage = $(isCommunityView ? "page-community" : "page-" + pageName);
   if (targetPage) targetPage.classList.remove("hidden");
+  syncAppRealtimeSubscriptions(pageName);
   if (isCommunityView) {
     window.activeGuildCommunityView = pageName;
     const copy = {
@@ -8790,7 +8818,6 @@ function openGuildPage(pageName) {
   if (pageName === "dashboard") {
     loadDashboardAnnouncement();
     loadDashboardGallery();
-    subscribeToGuildActivityRealtime();
   }
   if (pageName === "settings") {
     renderAccountDetails();
@@ -8802,7 +8829,6 @@ function openGuildPage(pageName) {
   if (pageName === "war-center") loadWarCenterTab(window.activeWarCenterTab || "overview");
   if (pageName === "rules") loadGuildRules();
   if (["community-board", "guild-news", "guild-activities"].includes(pageName)) {
-    subscribeToGuildActivityRealtime();
     loadGuildActivities();
   }
   if (pageName === "feedback") loadGuildFeedback();
