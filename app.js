@@ -5879,7 +5879,7 @@ window.exportWarPartyImage=exportWarPartyImage;
 
 async function loadWarAttendance(){
   const container=$("war-attendance-content");if(!container)return;container.innerHTML='<p class="muted">กำลังโหลดวอร์ที่เผยแพร่แล้ว...</p>';
-  const {data,error}=await supabaseClient.from("war_events").select("*").eq("is_published",true).order("event_date",{ascending:false});
+  const {data,error}=await supabaseClient.from("war_events").select("id,event_name,event_date,start_time,description").eq("is_published",true).order("event_date",{ascending:false});
   if(error){container.innerHTML=`<div class="system-role-error">โหลดข้อมูลไม่สำเร็จ: ${escapeHTML(error.message)}</div>`;return;}
   warAttendanceEvents=data||[];if(!warAttendanceEvents.length){showEmpty(container,"ยังไม่มีวอร์ที่เผยแพร่","เมื่อจัดตี้กิลด์วอร์เสร็จแล้ว รายชื่อปาร์ตี้วอร์จะแสดงที่หน้านี้");return;}
   warAttendanceEventId=warAttendanceEvents.find(item=>item.id===warAttendanceEventId)?.id||warAttendanceEvents[0].id;await renderWarAttendance();
@@ -5895,7 +5895,7 @@ async function renderWarAttendance(){
 
 const WAR_RECORD_BUCKET="war-record-images";let warMatchRecords=[];let warAttendanceEditEventId=null;
 function showWarRecordMessage(m,bad=false){const e=$("war-record-message");if(!e)return;e.textContent=m;e.classList.remove("hidden","error","success");e.classList.add(bad?"error":"success");}
-async function loadWarMatchRecords(){if(!isManagement())return;const box=$("war-record-history");if(box)box.innerHTML='<p class="muted">กำลังโหลดประวัติผลวอร์...</p>';const q=await supabaseClient.from("war_match_records").select("*").eq("is_confirmed",true).order("war_date",{ascending:false}).order("created_at",{ascending:false});if(q.error){if(box)box.innerHTML='<div class="system-role-error">'+escapeHTML(q.error.message)+'<br>กรุณาติดตั้ง SQL ระบบบันทึกผลวอร์</div>';return;}warMatchRecords=q.data||[];await renderWarMatchRecords();}
+async function loadWarMatchRecords(){if(!isManagement())return;const box=$("war-record-history");if(box)box.innerHTML='<p class="muted">กำลังโหลดประวัติผลวอร์...</p>';const q=await supabaseClient.from("war_match_records").select("id,opponent_guild,war_date,result,image_paths").eq("is_confirmed",true).order("war_date",{ascending:false}).order("created_at",{ascending:false});if(q.error){if(box)box.innerHTML='<div class="system-role-error">'+escapeHTML(q.error.message)+'<br>กรุณาติดตั้ง SQL ระบบบันทึกผลวอร์</div>';return;}warMatchRecords=q.data||[];await renderWarMatchRecords();}
 async function renderWarMatchRecords(){
  const r=warMatchRecords||[],w=r.filter(x=>x.result==="win").length,l=r.filter(x=>x.result==="loss").length,n=w+l,p=x=>n?(x/n*100).toFixed(1):"0.0";
  $("war-record-total").textContent=n;$("war-record-wins").textContent=w;$("war-record-losses").textContent=l;$("war-record-win-rate").textContent=p(w)+"% Win Rate";$("war-record-loss-rate").textContent=p(l)+"% Loss Rate";$("war-record-opponent-count").textContent=new Set(r.map(x=>String(x.opponent_guild||"").trim().toLowerCase()).filter(Boolean)).size;
@@ -6948,7 +6948,7 @@ async function loadSystemRoleMembers() {
 
   const { data, error } = await supabaseClient
     .from("guild_members")
-    .select("*")
+    .select("user_id,character_name,nickname,discord_name,game_uid,role,active,created_at")
     .order("created_at", { ascending: false });
 
   if (error) {
@@ -8269,7 +8269,7 @@ function refreshGuideCategoryFilter() {
 async function loadGuildGuides() {
   const list = $("guild-guides-list");
   if (list) list.innerHTML = '<div class="empty-state"><span>◷</span><h3>กำลังโหลดไกด์เกม</h3><p>กรุณารอสักครู่</p></div>';
-  const { data, error } = await supabaseClient.from("guild_guides").select("*").order("updated_at", { ascending: false });
+  const { data, error } = await supabaseClient.from("guild_guides").select("id,user_id,title,category,content_html,created_at,updated_at").order("updated_at", { ascending: false });
   if (error) {
     console.error("Load guild guides:", error);
     showEmpty(list, "โหลดไกด์เกมไม่สำเร็จ", error.message || "กรุณาตรวจสอบการตั้งค่า Supabase");
