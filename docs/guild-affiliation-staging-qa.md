@@ -49,7 +49,7 @@ The fixture set includes one manual row linked to a registered account and three
 
 ## Follow-up security hardening
 
-The feature branch now tightens the management RPC helper to the same Developer/Leader/Management role set used by the existing application, requires an active membership status, and preserves the owner Developer allowlist. The corresponding SQL edits have not yet been re-applied/re-tested after the Staging project was paused; rerun the targeted QA suite after resuming Staging.
+The feature branch now tightens the management RPC helper to the same Developer/Leader/Management role set used by the existing application, requires an active membership status, and preserves the owner Developer allowlist. The corresponding SQL edits have been re-applied to Staging and verified by schema contract tests and targeted member-versus-Developer authorization checks.
 
 
 ## Latest Staging revalidation
@@ -63,7 +63,7 @@ The feature branch now tightens the management RPC helper to the same Developer/
 
 ## Member Workspace follow-up
 
-The feature branch now loads Discord account identity/verification and the member's affiliation history only when Management opens a Workspace. The Workspace History tab combines affiliation history with Patch review events. Requests are bounded (50 affiliation rows, 30 folders/submissions) and do not run during the normal directory/dashboard load. These UI additions await Staging browser validation.
+The feature branch now loads Discord identity/verification and affiliation history only when Management opens a Workspace. The Workspace History tab combines affiliation history with Patch review events. Requests are bounded (50 affiliation rows, 30 folders, 100 Versions, 50 review events) and do not run during normal directory/dashboard loads. Actual browser QA with a signed-in Staging user remains outstanding.
 
 
 ## Staging baseline follow-up
