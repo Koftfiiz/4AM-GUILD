@@ -21,7 +21,6 @@ create index if not exists guild_member_affiliations_manual_history_idx on publi
 alter table public.guilds enable row level security;
 alter table public.guild_member_affiliations enable row level security;
 drop policy if exists affiliations_read_current_directory on public.guild_member_affiliations;
-create policy affiliations_read_current_directory on public.guild_member_affiliations for select to authenticated using(ended_at is null and public.is_guild_member());
 revoke all on public.guilds from public,anon,authenticated;
 grant select on public.guilds to authenticated;
 revoke insert,update,delete on public.guild_member_affiliations from public,anon,authenticated;
