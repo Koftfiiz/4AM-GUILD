@@ -66,7 +66,7 @@ The read RPC now exposes `review_queue_total`, and the Command Center UI include
 - Pagination ordering includes stable tie-breakers to avoid duplicate/skipped rows between pages.
 - Review notes and audit events are visible only to the submission owner or authorized Developer/Leader/Management reviewers.
 - Creating an already-started Patch or closing/archiving a due Patch first snapshots its roster, preventing lifecycle timing races.
-- These changes are committed on the feature branch but not yet re-applied to the paused Staging project.
+- These changes have been re-applied to Staging and passed the schema contract and targeted workflow tests.
 
 
 ## Member Workspace follow-up
