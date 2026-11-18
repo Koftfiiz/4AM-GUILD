@@ -5,6 +5,7 @@
   let requests = [];
   let editPermissions = [];
   let patchRoster = [];
+  let currentGuildCode = null;
   let selectedRoundId = "";
   let showArchivedRounds = false;
   let busy = false;
@@ -142,7 +143,16 @@
       selectedRoundId = preferred?.id || "";
       showArchivedRounds = !!preferred?.archived_at;
     }
-    await loadRosterForRound(selectedRoundId);
+    await Promise.all([loadRosterForRound(selectedRoundId),loadCurrentGuild()]);
+  }
+
+  async function loadCurrentGuild() {
+    currentGuildCode=null;
+    if(!currentUser?.id)return;
+    const {data,error}=await supabaseClient.from("guild_member_affiliations")
+      .select("guilds(code)").eq("user_id",currentUser.id).is("ended_at",null).maybeSingle();
+    if(error)throw error;
+    currentGuildCode=data?.guilds?.code||null;
   }
 
   async function loadRosterForRound(roundId) {
@@ -222,12 +232,12 @@
     } : null);
     const memberInRoster = !!selected && patchRoster.some(row=>row.round_id===selected.id&&row.member_id===currentUser?.id);
     const rosterSnapshotReady = !!selected?.roster_snapshot_at;
-    const canSubmitForRoster = !rosterSnapshotReady || memberInRoster;
+    const canSubmitForRoster = memberInRoster || (!rosterSnapshotReady && currentGuildCode==="4AM");
     const ownPermission = selected ? editPermissions.find(permission =>
       permission.round_id === selected.id && new Date(permission.expires_at).getTime() > Date.now()
     ) : null;
     const editable = !!selected && !selected.archived_at && (isRoundEditable(selected) || !!ownPermission);
-    const canRequestLate = !!selected && !selected.archived_at && (!rosterSnapshotReady || memberInRoster) && !editable &&
+    const canRequestLate = !!selected && !selected.archived_at && (rosterSnapshotReady ? memberInRoster : currentGuildCode==="4AM") && !editable &&
       (selected.status === "closed" || Date.now() > new Date(selected.closes_at).getTime());
     const pendingRequest = selected ? requests.find(request =>
       request.round_id === selected.id && request.member_id === currentUser?.id && request.status === "pending"
@@ -310,9 +320,11 @@
     const latePermissionNote = ownPermission && !isRoundEditable(selected)
       ? '<div class="portfolio-tracker-note">คุณได้รับอนุญาตให้ส่งหรือเปลี่ยน Version ในรอบนี้ถึง ' + esc(dateLabel(ownPermission.expires_at)) + '</div>'
       : "";
-    const rosterEligibilityNote = selected && rosterSnapshotReady && !memberInRoster
+    const rosterEligibilityNote = selected && !memberInRoster && rosterSnapshotReady
       ? '<div class="portfolio-tracker-note">รอบนี้ใช้ 4AM Patch Roster และบัญชีของคุณไม่ได้อยู่ในรายชื่อ Snapshot จึงไม่สามารถส่ง Version ในรอบนี้ได้</div>'
-      : "";
+      : selected && !rosterSnapshotReady && currentGuildCode!=="4AM"
+        ? '<div class="portfolio-tracker-note">การส่ง Patch เปิดให้เฉพาะสมาชิกที่ได้รับการกำหนดสังกัด 4AM เท่านั้น</div>'
+        : "";
     const lateRequestPanel = !editable && canRequestLate
       ? '<div class="portfolio-tracker-request"><strong>รอบนี้ปิดรับการส่งแล้ว</strong>' +
         '<p class="portfolio-tracker-muted">หากต้องการส่งหรือเปลี่ยน Version หลังปิดรอบ สามารถส่งคำขอให้ Management อนุมัติสิทธิ์ได้</p>' +
