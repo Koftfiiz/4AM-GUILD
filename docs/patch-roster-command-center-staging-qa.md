@@ -73,3 +73,12 @@ The final Production release will schedule the snapshot function using the exist
 
 
 The Production migration now includes `manual_link` as a distinct roster source so the UI can distinguish account linking from an actual 4PM-to-4AM transfer. Review queue pagination also returns a total count for bounded Previous/Next navigation. These latest changes are pending Staging revalidation.
+
+
+## Legacy Portfolio Tracker integration
+
+- The existing member-facing Portfolio Tracker now reads only the selected Patch's bounded roster snapshot for its management progress totals.
+- A member outside the 4AM snapshot sees a clear ineligible state instead of being counted as a missing submission; members can still view their own Portfolio folders.
+- The submit RPC snapshots due rounds before checking roster eligibility, so a 4AM member can submit at the exact opening even if the minute worker has not run yet.
+- Permanent Patch deletion was removed from the legacy tracker; archive/restore preserves the immutable roster and audit history.
+- These integration changes are committed but await Staging revalidation.
