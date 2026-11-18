@@ -20,16 +20,39 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
 
 function pathFromUrl(value) {
   if (typeof value !== "string" || !value.trim()) return null;
+
+  const rawValue = value.trim();
   const marker = "/storage/v1/object/";
-  const markerIndex = value.indexOf(marker);
-  if (markerIndex < 0) return null;
-  const afterMarker = value.slice(markerIndex + marker.length);
-  const bucketMarker = BUCKET + "/";
-  const bucketIndex = afterMarker.indexOf(bucketMarker);
-  if (bucketIndex < 0) return null;
-  const encodedPath = afterMarker.slice(bucketIndex + bucketMarker.length).split("?")[0];
+  const markerIndex = rawValue.indexOf(marker);
+  let encodedPath;
+
+  if (markerIndex >= 0) {
+    // Support public, signed, and authenticated Supabase Storage object URLs.
+    const afterMarker = rawValue.slice(markerIndex + marker.length);
+    const bucketMarker = BUCKET + "/";
+    const bucketIndex = afterMarker.indexOf(bucketMarker);
+    if (bucketIndex < 0) return null;
+    encodedPath = afterMarker.slice(bucketIndex + bucketMarker.length).split("?")[0];
+  } else {
+    // Database rows may store the object path directly rather than a full URL.
+    // Do not interpret unrelated absolute URLs as Storage paths.
+    if (/^[a-z][a-z0-9+.-]*:\/\//i.test(rawValue)) return null;
+    encodedPath = rawValue.split("?")[0].replace(/^\/+/, "");
+    const bucketPrefix = BUCKET + "/";
+    if (encodedPath.startsWith(bucketPrefix)) {
+      encodedPath = encodedPath.slice(bucketPrefix.length);
+    }
+  }
+
+  if (!encodedPath || encodedPath.endsWith("/")) return null;
   try {
-    return encodedPath.split("/").map((part) => decodeURIComponent(part)).join("/");
+    const decodedPath = encodedPath
+      .split("/")
+      .map((part) => decodeURIComponent(part))
+      .join("/");
+    return decodedPath && !decodedPath.split("/").some((part) => part === "." || part === "..")
+      ? decodedPath
+      : null;
   } catch {
     return null;
   }
