@@ -437,7 +437,8 @@
                 <span>ช่วงเวลาที่น่าจดจำของ 4AM GUILD</span>
               </div>
               <div class="gallery-admin-tools hidden" id="dashboard-gallery-admin">
-                <input type="file" id="dashboard-gallery-upload-input" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden>
+                <input type="file" id="dashboard-gallery-upload-input" accept="image/jpeg,image/png,image/webp,image/gif,image/svg+xml" multiple hidden>
+                <button type="button" class="btn btn-secondary" id="dashboard-gallery-optimize-trigger" title="แปลงภาพ PNG/JPG เก่าเป็น WebP โดยเก็บไฟล์ต้นฉบับ">ลดขนาดรูปเก่า</button>
                 <button type="button" class="btn btn-primary gallery-upload-trigger" id="dashboard-gallery-upload-trigger">＋ เพิ่มรูปภาพ</button>
               </div>
             </header>
@@ -451,6 +452,7 @@
             <div class="gallery-footer">
               <div class="gallery-footer-info">
                 <span id="dashboard-gallery-count">GUILD MOMENTS</span>
+                <span id="dashboard-gallery-status" class="muted" aria-live="polite"></span>
                 
               </div>
               <div class="gallery-footer-actions">
