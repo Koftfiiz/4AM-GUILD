@@ -183,7 +183,7 @@ drop policy if exists "portfolio update requests owner insert" on public.portfol
 create policy "portfolio update requests owner insert" on public.portfolio_update_edit_requests
  for insert to authenticated with check(
   member_id=(select auth.uid()) and exists(select 1 from public.portfolio_update_rounds r
-   where r.id=round_id and r.archived_at is null and (r.status='closed' or now()>r.closes_at))
+   where r.id=portfolio_update_edit_requests.round_id and r.archived_at is null and (r.status='closed' or now()>r.closes_at))
  );
 drop policy if exists "portfolio update requests management update" on public.portfolio_update_edit_requests;
 create policy "portfolio update requests management update" on public.portfolio_update_edit_requests
