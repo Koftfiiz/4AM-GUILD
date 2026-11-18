@@ -43,13 +43,13 @@
           app.src = "app.js?v=portfolio-webp-migration-20261119-r1";
           app.onload = () => {
             const tracker = document.createElement("script");
-            tracker.src = "portfolio-tracker.js?v=portfolio-schedule-labels-20261118-r1";
+            tracker.src = "portfolio-tracker.js?v=portfolio-roster-snapshot-20261119-r1";
             tracker.onload = () => {
               const directory = document.createElement("script");
-              directory.src = "guild-affiliation-directory.js?v=20261119-r1";
+              directory.src = "guild-affiliation-directory.js?v=20261119-r2";
               directory.onload = () => {
                 const commandCenter = document.createElement("script");
-                commandCenter.src = "patch-command-center.js?v=20261119-r1";
+                commandCenter.src = "patch-command-center.js?v=20261119-r2";
                 commandCenter.onerror = () => console.error("Patch Command Center script failed to load.");
                 document.head.appendChild(commandCenter);
               };
