@@ -1668,10 +1668,10 @@ async function optimizeLegacyDashboardGalleryImages() {
   if(trigger){trigger.disabled=true;trigger.textContent="กำลังตรวจสอบภาพ...";}
   try{
     await loadDashboardGallery();
-    const candidates=dashboardGalleryImages.filter(item=>/\\.(png|jpe?g)$/i.test(item.storage_path||""));
+    const candidates=dashboardGalleryImages.filter(item=>/\.(png|jpe?g)$/i.test(item.storage_path||""));
     if(!candidates.length){if(status)status.textContent="ไม่พบภาพ PNG/JPG เก่าที่ต้องปรับขนาดใน Guild Gallery";return;}
     const estimated=candidates.length;
-    if(!window.confirm("พบภาพเก่า "+estimated+" ภาพ ต้องการแปลงเป็น WebP เพื่อลด Egress หรือไม่?\\n\\nระบบจะอัปโหลดไฟล์ WebP ใหม่และเปลี่ยนเฉพาะ storage_path ในฐานข้อมูล โดยเก็บไฟล์ต้นฉบับเดิมไว้ ไม่ลบไฟล์เดิม"))return;
+    if(!window.confirm("พบภาพเก่า "+estimated+" ภาพ ต้องการแปลงเป็น WebP เพื่อลด Egress หรือไม่?\n\nระบบจะอัปโหลดไฟล์ WebP ใหม่และเปลี่ยนเฉพาะ storage_path ในฐานข้อมูล โดยเก็บไฟล์ต้นฉบับเดิมไว้ ไม่ลบไฟล์เดิม"))return;
     if(trigger)trigger.textContent="กำลังปรับภาพ...";
     let completed=0,failed=0;
     for(const item of candidates){
@@ -1683,7 +1683,7 @@ async function optimizeLegacyDashboardGalleryImages() {
         const response=await fetch(signedData.signedUrl,{cache:"no-store"});
         if(!response.ok)throw new Error("ดาวน์โหลดภาพต้นฉบับไม่สำเร็จ ("+response.status+")");
         const sourceBlob=await response.blob();
-        if(!/^image\\/(png|jpeg)$/.test(sourceBlob.type))throw new Error("ชนิดไฟล์ต้นฉบับไม่ใช่ PNG/JPEG");
+        if(!/^image\/(png|jpeg)$/.test(sourceBlob.type))throw new Error("ชนิดไฟล์ต้นฉบับไม่ใช่ PNG/JPEG");
         const bitmap=await createImageBitmap(sourceBlob);
         const scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
         const canvas=document.createElement("canvas");
@@ -1712,7 +1712,7 @@ async function optimizeLegacyDashboardGalleryImages() {
     }
     if(status)status.textContent="ปรับภาพเสร็จ "+completed+" ภาพ · ข้าม/ไม่สำเร็จ "+failed+" ภาพ · เก็บไฟล์ต้นฉบับไว้ทั้งหมด";
     await loadDashboardGallery();
-    alert("ปรับภาพ Guild Gallery เสร็จแล้ว\\nสำเร็จ: "+completed+" ภาพ\\nข้าม/ไม่สำเร็จ: "+failed+" ภาพ\\nไฟล์ต้นฉบับเดิมยังอยู่ใน Storage");
+    alert("ปรับภาพ Guild Gallery เสร็จแล้ว\nสำเร็จ: "+completed+" ภาพ\nข้าม/ไม่สำเร็จ: "+failed+" ภาพ\nไฟล์ต้นฉบับเดิมยังอยู่ใน Storage");
   }finally{
     dashboardGalleryBusy=false;
     if(trigger){trigger.disabled=false;trigger.textContent="ลดขนาดรูปเก่าใน Guild Gallery";}
