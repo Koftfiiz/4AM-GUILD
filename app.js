@@ -3337,13 +3337,13 @@ function getPortfolioClasses(value) {
 // Keep the database sequence unique; calculate the visible Snapshot number per Patch.
 function getPortfolioPatchName(version) {
   let value = String(version?.version_name || "").trim();
-  if (/^Version\\s+\\d+$/i.test(value)) value = "";
+  if (/^Version\s+\\d+$/i.test(value)) value = "";
   if (!value) value = String(version?.patch_label || "").trim();
-  value = value.replace(/^Patch\\s*/i, "").trim();
+  value = value.replace(/^Patch\s*/i, "").trim();
   return value || "ไม่ระบุ Patch";
 }
 function getPortfolioPatchKey(version) {
-  return getPortfolioPatchName(version).normalize("NFKC").toLocaleLowerCase("th").replace(/\\s+/g, " ");
+  return getPortfolioPatchName(version).normalize("NFKC").toLocaleLowerCase("th").replace(/\s+/g, " ");
 }
 function getPortfolioSnapshotLabel(version) {
   return "Patch " + getPortfolioPatchName(version) + " (" + Number(version?.patch_sequence_number || 1) + ")";
