@@ -62,6 +62,8 @@ let currentUser = null;
 let currentMember = null;
 let rolePreviewRole = null;
 let allMembers = [];
+let memberDirectoryCacheExpiresAt = 0;
+let portfolioDataCacheExpiresAt = 0;
 let guildMemberBonds = [];
 let bondRelationshipsLoadError = "";
 let bondSelectedMemberIds = new Set();
@@ -1853,13 +1855,34 @@ function renderBondMemberPicker() {
   const count = $("bond-profile-selected-count"); if (count) count.textContent = String(selectedMembers.length);
 }
 
-async function loadMembers() {
+async function fetchAllRowsPaged(queryFactory, pageSize = 100) {
+  const rows = [];
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await queryFactory().range(from, from + pageSize - 1);
+    if (error) return { data: null, error };
+    const page = data || [];
+    rows.push(...page);
+    if (page.length < pageSize) break;
+  }
+  return { data: rows, error: null };
+}
+
+async function loadMembers(forceRefresh = false) {
   const container = $("members-list");
+  if (!forceRefresh && Date.now() < memberDirectoryCacheExpiresAt) {
+    renderMembers(directoryMembers);
+    if ($("portfolio-member-grid")) await renderPortfolioMemberDirectory();
+    return;
+  }
   if (container) container.innerHTML = `<p class="muted">กำลังโหลดรายชื่อสมาชิก...</p>`;
 
   const [accountsResult, manualResult] = await Promise.all([
-    supabaseClient.from("guild_members").select("*").order("created_at", { ascending: true }),
-    supabaseClient.from("guild_manual_members").select("*").eq("active", true).is("linked_user_id", null).order("character_name", { ascending: true })
+    fetchAllRowsPaged(() => supabaseClient.from("guild_members")
+      .select("user_id,character_name,game_class,nickname,discord_name,age,role,active,created_at,updated_at,display_position,avatar_url,guild_position,game_uid,member_cover_crop_settings,member_cover_url,membership_status,reviewed_at,avatar_crop_settings")
+      .order("created_at", { ascending: true })),
+    fetchAllRowsPaged(() => supabaseClient.from("guild_manual_members")
+      .select("*").eq("active", true).is("linked_user_id", null)
+      .order("character_name", { ascending: true }))
   ]);
 
   if (accountsResult.error) {
@@ -1885,6 +1908,7 @@ async function loadMembers() {
     }))
   ].sort((a, b) => String(a.character_name || "").localeCompare(String(b.character_name || ""), "th"));
 
+  memberDirectoryCacheExpiresAt = Date.now() + 45 * 1000;
   renderMembers(directoryMembers);
   if ($("portfolio-member-grid")) await renderPortfolioMemberDirectory();
 }
@@ -2269,7 +2293,7 @@ async function loadManualMemberManagement() {
   if (!isManagement()) return;
   const list = $("manual-member-list");
   if (list) list.innerHTML = '<p class="muted">กำลังโหลดข้อมูลสมาชิก...</p>';
-  await loadMembers();
+  await loadMembers(true);
   discordAccountDirectory = new Map();
   const discordResult = await supabaseClient.from("discord_accounts").select("user_id,discord_user_id,discord_username,discord_global_name,verified,guild_member_verified,discord_connection_status,verified_at,last_checked_at");
   if (!discordResult.error) discordAccountDirectory = new Map((discordResult.data || []).map(row => [String(row.user_id), row]));
@@ -2664,7 +2688,7 @@ async function saveManualGuildMember(form) {
     resetManualMemberForm();
     if (status) status.textContent = "บันทึกข้อมูลสมาชิกเรียบร้อยแล้ว";
     renderManualMemberManagement();
-    await loadMembers();
+    await loadMembers(true);
   } catch (error) {
     console.error("Save member record:", error);
     if (status) status.textContent = "บันทึกไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด");
@@ -2808,7 +2832,7 @@ async function updateManualGuildMemberStatus(id) {
   if (error) { alert("เปลี่ยนสถานะไม่สำเร็จ: " + error.message); return; }
   Object.assign(member, data);
   renderManualMemberManagement();
-  await loadMembers();
+  await loadMembers(true);
 }
 
 async function removeGuildMemberRecord(recordType, recordId) {
@@ -2833,7 +2857,7 @@ async function removeGuildMemberRecord(recordType, recordId) {
     const { error } = await supabaseClient.from("guild_manual_members")
       .delete().eq("id", recordId).is("linked_user_id", null);
     if (error) { alert("ลบรายชื่อไม่สำเร็จ: " + error.message); return; }
-    await loadMembers();
+    await loadMembers(true);
     return;
   }
   const member = allMembers.find(item => String(item.user_id) === String(recordId));
@@ -2847,7 +2871,7 @@ async function removeGuildMemberRecord(recordType, recordId) {
     .update({ active: false, membership_status: "suspended" })
     .eq("user_id", recordId);
   if (error) { alert("นำสมาชิกออกจากกิลด์ไม่สำเร็จ: " + error.message); return; }
-  await loadMembers();
+  await loadMembers(true);
 }
 
 async function updateLinkedGuildMemberStatus(userId) {
@@ -2861,7 +2885,7 @@ async function updateLinkedGuildMemberStatus(userId) {
   Object.assign(member, data);
   if (currentMember?.user_id === userId) Object.assign(currentMember, data);
   renderManualMemberManagement();
-  await loadMembers();
+  await loadMembers(true);
 }
 
 // Manual member records are retained for reactivation; use the status toggle instead of hard deletion.
@@ -3246,22 +3270,37 @@ function openAvatarCropEditor(file) {
 // PORTFOLIO
 // ==========================================
 
-async function loadPortfolios() {
-  const { data, error } = await supabaseClient
-    .from("portfolios")
-    .select(`
-      id, member_id, title, description, game_class, portfolio_type, created_at, updated_at,
-      portfolio_versions (
-        id, version_number, version_name, round_id, patch_label, title, description, game_class,
-        portfolio_type, created_by, created_at,
-        portfolio_version_images (
-          id, image_url, cover_image_url, crop_settings, image_type,
-          section_key, caption, created_at, sort_order
-        ),
-        portfolio_version_reviews ( status, reason, reviewer_user_id, reviewed_at )
-      )
-    `)
-    .order("created_at", { ascending: false });
+async function loadPortfolios(forceRefresh = false) {
+  if (!forceRefresh && Date.now() < portfolioDataCacheExpiresAt) {
+    renderPortfolios();
+    renderPortfolioReviewCenter();
+    return;
+  }
+  const pageSize = 50;
+  const rows = [];
+  let error = null;
+  for (let from = 0; ; from += pageSize) {
+    const result = await supabaseClient
+      .from("portfolios")
+      .select(`
+        id, member_id, title, description, game_class, portfolio_type, created_at, updated_at,
+        portfolio_versions (
+          id, version_number, version_name, round_id, patch_label, title, description, game_class,
+          portfolio_type, created_by, created_at,
+          portfolio_version_images (
+            id, image_url, cover_image_url, crop_settings, image_type,
+            section_key, caption, created_at, sort_order
+          ),
+          portfolio_version_reviews ( status, reason, reviewer_user_id, reviewed_at )
+        )
+      `)
+      .order("created_at", { ascending: false })
+      .range(from, from + pageSize - 1);
+    if (result.error) { error = result.error; break; }
+    rows.push(...(result.data || []));
+    if ((result.data || []).length < pageSize) break;
+  }
+  const data = rows;
 
   if (error) {
     console.error("Portfolio loading error:", error);
@@ -3309,6 +3348,7 @@ async function loadPortfolios() {
     };
   });
 
+  portfolioDataCacheExpiresAt = Date.now() + 90 * 1000;
   renderPortfolios();
   renderPortfolioReviewCenter();
 }
@@ -3860,7 +3900,7 @@ async function renamePortfolioVersion(versionId, portfolioId) {
       new_version_name: newName
     });
     if (error) throw error;
-    await loadPortfolios();
+    await loadPortfolios(true);
     await openPortfolioDetail(portfolioId, versionId);
   } catch (error) {
     console.error("Rename portfolio version:", error);
@@ -3887,7 +3927,7 @@ async function deletePortfolioVersion(versionId, portfolioId, button) {
     if (!deletedRows?.length) throw new Error("ไม่พบ Version ที่ลบได้ หรือบัญชีไม่มีสิทธิ์ลบ");
     let storageWarning = "";
     if (paths.length) { const { error: storageError } = await supabaseClient.storage.from(PORTFOLIO_BUCKET).remove(paths); if (storageError) { console.warn("Portfolio Version Storage cleanup failed:", storageError); storageWarning = "\nแต่มีรูปภาพบางไฟล์ที่ยังลบจาก Storage ไม่สำเร็จ กรุณาแจ้ง Developer ตรวจสอบ"; } }
-    await loadPortfolios(); await openPortfolioDetail(portfolioId);
+    await loadPortfolios(true); await openPortfolioDetail(portfolioId);
     alert("ลบ " + versionLabel + " เรียบร้อยแล้ว โดยแฟ้มหลักและ Version อื่นยังอยู่ครบ" + storageWarning);
   } catch (error) { console.error("Portfolio Version delete error:", error); alert("ลบ Version ไม่สำเร็จ: " + (error.message || "Unknown error")); if (button) { button.disabled = false; button.textContent = "−"; } }
 }
@@ -4160,7 +4200,7 @@ async function savePortfolioReview(versionId, status, reason = "") {
       rejection_reason: status === "rejected" ? reason.trim() : null
     });
     if (error) throw error;
-    await loadPortfolios();
+    await loadPortfolios(true);
   } catch (error) {
     console.error("Portfolio version review error:", error);
     if (feedback) feedback.textContent = error.message || "บันทึกผลตรวจไม่สำเร็จ";
@@ -4416,7 +4456,7 @@ async function handlePortfolioCreate(event) {
     }
 
     portfolioClassFilter = "all";
-    await loadPortfolios();
+    await loadPortfolios(true);
     await window.loadPortfolioTracker?.();
     renderClassLegend();
     resetPortfolioForm();
@@ -4613,7 +4653,7 @@ async function deletePortfolioFolder(portfolioId, button) {
         storageWarning = "\nหมายเหตุ: มีไฟล์รูปบางส่วนที่ลบจาก Storage ไม่สำเร็จ กรุณาแจ้ง Developer ตรวจสอบ";
       }
     }
-    await loadPortfolios();
+    await loadPortfolios(true);
     await renderPortfolios();
     alert("ลบแฟ้ม “" + label + "” เรียบร้อยแล้ว" + storageWarning);
   } catch (error) {
@@ -4652,7 +4692,7 @@ function registerPortfolioEvents() {
   $("portfolio-review-search")?.addEventListener("input", renderPortfolioReviewCenter);
   $("portfolio-review-filter")?.addEventListener("change", renderPortfolioReviewCenter);
   $("portfolio-review-class-filters")?.addEventListener("click", event => { const button=event.target instanceof Element?event.target.closest("[data-review-class]"):null; if(!button)return; window.portfolioReviewClassFilter=button.dataset.reviewClass||"all"; renderPortfolioReviewCenter(); });
-  $("portfolio-review-refresh")?.addEventListener("click", () => { void loadPortfolios(); });
+  $("portfolio-review-refresh")?.addEventListener("click", () => { void loadPortfolios(true); });
   $("portfolio-review-queue")?.addEventListener("click", async event => {
     const button = event.target instanceof Element ? event.target.closest("[data-review-center-open]") : null;
     if (!button || !isPortfolioReviewer()) return;
@@ -8979,7 +9019,7 @@ function registerAppEventListeners() {
     else if (edit) editManualGuildMember(edit.dataset.manualEdit);
     else if (toggle) updateManualGuildMemberStatus(toggle.dataset.manualToggle);
   });
-  $("refresh-members")?.addEventListener("click", loadMembers);
+  $("refresh-members")?.addEventListener("click", () => loadMembers(true));
   $("connect-discord")?.addEventListener("click", connectDiscord);
   registerAppearanceEvents();
   registerDiscordIntegrationEvents();
