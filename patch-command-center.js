@@ -172,7 +172,7 @@
     try{
       const {error}=await supabaseClient.rpc("update_portfolio_patch_round",{p_round_id:state.roundId,p_action:action});
       if(error)throw error;
-      await loadCommandCenter(true);
+      state.page=0;await loadCommandCenter(true);
     }catch(error){alert("อัปเดต Patch ไม่สำเร็จ: "+(error.message||"Unknown error"));}
   }
 
@@ -194,7 +194,7 @@
         p_submission_id:state.reviewTarget.submission_id,p_status:status,p_review_note:status==="revision_required"?note:null
       });
       if(error)throw error;
-      closeReview();await loadCommandCenter(true);
+      closeReview();state.page=0;await loadCommandCenter(true);
     }catch(error){$("pc-review-error").textContent=error.message||"บันทึกผลตรวจไม่สำเร็จ";}
     finally{button.disabled=false;button.textContent="บันทึกผลตรวจ";}
   }
