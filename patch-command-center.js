@@ -99,7 +99,7 @@
     const s=state.data?.summary||{};
     const stats=[["สมาชิกใน Roster",s.roster_count||0],["ส่งแล้ว",s.submitted_members||0],["ยังไม่ส่ง",s.not_submitted||0],["ส่งไม่ครบ",s.partial_members||0],["Submission รอตรวจ",s.pending||0],["ต้องแก้ไข",s.revision_required||0]];
     $("pc-stats").innerHTML=stats.map(([label,value])=>'<article class="pc-stat"><span>'+esc(label)+'</span><strong>'+Number(value).toLocaleString("th-TH")+'</strong></article>').join("");
-    const attention=(state.data?.members||[]).filter(m=>["not_submitted","partial","revision_required"].includes(m.member_status));
+    const attention=state.data?.attention_members||[];
     $("pc-attention").innerHTML=attention.length?attention.slice(0,10).map(m=>'<div class="pc-event"><strong>'+esc(m.character_name)+' · '+esc(statusText[m.member_status])+'</strong><small>'+esc(m.game_class)+' · '+(m.submitted_folder_count||0)+'/'+(m.folder_count||0)+' แฟ้ม</small></div>').join(""):'<div class="pc-empty">ไม่มีรายการที่ต้องติดตามในหน้านี้</div>';
     const activity=state.data?.recent_activity||[];
     $("pc-activity").innerHTML=activity.length?activity.map(a=>'<div class="pc-event"><strong>'+esc(a.character_name)+' · '+esc(statusText[a.new_status]||a.new_status)+'</strong><small>'+esc(a.review_note||"ไม่มีหมายเหตุ")+' · '+dateLabel(a.created_at)+'</small></div>').join(""):'<div class="pc-empty">ยังไม่มีกิจกรรมตรวจสอบ</div>';
