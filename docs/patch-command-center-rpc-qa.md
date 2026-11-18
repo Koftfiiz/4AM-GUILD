@@ -12,7 +12,7 @@ It returns:
 - One bounded page of review queue items.
 - Up to 10 recent review events.
 
-The read model uses explicit columns and aggregates in PostgreSQL; the browser does not download all Portfolios, Versions, or review history.
+The read model uses explicit columns and aggregates in PostgreSQL; the browser does not download all Portfolios, Versions, or review history. Recent Activity includes both review transitions and first/resubmitted Patch Versions.
 
 ## Role alignment
 
@@ -80,4 +80,4 @@ The legacy member-facing Portfolio Tracker has also been aligned with the 4AM ro
 Latest GitHub Actions validation: JavaScript syntax checks passed on the feature branch after the Workspace, pagination, and Portfolio Tracker updates. The workflow also enforces the 15px minimum and black/red theme; the newest workflow run for the follow-up SQL/docs commit is queued separately.
 
 
-The Member Workspace now loads Portfolio folders and Version metadata in separate bounded queries (30 folders, 100 Versions), review history is capped at 50 events, and image metadata (maximum 100) is fetched only when Files is opened. Thumbnails are lazy-loaded; Overview and Directory do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
+The Member Workspace now loads Portfolio folders and Version metadata in separate bounded queries (30 folders, 100 Versions), review and submission history are each capped at 50 events, and image metadata (maximum 100) is fetched only when Files is opened. Thumbnails are lazy-loaded; Overview and Directory do not request Storage URLs or download image content. Opening a member's Portfolio from Workspace preserves Management mode.
