@@ -107,35 +107,9 @@ create policy "Members can view own guild affiliation" on public.guild_member_af
     where mm.id = guild_member_affiliations.manual_member_id and mm.linked_user_id = (select auth.uid())
   )
 );
-create policy "Leaders, Management, and Developers can manage member affiliations" on public.guild_member_affiliations for all to authenticated using (public.is_guild_admin()) with check (public.is_guild_admin());
+drop policy if exists "Leaders, Management, and Developers can manage member affiliations" on public.guild_member_affiliations;
+revoke all on public.guilds,public.guild_member_affiliations from public,anon,authenticated;
 grant select on public.guilds, public.guild_members, public.guild_manual_members, public.guild_member_affiliations, public.discord_accounts to authenticated;
-grant insert, update, delete on public.guild_member_affiliations to authenticated;
-create or replace function public.set_guild_member_affiliation(
-  p_guild_code text, p_user_id uuid default null, p_manual_member_id uuid default null, p_reason text default null
-) returns uuid language plpgsql security definer set search_path = '' as $$
-declare v_guild_id uuid; v_new_id uuid; v_started_at timestamptz := clock_timestamp(); v_manual_linked_user uuid;
-begin
-  if (p_user_id is null) = (p_manual_member_id is null) then raise exception 'Provide exactly one member identity'; end if;
-  if (select auth.uid()) is null or not public.is_guild_admin() then raise exception 'Not authorized to change guild affiliation'; end if;
-  select id into v_guild_id from public.guilds where code = p_guild_code and is_active = true;
-  if v_guild_id is null then raise exception 'Unknown or inactive guild'; end if;
-  if p_user_id is not null then
-    if not exists(select 1 from public.guild_members where user_id = p_user_id) then raise exception 'Registered member not found'; end if;
-    update public.guild_member_affiliations set ended_at = v_started_at where user_id = p_user_id and ended_at is null;
-    insert into public.guild_member_affiliations(guild_id,user_id,started_at,change_reason,created_by)
-    values(v_guild_id,p_user_id,v_started_at,nullif(trim(p_reason),''),(select auth.uid())) returning id into v_new_id;
-  else
-    select linked_user_id into v_manual_linked_user from public.guild_manual_members where id = p_manual_member_id and active = true;
-    if not found then raise exception 'Manual member not found or inactive'; end if;
-    if v_manual_linked_user is not null then raise exception 'This manual record is linked to a registered account; assign affiliation using the canonical user_id'; end if;
-    update public.guild_member_affiliations set ended_at = v_started_at where manual_member_id = p_manual_member_id and ended_at is null;
-    insert into public.guild_member_affiliations(guild_id,manual_member_id,started_at,change_reason,created_by)
-    values(v_guild_id,p_manual_member_id,v_started_at,nullif(trim(p_reason),''),(select auth.uid())) returning id into v_new_id;
-  end if;
-  return v_new_id;
-end; $$;
-revoke all on function public.set_guild_member_affiliation(text,uuid,uuid,text) from public;
-grant execute on function public.set_guild_member_affiliation(text,uuid,uuid,text) to authenticated;
 -- Synthetic fixture data only.
 insert into public.guild_members(user_id,character_name,game_class,nickname,discord_name,role) values
 ('10000000-0000-4000-8000-000000000001','AstraKnight','Ironclad','Astra','astra#0412','developer'),
