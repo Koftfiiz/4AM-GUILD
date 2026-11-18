@@ -19,6 +19,16 @@ create table public.guild_members (
   membership_status text not null default 'active',
   created_at timestamptz not null default now()
 );
+create table public.discord_accounts (
+  user_id uuid primary key references public.guild_members(user_id) on delete cascade,
+  discord_user_id text unique,
+  discord_username text,
+  discord_global_name text,
+  verified boolean not null default false,
+  guild_member_verified boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
 create table public.guild_manual_members (
   id uuid primary key default gen_random_uuid(),
   character_name text not null,
@@ -45,8 +55,8 @@ create table public.guild_member_affiliations (
   ),
   constraint guild_member_affiliations_valid_period check (ended_at is null or ended_at > started_at)
 );
-create unique index guild_member_affiliations_current_user_uidx on public.guild_member_affiliations(user_id) where user_id is not null and ended_at is null;
-create unique index guild_member_affiliations_current_manual_uidx on public.guild_member_affiliations(manual_member_id) where manual_member_id is not null and ended_at is null;
+create unique index guild_member_affiliations_one_current_user on public.guild_member_affiliations(user_id) where user_id is not null and ended_at is null;
+create unique index guild_member_affiliations_one_current_manual on public.guild_member_affiliations(manual_member_id) where manual_member_id is not null and ended_at is null;
 create index guild_member_affiliations_guild_current_idx on public.guild_member_affiliations(guild_id) where ended_at is null;
 insert into public.guilds(code,name) values ('4AM','4AM GUILD'),('4PM','4PM GUILD');
 create or replace function public.is_guild_member()
@@ -77,10 +87,12 @@ $$;
 alter table public.guilds enable row level security;
 alter table public.guild_members enable row level security;
 alter table public.guild_manual_members enable row level security;
+alter table public.discord_accounts enable row level security;
 alter table public.guild_member_affiliations enable row level security;
 create policy guilds_read_active on public.guilds for select to authenticated using (is_active = true);
 create policy guild_members_read_directory on public.guild_members for select to authenticated using (active = true);
 create policy guild_manual_members_read_directory on public.guild_manual_members for select to authenticated using (active = true);
+create policy discord_accounts_read_owner_or_management on public.discord_accounts for select to authenticated using (user_id=(select auth.uid()) or public.is_guild_admin());
 create policy affiliations_read_self_or_admin on public.guild_member_affiliations for select to authenticated using (
   public.is_guild_admin() or user_id = (select auth.uid()) or exists (
     select 1 from public.guild_manual_members mm
@@ -89,7 +101,7 @@ create policy affiliations_read_self_or_admin on public.guild_member_affiliation
 );
 create policy affiliations_admin_insert on public.guild_member_affiliations for insert to authenticated with check (public.is_guild_admin());
 create policy affiliations_admin_update on public.guild_member_affiliations for update to authenticated using (public.is_guild_admin()) with check (public.is_guild_admin());
-grant select on public.guilds, public.guild_members, public.guild_manual_members, public.guild_member_affiliations to authenticated;
+grant select on public.guilds, public.guild_members, public.guild_manual_members, public.guild_member_affiliations, public.discord_accounts to authenticated;
 grant insert, update, delete on public.guild_member_affiliations to authenticated;
 create or replace function public.set_guild_member_affiliation(
   p_guild_code text, p_user_id uuid default null, p_manual_member_id uuid default null, p_reason text default null
@@ -125,6 +137,13 @@ insert into public.guild_members(user_id,character_name,game_class,nickname,disc
 ('10000000-0000-4000-8000-000000000004','PinkOracle','Numina','Oracle','pinkoracle','member'),
 ('10000000-0000-4000-8000-000000000005','DragonHeart','Dragonsvelte','Dragon','dragonheart','member'),
 ('10000000-0000-4000-8000-000000000006','SilverShield','Ironclad','Silver','silvershield','member');
+insert into public.discord_accounts(user_id,discord_user_id,discord_username,discord_global_name,verified,guild_member_verified) values
+('10000000-0000-4000-8000-000000000001','900000000000000001','astra#0412','AstraKnight',true,true),
+('10000000-0000-4000-8000-000000000002','900000000000000002','crimsonvow','CrimsonVow',true,true),
+('10000000-0000-4000-8000-000000000003','900000000000000003','moon.celeste','MoonCeleste',false,false),
+('10000000-0000-4000-8000-000000000004','900000000000000004','pinkoracle','PinkOracle',true,true),
+('10000000-0000-4000-8000-000000000005','900000000000000005','dragonheart','DragonHeart',false,false),
+('10000000-0000-4000-8000-000000000006','900000000000000006','silvershield','SilverShield',true,true);
 insert into public.guild_manual_members(id,character_name,game_class,nickname,discord_name,linked_user_id) values
 ('20000000-0000-4000-8000-000000000001','WindPetal','Sylph','Petal',null,null),
 ('20000000-0000-4000-8000-000000000002','NightRider','Nightwaker','NR',null,null),
