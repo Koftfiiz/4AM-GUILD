@@ -18,7 +18,7 @@ For a brand-new blank Free Staging project, use only this canonical sequence:
 
 1. `guild_affiliation_staging_baseline.sql` (synthetic-only guild schema, Auth identities, and member fixtures)
 2. `20261119000000_guild_affiliation_foundation.sql`
-3. `portfolio_legacy_schema_baseline.sql` (synthetic legacy Portfolio/Patch tables and RLS)
+3. `portfolio_legacy_schema_baseline.sql` (synthetic legacy Portfolio/Patch tables, late-edit permissions/requests, and RLS)
 4. `20261119000100_guild_affiliation_directory.sql`
 5. `20261119000200_patch_roster_command_center.sql`
 6. `20261119_post_qa_baseline_followup.sql` (Staging-only synthetic Discord fixtures and legacy FK parity)
