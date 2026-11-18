@@ -8826,3 +8826,17 @@ body.gallery-lightbox-open{overflow:hidden}
   .portfolio-card-management { gap: 7px; }
   .portfolio-card-management button { min-height: 40px; }
 }
+
+
+/* Portfolio folder edit action: blue to distinguish editing from destructive red actions */
+.portfolio-card-management .portfolio-edit-button {
+  color: #bfdbfe;
+  border-color: rgba(37, 99, 235, .72);
+  background: rgba(37, 99, 235, .22);
+}
+.portfolio-card-management .portfolio-edit-button:hover {
+  color: #fff;
+  border-color: #60a5fa;
+  background: rgba(37, 99, 235, .82);
+  box-shadow: 0 0 14px rgba(37, 99, 235, .22);
+}
