@@ -689,8 +689,6 @@ async function loadApplication() {
       loadWarEvents()
     ]);
 
-    subscribeToWarRealtime();
-    subscribeToFeedbackRealtime();
 
     // Re-render after member records are available so each portfolio shows its owner.
     await renderPortfolios();
@@ -6639,12 +6637,54 @@ function isWarRealtimePageActive() {
   return Boolean(document.querySelector(".page[id^='page-war']:not(.hidden)"));
 }
 
+function syncAppRealtimeSubscriptions(pageName) {
+  const communityPages = ["community-board", "guild-news", "guild-activities"];
+  const shouldSubscribeToWar = pageName === "war-center";
+  const shouldSubscribeToActivity = pageName === "dashboard" || communityPages.includes(pageName);
+  const shouldSubscribeToFeedback = pageName === "feedback";
+
+  // Keep high-volume table subscriptions active only while their pages are open.
+  if (shouldSubscribeToWar) {
+    if (!warRealtimeChannel) subscribeToWarRealtime();
+  } else if (warRealtimeChannel) {
+    void supabaseClient.removeChannel(warRealtimeChannel);
+    warRealtimeChannel = null;
+  }
+
+  if (shouldSubscribeToActivity) {
+    if (!guildActivityRealtimeChannel) subscribeToGuildActivityRealtime();
+    if (communityPages.includes(pageName)) {
+      if (!guildActivityCommentsRealtimeChannel) subscribeToGuildActivityCommentsRealtime();
+    } else if (guildActivityCommentsRealtimeChannel) {
+      void supabaseClient.removeChannel(guildActivityCommentsRealtimeChannel);
+      guildActivityCommentsRealtimeChannel = null;
+    }
+  } else {
+    if (guildActivityRealtimeChannel) {
+      void supabaseClient.removeChannel(guildActivityRealtimeChannel);
+      guildActivityRealtimeChannel = null;
+    }
+    if (guildActivityCommentsRealtimeChannel) {
+      void supabaseClient.removeChannel(guildActivityCommentsRealtimeChannel);
+      guildActivityCommentsRealtimeChannel = null;
+    }
+  }
+
+  if (shouldSubscribeToFeedback) {
+    if (!feedbackRealtimeChannel) subscribeToFeedbackRealtime();
+  } else if (feedbackRealtimeChannel) {
+    void supabaseClient.removeChannel(feedbackRealtimeChannel);
+    feedbackRealtimeChannel = null;
+  }
+}
+
 function removeAppRealtimeChannels() {
-  for (const channel of [warRealtimeChannel, guildActivityRealtimeChannel, feedbackRealtimeChannel]) {
+  for (const channel of [warRealtimeChannel, guildActivityRealtimeChannel, guildActivityCommentsRealtimeChannel, feedbackRealtimeChannel]) {
     if (channel) void supabaseClient.removeChannel(channel);
   }
   warRealtimeChannel = null;
   guildActivityRealtimeChannel = null;
+  guildActivityCommentsRealtimeChannel = null;
   feedbackRealtimeChannel = null;
 }
 
@@ -7469,6 +7509,7 @@ function activityDateRange(item){
 let guildActivityCommentsCache={};
 let guildActivityMembersCache={};
 let guildActivityRealtimeChannel=null;
+let guildActivityCommentsRealtimeChannel=null;
 let guildActivityEmojiRange=null;
 const GUILD_ACTIVITY_EMOJIS=["😀","😃","😄","😁","😆","🥹","😂","🤣","😊","😍","🥰","😘","😎","🤔","😴","😭","😡","🤯","🥳","🤩","👍","👎","👏","🙌","🙏","💪","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🔥","✨","⭐","🌟","🎉","🎊","🎁","🏆","🥇","⚔️","🛡️","🐉","🌸","🍀","🎮","📢","📌","📅","⏰","✅","❌","❗","💬"];
 function rememberActivityEmojiSelection(){
@@ -7557,7 +7598,15 @@ function subscribeToGuildActivityRealtime(){
    if(!$("page-community")?.classList.contains("hidden"))loadGuildActivities();
    if(!$("page-dashboard")?.classList.contains("hidden")){loadDashboardAnnouncement();loadDashboardActivities();}
   })
-  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activity_comments"},()=>{if(!$("page-community")?.classList.contains("hidden"))loadGuildActivityComments();})
+  .subscribe();
+}
+function subscribeToGuildActivityCommentsRealtime(){
+ if(guildActivityCommentsRealtimeChannel){supabaseClient.removeChannel(guildActivityCommentsRealtimeChannel);guildActivityCommentsRealtimeChannel=null;}
+ if(!currentUser)return;
+ guildActivityCommentsRealtimeChannel=supabaseClient.channel("guild-activity-comments-live-"+currentUser.id)
+  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activity_comments"},()=>{
+   if(!$("page-community")?.classList.contains("hidden"))loadGuildActivityComments();
+  })
   .subscribe();
 }
 function openGuildActivityEditor(id=null){
@@ -8739,6 +8788,7 @@ function openGuildPage(pageName) {
   const isCommunityView = communityViews.includes(pageName);
   const targetPage = $(isCommunityView ? "page-community" : "page-" + pageName);
   if (targetPage) targetPage.classList.remove("hidden");
+  syncAppRealtimeSubscriptions(pageName);
   if (isCommunityView) {
     window.activeGuildCommunityView = pageName;
     const copy = {
@@ -8790,7 +8840,6 @@ function openGuildPage(pageName) {
   if (pageName === "dashboard") {
     loadDashboardAnnouncement();
     loadDashboardGallery();
-    subscribeToGuildActivityRealtime();
   }
   if (pageName === "settings") {
     renderAccountDetails();
@@ -8802,7 +8851,6 @@ function openGuildPage(pageName) {
   if (pageName === "war-center") loadWarCenterTab(window.activeWarCenterTab || "overview");
   if (pageName === "rules") loadGuildRules();
   if (["community-board", "guild-news", "guild-activities"].includes(pageName)) {
-    subscribeToGuildActivityRealtime();
     loadGuildActivities();
   }
   if (pageName === "feedback") loadGuildFeedback();
