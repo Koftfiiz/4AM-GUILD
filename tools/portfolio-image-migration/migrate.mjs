@@ -14,7 +14,7 @@ const url = process.env.SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 assert(url && key, "Missing Supabase secrets.");
 assert(process.env.CONFIRM_MIGRATION === REQUIRED_CONFIRMATION, "Safety stop: confirmation input must equal MIGRATE-46.");
-assert(Number(process.env.TARGET_COUNT) === TARGET_COUNT, "Safety stop: TARGET_COUNT must equal 47.");
+assert(Number(process.env.TARGET_COUNT) === TARGET_COUNT, "Safety stop: TARGET_COUNT must equal 46.");
 
 const manifest = JSON.parse(await readFile(new URL("./approved-manifest.json", import.meta.url), "utf8"));
 assert(manifest.bucket === BUCKET && manifest.files.length === TARGET_COUNT, "Manifest does not match the approved 46-file scope.");
@@ -67,13 +67,60 @@ async function readRows(table) {
   return rows;
 }
 
-async function storageObjectExists(path) {
+async function storageObjectInfo(path) {
   const slash = path.lastIndexOf("/");
   const folder = slash >= 0 ? path.slice(0, slash) : "";
   const filename = slash >= 0 ? path.slice(slash + 1) : path;
   const { data, error } = await supabase.storage.from(BUCKET).list(folder, { limit: 100, search: filename });
   if (error) throw new Error("Storage list failed for " + path + ": " + error.message);
-  return (data ?? []).some((item) => item.name === filename && item.id !== null);
+  return (data ?? []).find((item) => item.name === filename && item.id !== null) ?? null;
+}
+
+function validateWebpObject(info, path) {
+  const mime = info?.metadata?.mimetype ?? info?.metadata?.contentType ?? "";
+  const size = Number(info?.metadata?.size ?? info?.metadata?.contentLength ?? 0);
+  if (!(mime === "image/webp" && Number.isFinite(size) && size > 0)) {
+    throw new Error("Safety stop: existing destination is not a verified WebP object: " + path);
+  }
+  return size;
+}
+
+async function uploadWebpWithRetry(destination, output) {
+  let lastError = null;
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    try {
+      const { error } = await supabase.storage.from(BUCKET).upload(destination, output, {
+        contentType: "image/webp",
+        cacheControl: "31536000",
+        upsert: false
+      });
+      if (!error) {
+        const info = await storageObjectInfo(destination);
+        if (!info) throw new Error("Uploaded WebP could not be confirmed in Storage: " + destination);
+        const size = validateWebpObject(info, destination);
+        if (size !== output.length) throw new Error("Uploaded WebP size mismatch for " + destination);
+        return size;
+      }
+      lastError = new Error(error.message);
+    } catch (error) {
+      lastError = error;
+    }
+
+    // A gateway may return HTML or drop the response after Storage has committed.
+    // Re-check before retrying so an ambiguous success is never uploaded twice.
+    const info = await storageObjectInfo(destination);
+    if (info) {
+      const size = validateWebpObject(info, destination);
+      if (size !== output.length) throw new Error("Existing WebP size mismatch after ambiguous upload for " + destination);
+      return size;
+    }
+    if (attempt < 4) {
+      const delay = 1000 * (2 ** (attempt - 1));
+      console.warn("Upload attempt " + attempt + " failed for " + destination + "; retrying in " + delay + "ms: " + (lastError?.message ?? lastError));
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error("WebP upload failed after 4 attempts for " + destination + ": " + (lastError?.message ?? lastError));
 }
 
 const tableNames = ["portfolio_images", "portfolio_version_images"];
@@ -98,37 +145,40 @@ const prepared = [];
 for (let index = 0; index < manifest.files.length; index++) {
   const item = manifest.files[index];
   const destination = item.path.replace(/\.png$/i, ".webp");
-  assert(!(await storageObjectExists(destination)), "Safety stop: destination already exists: " + destination);
+  const existing = await storageObjectInfo(destination);
+
+  if (existing) {
+    const webpBytes = validateWebpObject(existing, destination);
+    prepared.push({ sourcePath: item.path, destinationPath: destination, sourceBytes: item.originalBytes, webpBytes, resumed: true });
+    console.log("Reused verified WebP " + (index + 1) + "/" + TARGET_COUNT + ": " + destination + " (" + webpBytes + " bytes)");
+    continue;
+  }
 
   const { data: blob, error } = await supabase.storage.from(BUCKET).download(item.path);
   if (error || !blob) throw new Error("Source download failed for " + item.path + ": " + (error?.message ?? "empty response"));
   const input = Buffer.from(await blob.arrayBuffer());
-  assert(input.length === item.originalBytes, "Source size changed since Dry Run: " + item.path + " expected " + item.originalBytes + " got " + input.length);
+  if (input.length !== item.originalBytes) throw new Error("Source size changed since Dry Run: " + item.path + " expected " + item.originalBytes + " got " + input.length);
 
   const image = sharp(input, { limitInputPixels: 100_000_000 });
   const metadata = await image.metadata();
-  assert(metadata.format === "png", "Unexpected source format for " + item.path + ": " + metadata.format);
+  if (metadata.format !== "png") throw new Error("Unexpected source format for " + item.path + ": " + metadata.format);
 
   const output = await sharp(input, { limitInputPixels: 100_000_000 })
     .rotate()
     .webp({ quality: manifest.quality, effort: manifest.effort })
     .toBuffer();
-  assert(output.length < input.length * (1 - manifest.minimumSavingPercent / 100), "WebP did not meet the minimum 5% saving guard: " + item.path);
+  if (!(output.length < input.length * (1 - manifest.minimumSavingPercent / 100))) throw new Error("WebP did not meet the minimum 5% saving guard: " + item.path);
 
-  const { error: uploadError } = await supabase.storage.from(BUCKET).upload(destination, output, {
-    contentType: "image/webp",
-    cacheControl: "31536000",
-    upsert: false
-  });
-  if (uploadError) throw new Error("WebP upload failed for " + destination + ": " + uploadError.message);
-
-  const exists = await storageObjectExists(destination);
-  assert(exists, "Uploaded WebP could not be confirmed in Storage: " + destination);
-
-  prepared.push({ sourcePath: item.path, destinationPath: destination, sourceBytes: input.length, webpBytes: output.length });
+  const webpBytes = await uploadWebpWithRetry(destination, output);
+  prepared.push({ sourcePath: item.path, destinationPath: destination, sourceBytes: input.length, webpBytes, resumed: false });
   report.uploaded.push(prepared[prepared.length - 1]);
-  console.log("Uploaded " + (index + 1) + "/" + TARGET_COUNT + ": " + destination + " (" + output.length + " bytes)");
+  console.log("Uploaded " + (index + 1) + "/" + TARGET_COUNT + ": " + destination + " (" + webpBytes + " bytes)");
 }
+
+if (prepared.length !== TARGET_COUNT) throw new Error("Safety stop: not all 46 WebP destinations were prepared.");
+report.resumed = prepared.filter((item) => item.resumed).length;
+report.newlyUploaded = prepared.filter((item) => !item.resumed).length;
+console.log("All 46 WebP destinations verified. Existing reused: " + report.resumed + "; newly uploaded: " + report.newlyUploaded + ". Database URL updates may now begin.");
 
 const changes = [];
 for (const table of tableNames) {
@@ -190,7 +240,9 @@ report.finishedAt = new Date().toISOString();
 report.status = "SUCCESS";
 report.counts = {
   sourceFiles: prepared.length,
-  uploadedWebpFiles: report.uploaded.length,
+  uploadedWebpFiles: prepared.length,
+  reusedWebpFiles: report.resumed ?? 0,
+  newlyUploadedWebpFiles: report.newlyUploaded ?? 0,
   updatedDatabaseFields: report.updatedRows.length,
   originalFilesDeleted: 0
 };
