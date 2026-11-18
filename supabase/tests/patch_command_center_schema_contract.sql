@@ -12,6 +12,9 @@ begin
   if to_regclass('public.portfolio_patch_review_events') is null then
     raise exception 'Missing public.portfolio_patch_review_events';
   end if;
+  if to_regclass('public.portfolio_patch_submission_events') is null then
+    raise exception 'Missing public.portfolio_patch_submission_events';
+  end if;
 
   if not exists (
     select 1 from information_schema.columns
@@ -56,6 +59,19 @@ begin
       and qual like '%member_id%'
   ) then
     raise exception 'Patch review event visibility must be restricted to owner/reviewer';
+  end if;
+  if not exists (
+    select 1 from pg_policies
+    where schemaname='public' and tablename='portfolio_patch_submission_events'
+      and policyname='patch_submission_events_read_members'
+      and qual like '%can_manage_guild_affiliations%'
+      and qual like '%member_id%'
+  ) then
+    raise exception 'Patch submission version history must be restricted to owner/reviewer';
+  end if;
+  if to_regprocedure('public.audit_patch_submission_event()') is null
+     or not exists(select 1 from pg_trigger where tgname='patch_submission_version_audit' and not tgisinternal) then
+    raise exception 'Patch submission version audit trigger is missing';
   end if;
 
   if not (
