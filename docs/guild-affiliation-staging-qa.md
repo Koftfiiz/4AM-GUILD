@@ -62,3 +62,8 @@ The feature branch now tightens the management RPC helper to the same Developer/
 ## Member Workspace follow-up
 
 The feature branch now loads Discord account identity/verification and the member's affiliation history only when Management opens a Workspace. The Workspace History tab combines affiliation history with Patch review events. Requests are bounded (50 affiliation rows, 30 folders/submissions) and do not run during the normal directory/dashboard load. These UI additions await Staging browser validation.
+
+
+## Staging baseline follow-up
+
+A new additive Staging-only follow-up migration adds six synthetic Discord Account rows for Workspace testing, aligns affiliation index/policy names with the production contract, permits the `manual_link` Patch roster source, and aligns Patch Submission FK delete actions. It contains no production data or secrets. Apply it only after the existing Staging Patch schema is present.
