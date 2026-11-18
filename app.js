@@ -64,6 +64,58 @@ const supabaseClient = window.supabase.createClient(
   }
 );
 
+function mountStagingTestLogin() {
+  if (IS_PRODUCTION_DEPLOYMENT || document.getElementById("staging-test-login")) return;
+  const loginForm = document.getElementById("login-form");
+  if (!loginForm) return;
+
+  const panel = document.createElement("form");
+  panel.id = "staging-test-login";
+  panel.style.cssText = "margin-top:18px;padding:18px;border:1px solid rgba(239,55,70,.55);border-radius:14px;background:rgba(15,15,18,.96);color:#f5f5f5;text-align:left";
+  panel.innerHTML = `
+    <div style="font-size:15px;font-weight:800;letter-spacing:.08em;color:#ff5364;margin-bottom:6px">STAGING TEST LOGIN</div>
+    <p style="font-size:15px;line-height:1.5;color:#c9c9ce;margin:0 0 14px">บัญชีทดสอบสำหรับ Preview/Local เท่านั้น ข้อมูลแยกจาก Production</p>
+    <label for="staging-test-email" style="display:block;font-size:15px;margin:10px 0 6px">Test email</label>
+    <input id="staging-test-email" type="email" autocomplete="username" required
+      style="box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #444;background:#09090b;color:#fff;border-radius:9px;font-size:15px">
+    <label for="staging-test-password" style="display:block;font-size:15px;margin:12px 0 6px">Password</label>
+    <input id="staging-test-password" type="password" autocomplete="current-password" required
+      style="box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #444;background:#09090b;color:#fff;border-radius:9px;font-size:15px">
+    <button type="submit" style="width:100%;min-height:44px;margin-top:14px;border:0;border-radius:9px;background:#d92f43;color:#fff;font-size:15px;font-weight:800;cursor:pointer">LOGIN TO STAGING</button>
+    <p id="staging-test-login-message" role="status" aria-live="polite" style="font-size:15px;line-height:1.5;color:#ff8793;margin:10px 0 0"></p>
+  `;
+  loginForm.insertAdjacentElement("afterend", panel);
+
+  panel.addEventListener("submit", async event => {
+    event.preventDefault();
+    const button = panel.querySelector("button[type='submit']");
+    const message = document.getElementById("staging-test-login-message");
+    if (button) { button.disabled = true; button.textContent = "กำลังเข้าสู่ระบบ..."; }
+    if (message) message.textContent = "";
+    try {
+      const email = document.getElementById("staging-test-email")?.value?.trim();
+      const password = document.getElementById("staging-test-password")?.value || "";
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      currentUser = data.user;
+      await bootAuthenticatedApplication();
+    } catch (error) {
+      if (message) message.textContent = "เข้าสู่ระบบ Staging ไม่สำเร็จ: " + (error?.message || "Unknown error");
+    } finally {
+      if (button) { button.disabled = false; button.textContent = "LOGIN TO STAGING"; }
+    }
+  });
+}
+
+if (!IS_PRODUCTION_DEPLOYMENT) {
+  document.title = "[STAGING] " + (document.title || "4AM GUILD");
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountStagingTestLogin, { once: true });
+  } else {
+    mountStagingTestLogin();
+  }
+}
+
 // ==========================================
 // GLOBAL STATE
 // ==========================================
