@@ -75,3 +75,6 @@ The feature branch now loads Discord account identity/verification and the membe
 
 
 The legacy member-facing Portfolio Tracker has also been aligned with the 4AM roster: progress totals use the selected Patch snapshot, out-of-roster accounts are not offered submission actions after the snapshot is ready, and the delete-round action is removed in favor of archive/restore. The submission RPC performs a due snapshot before roster validation. Pending Staging QA.
+
+
+Latest GitHub Actions validation: JavaScript syntax checks passed on the feature branch after the Workspace, pagination, and Portfolio Tracker updates. The workflow also enforces the 15px minimum and black/red theme; the newest workflow run for the follow-up SQL/docs commit is queued separately.
