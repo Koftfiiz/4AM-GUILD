@@ -93,6 +93,7 @@ begin
  return new;
 end; $$;
 revoke all on function public.sync_patch_submission_review() from public,anon,authenticated;
+drop trigger if exists patch_submission_sync_review on public.portfolio_patch_submissions;
 create trigger patch_submission_sync_review after insert or update of version_id on public.portfolio_patch_submissions
 for each row execute function public.sync_patch_submission_review();
 
@@ -105,6 +106,7 @@ begin
  return new;
 end; $$;
 revoke all on function public.audit_patch_submission_review() from public,anon,authenticated;
+drop trigger if exists patch_submission_review_audit on public.portfolio_patch_submission_reviews;
 create trigger patch_submission_review_audit after insert or update on public.portfolio_patch_submission_reviews
 for each row execute function public.audit_patch_submission_review();
 
