@@ -12,6 +12,14 @@ begin
   if to_regclass('public.portfolio_patch_review_events') is null then
     raise exception 'Missing public.portfolio_patch_review_events';
   end if;
+  if to_regclass('public.portfolio_update_edit_permissions') is null
+     or to_regclass('public.portfolio_update_edit_requests') is null then
+    raise exception 'Legacy Patch late-edit permission/request tables must exist in Staging';
+  end if;
+  if not exists(select 1 from information_schema.columns where table_schema='public' and table_name='portfolio_versions' and column_name='round_id')
+     or not exists(select 1 from information_schema.columns where table_schema='public' and table_name='portfolio_version_images' and column_name='image_type') then
+    raise exception 'Legacy Portfolio nested query columns are incomplete';
+  end if;
   if to_regclass('public.portfolio_patch_submission_events') is null then
     raise exception 'Missing public.portfolio_patch_submission_events';
   end if;
