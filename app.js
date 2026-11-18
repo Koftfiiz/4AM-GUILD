@@ -2277,9 +2277,12 @@ function resetManualMemberForm() {
 // WEBSITE MEMBER PRESENCE
 // ==========================================
 
-const GUILD_PRESENCE_STALE_MS = 5 * 60 * 1000;
-const GUILD_PRESENCE_HEARTBEAT_MS = 120 * 1000;
-const GUILD_PRESENCE_REFRESH_MS = 120 * 1000;
+// Reduce background traffic while keeping presence reliable.
+// Heartbeats run every 4 minutes; the 10-minute stale window allows
+// for delayed/backgrounded browser tabs without showing active members offline.
+const GUILD_PRESENCE_STALE_MS = 10 * 60 * 1000;
+const GUILD_PRESENCE_HEARTBEAT_MS = 4 * 60 * 1000;
+const GUILD_PRESENCE_REFRESH_MS = 3 * 60 * 1000;
 
 async function sendGuildPresenceHeartbeat() {
   if (!currentUser?.id || currentMember?.active !== true) return;
@@ -2335,7 +2338,9 @@ function startGuildPresence() {
     if (document.visibilityState === "visible") void sendGuildPresenceHeartbeat();
   }, GUILD_PRESENCE_HEARTBEAT_MS);
   presenceRefreshTimer = window.setInterval(() => {
-    if (isManagement()) void refreshGuildPresence();
+    if (document.visibilityState === "visible" && isManagement()) {
+      void refreshGuildPresence();
+    }
   }, GUILD_PRESENCE_REFRESH_MS);
   document.removeEventListener("visibilitychange", handleGuildPresenceVisibility);
   document.addEventListener("visibilitychange", handleGuildPresenceVisibility);
