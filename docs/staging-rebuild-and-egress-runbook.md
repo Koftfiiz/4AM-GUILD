@@ -12,47 +12,28 @@
 
 ## Existing project versus clean rebuild
 
-The synthetic baseline has already been applied to the current Staging project and now contains additional synthetic QA cases. Do not rerun `guild_affiliation_staging_baseline.sql` against that project because it creates base tables and fixtures without `IF NOT EXISTS`.
+The current Staging project has already been initialized with synthetic-only schema and fixtures. Do not rerun `guild_affiliation_staging_baseline.sql` against it because it creates base tables and fixture rows without `IF NOT EXISTS`.
 
-For a new blank Free Staging project, use this order (the current Staging project already has this baseline and the canonical feature migrations applied):
+For a brand-new blank Free Staging project, use only this canonical sequence:
 
-1. `guild_affiliation_staging_baseline.sql`
+1. `guild_affiliation_staging_baseline.sql` (synthetic-only legacy schema and fixtures)
 2. `20261119000000_guild_affiliation_foundation.sql`
 3. `20261119000100_guild_affiliation_directory.sql`
 4. `20261119000200_patch_roster_command_center.sql`
-5. Apply only the remaining Staging-specific parity/fixture scripts listed below when rebuilding the synthetic test schema.
-3. `20261119_server_side_member_directory_rpc.sql`
-4. `20261119_patch_roster_snapshot_and_affiliation_sync.sql`
-5. `20261119_align_patch_permissions_with_portfolio_roles.sql`
-6. `20261119_secure_patch_round_management_rpcs.sql`
-7. `20261119_merge_manual_affiliation_on_account_link.sql`
-8. `20261119_patch_command_center_submission_review_foundation.sql`
-9. `20261119_post_qa_baseline_followup.sql`
-10. `20261119_make_patch_snapshot_due_independent_of_round_status.sql`
-11. `20261119_patch_member_partial_submission_status.sql`
-12. `20261119_guard_member_directory_rpc_and_bound_pagination.sql`
-13. `20261119_index_patch_command_center_foreign_keys.sql`
-14. `20261119_restrict_staging_table_grants_to_read_only.sql`
+5. `20261119_post_qa_baseline_followup.sql` (Staging-only synthetic Discord fixtures and legacy FK parity)
+6. Run both files in `supabase/tests/`.
 
-Re-run the schema contract tests after the complete sequence.
+The other files in `supabase/staging/` are historical incremental QA patches used while developing the prototype. They are not part of the clean rebuild path; do not replay them after the canonical migrations unless a specific schema inspection identifies a missing object.
 
-## Current paused project's post-QA update
+## Current Staging state
 
-For the already-initialized Staging project, first inspect applied migrations, tables, constraints, and policies. Apply only the additive follow-up migration and re-apply the idempotent `CREATE OR REPLACE`/policy migrations needed to match the current feature branch. Do not re-run the base schema file. Re-apply in this order:
-
-1. `20261119_post_qa_baseline_followup.sql`
-2. `20261119_patch_roster_snapshot_and_affiliation_sync.sql`
-3. `20261119_align_patch_permissions_with_portfolio_roles.sql`
-4. `20261119_secure_patch_round_management_rpcs.sql`
-5. `20261119_merge_manual_affiliation_on_account_link.sql`
-6. `20261119_patch_command_center_submission_review_foundation.sql`
-7. `20261119_make_patch_snapshot_due_independent_of_round_status.sql`
-8. `20261119_patch_member_partial_submission_status.sql`
-9. `20261119_guard_member_directory_rpc_and_bound_pagination.sql`
-10. `20261119_index_patch_command_center_foreign_keys.sql`
-11. `20261119_restrict_staging_table_grants_to_read_only.sql`
-
-If any listed migration is absent from the Staging migration history, inspect the actual schema before applying it. Do not blindly replay non-idempotent SQL.
+- The project is active for this QA session.
+- The synthetic baseline and three canonical feature migrations have been applied successfully.
+- The post-QA fixture/FK follow-up has been applied.
+- Both schema contract tests pass.
+- One database-only snapshot cron job is active once per minute and has successful run records. It does not call external services or Storage.
+- The current fixtures include synthetic accounts, manual-only/link cases, Patch rounds, roster entries, submissions, and review events. They are not Production data.
+- After the remaining Staging QA is complete, pause the Free Staging project to conserve active compute. Do not pause it while a test session is still running.
 
 ## Required QA
 
