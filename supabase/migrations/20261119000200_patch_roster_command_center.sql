@@ -345,6 +345,8 @@ begin
   updated_at=clock_timestamp()
  where id=p_round_id returning id into p_round_id;
  if not found then raise exception 'Patch round not found'; end if;
+ -- If restoring an already-started Patch, create its opening snapshot immediately.
+ perform public.snapshot_due_patch_rosters();
  return p_round_id;
 end; $$;
 revoke all on function public.update_portfolio_patch_round(uuid,text) from public,anon;
