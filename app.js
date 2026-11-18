@@ -39,8 +39,18 @@ async function restoreGuildFeedback(feedbackId, button) {
 // 4AM GUILD - SUPABASE CONFIGURATION
 // ==========================================
 
-const SUPABASE_URL = "https://qbjixpcbzklrkcneluej.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_4nOj0RDz_BuIt-lIWNvGAg_NmABI3a0";
+// Production is selected only on the verified production hostname.
+// Every Vercel Preview URL and local development hostname uses isolated Staging.
+const PRODUCTION_HOSTNAMES = new Set(["4am-guild.vercel.app"]);
+const IS_PRODUCTION_DEPLOYMENT = PRODUCTION_HOSTNAMES.has(
+  String(window.location.hostname || "").toLowerCase()
+);
+const SUPABASE_URL = IS_PRODUCTION_DEPLOYMENT
+  ? "https://qbjixpcbzklrkcneluej.supabase.co"
+  : "https://jmuxbomowtqcigesbimz.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = IS_PRODUCTION_DEPLOYMENT
+  ? "sb_publishable_4nOj0RDz_BuIt-lIWNvGAg_NmABI3a0"
+  : "sb_publishable_iive09cpDKs7AV45AbvIKw_vO4Acr80";
 
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
