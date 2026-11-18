@@ -22,7 +22,8 @@ For a brand-new blank Free Staging project, use only this canonical sequence:
 4. `20261119000100_guild_affiliation_directory.sql`
 5. `20261119000200_patch_roster_command_center.sql`
 6. `20261119_post_qa_baseline_followup.sql` (Staging-only synthetic Discord fixtures and legacy FK parity)
-7. Run both files in `supabase/tests/`.
+7. `20261119_staging_app_grants_and_rls.sql` (app-compatible authenticated writes, Developer-only Discord account mutation, no anon table access)
+8. Run both files in `supabase/tests/`.
 
 The other files in `supabase/staging/` are historical incremental QA patches used while developing the prototype. They are not part of the clean rebuild path; do not replay them after the canonical migrations unless a specific schema inspection identifies a missing object.
 
@@ -32,6 +33,7 @@ The other files in `supabase/staging/` are historical incremental QA patches use
 - The synthetic baseline and three canonical feature migrations have been applied successfully.
 - The post-QA fixture/FK follow-up has been applied.
 - Both schema contract tests pass.
+- Staging grants are aligned to the app's direct-write workflows while preserving RLS; anon has no table privileges on the feature schema.
 - One database-only snapshot cron job is active once per minute and has successful run records. It does not call external services or Storage.
 - The current fixtures include synthetic accounts, manual-only/link cases, Patch rounds, roster entries, submissions, and review events. They are not Production data.
 - After the remaining Staging QA is complete, pause the Free Staging project to conserve active compute. Do not pause it while a test session is still running.
