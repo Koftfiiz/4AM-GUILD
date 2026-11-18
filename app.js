@@ -6653,9 +6653,21 @@ function syncAppRealtimeSubscriptions(pageName) {
 
   if (shouldSubscribeToActivity) {
     if (!guildActivityRealtimeChannel) subscribeToGuildActivityRealtime();
-  } else if (guildActivityRealtimeChannel) {
-    void supabaseClient.removeChannel(guildActivityRealtimeChannel);
-    guildActivityRealtimeChannel = null;
+    if (communityPages.includes(pageName)) {
+      if (!guildActivityCommentsRealtimeChannel) subscribeToGuildActivityCommentsRealtime();
+    } else if (guildActivityCommentsRealtimeChannel) {
+      void supabaseClient.removeChannel(guildActivityCommentsRealtimeChannel);
+      guildActivityCommentsRealtimeChannel = null;
+    }
+  } else {
+    if (guildActivityRealtimeChannel) {
+      void supabaseClient.removeChannel(guildActivityRealtimeChannel);
+      guildActivityRealtimeChannel = null;
+    }
+    if (guildActivityCommentsRealtimeChannel) {
+      void supabaseClient.removeChannel(guildActivityCommentsRealtimeChannel);
+      guildActivityCommentsRealtimeChannel = null;
+    }
   }
 
   if (shouldSubscribeToFeedback) {
@@ -6667,11 +6679,12 @@ function syncAppRealtimeSubscriptions(pageName) {
 }
 
 function removeAppRealtimeChannels() {
-  for (const channel of [warRealtimeChannel, guildActivityRealtimeChannel, feedbackRealtimeChannel]) {
+  for (const channel of [warRealtimeChannel, guildActivityRealtimeChannel, guildActivityCommentsRealtimeChannel, feedbackRealtimeChannel]) {
     if (channel) void supabaseClient.removeChannel(channel);
   }
   warRealtimeChannel = null;
   guildActivityRealtimeChannel = null;
+  guildActivityCommentsRealtimeChannel = null;
   feedbackRealtimeChannel = null;
 }
 
@@ -7496,6 +7509,7 @@ function activityDateRange(item){
 let guildActivityCommentsCache={};
 let guildActivityMembersCache={};
 let guildActivityRealtimeChannel=null;
+let guildActivityCommentsRealtimeChannel=null;
 let guildActivityEmojiRange=null;
 const GUILD_ACTIVITY_EMOJIS=["😀","😃","😄","😁","😆","🥹","😂","🤣","😊","😍","🥰","😘","😎","🤔","😴","😭","😡","🤯","🥳","🤩","👍","👎","👏","🙌","🙏","💪","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🔥","✨","⭐","🌟","🎉","🎊","🎁","🏆","🥇","⚔️","🛡️","🐉","🌸","🍀","🎮","📢","📌","📅","⏰","✅","❌","❗","💬"];
 function rememberActivityEmojiSelection(){
@@ -7584,7 +7598,15 @@ function subscribeToGuildActivityRealtime(){
    if(!$("page-community")?.classList.contains("hidden"))loadGuildActivities();
    if(!$("page-dashboard")?.classList.contains("hidden")){loadDashboardAnnouncement();loadDashboardActivities();}
   })
-  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activity_comments"},()=>{if(!$("page-community")?.classList.contains("hidden"))loadGuildActivityComments();})
+  .subscribe();
+}
+function subscribeToGuildActivityCommentsRealtime(){
+ if(guildActivityCommentsRealtimeChannel){supabaseClient.removeChannel(guildActivityCommentsRealtimeChannel);guildActivityCommentsRealtimeChannel=null;}
+ if(!currentUser)return;
+ guildActivityCommentsRealtimeChannel=supabaseClient.channel("guild-activity-comments-live-"+currentUser.id)
+  .on("postgres_changes",{event:"*",schema:"public",table:"guild_activity_comments"},()=>{
+   if(!$("page-community")?.classList.contains("hidden"))loadGuildActivityComments();
+  })
   .subscribe();
 }
 function openGuildActivityEditor(id=null){
