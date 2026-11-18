@@ -252,7 +252,8 @@
     $("pc-create-form")?.addEventListener("submit",createRound);
     $("pc-member-search-btn")?.addEventListener("click",()=>{state.search=$("pc-member-search").value.trim();state.status=$("pc-member-status").value;state.page=0;void loadCommandCenter(true)});
     $("pc-queue-search-btn")?.addEventListener("click",()=>{state.search=$("pc-queue-search").value.trim();state.status=$("pc-queue-status").value;state.page=0;void loadCommandCenter(true)});
-    $("pc-queue-prev")?.addEventListener("click",()=>{if(state.page>0){state.page--;void loadCommandCenter(true)}});\n    $("pc-queue-next")?.addEventListener("click",()=>{if((state.page+1)*PAGE_SIZE<Number(state.data?.review_queue_total||0)){state.page++;void loadCommandCenter(true)}});
+    $("pc-queue-prev")?.addEventListener("click",()=>{if(state.page>0){state.page--;void loadCommandCenter(true)}});
+    $("pc-queue-next")?.addEventListener("click",()=>{if((state.page+1)*PAGE_SIZE<Number(state.data?.review_queue_total||0)){state.page++;void loadCommandCenter(true)}});
     $("pc-member-prev")?.addEventListener("click",()=>{if(state.page>0){state.page--;void loadCommandCenter(true)}});
     $("pc-member-next")?.addEventListener("click",()=>{state.page++;void loadCommandCenter(true)});
     $("pc-member-rows")?.addEventListener("click",e=>{const b=e.target.closest("[data-pc-workspace]");if(b)void openWorkspace(b.dataset.pcWorkspace)});
