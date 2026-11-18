@@ -59,3 +59,12 @@ Create a schema-only baseline from reviewed DDL (no production rows, Auth users,
 - Pagination, cache invalidation, and Realtime lifecycle tests pass.
 - Desktop/mobile QA and end-to-end Patch submission/review tests pass.
 - A rollback plan is documented before the single production release.
+
+
+## Free-plan quota clarification
+
+- Production and Staging are in the same Free organization. Egress is an organization-level quota shared across its projects, not a separate 5 GB allowance per project.
+- The current Supabase Free documentation lists 5 GB egress for the organization, 1 GB Storage, 500 MB database size per project, and 500,000 Edge Function invocations. Confirm the live usage dashboard before any large test.
+- Supabase Free projects may be automatically paused after a week of low activity. Staging must not be kept artificially busy just to avoid pausing; resume it only when active development/testing is needed.
+- Pause Staging between work sessions when it is not needed. Pausing reduces active compute time but does not erase egress already consumed in the billing period.
+- Prefer local mocked UI/data tests first, then short targeted Staging integration tests. Avoid repeated full-page reloads against Staging and avoid downloading production assets.
