@@ -203,13 +203,16 @@
     const member=(state.data?.members||[]).find(m=>m.member_id===memberId);if(!member)return;
     const host=$("pc-workspace");host.classList.remove("pc-hidden");host.innerHTML='<div class="pc-empty">กำลังโหลด Workspace...</div>';
     try{
-      const [portfolioResult,submissionResult]=await Promise.all([
+      const [portfolioResult,submissionResult,profileResult,affiliationResult]=await Promise.all([
         supabaseClient.from("portfolios").select("id,title,game_class,portfolio_type,created_at,portfolio_versions(id,version_number,version_name,created_at,portfolio_version_images(id,section_key))").eq("member_id",memberId).order("created_at",{ascending:false}).limit(30),
-        supabaseClient.from("portfolio_patch_submissions").select("id,portfolio_id,version_id,submitted_at,portfolio_patch_submission_reviews(status,review_note,reviewed_at),portfolio_patch_review_events(id,old_status,new_status,review_note,created_at)").eq("member_id",memberId).eq("round_id",state.roundId).order("submitted_at",{ascending:false}).limit(30)
+        supabaseClient.from("portfolio_patch_submissions").select("id,portfolio_id,version_id,submitted_at,portfolio_patch_submission_reviews(status,review_note,reviewed_at),portfolio_patch_review_events(id,old_status,new_status,review_note,created_at)").eq("member_id",memberId).eq("round_id",state.roundId).order("submitted_at",{ascending:false}).limit(30),
+        supabaseClient.from("guild_members").select("user_id,character_name,game_class,nickname,discord_name,discord_accounts(discord_user_id,discord_username,discord_global_name,verified,guild_member_verified)").eq("user_id",memberId).maybeSingle(),
+        supabaseClient.from("guild_member_affiliations").select("id,started_at,ended_at,change_reason,guilds(code,name)").eq("user_id",memberId).order("started_at",{ascending:false}).limit(50)
       ]);
       if(portfolioResult.error)throw portfolioResult.error;if(submissionResult.error)throw submissionResult.error;
+      if(profileResult.error)throw profileResult.error;if(affiliationResult.error)throw affiliationResult.error;
       const folders=portfolioResult.data||[],subs=submissionResult.data||[];
-      state.workspace={member,folders,subs,memberIds:(state.data?.members||[]).map(x=>x.member_id)};
+      state.workspace={member,folders,subs,profile:profileResult.data||null,affiliations:affiliationResult.data||[],memberIds:(state.data?.members||[]).map(x=>x.member_id)};
       state.workspaceTab="overview";renderWorkspace();
     }catch(error){host.innerHTML='<div class="pc-empty">เปิด Workspace ไม่สำเร็จ: '+esc(error.message||"Unknown error")+'</div>';}
   }
@@ -219,10 +222,20 @@
     const ids=w.memberIds,index=ids.indexOf(w.member.member_id);
     const totalVersions=w.folders.reduce((sum,p)=>sum+(p.portfolio_versions||[]).length,0);
     const totalImages=w.folders.reduce((sum,p)=>sum+(p.portfolio_versions||[]).reduce((n,v)=>n+(v.portfolio_version_images||[]).length,0),0);
-    const overview='<div class="pc-stats"><article class="pc-stat"><span>แฟ้มผลงาน</span><strong>'+w.folders.length+'</strong></article><article class="pc-stat"><span>Portfolio Versions</span><strong>'+totalVersions+'</strong></article><article class="pc-stat"><span>รูปภาพทั้งหมด</span><strong>'+totalImages+'</strong></article><article class="pc-stat"><span>Patch Submissions</span><strong>'+w.subs.length+'</strong></article></div><p class="pc-muted">'+esc(w.member.discord_name||"ไม่พบ Discord")+' · '+esc(w.member.roster_source==="affiliation_transfer"?"เพิ่มจากการย้ายเข้า 4AM":w.member.roster_source==="manual_link"?"เพิ่มหลังเชื่อมบัญชี Manual":"Opening Snapshot")+'</p>';
+    const profile=w.profile||{},discordValue=profile.discord_accounts;
+    const discord=Array.isArray(discordValue)?discordValue[0]:discordValue;
+    const currentAffiliation=w.affiliations.find(a=>!a.ended_at);
+    const discordName=discord?.discord_global_name||discord?.discord_username||profile.discord_name||"ไม่พบ Discord";
+    const discordId=discord?.discord_user_id||"—";
+    const discordStatus=discord?(discord.verified?"ยืนยันแล้ว":"รอยืนยัน"):"ไม่พบ Discord Account";
+    const affiliationLabel=currentAffiliation?.guilds?.code||"ยังไม่กำหนดสังกัด";
+    const sourceLabel=w.member.roster_source==="affiliation_transfer"?"เพิ่มจากการย้ายเข้า 4AM":w.member.roster_source==="manual_link"?"เพิ่มหลังเชื่อมบัญชี Manual":"Opening Snapshot";
+    const overview='<div class="pc-stats"><article class="pc-stat"><span>แฟ้มผลงาน</span><strong>'+w.folders.length+'</strong></article><article class="pc-stat"><span>Portfolio Versions</span><strong>'+totalVersions+'</strong></article><article class="pc-stat"><span>รูปภาพทั้งหมด</span><strong>'+totalImages+'</strong></article><article class="pc-stat"><span>Patch Submissions</span><strong>'+w.subs.length+'</strong></article></div><div class="pc-member"><h3>ข้อมูลสมาชิก</h3><p>สังกัดปัจจุบัน: <strong>'+esc(affiliationLabel)+'</strong> · '+esc(sourceLabel)+'</p><p>Discord: <strong>'+esc(discordName)+'</strong> · ID: '+esc(discordId)+'</p><p>สถานะ Discord: '+esc(discordStatus)+' · Guild Member Verified: '+(discord?.guild_member_verified?"ยืนยันแล้ว":"ยังไม่ยืนยัน")+'</p></div>';
     const files='<div class="pc-workspace-grid">'+(w.folders.map(p=>'<article class="pc-file"><strong>'+esc(p.title)+'</strong><p class="pc-muted">'+esc(p.game_class)+' · '+esc(p.portfolio_type)+' · '+(p.portfolio_versions||[]).length+' Versions</p>'+(p.portfolio_versions||[]).map(v=>'<div class="pc-event"><strong>'+esc(v.version_name||("Version "+v.version_number))+'</strong><small>'+dateLabel(v.created_at)+' · '+(v.portfolio_version_images||[]).length+' รูปภาพ</small></div>').join("")+'<button class="pc-btn" data-pc-open-portfolio="'+esc(w.member.member_id)+'">เปิดแฟ้มใน Portfolio</button></article>').join("")||'<div class="pc-empty">สมาชิกยังไม่มี Portfolio</div>')+'</div>';
     const events=w.subs.flatMap(s=>(s.portfolio_patch_review_events||[]).map(e=>({...e,submission:s}))).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
-    const history='<div class="pc-list">'+(events.map(e=>'<div class="pc-event"><strong>'+esc(statusText[e.new_status]||e.new_status)+'</strong><small>'+esc(e.review_note||"ไม่มีหมายเหตุ")+' · '+dateLabel(e.created_at)+'</small></div>').join("")||'<div class="pc-empty">ยังไม่มีประวัติการตรวจใน Patch นี้</div>')+'</div>';
+    const affiliationHistory=w.affiliations.map(a=>'<div class="pc-event"><strong>'+esc(a.guilds?.code||"ไม่ทราบสังกัด")+' · '+(a.ended_at?"สิ้นสุดแล้ว":"ปัจจุบัน")+'</strong><small>เริ่ม '+dateLabel(a.started_at)+' · '+(a.ended_at?"สิ้นสุด "+dateLabel(a.ended_at):"ยังเป็นสังกัดปัจจุบัน")+' · '+esc(a.change_reason||"ไม่ได้ระบุเหตุผล")+'</small></div>').join("");
+    const reviewHistory=events.map(e=>'<div class="pc-event"><strong>'+esc(statusText[e.new_status]||e.new_status)+'</strong><small>'+esc(e.review_note||"ไม่มีหมายเหตุ")+' · '+dateLabel(e.created_at)+'</small></div>').join("");
+    const history='<div class="pc-list"><h3>ประวัติสังกัด</h3>'+(affiliationHistory||'<div class="pc-empty">ยังไม่มีประวัติสังกัด</div>')+'<h3>ประวัติการตรวจ Patch</h3>'+(reviewHistory||'<div class="pc-empty">ยังไม่มีประวัติการตรวจใน Patch นี้</div>')+'</div>';
     host.innerHTML='<div class="pc-head"><div><span class="pc-kicker">MEMBER WORKSPACE</span><h2>'+esc(w.member.character_name)+'</h2><p class="pc-muted">'+esc(w.member.game_class)+' · '+esc(w.member.discord_name||"ไม่พบ Discord")+'</p></div><div class="pc-toolbar"><button class="pc-btn" id="pc-workspace-prev" '+(index<=0?"disabled":"")+'>← ก่อนหน้า</button><button class="pc-btn" id="pc-workspace-next" '+(index>=ids.length-1?"disabled":"")+'>ถัดไป →</button><button class="pc-btn" id="pc-workspace-close">ปิด</button></div></div><nav class="pc-tabs"><button class="pc-tab '+(state.workspaceTab==="overview"?"active":"")+'" data-pc-workspace-tab="overview">Overview</button><button class="pc-tab '+(state.workspaceTab==="files"?"active":"")+'" data-pc-workspace-tab="files">Files & Portfolio</button><button class="pc-tab '+(state.workspaceTab==="history"?"active":"")+'" data-pc-workspace-tab="history">History</button></nav><div>'+(state.workspaceTab==="overview"?overview:state.workspaceTab==="files"?files:history)+'</div>';
     host.querySelectorAll("[data-pc-workspace-tab]").forEach(b=>b.addEventListener("click",()=>{state.workspaceTab=b.dataset.pcWorkspaceTab;renderWorkspace()}));
     $("pc-workspace-close")?.addEventListener("click",()=>host.classList.add("pc-hidden"));
