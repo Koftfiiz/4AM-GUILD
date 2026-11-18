@@ -44,6 +44,7 @@ begin
   from public.guild_members gm
   left join public.guild_member_affiliations aff on aff.user_id=gm.user_id and aff.ended_at is null
   left join public.guilds g on g.id=aff.guild_id
+  where gm.active=true and gm.membership_status='active'
   union all
   select null::uuid,mm.id,mm.character_name,mm.game_class,mm.nickname,mm.discord_name,'manual'::text,mm.active,'manual'::text,'member'::text,g.code,aff.started_at
   from public.guild_manual_members mm
