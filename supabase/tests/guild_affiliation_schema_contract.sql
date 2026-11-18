@@ -41,6 +41,15 @@ begin
     raise exception 'Affiliation write policy is missing or uses the wrong authorization helper';
   end if;
 
+  if not exists (
+    select 1 from pg_policies
+    where schemaname='public' and tablename='guild_member_affiliations'
+      and policyname='Members can view own guild affiliation'
+      and qual like '%can_manage_guild_affiliations%'
+  ) then
+    raise exception 'Affiliation history must be limited to owners and guild leadership';
+  end if;
+
   if exists (
     select 1 from public.guild_member_affiliations
     where num_nonnulls(user_id, manual_member_id) <> 1
