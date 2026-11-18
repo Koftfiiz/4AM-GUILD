@@ -492,14 +492,13 @@
         closes = parseRoundDateTime(form.get("closes_at"),"วันและเวลาปิดรับ");
       } catch(error) { alert(error.message); return; }
       if (!(closes > starts)) { alert("วันและเวลาปิดรับต้องอยู่หลังวันและเวลาเริ่มต้น"); return; }
-      const {data,error} = await supabaseClient.from("portfolio_update_rounds").insert({
-        round_name:String(form.get("round_name")).trim(),
-        starts_at:starts.toISOString(),
-        closes_at:closes.toISOString(),
-        created_by:currentUser.id
-      }).select("id").single();
+      const {data,error} = await supabaseClient.rpc("create_portfolio_patch_round",{
+        p_round_name:String(form.get("round_name")).trim(),
+        p_starts_at:starts.toISOString(),
+        p_closes_at:closes.toISOString()
+      });
       if (error) { alert("สร้างรอบไม่สำเร็จ: " + error.message); return; }
-      selectedRoundId = data.id;
+      selectedRoundId = data;
       await loadData();
       render();
     });
@@ -516,7 +515,7 @@
       const round = rounds.find(item => item.id === selectedRoundId);
       if (!round || round.archived_at) return;
       if (!confirm('เก็บรอบ “' + round.round_name + '” เข้าคลังใช่หรือไม่? รอบนี้จะหายจากรายการที่ใช้งาน แต่ประวัติ Version และรูปภาพจะยังอยู่ครบ')) return;
-      const {error} = await supabaseClient.from("portfolio_update_rounds").update({archived_at:new Date().toISOString(),archived_by:currentUser.id}).eq("id",selectedRoundId);
+      const {error} = await supabaseClient.rpc("update_portfolio_patch_round",{p_round_id:selectedRoundId,p_action:"archive"});
       if (error) { alert("เก็บรอบเข้าคลังไม่สำเร็จ: " + error.message); return; }
       showArchivedRounds = true;
       await loadData();
@@ -525,7 +524,7 @@
 
     root.querySelector("#pt-restore-round")?.addEventListener("click",async() => {
       if (!management() || !selectedRoundId) return;
-      const {error} = await supabaseClient.from("portfolio_update_rounds").update({archived_at:null,archived_by:null}).eq("id",selectedRoundId);
+      const {error} = await supabaseClient.rpc("update_portfolio_patch_round",{p_round_id:selectedRoundId,p_action:"restore"});
       if (error) { alert("กู้คืนรอบไม่สำเร็จ: " + error.message); return; }
       showArchivedRounds = false;
       await loadData();
@@ -603,7 +602,7 @@
       const round = rounds.find(item => item.id === selectedRoundId);
       const next = round.status === "open" ? "closed" : "open";
       if (!confirm(next === "closed" ? "ยืนยันปิดรอบนี้?" : "ยืนยันเปิดรอบนี้อีกครั้ง?")) return;
-      const {error} = await supabaseClient.from("portfolio_update_rounds").update({status:next}).eq("id",selectedRoundId);
+      const {error} = await supabaseClient.rpc("update_portfolio_patch_round",{p_round_id:selectedRoundId,p_action:next==="closed"?"close":"open"});
       if (error) { alert(error.message); return; }
       await loadData();
       render();
