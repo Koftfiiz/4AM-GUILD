@@ -204,15 +204,29 @@
     const host=$("pc-workspace");host.classList.remove("pc-hidden");host.innerHTML='<div class="pc-empty">กำลังโหลด Workspace...</div>';
     try{
       const [portfolioResult,submissionResult,profileResult,affiliationResult]=await Promise.all([
-        supabaseClient.from("portfolios").select("id,title,game_class,portfolio_type,created_at,portfolio_versions(id,version_number,version_name,created_at,portfolio_version_images(id,section_key))").eq("member_id",memberId).order("created_at",{ascending:false}).limit(30),
-        supabaseClient.from("portfolio_patch_submissions").select("id,portfolio_id,version_id,submitted_at,portfolio_patch_submission_reviews(status,review_note,reviewed_at),portfolio_patch_review_events(id,old_status,new_status,review_note,created_at)").eq("member_id",memberId).eq("round_id",state.roundId).order("submitted_at",{ascending:false}).limit(30),
-        supabaseClient.from("guild_members").select("user_id,character_name,game_class,nickname,discord_name,discord_accounts(discord_user_id,discord_username,discord_global_name,verified,guild_member_verified)").eq("user_id",memberId).maybeSingle(),
-        supabaseClient.from("guild_member_affiliations").select("id,started_at,ended_at,change_reason,guilds(code,name)").eq("user_id",memberId).order("started_at",{ascending:false}).limit(50)
+        supabaseClient.from("portfolios").select("id,title,game_class,portfolio_type,created_at")
+          .eq("member_id",memberId).order("created_at",{ascending:false}).limit(30),
+        supabaseClient.from("portfolio_patch_submissions").select("id,portfolio_id,version_id,submitted_at,portfolio_patch_submission_reviews(status,review_note,reviewed_at),portfolio_patch_review_events(id,old_status,new_status,review_note,created_at)")
+          .eq("member_id",memberId).eq("round_id",state.roundId).order("submitted_at",{ascending:false}).limit(30),
+        supabaseClient.from("guild_members").select("user_id,character_name,game_class,nickname,discord_name,discord_accounts(discord_user_id,discord_username,discord_global_name,verified,guild_member_verified)")
+          .eq("user_id",memberId).maybeSingle(),
+        supabaseClient.from("guild_member_affiliations").select("id,started_at,ended_at,change_reason,guilds(code,name)")
+          .eq("user_id",memberId).order("started_at",{ascending:false}).limit(50)
       ]);
       if(portfolioResult.error)throw portfolioResult.error;if(submissionResult.error)throw submissionResult.error;
       if(profileResult.error)throw profileResult.error;if(affiliationResult.error)throw affiliationResult.error;
-      const folders=portfolioResult.data||[],subs=submissionResult.data||[];
-      state.workspace={member,folders,subs,profile:profileResult.data||null,affiliations:affiliationResult.data||[],images:[],imagesLoaded:false,imagesLoading:false,imagesError:"",memberIds:(state.data?.members||[]).map(x=>x.member_id)};
+      const folders=portfolioResult.data||[],folderIds=folders.map(folder=>folder.id);
+      let versions=[];
+      if(folderIds.length){
+        const versionResult=await supabaseClient.from("portfolio_versions")
+          .select("id,portfolio_id,version_number,version_name,created_at")
+          .in("portfolio_id",folderIds).order("created_at",{ascending:false}).limit(100);
+        if(versionResult.error)throw versionResult.error;
+        versions=versionResult.data||[];
+      }
+      folders.forEach(folder=>{folder.portfolio_versions=versions.filter(version=>version.portfolio_id===folder.id);});
+      const subs=submissionResult.data||[];
+      state.workspace={member,folders,subs,profile:profileResult.data||null,affiliations:affiliationResult.data||[],images:[],imagesLoaded:false,imagesLoading:false,imagesError:"",versionsLimited:versions.length===100,memberIds:(state.data?.members||[]).map(x=>x.member_id)};
       state.workspaceTab="overview";renderWorkspace();
     }catch(error){host.innerHTML='<div class="pc-empty">เปิด Workspace ไม่สำเร็จ: '+esc(error.message||"Unknown error")+'</div>';}
   }
@@ -246,7 +260,7 @@
     const w=state.workspace;if(!w)return;const host=$("pc-workspace");host.classList.remove("pc-hidden");
     const ids=w.memberIds,index=ids.indexOf(w.member.member_id);
     const totalVersions=w.folders.reduce((sum,p)=>sum+(p.portfolio_versions||[]).length,0);
-    const totalImages=w.folders.reduce((sum,p)=>sum+(p.portfolio_versions||[]).reduce((n,v)=>n+(v.portfolio_version_images||[]).length,0),0);
+    const totalImages=w.imagesLoaded?w.images.length:null;
     const profile=w.profile||{},discordValue=profile.discord_accounts;
     const discord=Array.isArray(discordValue)?discordValue[0]:discordValue;
     const currentAffiliation=w.affiliations.find(a=>!a.ended_at);
@@ -256,7 +270,7 @@
     const affiliationLabel=currentAffiliation?.guilds?.code||"ยังไม่กำหนดสังกัด";
     const sourceLabel=w.member.roster_source==="affiliation_transfer"?"เพิ่มจากการย้ายเข้า 4AM":w.member.roster_source==="manual_link"?"เพิ่มหลังเชื่อมบัญชี Manual":"Opening Snapshot";
     const overview='<div class="pc-stats"><article class="pc-stat"><span>แฟ้มผลงาน</span><strong>'+w.folders.length+'</strong></article><article class="pc-stat"><span>Portfolio Versions</span><strong>'+totalVersions+'</strong></article><article class="pc-stat"><span>รูปภาพทั้งหมด</span><strong>'+totalImages+'</strong></article><article class="pc-stat"><span>Patch Submissions</span><strong>'+w.subs.length+'</strong></article></div><div class="pc-member"><h3>ข้อมูลสมาชิก</h3><p>สังกัดปัจจุบัน: <strong>'+esc(affiliationLabel)+'</strong> · '+esc(sourceLabel)+'</p><p>Discord: <strong>'+esc(discordName)+'</strong> · ID: '+esc(discordId)+'</p><p>สถานะ Discord: '+esc(discordStatus)+' · Guild Member Verified: '+(discord?.guild_member_verified?"ยืนยันแล้ว":"ยังไม่ยืนยัน")+'</p></div>';
-    const files=w.imagesLoading?'<div class="pc-empty">กำลังโหลดไฟล์ Portfolio...</div>':w.imagesError?'<div class="pc-empty">'+esc(w.imagesError)+'<br><button class="pc-btn" data-pc-retry-files>ลองอีกครั้ง</button></div>':'<div class="pc-workspace-grid">'+(w.folders.map(p=>'<article class="pc-file"><strong>'+esc(p.title)+'</strong><p class="pc-muted">'+esc(p.game_class)+' · '+esc(p.portfolio_type)+' · '+(p.portfolio_versions||[]).length+' Versions</p>'+(p.portfolio_versions||[]).map(v=>{const images=(w.images||[]).filter(img=>img.version_id===v.id);return '<div class="pc-event"><strong>'+esc(v.version_name||("Version "+v.version_number))+'</strong><small>'+dateLabel(v.created_at)+' · '+(v.portfolio_version_images||[]).length+' รูปภาพ'+(images.length?" · แสดง "+images.length:"") +'</small><div class="pc-file-images">'+images.map(img=>img.signed_url?'<a class="pc-file-thumb-link" href="'+esc(img.signed_url)+'" target="_blank" rel="noopener"><img class="pc-file-thumb" loading="lazy" decoding="async" src="'+esc(img.signed_url)+'" alt="'+esc(img.caption||img.section_key||"Portfolio image")+'"></a>':'').join("")+'</div></div>'}).join("")+'<button class="pc-btn" data-pc-open-portfolio="'+esc(w.member.member_id)+'">เปิดแฟ้มใน Portfolio</button></article>').join("")||'<div class="pc-empty">สมาชิกยังไม่มี Portfolio</div>')+'</div>';
+    const files=w.imagesLoading?'<div class="pc-empty">กำลังโหลดไฟล์ Portfolio...</div>':w.imagesError?'<div class="pc-empty">'+esc(w.imagesError)+'<br><button class="pc-btn" data-pc-retry-files>ลองอีกครั้ง</button></div>':(w.versionsLimited?'<div class="pc-muted">แสดง 100 Versions ล่าสุดเพื่อประหยัดการโหลดข้อมูล</div>':'')+'<div class="pc-workspace-grid">'+(w.folders.map(p=>'<article class="pc-file"><strong>'+esc(p.title)+'</strong><p class="pc-muted">'+esc(p.game_class)+' · '+esc(p.portfolio_type)+' · '+(p.portfolio_versions||[]).length+' Versions</p>'+(p.portfolio_versions||[]).map(v=>{const images=(w.images||[]).filter(img=>img.version_id===v.id);return '<div class="pc-event"><strong>'+esc(v.version_name||("Version "+v.version_number))+'</strong><small>'+dateLabel(v.created_at)+' · '+images.length+' รูปภาพ'+(images.length?" · แสดง "+images.length:"") +'</small><div class="pc-file-images">'+images.map(img=>img.signed_url?'<a class="pc-file-thumb-link" href="'+esc(img.signed_url)+'" target="_blank" rel="noopener"><img class="pc-file-thumb" loading="lazy" decoding="async" src="'+esc(img.signed_url)+'" alt="'+esc(img.caption||img.section_key||"Portfolio image")+'"></a>':'').join("")+'</div></div>'}).join("")+'<button class="pc-btn" data-pc-open-portfolio="'+esc(w.member.member_id)+'">เปิดแฟ้มใน Portfolio</button></article>').join("")||'<div class="pc-empty">สมาชิกยังไม่มี Portfolio</div>')+'</div>';
     const events=w.subs.flatMap(s=>(s.portfolio_patch_review_events||[]).map(e=>({...e,submission:s}))).sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     const affiliationHistory=w.affiliations.map(a=>'<div class="pc-event"><strong>'+esc(a.guilds?.code||"ไม่ทราบสังกัด")+' · '+(a.ended_at?"สิ้นสุดแล้ว":"ปัจจุบัน")+'</strong><small>เริ่ม '+dateLabel(a.started_at)+' · '+(a.ended_at?"สิ้นสุด "+dateLabel(a.ended_at):"ยังเป็นสังกัดปัจจุบัน")+' · '+esc(a.change_reason||"ไม่ได้ระบุเหตุผล")+'</small></div>').join("");
     const reviewHistory=events.map(e=>'<div class="pc-event"><strong>'+esc(statusText[e.new_status]||e.new_status)+'</strong><small>'+esc(e.review_note||"ไม่มีหมายเหตุ")+' · '+dateLabel(e.created_at)+'</small></div>').join("");
