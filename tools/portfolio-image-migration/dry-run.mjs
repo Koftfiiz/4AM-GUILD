@@ -8,6 +8,7 @@ const BUCKET = "portfolio-images";
 const MIN_BYTES = 3 * 1024 * 1024;
 const PAGE_SIZE = 100;
 const MAX_FILES = 100;
+const MAX_DRY_RUN_DOWNLOAD_BYTES = 200 * 1024 * 1024;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
   throw new Error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY GitHub secret.");
@@ -99,6 +100,11 @@ const candidates = [...allRefs]
 if (candidates.length > MAX_FILES) {
   throw new Error("Safety stop: " + candidates.length + " candidates exceeds MAX_FILES=" + MAX_FILES + ". No files were changed.");
 }
+const plannedDownloadBytes = candidates.reduce((sum, item) => sum + item.size, 0);
+if (plannedDownloadBytes > MAX_DRY_RUN_DOWNLOAD_BYTES) {
+  throw new Error("Safety stop: dry-run downloads would exceed 200 MiB (" + plannedDownloadBytes + " bytes). No images were downloaded and no files were changed.");
+}
+console.log("Planned one-time source download for analysis: " + (plannedDownloadBytes / 1024 / 1024).toFixed(2) + " MiB (hard limit 200 MiB).");
 
 const results = [];
 for (const item of candidates) {
@@ -159,6 +165,8 @@ const report = {
   generatedAt: new Date().toISOString(),
   bucket: BUCKET,
   thresholdBytes: MIN_BYTES,
+  plannedDownloadBytes,
+  maxDryRunDownloadBytes: MAX_DRY_RUN_DOWNLOAD_BYTES,
   note: "No Storage upload, overwrite, delete, or database update is performed by this script.",
   counts: {
     referencedPaths: allRefs.size,
