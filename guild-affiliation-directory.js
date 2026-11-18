@@ -289,6 +289,7 @@
   function activate() {
     ensurePage();
     if (!isAllowed()) return;
+    window.setGuildAffiliationRealtime?.(true);
     void loadDirectory();
   }
 
