@@ -1,0 +1,46 @@
+name: Guild Feature Validation
+
+on:
+  push:
+    branches:
+      - feature/guild-affiliation-command-center
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Check JavaScript syntax
+        run: |
+          node --check app.js
+          node --check portfolio-tracker.js
+          node --check guild-affiliation-directory.js
+          node --check patch-command-center.js
+
+      - name: Enforce 15px minimum in new feature modules
+        run: |
+          if grep -En 'font-size[[:space:]]*:[[:space:]]*(1[0-4]|[1-9])px' guild-affiliation-directory.js patch-command-center.js; then
+            echo "Found feature text smaller than 15px."
+            exit 1
+          fi
+
+      - name: Enforce black-and-red theme in new feature modules
+        run: |
+          if grep -Ein '#f0c477|#80612e|#302613|gold' guild-affiliation-directory.js patch-command-center.js; then
+            echo "Found a gold accent in the new feature modules."
+            exit 1
+          fi
