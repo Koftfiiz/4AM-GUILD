@@ -44,3 +44,11 @@ The Production application already defines `is_portfolio_management()` and `is_p
 - Verify the new pages in a browser session with real authenticated Staging users (not synthetic JWT claims).
 - Complete responsive/accessibility checks and regression tests against the legacy Portfolio Tracker.
 - Prepare Production migrations and a rollback plan; do not merge/deploy until all seven phases pass.
+
+
+## Follow-up hardening after initial QA
+
+- Staging role helpers now require `active = true` and `membership_status = 'active'`, with the project owner's explicit Developer allowlist preserved.
+- Patch read policies now scope review notes/events to the submission owner or an authorized reviewer; general Patch data is restricted to active guild members.
+- Staging submission FK delete behavior has been aligned with the inspected Production constraints (member cascade, portfolio restrict, round cascade, version restrict).
+- These follow-up SQL edits are committed on the feature branch but have not yet been re-applied/re-tested because the Free Staging project has been paused to conserve active resources. Re-run the targeted QA suite after resuming Staging.
