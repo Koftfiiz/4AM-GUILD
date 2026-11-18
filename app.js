@@ -7036,9 +7036,11 @@ function setPortfolioWebpMigrationStatus(message, tone = "muted") {
 
 function setPortfolioWebpMigrationProgress(done, total) {
   const bar = $("portfolio-webp-migration-progress");
+  const track = $("portfolio-webp-migration-track");
   const label = $("portfolio-webp-migration-progress-label");
   const percent = total ? Math.round((done / total) * 100) : 0;
   if (bar) bar.style.width = percent + "%";
+  if (track) track.setAttribute("aria-valuenow", String(percent));
   if (label) label.textContent = total ? done + " / " + total + " · " + percent + "%" : "ยังไม่ได้เริ่ม";
 }
 
