@@ -132,8 +132,13 @@ begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000005',true);
 do $$
-declare sid uuid:='3b2cd85f-e3f2-4469-90d1-20a9b39aaee9'; v_status text; n int; blocked boolean:=false;
+declare sid uuid; v_status text; n int; blocked boolean:=false;
 begin
+ select id into sid from public.portfolio_patch_submissions
+ where round_id='b58f481c-44b5-451d-b55e-6d270429ebbe'
+  and member_id='10000000-0000-4000-8000-000000000001'
+ order by submitted_at desc limit 1;
+ if sid is null then raise exception 'Developer submission fixture is missing'; end if;
  begin
   perform public.set_patch_submission_review(sid,'revision_required',null);
  exception when others then
@@ -164,7 +169,7 @@ do $$
 declare blocked boolean:=false;
 begin
  begin
-  perform public.set_patch_submission_review('3b2cd85f-e3f2-4469-90d1-20a9b39aaee9','approved',null);
+  perform public.set_patch_submission_review(sid,'approved',null);
  exception when others then
   if sqlerrm like '%Not authorized to review Patch submissions%' then blocked:=true; else raise; end if;
  end;
@@ -176,7 +181,7 @@ rollback;
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000005',true);
-perform public.set_guild_member_affiliation('4AM',null,'20000000-0000-4000-8000-000000000002','QA manual-to-account transfer');
+select public.set_guild_member_affiliation('4AM',null,'20000000-0000-4000-8000-000000000002','QA manual-to-account transfer');
 update public.guild_manual_members set linked_user_id='10000000-0000-4000-8000-000000000006'
  where id='20000000-0000-4000-8000-000000000002';
 do $$
@@ -212,7 +217,7 @@ rollback;
 begin;
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
-perform public.set_guild_member_affiliation('4PM','10000000-0000-4000-8000-000000000001',null,'QA history privacy');
+select public.set_guild_member_affiliation('4PM','10000000-0000-4000-8000-000000000001',null,'QA history privacy');
 set local role authenticated;
 select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000002',true);
 do $$
