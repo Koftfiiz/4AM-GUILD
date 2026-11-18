@@ -26,7 +26,7 @@ create table public.portfolio_patch_roster (
   nickname text,
   discord_name text,
   affiliation_id uuid,
-  roster_source text not null check (roster_source in ('opening_snapshot','affiliation_transfer')),
+  roster_source text not null check (roster_source in ('opening_snapshot','affiliation_transfer','manual_link')),
   added_at timestamptz not null default now(),
   unique (round_id,member_id)
 );
