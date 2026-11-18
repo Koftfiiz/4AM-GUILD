@@ -33,14 +33,14 @@ jobs:
 
       - name: Enforce 15px minimum in new feature modules
         run: |
-          if grep -En 'font-size[[:space:]]*:[[:space:]]*(1[0-4]|[1-9])px' guild-affiliation-directory.js patch-command-center.js; then
+          if grep -En 'font-size[[:space:]]*:[[:space:]]*(1[0-4]|[1-9])px' guild-affiliation-directory.js patch-command-center.js portfolio-tracker.js; then
             echo "Found feature text smaller than 15px."
             exit 1
           fi
 
       - name: Enforce black-and-red theme in new feature modules
         run: |
-          if grep -Ein '#f0c477|#80612e|#302613|gold' guild-affiliation-directory.js patch-command-center.js; then
+          if grep -Ein '#f0c477|#80612e|#302613|gold' guild-affiliation-directory.js patch-command-center.js portfolio-tracker.js; then
             echo "Found a gold accent in the new feature modules."
             exit 1
           fi
