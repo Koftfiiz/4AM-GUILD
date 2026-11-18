@@ -75,7 +75,7 @@ Latest read-only Production counts: 58 active registered accounts, 14 active Man
 
 ## Latest QA and preview safety
 
-- The feature branch now routes the verified Production hostname to Production and all Preview/local hostnames to isolated Staging; this safeguard is covered by the passing JavaScript CI workflow.
+- The feature branch now routes the verified Production hostname to Production and all Preview/local hostnames to isolated Staging in both the main app and standalone Duck Race page; this safeguard is covered by the passing JavaScript CI workflow.
 - Staging schema contracts and targeted SQL tests cover directory canonical identity/pagination, affiliation privacy and role permissions, immutable Patch roster, late manual-account linking, submission/resubmission history, reviewer-only transitions, and app-compatible table grants.
 - Staging's RLS advisor has no multiple-permissive-policy or unindexed-FK warning. Remaining notices are the expected authenticated SECURITY DEFINER helpers/RPCs, inherited leaked-password-protection setting, and unused indexes on the small synthetic dataset.
 - Real browser QA is still open. The previous Vercel Preview predates the Staging-routing safeguard; a new Preview build is blocked by the Free daily deployment API quota until its 24-hour window resets. Do not use the old Preview URL.
