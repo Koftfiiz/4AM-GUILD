@@ -6,7 +6,7 @@ create or replace function public.get_patch_command_center(
 as $$
 declare v_round_id uuid; v_result jsonb;
 begin
- if (select auth.uid()) is null or not public.is_guild_admin() then raise exception 'Management access required'; end if;
+ if (select auth.uid()) is null or not public.can_manage_guild_affiliations() then raise exception 'Management access required'; end if;
  if length(trim(coalesce(p_search,'')))>80 then raise exception 'Search text is too long'; end if;
  if p_status_filter not in ('all','not_submitted','partial','pending','reviewing','approved','revision_required') then raise exception 'Invalid Patch status filter'; end if;
  select r.id into v_round_id from public.portfolio_update_rounds r
