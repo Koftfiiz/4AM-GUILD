@@ -55,6 +55,14 @@ create index if not exists portfolio_patch_roster_member_idx on public.portfolio
 create index if not exists portfolio_patch_submission_reviews_status_idx on public.portfolio_patch_submission_reviews(status,updated_at desc);
 create index if not exists portfolio_patch_review_events_submission_idx on public.portfolio_patch_review_events(submission_id,created_at desc);
 create index if not exists portfolio_patch_submission_events_submission_idx on public.portfolio_patch_submission_events(submission_id,created_at desc);
+create index if not exists portfolio_patch_submission_events_actor_idx on public.portfolio_patch_submission_events(actor_user_id);
+create index if not exists portfolio_patch_submission_events_new_version_idx on public.portfolio_patch_submission_events(new_version_id);
+create index if not exists portfolio_patch_submission_events_previous_version_idx on public.portfolio_patch_submission_events(previous_version_id);
+create index if not exists portfolio_update_edit_permissions_granted_by_idx on public.portfolio_update_edit_permissions(granted_by);
+create index if not exists portfolio_update_edit_permissions_member_idx on public.portfolio_update_edit_permissions(member_id);
+create index if not exists portfolio_update_edit_requests_member_idx on public.portfolio_update_edit_requests(member_id);
+create index if not exists portfolio_update_edit_requests_reviewed_by_idx on public.portfolio_update_edit_requests(reviewed_by);
+create index if not exists portfolio_versions_created_by_idx on public.portfolio_versions(created_by);
 create index if not exists portfolio_patch_submissions_portfolio_idx on public.portfolio_patch_submissions(portfolio_id);
 create index if not exists portfolio_patch_submissions_version_idx on public.portfolio_patch_submissions(version_id);
 create index if not exists portfolio_version_images_version_idx on public.portfolio_version_images(version_id,sort_order);
@@ -66,6 +74,29 @@ alter table public.portfolio_patch_roster enable row level security;
 alter table public.portfolio_patch_submission_reviews enable row level security;
 alter table public.portfolio_patch_review_events enable row level security;
 alter table public.portfolio_patch_submission_events enable row level security;
+
+-- Replace legacy FOR ALL policies with explicit write policies to avoid duplicate SELECT evaluation.
+drop policy if exists "portfolio update rounds managed by management" on public.portfolio_update_rounds;
+drop policy if exists "portfolio update rounds management insert" on public.portfolio_update_rounds;
+drop policy if exists "portfolio update rounds management update" on public.portfolio_update_rounds;
+drop policy if exists "portfolio update rounds management delete" on public.portfolio_update_rounds;
+create policy "portfolio update rounds management insert" on public.portfolio_update_rounds
+ for insert to authenticated with check(public.is_portfolio_management());
+create policy "portfolio update rounds management update" on public.portfolio_update_rounds
+ for update to authenticated using(public.is_portfolio_management()) with check(public.is_portfolio_management());
+create policy "portfolio update rounds management delete" on public.portfolio_update_rounds
+ for delete to authenticated using(public.is_portfolio_management());
+
+drop policy if exists "portfolio update permissions managed by management" on public.portfolio_update_edit_permissions;
+drop policy if exists "portfolio update permissions management insert" on public.portfolio_update_edit_permissions;
+drop policy if exists "portfolio update permissions management update" on public.portfolio_update_edit_permissions;
+drop policy if exists "portfolio update permissions management delete" on public.portfolio_update_edit_permissions;
+create policy "portfolio update permissions management insert" on public.portfolio_update_edit_permissions
+ for insert to authenticated with check(public.is_portfolio_management());
+create policy "portfolio update permissions management update" on public.portfolio_update_edit_permissions
+ for update to authenticated using(public.is_portfolio_management()) with check(public.is_portfolio_management());
+create policy "portfolio update permissions management delete" on public.portfolio_update_edit_permissions
+ for delete to authenticated using(public.is_portfolio_management());
 
 drop policy if exists patch_roster_read on public.portfolio_patch_roster;
 drop policy if exists patch_roster_read_members on public.portfolio_patch_roster;
