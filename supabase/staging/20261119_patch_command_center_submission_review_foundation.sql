@@ -68,7 +68,8 @@ create policy version_images_read_members on public.portfolio_version_images for
 drop policy if exists patch_submissions_read_members on public.portfolio_patch_submissions;
 create policy patch_submissions_read_members on public.portfolio_patch_submissions for select to authenticated using(public.is_guild_member());
 drop policy if exists patch_reviews_read_members on public.portfolio_patch_submission_reviews;
-create policy patch_reviews_read_members on public.portfolio_patch_submission_reviews for select to authenticated using(
+drop policy if exists patch_submission_reviews_read_members on public.portfolio_patch_submission_reviews;
+create policy patch_submission_reviews_read_members on public.portfolio_patch_submission_reviews for select to authenticated using(
  exists(select 1 from public.portfolio_patch_submissions s where s.id=submission_id
   and (s.member_id=(select auth.uid()) or public.can_manage_guild_affiliations()))
 );
