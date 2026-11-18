@@ -34,7 +34,7 @@
 
   if (typeof PAGE_TITLES !== "undefined") PAGE_TITLES[PAGE] = "Patch Submission Command Center";
   function ensurePage(){
-    if($("page-patch-command-center"))return;
+    const existingPage=$("page-patch-command-center");
     const directoryNav=document.querySelector('.sidebar .nav-item[data-page="guild-directory"]');
     const memberNav=document.querySelector('.sidebar .nav-item[data-page="members"]');
     const nav=directoryNav?.parentElement||memberNav?.parentElement;
@@ -44,6 +44,14 @@
       (directoryNav||memberNav).insertAdjacentElement("afterend",button);
       button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();window.openGuildPage(PAGE);});
     }
+    const commandNav=document.querySelector('.sidebar .nav-item[data-page="'+PAGE+'"]');
+    if(commandNav&&!document.querySelector('.sidebar .nav-item[data-page="'+REVIEW_PAGE+'"]')){
+      const button=document.createElement("button");button.type="button";button.className="nav-item management-only is-role-hidden";button.dataset.page=REVIEW_PAGE;button.dataset.managementOnly="";button.setAttribute("aria-hidden","true");
+      button.innerHTML='<svg class="icon"><use href="#i-shield-check"/></svg><span>Review Queue</span>';
+      commandNav.insertAdjacentElement("afterend",button);
+      button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();window.openGuildPage(REVIEW_PAGE);});
+    }
+    if(existingPage)return;
     const main=document.querySelector(".main-area");if(!main)return;
     const page=document.createElement("section");page.id="page-patch-command-center";page.className="page page-padded hidden";
     page.innerHTML=`
@@ -354,9 +362,16 @@
   function activate(){ensurePage();if(!allowed())return;void loadCommandCenter(true);}
   const originalOpen=window.openGuildPage||openGuildPage;
   window.openGuildPage=function(pageName){
-    let target=pageName;if(target===PAGE&&!allowed())target="dashboard";
+    const reviewTarget=pageName===REVIEW_PAGE;
+    let target=reviewTarget?PAGE:pageName;
+    if(target===PAGE&&!allowed())target="dashboard";
     originalOpen.call(this,target);
-    if(target===PAGE)activate();
+    if(target===PAGE){
+      activate();
+      showTab(reviewTarget?"queue":"overview");
+      document.querySelector('.sidebar .nav-item[data-page="'+PAGE+'"]')?.classList.toggle("active",!reviewTarget);
+      document.querySelector('.sidebar .nav-item[data-page="'+REVIEW_PAGE+'"]')?.classList.toggle("active",reviewTarget);
+    }
   };
   ensurePage();
   window.addEventListener("4am:app-ready",()=>{if(typeof syncManagementMenuVisibility==="function")syncManagementMenuVisibility();if($("page-patch-command-center")&&!$("page-patch-command-center").classList.contains("hidden"))activate();});
