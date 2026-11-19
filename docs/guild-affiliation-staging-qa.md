@@ -102,3 +102,17 @@ The Staging app grant/RLS follow-up now restores the authenticated write privile
 - Real browser QA with an authenticated Staging user is still required for Guild Directory, Command Center, Member Workspace, Review Queue/Patch History, and the existing Portfolio Tracker flows.
 - Complete desktop/mobile visual review, keyboard/focus and screen-reader checks, and end-to-end navigation checks before calling Phase 7 fully accepted.
 - Do not merge or deploy to Production until those checks pass and the user explicitly approves the release.
+
+
+## Member Management Center consolidation — 2026-11-19
+
+- The public `รายชื่อสมาชิก` page remains available to all active guild members and continues to use the existing unified registered/manual directory.
+- The management-only `จัดการรายชื่อสมาชิก` page is now the single administrative workspace for member records and guild affiliations.
+- The standalone dynamically-created `Guild Directory` sidebar item/page has been removed. Its 4AM/4PM affiliation directory is embedded as the `สังกัดกิลด์ 4AM / 4PM` workspace tab inside Member Management.
+- The affiliation view retains the bounded server-side directory RPC (50 rows per page), guild/class/record-type filters, 4AM/4PM/unassigned counts, affiliation assignment RPC, and affiliation history.
+- The affiliation view is guarded by active membership plus the existing Management/Leader/Developer role gate. Mutation remains guarded by `canManageMemberProfiles()`; Role Preview is read-only.
+- Fixed the directory row action cell so both affiliation assignment and history actions are actually rendered.
+- Realtime subscriptions now refresh only while the affiliation tab is active inside the management workspace and are stopped when leaving that view.
+- Updated the management page introduction and retained the black/red visual language with 15px minimum text in the new directory module.
+- GitHub Actions syntax, 15px typography, and black/red checks passed for the feature branch commit `3ff0124870c08bdd3c9f4bc2e280a01217291f49`.
+- Authenticated browser QA for the new tab, role gating, mobile layout, keyboard/focus behavior, and affiliation mutation remains open. No Production migration, merge, or deployment was performed.
