@@ -401,15 +401,11 @@
       const identity=view?.dataset.gdView||edit?.dataset.gdEdit||toggle?.dataset.gdToggle||remove?.dataset.gdRemove;
       const kind=view?.dataset.gdKind||edit?.dataset.gdKind||toggle?.dataset.gdKind||remove?.dataset.gdKind;
       const row=identity?[...state.rows,...state.suspendedRows].find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind):null;
-      if(!row)return;
-      if(view){
-        openDetail(identity,kind);
-      }else if(edit){
-        if(kind==="account"&&typeof editLinkedGuildMember==="function")void editLinkedGuildMember(identity);
-        else if(kind==="manual"&&typeof editManualGuildMember==="function")void editManualGuildMember(identity);
-      }else if(toggle){
-        // Suspended rows are loaded by this module and may not exist in the
-        // legacy global member caches. Reactivate the exact row directly.
+      if(toggle){
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation();
+        const shouldActivate=toggle.textContent.trim()==="เปิดใช้งาน";
         void (async()=>{
           if(!isAllowed())return;
           toggle.disabled=true;
@@ -417,14 +413,14 @@
             let query;
             if(kind==="manual"){
               query=supabaseClient.from("guild_manual_members")
-                .update({active:true})
+                .update({active:shouldActivate})
                 .eq("id",identity)
                 .is("linked_user_id",null)
                 .select("id")
                 .single();
             }else if(kind==="account"){
               query=supabaseClient.from("guild_members")
-                .update({active:true,membership_status:"active"})
+                .update({active:shouldActivate,membership_status:shouldActivate?"active":"suspended"})
                 .eq("user_id",identity)
                 .select("user_id")
                 .single();
@@ -433,16 +429,24 @@
             }
             const {data,error}=await query;
             if(error)throw error;
-            if(!data)throw new Error("ไม่พบข้อมูลสมาชิกที่ต้องการเปิดใช้งาน");
+            if(!data)throw new Error("ไม่พบข้อมูลสมาชิกที่ต้องการเปลี่ยนสถานะ");
             cache.clear();
             await loadDirectory(true);
             if(typeof loadMembers==="function")await loadMembers(true);
           }catch(error){
-            console.error("[Member Management Center] Reactivate member:",error);
-            alert("เปิดใช้งานสมาชิกไม่สำเร็จ: "+(error?.message||"กรุณาลองอีกครั้ง"));
+            console.error("[Member Management Center] Change member status:",error);
+            alert((shouldActivate?"เปิดใช้งาน":"ระงับ")+"สมาชิกไม่สำเร็จ: "+(error?.message||"กรุณาลองอีกครั้ง"));
             toggle.disabled=false;
           }
         })();
+        return;
+      }
+      if(!row)return;
+      if(view){
+        openDetail(identity,kind);
+      }else if(edit){
+        if(kind==="account"&&typeof editLinkedGuildMember==="function")void editLinkedGuildMember(identity);
+        else if(kind==="manual"&&typeof editManualGuildMember==="function")void editManualGuildMember(identity);
       }else if(remove&&typeof removeGuildMemberRecord==="function"){
         void removeGuildMemberRecord(kind,identity);
       }
