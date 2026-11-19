@@ -39,8 +39,18 @@ async function restoreGuildFeedback(feedbackId, button) {
 // 4AM GUILD - SUPABASE CONFIGURATION
 // ==========================================
 
-const SUPABASE_URL = "https://qbjixpcbzklrkcneluej.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_4nOj0RDz_BuIt-lIWNvGAg_NmABI3a0";
+// Production is selected only on the verified production hostname.
+// Every Vercel Preview URL and local development hostname uses isolated Staging.
+const PRODUCTION_HOSTNAMES = new Set(["4am-guild.vercel.app"]);
+const IS_PRODUCTION_DEPLOYMENT = PRODUCTION_HOSTNAMES.has(
+  String(window.location.hostname || "").toLowerCase()
+);
+const SUPABASE_URL = IS_PRODUCTION_DEPLOYMENT
+  ? "https://qbjixpcbzklrkcneluej.supabase.co"
+  : "https://jmuxbomowtqcigesbimz.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = IS_PRODUCTION_DEPLOYMENT
+  ? "sb_publishable_4nOj0RDz_BuIt-lIWNvGAg_NmABI3a0"
+  : "sb_publishable_iive09cpDKs7AV45AbvIKw_vO4Acr80";
 
 const supabaseClient = window.supabase.createClient(
   SUPABASE_URL,
@@ -54,6 +64,58 @@ const supabaseClient = window.supabase.createClient(
   }
 );
 
+function mountStagingTestLogin() {
+  if (IS_PRODUCTION_DEPLOYMENT || document.getElementById("staging-test-login")) return;
+  const loginForm = document.getElementById("login-form");
+  if (!loginForm) return;
+
+  const panel = document.createElement("form");
+  panel.id = "staging-test-login";
+  panel.style.cssText = "margin-top:18px;padding:18px;border:1px solid rgba(239,55,70,.55);border-radius:14px;background:rgba(15,15,18,.96);color:#f5f5f5;text-align:left";
+  panel.innerHTML = `
+    <div style="font-size:15px;font-weight:800;letter-spacing:.08em;color:#ff5364;margin-bottom:6px">STAGING TEST LOGIN</div>
+    <p style="font-size:15px;line-height:1.5;color:#c9c9ce;margin:0 0 14px">บัญชีทดสอบสำหรับ Preview/Local เท่านั้น ข้อมูลแยกจาก Production</p>
+    <label for="staging-test-email" style="display:block;font-size:15px;margin:10px 0 6px">Test email</label>
+    <input id="staging-test-email" type="email" autocomplete="username" required
+      style="box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #444;background:#09090b;color:#fff;border-radius:9px;font-size:15px">
+    <label for="staging-test-password" style="display:block;font-size:15px;margin:12px 0 6px">Password</label>
+    <input id="staging-test-password" type="password" autocomplete="current-password" required
+      style="box-sizing:border-box;width:100%;min-height:44px;padding:10px 12px;border:1px solid #444;background:#09090b;color:#fff;border-radius:9px;font-size:15px">
+    <button type="submit" style="width:100%;min-height:44px;margin-top:14px;border:0;border-radius:9px;background:#d92f43;color:#fff;font-size:15px;font-weight:800;cursor:pointer">LOGIN TO STAGING</button>
+    <p id="staging-test-login-message" role="status" aria-live="polite" style="font-size:15px;line-height:1.5;color:#ff8793;margin:10px 0 0"></p>
+  `;
+  loginForm.insertAdjacentElement("afterend", panel);
+
+  panel.addEventListener("submit", async event => {
+    event.preventDefault();
+    const button = panel.querySelector("button[type='submit']");
+    const message = document.getElementById("staging-test-login-message");
+    if (button) { button.disabled = true; button.textContent = "กำลังเข้าสู่ระบบ..."; }
+    if (message) message.textContent = "";
+    try {
+      const email = document.getElementById("staging-test-email")?.value?.trim();
+      const password = document.getElementById("staging-test-password")?.value || "";
+      const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      currentUser = data.user;
+      await bootAuthenticatedApplication();
+    } catch (error) {
+      if (message) message.textContent = "เข้าสู่ระบบ Staging ไม่สำเร็จ: " + (error?.message || "Unknown error");
+    } finally {
+      if (button) { button.disabled = false; button.textContent = "LOGIN TO STAGING"; }
+    }
+  });
+}
+
+if (!IS_PRODUCTION_DEPLOYMENT) {
+  document.title = "[STAGING] " + (document.title || "4AM GUILD");
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", mountStagingTestLogin, { once: true });
+  } else {
+    mountStagingTestLogin();
+  }
+}
+
 // ==========================================
 // GLOBAL STATE
 // ==========================================
@@ -63,6 +125,7 @@ let currentMember = null;
 let rolePreviewRole = null;
 let allMembers = [];
 let memberDirectoryCacheExpiresAt = 0;
+let memberDirectoryRealtimeChannel = null;
 let portfolioDataCacheExpiresAt = 0;
 let guildMemberBonds = [];
 let bondRelationshipsLoadError = "";
@@ -1932,6 +1995,16 @@ async function fetchAllRowsPaged(queryFactory, pageSize = 100) {
 
 async function loadMembers(forceRefresh = false) {
   const container = $("members-list");
+  if (!memberDirectoryRealtimeChannel) {
+    memberDirectoryRealtimeChannel = supabaseClient.channel("public-member-directory-affiliations")
+      .on("postgres_changes", { event: "*", schema: "public", table: "guild_member_affiliations" }, () => {
+        memberDirectoryCacheExpiresAt = 0;
+        const page = $("page-members");
+        if (!page || page.classList.contains("hidden")) return;
+        void loadMembers(true);
+      })
+      .subscribe();
+  }
   if (!forceRefresh && Date.now() < memberDirectoryCacheExpiresAt) {
     renderMembers(directoryMembers);
     if ($("portfolio-member-grid")) await renderPortfolioMemberDirectory();
@@ -1940,14 +2013,17 @@ async function loadMembers(forceRefresh = false) {
   memberDirectoryCacheExpiresAt = 0;
   if (container) container.innerHTML = `<p class="muted">กำลังโหลดรายชื่อสมาชิก...</p>`;
 
-  const [accountsResult, manualResult] = await Promise.all([
+  const [accountsResult, manualResult, affiliationResult] = await Promise.all([
     fetchAllRowsPaged(() => supabaseClient.from("guild_members")
-      .select("user_id,character_name,game_class,nickname,discord_name,age,role,active,created_at,updated_at,display_position,avatar_url,guild_position,game_uid,member_cover_crop_settings,member_cover_url,membership_status,reviewed_at,avatar_crop_settings")
+      .select("user_id,character_name,game_class,nickname,discord_name,role,active,membership_status,created_at")
       .order("created_at", { ascending: true })),
     fetchAllRowsPaged(() => supabaseClient.from("guild_manual_members")
-      .select("id,character_name,game_class,nickname,discord_name,age,guild_position,active,discord_user_id,discord_username,discord_global_name,discord_server_nickname,discord_avatar_url,linked_user_id,linked_at,created_at,updated_at")
+      .select("id,character_name,game_class,nickname,discord_name,active,linked_user_id,created_at")
       .eq("active", true).is("linked_user_id", null)
-      .order("character_name", { ascending: true }))
+      .order("character_name", { ascending: true })),
+    fetchAllRowsPaged(() => supabaseClient.from("guild_member_affiliations")
+      .select("user_id,manual_member_id,guilds(code)")
+      .is("ended_at", null))
   ]);
 
   if (accountsResult.error) {
@@ -1963,11 +2039,23 @@ async function loadMembers(forceRefresh = false) {
     console.warn("Load manual guild members:", manualResult.error);
   }
 
+  const affiliationByMember = new Map();
+  if (affiliationResult.error) {
+    console.warn("Load current guild affiliations:", affiliationResult.error);
+  } else {
+    (affiliationResult.data || []).forEach(item => {
+      const guild = Array.isArray(item.guilds) ? item.guilds[0] : item.guilds;
+      const code = guild?.code || null;
+      if (item.user_id) affiliationByMember.set("account:"+String(item.user_id), code);
+      if (item.manual_member_id) affiliationByMember.set("manual:"+String(item.manual_member_id), code);
+    });
+  }
   directoryMembers = [
-    ...allMembers.map(member => ({ ...member, is_manual_record: false })),
+    ...allMembers.map(member => ({ ...member, guild_code: affiliationByMember.get("account:"+String(member.user_id)) || null, is_manual_record: false })),
     ...manualGuildMembers.map(member => ({
       ...member,
       user_id: null,
+      guild_code: affiliationByMember.get("manual:"+String(member.id)) || null,
       role: "member",
       is_manual_record: true
     }))
@@ -2013,18 +2101,21 @@ function renderMembers(members) {
     const name = getMemberName(member), className = getMemberClass(member);
     const classInfo = getClassInfo(className), classColor = classInfo?.color || "#8b8b8b";
     const guildPosition = member.guild_position || "ยังไม่ได้กำหนดตำแหน่ง";
+    const guildCode = member.guild_code || "unassigned";
+    const guildLabel = guildCode === "unassigned" ? "ยังไม่ระบุสังกัด" : guildCode;
     const gameUID = String(member.game_uid || "");
     const recordType = member.is_manual_record ? "manual" : "account";
     const avatarKey = member.user_id || member.id || name;
     const isOwn = Boolean(currentUser?.id && member.user_id && String(member.user_id) === String(currentUser.id));
-    const canEdit = !isRolePreviewActive() && (member.is_manual_record ? canManageMemberProfiles() : (isOwn || canManageMemberProfiles()));
+    // Public directory pencil is reserved for a member editing their own profile. Management+ use the Member Management Center exclusively.
+    const canEdit = !isRolePreviewActive() && isOwn;
     const editButton = canEdit ? `<button type="button" class="member-card-edit" data-member-card-edit="${escapeHTML(member.user_id || "")}" data-member-card-manual="${member.is_manual_record ? escapeHTML(member.id) : ""}" aria-label="แก้ไขข้อมูล ${escapeHTML(name)}" title="แก้ไขข้อมูลสมาชิก"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>` : "";
     return `
       <article class="member-card member-directory-card" data-member-kind="${recordType}" style="--member-class-color:${escapeHTML(classColor)}">
         ${editButton}
         <div class="member-avatar"><img class="member-avatar-image" data-member-avatar-user-id="${escapeHTML(avatarKey)}" src="${DEFAULT_AVATAR}" alt="รูปโปรไฟล์ ${escapeHTML(name)}" loading="lazy" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'"></div>
         <div class="member-info">
-          <div class="member-details"><h4>${escapeHTML(name)}</h4><span class="member-guild-position-badge">${escapeHTML(guildPosition)}</span><small class="member-secondary-name"><strong>ชื่อเล่น:</strong> <span>${escapeHTML(member.nickname || "-")}</span></small><small class="member-secondary-name"><strong>Discord:</strong> <span>${escapeHTML(member.discord_name || "-")}</span></small><small class="member-secondary-name"><strong>อายุ:</strong> <span>${member.age ? `${escapeHTML(member.age)} ปี` : "-"}</span></small></div>
+          <div class="member-details"><h4>${escapeHTML(name)}</h4><span class="member-guild-position-badge">${escapeHTML(guildPosition)}</span><span class="member-guild-affiliation-badge is-${guildCode==="4AM"?"4am":guildCode==="4PM"?"4pm":"unassigned"}">${escapeHTML(guildLabel)}</span><small class="member-secondary-name"><strong>ชื่อเล่น:</strong> <span>${escapeHTML(member.nickname || "-")}</span></small><small class="member-secondary-name"><strong>Discord:</strong> <span>${escapeHTML(member.discord_name || "-")}</span></small><small class="member-secondary-name"><strong>อายุ:</strong> <span>${member.age ? `${escapeHTML(member.age)} ปี` : "-"}</span></small></div>
           <div class="member-game-uid"><span class="member-uid-label">UID ตัวละคร</span><span class="member-uid-value">${escapeHTML(gameUID || "-")}</span>${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">คัดลอก UID</button>` : ""}</div>
         </div>
         <div class="member-class" style="--class-color:${escapeHTML(classColor)}">${classInfo?.iconPath ? `<img class="member-class-icon" src="${escapeHTML(classInfo.iconPath)}" alt="${escapeHTML(className)}" loading="lazy" onerror="this.style.display='none'">` : ""}<span>${escapeHTML(className)}</span>${member.is_manual_record ? '<span class="member-record-status">Manual</span>' : ""}</div>
@@ -2043,6 +2134,7 @@ function renderMembers(members) {
 function openMemberCardEditor(member) {
   const modal = $("member-card-edit-modal"), form = $("member-card-edit-form");
   if (!modal || !form || !member || member.is_manual_record || !member.user_id) return;
+  if (isRolePreviewActive() || String(member.user_id) !== String(currentUser?.id || "")) return;
   $("member-card-edit-user-id").value = member.user_id;
   form.elements.character_name.value = member.character_name || "";
   form.elements.nickname.value = member.nickname || "";
@@ -2070,8 +2162,8 @@ async function saveMemberCardEditor(form) {
   const target = directoryMembers.find(member => !member.is_manual_record && String(member.user_id) === userId);
   if (!target) return;
   const isOwn = userId === String(currentUser.id);
-  if (!isOwn && !canManageMemberProfiles()) { alert("ไม่มีสิทธิ์แก้ไขข้อมูลสมาชิกคนนี้"); return; }
   if (isRolePreviewActive()) { alert("Role Preview เป็นโหมดอ่านอย่างเดียว"); return; }
+  if (!isOwn) { alert("สามารถแก้ไขข้อมูลผ่านปุ่มดินสอบนการ์ดได้เฉพาะการ์ดของตัวเองเท่านั้น"); return; }
   const characterName = String(form.elements.character_name.value || "").trim();
   const nickname = String(form.elements.nickname.value || "").trim();
   const gameClass = String(form.elements.game_class.value || "").trim();
@@ -2364,6 +2456,20 @@ async function loadManualMemberManagement() {
   const list = $("manual-member-list");
   if (list) list.innerHTML = '<p class="muted">กำลังโหลดข้อมูลสมาชิก...</p>';
   await loadMembers(true);
+  // Management-only supplemental fields are deliberately fetched here, not in
+  // the public member directory query.
+  const accountAdminResult = await supabaseClient
+    .from("guild_members")
+    .select("user_id,game_uid,guild_position");
+  if (!accountAdminResult.error) {
+    const accountAdminById = new Map((accountAdminResult.data || []).map(row => [String(row.user_id), row]));
+    allMembers = allMembers.map(member => ({
+      ...member,
+      ...(accountAdminById.get(String(member.user_id)) || {})
+    }));
+  } else {
+    console.warn("Member admin profile fields unavailable:", accountAdminResult.error.message);
+  }
   discordAccountDirectory = new Map();
   const discordResult = await supabaseClient.from("discord_accounts").select("user_id,discord_user_id,discord_username,discord_global_name,verified,guild_member_verified,discord_connection_status,verified_at,last_checked_at");
   if (!discordResult.error) discordAccountDirectory = new Map((discordResult.data || []).map(row => [String(row.user_id), row]));
@@ -2518,18 +2624,18 @@ function renderManualMemberManagement() {
   // A linked Manual row is represented by its real guild_members account row.
   // Keep the source record for administration, but do not render/count it twice.
   const unlinkedManualMembers = manualGuildMembers.filter(member => !member.linked_user_id);
+  const activeAccountMembers = allMembers.filter(member => member.active === true && member.membership_status === "active");
+  const activeUnlinkedManualMembers = unlinkedManualMembers.filter(member => member.active === true);
   const manualCount = unlinkedManualMembers.length;
-  const activeCount =
-    allMembers.filter(member => member.active).length +
-    unlinkedManualMembers.filter(member => member.active).length;
+  const activeCount = activeAccountMembers.length + activeUnlinkedManualMembers.length;
   if (summary) summary.textContent = `สมาชิกในระบบ ${linkedCount} คน · Manual ที่ยังไม่เชื่อม ${manualCount} คน · Active ${activeCount} คน`;
 
   const classSummary = $("manual-member-class-summary");
   if (classSummary) {
     const classCounts = new Map();
     const countableMembers = [
-      ...allMembers,
-      ...unlinkedManualMembers
+      ...activeAccountMembers,
+      ...activeUnlinkedManualMembers
     ];
     countableMembers.forEach(member => {
       const className = String(member.game_class || "").trim().toLocaleLowerCase();
@@ -2560,7 +2666,7 @@ function renderManualMemberManagement() {
       .filter(member => member.linked_user_id)
       .map(member => [String(member.linked_user_id), member])
   );
-  const accountRowsWithDiscord = allMembers.map(member => {
+  const accountRowsWithDiscord = activeAccountMembers.map(member => {
     const linkedManual = linkedManualByUserId.get(String(member.user_id));
     if (!linkedManual) return { ...member, _recordType: "account" };
     return {
@@ -2577,7 +2683,7 @@ function renderManualMemberManagement() {
   });
   const allVisibleMembers = [
     ...accountRowsWithDiscord,
-    ...unlinkedManualMembers.map(member => ({ ...member, _recordType: "manual" }))
+    ...activeUnlinkedManualMembers.map(member => ({ ...member, _recordType: "manual" }))
   ].sort((a, b) => {
     const rankA = guildPositionOrder.has(a.guild_position)
       ? guildPositionOrder.get(a.guild_position)
@@ -2632,7 +2738,7 @@ function renderManualMemberManagement() {
     return `<tr>
       <td class="manual-member-number" style="text-align:center;font-weight:700;">${index + 1}</td>
       <td><strong>${escapeHTML(name)}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")} · ${identityNote}</small></td>
-      <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class || "ยังไม่ระบุ")}</span></td>
+      <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"};color:${cls?.color || "#aaa"}">${cls?.iconPath ? `<img src="${escapeHTML(cls.iconPath)}" alt="" loading="lazy" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;margin-right:7px">` : ""}${escapeHTML(member.game_class || "ยังไม่ระบุ")}</span></td>
       <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
       <td><span class="member-admin-health-pill is-${discordHealth.tone}">${escapeHTML(discordHealth.label)}</span></td>
       <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
@@ -2897,7 +3003,7 @@ async function updateManualGuildMemberStatus(id) {
   const member = manualGuildMembers.find(item => item.id === id);
   if (!member) return;
   const { data, error } = await supabaseClient.from("guild_manual_members")
-    .update({ active: !member.active, updated_by: currentUser.id, updated_at: new Date().toISOString() })
+    .update({ active: !member.active })
     .eq("id", id).select("*").single();
   if (error) { alert("เปลี่ยนสถานะไม่สำเร็จ: " + error.message); return; }
   Object.assign(member, data);
@@ -4341,12 +4447,13 @@ async function uploadPortfolioImage(file, portfolioId, caption="", sortOrder=0, 
   if (!currentUser) throw new Error("กรุณาเข้าสู่ระบบก่อน");
   if (!file || !file.type.startsWith("image/")) throw new Error("กรุณาเลือกรูปภาพ");
 
-  // Convert supported static portfolio images to WebP consistently.
+  // Prefer WebP for static portfolio images, but never block a member upload
+  // when the browser cannot decode/convert the original JPG or PNG.
   // Animated GIF files are kept unchanged to preserve their animation.
-  const uploadFile = file.type === "image/gif"
+  const uploadFile = file.type === "image/gif" || file.type === "image/svg+xml"
     ? file
-    : await prepareStorageImageForUpload(file, { maxDimension: 2880, quality: 0.92, forceWebP: true });
-  if (!["image/webp","image/gif","image/svg+xml"].includes(uploadFile.type)) {
+    : await prepareStorageImageForUpload(file, { maxDimension: 2880, quality: 0.92, forceWebP: false });
+  if (!["image/webp","image/jpeg","image/png","image/gif","image/svg+xml"].includes(uploadFile.type)) {
     throw new Error("รองรับภาพ Portfolio เป็น JPG, PNG, WEBP, GIF หรือ SVG เท่านั้น");
   }
   const ext = (uploadFile.name.split(".").pop() || "jpg").toLowerCase();
@@ -6646,6 +6753,15 @@ function syncAppRealtimeSubscriptions(pageName) {
   const shouldSubscribeToWar = pageName === "war-center";
   const shouldSubscribeToActivity = pageName === "dashboard" || communityPages.includes(pageName);
   const shouldSubscribeToFeedback = pageName === "feedback";
+  const shouldSubscribeToGuildDirectory = pageName === "guild-directory";
+  const shouldSubscribeToPatchCenter = pageName === "patch-command-center";
+
+  if (typeof window.setGuildAffiliationRealtime === "function") {
+    window.setGuildAffiliationRealtime(shouldSubscribeToGuildDirectory);
+  }
+  if (typeof window.setPatchCommandCenterRealtime === "function") {
+    window.setPatchCommandCenterRealtime(shouldSubscribeToPatchCenter);
+  }
 
   // Keep high-volume table subscriptions active only while their pages are open.
   if (shouldSubscribeToWar) {
@@ -6683,6 +6799,9 @@ function syncAppRealtimeSubscriptions(pageName) {
 }
 
 function removeAppRealtimeChannels() {
+  if (memberDirectoryRealtimeChannel) { void supabaseClient.removeChannel(memberDirectoryRealtimeChannel); memberDirectoryRealtimeChannel = null; }
+  if (typeof window.setGuildAffiliationRealtime === "function") window.setGuildAffiliationRealtime(false);
+  if (typeof window.setPatchCommandCenterRealtime === "function") window.setPatchCommandCenterRealtime(false);
   for (const channel of [warRealtimeChannel, guildActivityRealtimeChannel, guildActivityCommentsRealtimeChannel, feedbackRealtimeChannel]) {
     if (channel) void supabaseClient.removeChannel(channel);
   }
@@ -8840,7 +8959,7 @@ function openGuildPage(pageName) {
   window.scrollTo({ top: 0 });
 
   if (pageName === "members") loadMembers();
-  if (pageName === "member-management" && isManagement()) loadManualMemberManagement();
+  if (pageName === "member-management" && isManagement()) window.memberManagementLoadPromise = loadManualMemberManagement();
   if (pageName === "system-management") loadSystemRoleMembers();
   if (pageName === "discord-integration") loadDiscordIntegrationSettings();
 
@@ -9280,19 +9399,15 @@ function registerAppEventListeners() {
     if (!button) return;
     event.preventDefault();
     if (isRolePreviewActive()) { alert("Role Preview เป็นโหมดอ่านอย่างเดียว"); return; }
-    const userId = button.dataset.memberCardEdit, manualId = button.dataset.memberCardManual;
-    if (manualId) { if (isManagement()) editManualGuildMember(manualId); return; }
+    // Every role may edit only their own public member card; other members are managed in the Member Management Center.
+    const userId = button.dataset.memberCardEdit;
+    if (button.dataset.memberCardManual) return;
     const member = directoryMembers.find(row => !row.is_manual_record && String(row.user_id) === String(userId));
-    if (!member) return;
-    if (canManageMemberProfiles()) {
-      void editLinkedGuildMember(userId);
-    } else if (String(currentUser?.id) === String(userId)) {
-      openMemberCardEditor(member);
-    } else {
-      alert(isRolePreviewActive()
-        ? "Role Preview เป็นโหมดอ่านอย่างเดียว กรุณาออกจาก Preview เพื่อแก้ไขข้อมูลสมาชิก"
-        : "ไม่มีสิทธิ์แก้ไขข้อมูลสมาชิกคนนี้");
+    if (!member || String(currentUser?.id) !== String(userId)) {
+      alert("สามารถแก้ไขข้อมูลได้เฉพาะการ์ดของตัวเอง");
+      return;
     }
+    openMemberCardEditor(member);
   });
   $("member-card-edit-modal")?.addEventListener("click", event => {
     if (event.target.closest("[data-member-card-edit-close]")) closeMemberCardEditor();

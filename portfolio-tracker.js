@@ -4,6 +4,8 @@
   let submissions = [];
   let requests = [];
   let editPermissions = [];
+  let patchRoster = [];
+  let currentGuildCode = null;
   let selectedRoundId = "";
   let showArchivedRounds = false;
   let busy = false;
@@ -11,9 +13,9 @@
   const $ = (id) => document.getElementById(id);
   const esc = (value) => String(value ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
   const management = () => typeof isManagement === "function" && isManagement();
-  const memberName = (id) => {
+  const memberName = (id,fallback) => {
     const member = (allMembers || []).find(m => m.user_id === id);
-    return member && typeof getMemberName === "function" ? getMemberName(member) : (member?.character_name || id);
+    return member && typeof getMemberName === "function" ? getMemberName(member) : (member?.character_name || fallback || id);
   };
   const dateLabel = (value) => {
     if (!value) return "—";
@@ -112,35 +114,71 @@
   }
 
   async function loadData() {
-    const [roundResult, portfolioResult, requestResult, permissionResult, submissionResult] = await Promise.all([
-      supabaseClient.from("portfolio_update_rounds").select("*").order("created_at",{ascending:false}),
-      supabaseClient.from("portfolios").select(
-        "id,member_id,title,game_class,portfolio_type,created_at,updated_at," +
-        "portfolio_versions(id,version_number,version_name,round_id,patch_label,created_at," +
-        "portfolio_version_images(id,section_key,image_url,sort_order))"
-      ).order("created_at",{ascending:false}),
-      supabaseClient.from("portfolio_update_edit_requests").select("*").order("created_at",{ascending:false}),
-      supabaseClient.from("portfolio_update_edit_permissions").select("*").eq("member_id",currentUser.id),
-      supabaseClient.from("portfolio_patch_submissions").select("id,round_id,portfolio_id,version_id,member_id,submitted_at,updated_at").order("submitted_at",{ascending:false})
-    ]);
-    const failure = [roundResult,portfolioResult,requestResult,permissionResult,submissionResult].find(result => result.error);
-    if (failure) throw failure.error;
-    rounds = roundResult.data || [];
-    requests = requestResult.data || [];
-    editPermissions = permissionResult.data || [];
-    submissions = submissionResult.data || [];
-    portfolios = (portfolioResult.data || []).map(portfolio => ({
-      ...portfolio,
-      portfolio_versions: (portfolio.portfolio_versions || []).map(version => ({
-        ...version,
-        portfolio_version_images: version.portfolio_version_images || []
-      }))
-    }));
-    if (!selectedRoundId || !rounds.some(round => round.id === selectedRoundId)) {
-      const preferred = rounds.find(round => !round.archived_at) || rounds[0];
-      selectedRoundId = preferred?.id || "";
-      showArchivedRounds = !!preferred?.archived_at;
+    const roundResult=await supabaseClient.from("portfolio_update_rounds")
+      .select("id,round_name,starts_at,closes_at,status,created_at,archived_at,archived_by,roster_snapshot_at")
+      .order("created_at",{ascending:false}).limit(50);
+    if(roundResult.error)throw roundResult.error;
+    rounds=roundResult.data||[];
+    if(!selectedRoundId||!rounds.some(round=>round.id===selectedRoundId)){
+      const preferred=rounds.find(round=>!round.archived_at)||rounds[0];
+      selectedRoundId=preferred?.id||"";
+      showArchivedRounds=!!preferred?.archived_at;
     }
+
+    await Promise.all([loadRosterForRound(selectedRoundId),loadCurrentGuild()]);
+    if(!selectedRoundId){
+      portfolios=[];requests=[];editPermissions=[];submissions=[];
+      return;
+    }
+
+    const rosterIds=patchRoster.map(row=>row.member_id);
+    const memberIds=management()
+      ? [...new Set([...rosterIds,currentUser?.id].filter(Boolean))]
+      : [currentUser.id];
+    const [portfolioResult,requestResult,permissionResult,submissionResult]=await Promise.all([
+      memberIds.length
+        ? supabaseClient.from("portfolios").select(
+            "id,member_id,title,game_class,portfolio_type,created_at,updated_at,"+
+            "portfolio_versions(id,version_number,version_name,round_id,patch_label,created_at)"
+          ).in("member_id",memberIds).order("created_at",{ascending:false}).limit(1000)
+        : Promise.resolve({data:[],error:null}),
+      supabaseClient.from("portfolio_update_edit_requests")
+        .select("id,round_id,member_id,reason,status,created_at,reviewed_by,reviewed_at")
+        .eq("round_id",selectedRoundId).order("created_at",{ascending:false}).limit(100),
+      supabaseClient.from("portfolio_update_edit_permissions")
+        .select("id,round_id,member_id,expires_at")
+        .eq("member_id",currentUser.id).eq("round_id",selectedRoundId).limit(1),
+      memberIds.length
+        ? supabaseClient.from("portfolio_patch_submissions")
+            .select("id,round_id,portfolio_id,version_id,member_id,submitted_at,updated_at")
+            .eq("round_id",selectedRoundId).in("member_id",memberIds)
+            .order("submitted_at",{ascending:false}).limit(1000)
+        : Promise.resolve({data:[],error:null})
+    ]);
+    const failure=[portfolioResult,requestResult,permissionResult,submissionResult].find(result=>result.error);
+    if(failure)throw failure.error;
+    portfolios=portfolioResult.data||[];
+    requests=requestResult.data||[];
+    editPermissions=permissionResult.data||[];
+    submissions=submissionResult.data||[];
+  }
+
+  async function loadCurrentGuild() {
+    currentGuildCode=null;
+    if(!currentUser?.id)return;
+    const {data,error}=await supabaseClient.from("guild_member_affiliations")
+      .select("guilds(code)").eq("user_id",currentUser.id).is("ended_at",null).maybeSingle();
+    if(error)throw error;
+    currentGuildCode=data?.guilds?.code||null;
+  }
+
+  async function loadRosterForRound(roundId) {
+    if (!roundId) { patchRoster = []; return; }
+    const {data,error}=await supabaseClient.from("portfolio_patch_roster")
+      .select("round_id,member_id,character_name,game_class,nickname,discord_name,roster_source")
+      .eq("round_id",roundId).order("character_name").limit(100);
+    if(error)throw error;
+    patchRoster=data||[];
   }
 
   function submissionForFolder(portfolioId, roundId) {
@@ -148,7 +186,10 @@
   }
 
   function roundStats(roundId) {
-    const members = (allMembers || []).filter(member => member.active !== false);
+    const members = patchRoster.filter(row=>row.round_id===roundId).map(row=>({
+      user_id:row.member_id,character_name:row.character_name,game_class:row.game_class,
+      nickname:row.nickname,discord_name:row.discord_name,active:true,roster_source:row.roster_source
+    }));
     let completeMembers = 0;
     const detail = members.map(member => {
       const own = portfolios.filter(portfolio => portfolio.member_id === member.user_id);
@@ -200,12 +241,20 @@
     const selected = rounds.find(round => round.id === selectedRoundId);
     const visibleRounds = rounds.filter(round => showArchivedRounds ? !!round.archived_at : !round.archived_at);
     const stats = selected ? roundStats(selected.id) : null;
-    const ownRow = stats ? stats.detail.find(row => row.member.user_id === currentUser?.id) : null;
+    const rosterOwnRow = stats ? stats.detail.find(row => row.member.user_id === currentUser?.id) : null;
+    const ownFolders = selected ? portfolios.filter(portfolio=>portfolio.member_id===currentUser?.id) : [];
+    const ownRow = rosterOwnRow || (selected && currentUser ? {
+      member:{user_id:currentUser.id},portfolios:ownFolders,total:ownFolders.length,
+      submitted:ownFolders.filter(portfolio=>!!submissionForFolder(portfolio.id,selected.id)).length
+    } : null);
+    const memberInRoster = !!selected && patchRoster.some(row=>row.round_id===selected.id&&row.member_id===currentUser?.id);
+    const rosterSnapshotReady = !!selected?.roster_snapshot_at;
+    const canSubmitForRoster = memberInRoster || (!rosterSnapshotReady && currentGuildCode==="4AM");
     const ownPermission = selected ? editPermissions.find(permission =>
       permission.round_id === selected.id && new Date(permission.expires_at).getTime() > Date.now()
     ) : null;
     const editable = !!selected && !selected.archived_at && (isRoundEditable(selected) || !!ownPermission);
-    const canRequestLate = !!selected && !selected.archived_at && !editable &&
+    const canRequestLate = !!selected && !selected.archived_at && (rosterSnapshotReady ? memberInRoster : currentGuildCode==="4AM") && !editable &&
       (selected.status === "closed" || Date.now() > new Date(selected.closes_at).getTime());
     const pendingRequest = selected ? requests.find(request =>
       request.round_id === selected.id && request.member_id === currentUser?.id && request.status === "pending"
@@ -239,7 +288,7 @@
       '<div class="portfolio-tracker-stat"><strong>' + stats.pendingFolders + '</strong><span>แฟ้มที่ยังไม่ส่ง</span></div></div>' +
       '<div class="portfolio-tracker-table-wrap"><table class="portfolio-tracker-table"><thead><tr><th>สมาชิก</th><th>แฟ้มทั้งหมด</th><th>ส่งแล้ว</th><th>สถานะ</th><th>จัดการ</th></tr></thead><tbody>' +
       stats.detail.map(row =>
-        '<tr><td><strong>' + esc(memberName(row.member.user_id)) + '</strong></td>' +
+        '<tr><td><strong>' + esc(memberName(row.member.user_id,row.member.character_name)) + '</strong></td>' +
         '<td>' + row.total + '</td><td>' + row.submitted + '/' + row.total + '</td>' +
         '<td>' + pill(row.status, row.total === 0 ? "ยังไม่มีแฟ้ม" : row.submitted + "/" + row.total + " แฟ้ม") + '</td>' +
         '<td><button class="btn btn-outline btn-sm" type="button" data-pt-member="' + esc(row.member.user_id) + '">ดูรายละเอียด</button></td></tr>'
@@ -278,16 +327,21 @@
             esc(portfolio.game_class || "ไม่ระบุคลาส") + ' · ' + esc(portfolio.portfolio_type || "Portfolio") + '</p>' +
             statusHtml + '</div><div class="portfolio-tracker-submit-controls">' +
             '<label>เลือก Version<select data-pt-version-select="' + esc(portfolio.id) + '" ' +
-            (!editable || !versions.length ? "disabled" : "") + '>' + options + '</select></label>' +
+            (!editable || !canSubmitForRoster || !versions.length ? "disabled" : "") + '>' + options + '</select></label>' +
             '<button type="button" class="btn btn-primary btn-sm" data-pt-submit="' + esc(portfolio.id) + '" ' +
-            (!editable || !versions.length ? "disabled" : "") + '>' +
-            (submission ? "เปลี่ยนเวอร์ชันที่ส่ง" : "ส่งเวอร์ชันนี้เข้าระบบ") + '</button></div></div>';
+            (!editable || !canSubmitForRoster || !versions.length ? "disabled" : "") + '>' +
+            (!canSubmitForRoster ? "ไม่อยู่ใน Roster 4AM" : submission ? "เปลี่ยนเวอร์ชันที่ส่ง" : "ส่งเวอร์ชันนี้เข้าระบบ") + '</button></div></div>';
         }).join("") + '</div>'
       : '<div class="portfolio-tracker-empty">คุณยังไม่มีแฟ้ม Portfolio สามารถสร้างแฟ้มและ Version ได้ทุกเวลา แล้วกลับมาเลือกส่งเข้ารอบนี้ได้</div>';
 
     const latePermissionNote = ownPermission && !isRoundEditable(selected)
       ? '<div class="portfolio-tracker-note">คุณได้รับอนุญาตให้ส่งหรือเปลี่ยน Version ในรอบนี้ถึง ' + esc(dateLabel(ownPermission.expires_at)) + '</div>'
       : "";
+    const rosterEligibilityNote = selected && !memberInRoster && rosterSnapshotReady
+      ? '<div class="portfolio-tracker-note">รอบนี้ใช้ 4AM Patch Roster และบัญชีของคุณไม่ได้อยู่ในรายชื่อ Snapshot จึงไม่สามารถส่ง Version ในรอบนี้ได้</div>'
+      : selected && !rosterSnapshotReady && currentGuildCode!=="4AM"
+        ? '<div class="portfolio-tracker-note">การส่ง Patch เปิดให้เฉพาะสมาชิกที่ได้รับการกำหนดสังกัด 4AM เท่านั้น</div>'
+        : "";
     const lateRequestPanel = !editable && canRequestLate
       ? '<div class="portfolio-tracker-request"><strong>รอบนี้ปิดรับการส่งแล้ว</strong>' +
         '<p class="portfolio-tracker-muted">หากต้องการส่งหรือเปลี่ยน Version หลังปิดรอบ สามารถส่งคำขอให้ Management อนุมัติสิทธิ์ได้</p>' +
@@ -310,11 +364,11 @@
             (selected.archived_at
               ? '<button id="pt-restore-round" class="btn btn-outline btn-sm" type="button">กู้คืนรอบ</button>'
               : '<button id="pt-archive-round" class="btn btn-outline btn-sm" type="button">เก็บเข้าคลัง</button>') +
-            '<button id="pt-delete-round" class="btn btn-outline btn-sm portfolio-tracker-danger" type="button">ลบถาวร</button></div>'
+            '</div>'
           : "") +
         '</div>' + managementStats + requestQueue +
         '<div class="portfolio-tracker-own"><h4>แฟ้ม Portfolio ของคุณในรอบนี้</h4>' +
-        ownFoldersHtml + latePermissionNote +
+        ownFoldersHtml + latePermissionNote + rosterEligibilityNote +
         '<div><button type="button" class="btn btn-outline" data-pt-open-portfolio="' + esc(currentUser?.id || "") + '">ไปยังแฟ้ม Portfolio</button></div>' +
         lateRequestPanel + archivedNote + '</div>'
       : '<div class="portfolio-tracker-empty">เลือกหรือสร้างรอบ Patch เพื่อดูสถานะการส่งผลงาน</div>';
@@ -364,7 +418,7 @@
         (submission ? ' · ' + esc(dateLabel(submission.submitted_at)) : "") + '</p></div>' +
         '<button type="button" class="btn btn-outline btn-sm" data-pt-open-portfolio="' + esc(memberId) + '">เปิดแฟ้ม</button></div>';
     }).join("");
-    host.innerHTML = '<div class="portfolio-tracker-detail-item"><strong>' + esc(memberName(memberId)) +
+    host.innerHTML = '<div class="portfolio-tracker-detail-item"><strong>' + esc(memberName(memberId,row.member.character_name)) +
       '</strong><span>' + pill(row.status,row.submitted + "/" + row.total + " แฟ้ม") + '</span></div>' +
       (items || '<div class="portfolio-tracker-empty">สมาชิกยังไม่มีแฟ้ม Portfolio</div>') +
       (management() && !rounds.find(item=>item.id===roundId)?.archived_at &&
@@ -438,14 +492,13 @@
         closes = parseRoundDateTime(form.get("closes_at"),"วันและเวลาปิดรับ");
       } catch(error) { alert(error.message); return; }
       if (!(closes > starts)) { alert("วันและเวลาปิดรับต้องอยู่หลังวันและเวลาเริ่มต้น"); return; }
-      const {data,error} = await supabaseClient.from("portfolio_update_rounds").insert({
-        round_name:String(form.get("round_name")).trim(),
-        starts_at:starts.toISOString(),
-        closes_at:closes.toISOString(),
-        created_by:currentUser.id
-      }).select("id").single();
+      const {data,error} = await supabaseClient.rpc("create_portfolio_patch_round",{
+        p_round_name:String(form.get("round_name")).trim(),
+        p_starts_at:starts.toISOString(),
+        p_closes_at:closes.toISOString()
+      });
       if (error) { alert("สร้างรอบไม่สำเร็จ: " + error.message); return; }
-      selectedRoundId = data.id;
+      selectedRoundId = data;
       await loadData();
       render();
     });
@@ -462,7 +515,7 @@
       const round = rounds.find(item => item.id === selectedRoundId);
       if (!round || round.archived_at) return;
       if (!confirm('เก็บรอบ “' + round.round_name + '” เข้าคลังใช่หรือไม่? รอบนี้จะหายจากรายการที่ใช้งาน แต่ประวัติ Version และรูปภาพจะยังอยู่ครบ')) return;
-      const {error} = await supabaseClient.from("portfolio_update_rounds").update({archived_at:new Date().toISOString(),archived_by:currentUser.id}).eq("id",selectedRoundId);
+      const {error} = await supabaseClient.rpc("update_portfolio_patch_round",{p_round_id:selectedRoundId,p_action:"archive"});
       if (error) { alert("เก็บรอบเข้าคลังไม่สำเร็จ: " + error.message); return; }
       showArchivedRounds = true;
       await loadData();
@@ -471,34 +524,9 @@
 
     root.querySelector("#pt-restore-round")?.addEventListener("click",async() => {
       if (!management() || !selectedRoundId) return;
-      const {error} = await supabaseClient.from("portfolio_update_rounds").update({archived_at:null,archived_by:null}).eq("id",selectedRoundId);
+      const {error} = await supabaseClient.rpc("update_portfolio_patch_round",{p_round_id:selectedRoundId,p_action:"restore"});
       if (error) { alert("กู้คืนรอบไม่สำเร็จ: " + error.message); return; }
       showArchivedRounds = false;
-      await loadData();
-      render();
-    });
-
-    root.querySelector("#pt-delete-round")?.addEventListener("click",async() => {
-      if (!management() || !selectedRoundId) return;
-      const round = rounds.find(item => item.id === selectedRoundId);
-      if (!round) return;
-      if (!confirm('ต้องการตรวจสอบและลบรอบ “' + round.round_name + '” ถาวรใช่หรือไม่? ระบบจะตรวจสอบข้อมูลที่เชื่อมโยงก่อนดำเนินการ')) return;
-      const checks = await Promise.all([
-        supabaseClient.from("portfolio_versions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
-        supabaseClient.from("portfolio_patch_submissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
-        supabaseClient.from("portfolio_update_submissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
-        supabaseClient.from("portfolio_update_edit_requests").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId),
-        supabaseClient.from("portfolio_update_edit_permissions").select("id",{count:"exact",head:true}).eq("round_id",selectedRoundId)
-      ]);
-      const failed = checks.find(result => result.error);
-      if (failed) { alert("ตรวจสอบข้อมูลก่อนลบไม่สำเร็จ: " + failed.error.message); return; }
-      const [legacyVersions,patchSubmissions,legacySubmissions,requestsCount,permissions] = checks.map(result => result.count || 0);
-      const details = 'ข้อมูลที่พบในรอบนี้:\n• Legacy-linked Versions: ' + legacyVersions + '\n• Patch Submissions ใหม่: ' + patchSubmissions + '\n• Submissions เดิม: ' + legacySubmissions + '\n• คำขอแก้ไข: ' + requestsCount + '\n• สิทธิ์แก้ไข: ' + permissions + '\n\nการลบรอบจะลบข้อมูล Submission/คำขอ/สิทธิ์ที่ผูกกับรอบนี้ ส่วน Version และรูปภาพ Portfolio จะยังคงอยู่';
-      if (!confirm(details + '\n\nยืนยันลบถาวรหรือไม่? การกระทำนี้ย้อนกลับไม่ได้')) return;
-      const {error} = await supabaseClient.from("portfolio_update_rounds").delete().eq("id",selectedRoundId);
-      if (error) { alert("ลบรอบไม่สำเร็จ: " + error.message); return; }
-      alert("ลบรอบอัปเดตเรียบร้อยแล้ว โดยข้อมูล Version และรูปภาพ Portfolio ยังคงอยู่");
-      selectedRoundId = "";
       await loadData();
       render();
     });
@@ -563,14 +591,18 @@
       try { await loadData(); render(); } catch(error) { alert(error.message); }
     });
     root.querySelectorAll("[data-pt-round]").forEach(button =>
-      button.addEventListener("click",() => { selectedRoundId = button.dataset.ptRound; render(); })
+      button.addEventListener("click",async() => {
+        selectedRoundId=button.dataset.ptRound;
+        try { await loadData(); render(); }
+        catch(error) { alert("โหลด Patch และ Roster ไม่สำเร็จ: "+(error.message||"Unknown error")); }
+      })
     );
     root.querySelector("#pt-toggle-round")?.addEventListener("click",async() => {
       if (!management() || !selectedRoundId) return;
       const round = rounds.find(item => item.id === selectedRoundId);
       const next = round.status === "open" ? "closed" : "open";
       if (!confirm(next === "closed" ? "ยืนยันปิดรอบนี้?" : "ยืนยันเปิดรอบนี้อีกครั้ง?")) return;
-      const {error} = await supabaseClient.from("portfolio_update_rounds").update({status:next}).eq("id",selectedRoundId);
+      const {error} = await supabaseClient.rpc("update_portfolio_patch_round",{p_round_id:selectedRoundId,p_action:next==="closed"?"close":"open"});
       if (error) { alert(error.message); return; }
       await loadData();
       render();

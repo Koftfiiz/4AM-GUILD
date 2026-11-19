@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=portfolio-edit-button-blue-20261119-r1">
+  <link rel="stylesheet" href="style.css?v=member-management-center-20261119-r2">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
@@ -40,10 +40,22 @@
           }
 
           const app = document.createElement("script");
-          app.src = "app.js?v=portfolio-webp-migration-20261119-r1";
+          app.src = "app.js?v=staging-realtime-20261119-r2";
           app.onload = () => {
             const tracker = document.createElement("script");
-            tracker.src = "portfolio-tracker.js?v=portfolio-schedule-labels-20261118-r1";
+            tracker.src = "portfolio-tracker.js?v=portfolio-roster-snapshot-20261119-r2";
+            tracker.onload = () => {
+              const directory = document.createElement("script");
+              directory.src = "guild-affiliation-directory.js?v=20261119-r6";
+              directory.onload = () => {
+                const commandCenter = document.createElement("script");
+                commandCenter.src = "patch-command-center.js?v=20261119-r10";
+                commandCenter.onerror = () => console.error("Patch Command Center script failed to load.");
+                document.head.appendChild(commandCenter);
+              };
+              directory.onerror = () => console.error("Guild affiliation directory script failed to load.");
+              document.head.appendChild(directory);
+            };
             tracker.onerror = () => console.error("Portfolio tracker script failed to load.");
             document.head.appendChild(tracker);
           };
@@ -513,7 +525,7 @@
           <p>ทำความรู้จักสมาชิก 4AM GUILD พร้อม Class อาชีพและตำแหน่งภายในกิลด์</p>
         </div>
         <nav class="section-tab-navigation" aria-label="เมนูย่อย"><button type="button" data-go-page="members">รายชื่อสมาชิก</button>
-<button type="button" data-go-page="member-management" data-management-only class="management-only is-role-hidden" aria-hidden="true">จัดการรายชื่อสมาชิก</button></nav>
+<button type="button" data-go-page="member-management" data-management-only class="management-only is-role-hidden" aria-hidden="true">ศูนย์จัดการสมาชิก</button></nav>
 
         <section class="panel member-directory-panel">
           <div class="panel-heading">
@@ -541,17 +553,17 @@
         <div class="page-intro">
           <span class="section-kicker">MEMBER ADMINISTRATION</span>
           <h1>จัดการรายชื่อสมาชิก</h1>
-          <p>เพิ่มและดูแลข้อมูลสมาชิกด้วยตนเอง โดยไม่จำเป็นต้องมีบัญชีเข้าใช้งานแอปก่อน</p>
+          <p>ศูนย์กลางบริหารข้อมูลสมาชิก บัญชี Discord และสังกัดกิลด์ 4AM / 4PM</p>
         </div>
         <nav class="section-tab-navigation" aria-label="เมนูย่อย"><button type="button" data-go-page="members">รายชื่อสมาชิก</button>
-<button type="button" data-go-page="member-management" data-management-only class="management-only is-role-hidden" aria-hidden="true">จัดการรายชื่อสมาชิก</button></nav>
+<button type="button" data-go-page="member-management" data-management-only class="management-only is-role-hidden" aria-hidden="true">ศูนย์จัดการสมาชิก</button></nav>
 
         <section class="member-admin-overview">
           <div class="member-admin-stat">
             <span class="member-admin-stat-icon">◎</span>
-            <div><small>MANUAL DIRECTORY</small><strong id="manual-member-summary">กำลังโหลด...</strong></div>
+            <div><small>MEMBER MANAGEMENT</small><strong id="manual-member-summary">กำลังโหลด...</strong></div>
           </div>
-          <div class="member-admin-note"><strong>ข้อมูลสมาชิก Manual</strong><span>รายชื่อในส่วนนี้จะแสดงในหน้ารายชื่อสมาชิก แต่ยังไม่สามารถ Login หรือเข้าร่วมระบบวอร์จนกว่าจะเชื่อมบัญชีผู้ใช้</span></div>
+          <div class="member-admin-note"><strong>ศูนย์กลางข้อมูลสมาชิก</strong><span>จัดการสมาชิกที่ลงทะเบียนผ่านเว็บไซต์และรายชื่อ Manual ได้จากหน้าจอเดียว พร้อมดูสถานะบัญชีและข้อมูลสังกัด</span></div>
         </section>
 
         <button type="button" id="manual-member-add-trigger" class="manual-member-add-card">
@@ -1085,7 +1097,7 @@
           <iframe
             id="duck-race-frame"
             class="duck-race-frame"
-            src="/duck-race/duck-race.html?v=20261114-lucky-delete-r1"
+            src="/duck-race/duck-race.html?v=staging-routing-20261119-r1"
             title="4AM Duck Race Game"
             loading="lazy"
             allow="autoplay"
