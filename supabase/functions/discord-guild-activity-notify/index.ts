@@ -190,6 +190,7 @@ Deno.serve(async (request) => {
         value: "\u200b",
         inline: true
       });
+      if (role === "DPS") signupFields.push({ name: "\u200b", value: "\u200b", inline: false });
     }
     const rosterLines = warSignupMembers.filter(x => Number(x.queue_position) <= 60)
       .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
