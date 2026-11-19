@@ -2624,18 +2624,18 @@ function renderManualMemberManagement() {
   // A linked Manual row is represented by its real guild_members account row.
   // Keep the source record for administration, but do not render/count it twice.
   const unlinkedManualMembers = manualGuildMembers.filter(member => !member.linked_user_id);
+  const activeAccountMembers = allMembers.filter(member => member.active === true && member.membership_status === "active");
+  const activeUnlinkedManualMembers = unlinkedManualMembers.filter(member => member.active === true);
   const manualCount = unlinkedManualMembers.length;
-  const activeCount =
-    allMembers.filter(member => member.active).length +
-    unlinkedManualMembers.filter(member => member.active).length;
+  const activeCount = activeAccountMembers.length + activeUnlinkedManualMembers.length;
   if (summary) summary.textContent = `สมาชิกในระบบ ${linkedCount} คน · Manual ที่ยังไม่เชื่อม ${manualCount} คน · Active ${activeCount} คน`;
 
   const classSummary = $("manual-member-class-summary");
   if (classSummary) {
     const classCounts = new Map();
     const countableMembers = [
-      ...allMembers,
-      ...unlinkedManualMembers
+      ...activeAccountMembers,
+      ...activeUnlinkedManualMembers
     ];
     countableMembers.forEach(member => {
       const className = String(member.game_class || "").trim().toLocaleLowerCase();
@@ -2666,7 +2666,7 @@ function renderManualMemberManagement() {
       .filter(member => member.linked_user_id)
       .map(member => [String(member.linked_user_id), member])
   );
-  const accountRowsWithDiscord = allMembers.map(member => {
+  const accountRowsWithDiscord = activeAccountMembers.map(member => {
     const linkedManual = linkedManualByUserId.get(String(member.user_id));
     if (!linkedManual) return { ...member, _recordType: "account" };
     return {
@@ -2683,7 +2683,7 @@ function renderManualMemberManagement() {
   });
   const allVisibleMembers = [
     ...accountRowsWithDiscord,
-    ...unlinkedManualMembers.map(member => ({ ...member, _recordType: "manual" }))
+    ...activeUnlinkedManualMembers.map(member => ({ ...member, _recordType: "manual" }))
   ].sort((a, b) => {
     const rankA = guildPositionOrder.has(a.guild_position)
       ? guildPositionOrder.get(a.guild_position)
