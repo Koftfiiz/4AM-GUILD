@@ -244,40 +244,49 @@ Deno.serve(async (request: Request) => {
     const open = !closed && Number.isFinite(opens) && Date.now() >= opens;
     const state = event.status === "cancelled" ? "CANCELLED" : closed ? "CLOSED" : open ? "OPEN" : "SCHEDULED";
     const fields: any[] = [
-      { name: "ผู้ลงชื่อทั้งหมด", value: rows.length + " / 80 คน", inline: true },
-      { name: "ตัวจริง", value: rows.filter((x: any) => Number(x.queue_position) <= 60).length + " / 60 คน", inline: true },
-      { name: "ตัวสำรอง", value: rows.filter((x: any) => Number(x.queue_position) > 60).length + " / 20 คน", inline: true }
+      { name: "**ผู้ลงชื่อทั้งหมด**", value: rows.length + " / 80 คน", inline: true },
+      { name: "**ตัวจริง**", value: rows.filter((x: any) => Number(x.queue_position) <= 60).length + " / 60 คน", inline: true },
+      { name: "**ตัวสำรอง**", value: rows.filter((x: any) => Number(x.queue_position) > 60).length + " / 20 คน", inline: true }
     ];
+    const roleIcons: Record<string, string> = { Tank: "🛡️", DPS: "⚔️", Bloodstrom: "🩸", Healer: "💚" };
     for (const role of roleOrder) {
       const roleRows = roleGroups.get(role) || [];
-      const names = roleRows.map((x: any) => String(x.member.character_name || x.member.nickname || "สมาชิก"));
+      fields.push({
+        name: roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**",
+        value: "\u200b",
+        inline: true
+      });
+    }
+    const rosterLines = rows.filter((x: any) => Number(x.queue_position) <= 60)
+      .map((x: any) => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
+    const reserveLines = rows.filter((x: any) => Number(x.queue_position) > 60)
+      .map((x: any) => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
+    const addRosterFields = (heading: string, lines: string[]) => {
       const chunks: string[] = [];
       let chunk = "";
-      for (const name of names) {
-        const next = chunk ? chunk + "\n" + name : name;
-        if (next.length > 980 && chunk) {
-          chunks.push(chunk);
-          chunk = name;
-        } else {
-          chunk = next;
-        }
+      for (const line of lines) {
+        const next = chunk ? chunk + "\n" + line : line;
+        if (next.length > 980 && chunk) { chunks.push(chunk); chunk = line; }
+        else chunk = next;
       }
       if (chunk) chunks.push(chunk);
       if (!chunks.length) chunks.push("—");
       chunks.forEach((value, index) => fields.push({
-        name: index === 0 ? role + " · " + roleRows.length + " คน" : role + " · ต่อ",
+        name: index === 0 ? heading : heading + " · ต่อ",
         value,
-        inline: true
+        inline: false
       }));
-    }
+    };
+    addRosterFields("**เข้าร่วม (" + rosterLines.length + " คน)**", rosterLines);
+    addRosterFields("**รายชื่อสำรอง (" + reserveLines.length + " คน)**", reserveLines);
 
     const kindLabel = event.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const description = "**◥◣④AM◥◣ " + kindLabel + "**" +
-      "\n**" + String(event.event_name || "4AM SIGN-UP") + "**" +
-      "\nวันที่ " + formatDate(event.event_date) + " · เวลา " + String(event.start_time || "-").slice(0, 5) + " น." +
-      "\nสถานะ: **" + state + "**" +
-      "\nเปิดรับสมัคร: **" + formatDateTime(event.signup_opens_at) + " น.**" +
-      "\nปิดรับสมัคร: **" + formatDateTime(event.registration_type === "official" && event.event_date ? String(event.event_date).slice(0, 10) + "T14:00:00+07:00" : event.signup_closes_at) + " น.**" +
+      "\n\n**" + String(event.event_name || "4AM SIGN-UP") + "**" +
+      "\n\n**วันที่ " + formatDate(event.event_date) + " · เวลา " + String(event.start_time || "-").slice(0, 5) + " น.**" +
+      "\n**สถานะ: " + state + "**" +
+      "\n**เปิดรับสมัคร: " + formatDateTime(event.signup_opens_at) + " น.**" +
+      "\n**ปิดรับสมัคร: " + formatDateTime(event.registration_type === "official" && event.event_date ? String(event.event_date).slice(0, 10) + "T14:00:00+07:00" : event.signup_closes_at) + " น.**" +
       "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง";
     return {
       embeds: [{
