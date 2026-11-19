@@ -263,7 +263,7 @@
     $("gd-history-modal")?.addEventListener("click",event=>{if(event.target===$("gd-history-modal"))closeHistory();});
     $("gd-detail-close")?.addEventListener("click",closeDetail);
     $("gd-detail-modal")?.addEventListener("click",event=>{if(event.target===$("gd-detail-modal"))closeDetail();});
-    $("gd-detail-history")?.addEventListener("click",()=>{if(!detailRow)return;closeDetail();void openHistory(detailRow.member_id||detailRow.manual_member_id,detailRow.record_type);});
+    $("gd-detail-history")?.addEventListener("click",()=>{if(!detailRow)return;const row=detailRow;closeDetail();void openHistory(row.member_id||row.manual_member_id,row.record_type);});
     $("gd-detail-assign")?.addEventListener("click",()=>{if(!detailRow)return;const row=detailRow;closeDetail();openAssign(row.member_id||row.manual_member_id,row.record_type);});
     $("gd-rows")?.addEventListener("click",event=>{
       const detail=event.target.closest("[data-gd-detail]"),assign=event.target.closest("[data-gd-assign]"),history=event.target.closest("[data-gd-history]");
