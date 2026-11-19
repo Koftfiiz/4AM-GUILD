@@ -176,15 +176,14 @@
         const presence = row.record_type === "account" && typeof renderGuildPresenceStatus === "function"
           ? renderGuildPresenceStatus(row.member_id)
           : '<span class="guild-presence-status is-offline"><span class="guild-presence-dot"></span>ออฟไลน์</span>';
-        const buttons = '<button class="gd-button" type="button" data-gd-detail="'+index+'">ข้อมูลสมาชิก</button>' +
-          (canAssign() ? '<button class="gd-button" type="button" data-gd-position="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">ตำแหน่งกิลด์</button>' : '') +
+        const buttons = '<button class="gd-button" type="button" data-gd-detail="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">ข้อมูลสมาชิก</button>' +
           (canAssign() ? '<button class="gd-button" type="button" data-gd-assign="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">เปลี่ยนสังกัด</button>' : '') +
           ((canAssign() || (row.record_type==="account" && String(currentUser?.id)===String(row.member_id))) ? '<button class="gd-button" type="button" data-gd-history="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">ดูประวัติ</button>' : '');
         return '<tr><td class="gd-sequence">'+(state.page*PAGE_SIZE+index+1).toLocaleString("th-TH")+'</td>' +
           '<td><span class="gd-name">'+esc(row.character_name||"—")+'</span></td>' +
           '<td>'+esc(row.nickname||"—")+'</td>' +
           '<td><span class="manual-member-class" style="--class-color:'+esc(cls?.color||"#aaa")+'">'+esc(row.game_class||"—")+'</span></td>' +
-          '<td>'+esc(row.guild_position||"ยังไม่ได้กำหนด")+'</td>' +
+          '<td>'+(canAssign() ? '<select class="gd-field gd-position-select" data-gd-position="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'"><option value="">ยังไม่ได้กำหนด</option>'+(typeof GUILD_POSITIONS!=="undefined"?GUILD_POSITIONS:[]).map(position=>'<option value="'+esc(position)+'" '+(row.guild_position===position?'selected':'')+'>'+esc(position)+'</option>').join("")+'</select>' : esc(row.guild_position||"ยังไม่ได้กำหนด"))+'</td>' +
           '<td><span class="member-admin-health-pill is-'+esc(health.tone||"muted")+'">'+esc(health.label||"ตรวจสอบไม่ได้")+'</span></td>' +
           '<td><span class="gd-pill '+guildClass+'">'+esc(guildLabel)+'</span></td>' +
           '<td><span class="gd-record-status '+statusClass+'">'+esc(statusLabel)+'</span></td>' +
@@ -247,15 +246,19 @@
   };
 
   let editing=null,detailRow=null;
-  function openDetail(index){
-    const row=state.rows[Number(index)];if(!row)return;detailRow=row;
+  function openDetail(identity,kind){
+    const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&(!kind||item.record_type===kind));if(!row)return;detailRow=row;
     $("gd-detail-title").textContent=row.character_name||"ข้อมูลสมาชิก";
     $("gd-detail-subtitle").textContent=(row.nickname||"—")+" · "+(row.game_class||"—");
+    const health=row.discordHealth||{label:"ตรวจสอบไม่ได้"};
     const values=[
       ["ตัวละคร",row.character_name],["ชื่อเล่น",row.nickname],["คลาส",row.game_class],
-      ["Discord",row.discord_name],["สังกัดปัจจุบัน",row.guild_code||"ยังไม่ระบุสังกัด"],
-      ["ประเภทบัญชี",row.record_type==="manual"?"Manual":"บัญชีเว็บไซต์"],
-      ["สถานะสมาชิก",row.membership_status|| (row.active?"Active":"Inactive")],
+      ["ตำแหน่งกิลด์",row.guild_position||"ยังไม่ได้กำหนด"],["Discord Health",health.label],
+      ["Discord",row.discord_name],["Discord Username",row.discord_username],
+      ["Discord Global Name",row.discord_global_name],["Discord User ID",row.discord_user_id],
+      ["สังกัดปัจจุบัน",row.guild_code||"ยังไม่ระบุสังกัด"],
+      ["สถานะสมาชิก",row.record_type==="manual"?"Manual":(row.active===false?"Inactive":"Active")],
+      ["ออนไลน์",row.online?"ออนไลน์":"ออฟไลน์"],["วันที่เข้าระบบ",formatBangkokDateTime(row.created_at)],
       ["เริ่มสังกัดเมื่อ",formatBangkokDateTime(row.affiliation_started_at)]
     ];
     $("gd-detail-grid").innerHTML=values.map(([label,value])=>'<div class="gd-detail"><span>'+esc(label)+'</span><strong>'+esc(value||"—")+'</strong></div>').join("");
@@ -341,7 +344,7 @@
     $("gd-detail-assign")?.addEventListener("click",()=>{if(!detailRow)return;const row=detailRow;closeDetail();openAssign(row.member_id||row.manual_member_id,row.record_type);});
     $("gd-rows")?.addEventListener("click",event=>{
       const detail=event.target.closest("[data-gd-detail]"),assign=event.target.closest("[data-gd-assign]"),history=event.target.closest("[data-gd-history]");
-      if(detail)openDetail(detail.dataset.gdDetail);
+      if(detail)openDetail(detail.dataset.gdDetail,detail.dataset.gdKind);
       else if(assign)openAssign(assign.dataset.gdAssign,assign.dataset.gdKind);
       else if(history)void openHistory(history.dataset.gdHistory,history.dataset.gdKind);
     });
