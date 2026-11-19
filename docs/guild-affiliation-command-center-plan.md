@@ -79,3 +79,14 @@ Latest read-only Production counts: 58 active registered accounts, 14 active Man
 - Staging schema contracts and targeted SQL tests cover directory canonical identity/pagination, affiliation privacy and role permissions, immutable Patch roster, late manual-account linking, submission/resubmission history, reviewer-only transitions, and app-compatible table grants.
 - Staging's RLS advisor has no multiple-permissive-policy or unindexed-FK warning. Remaining notices are the expected authenticated SECURITY DEFINER helpers/RPCs, inherited leaked-password-protection setting, and unused indexes on the small synthetic dataset.
 - Real browser QA is still open. The previous Vercel Preview predates the Staging-routing safeguard; a new Preview build is blocked by the Free daily deployment API quota until its 24-hour window resets. Do not use the old Preview URL.
+
+
+## Member Management Center UI architecture
+
+- Keep `รายชื่อสมาชิก` as the public/member-facing directory for all active members.
+- Keep `จัดการรายชื่อสมาชิก` as a management-only workspace for Developer, Leader, and Management.
+- Consolidate Guild Directory into a dedicated `สังกัดกิลด์ 4AM / 4PM` tab within the management workspace; do not expose a separate sidebar destination.
+- Preserve the existing member editor, registered/manual identity handling, Discord verification checks, profile drawer, and Saved Filters.
+- The affiliation workspace reuses the existing bounded directory RPC and guarded affiliation assignment/history functions. It does not infer or auto-assign a member's guild.
+- Keep all management mutations behind the existing server-side role checks. Role Preview remains read-only.
+- The first consolidation slice is implemented on the feature branch. Browser QA, additional management-center enhancements, and the full Phase 1–7 release gates remain outstanding.
