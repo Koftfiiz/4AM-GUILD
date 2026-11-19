@@ -2050,9 +2050,15 @@ async function loadMembers(forceRefresh = false) {
       if (item.manual_member_id) affiliationByMember.set("manual:"+String(item.manual_member_id), code);
     });
   }
+  // The public member directory only includes approved, active accounts.
+  // Suspended / pending / inactive accounts remain in allMembers for the
+  // Management Center, but must not appear in public counts or filters.
+  const activeDirectoryAccounts = allMembers.filter(member =>
+    member.active === true && member.membership_status === "active"
+  );
   directoryMembers = [
-    ...allMembers.map(member => ({ ...member, guild_code: affiliationByMember.get("account:"+String(member.user_id)) || null, is_manual_record: false })),
-    ...manualGuildMembers.map(member => ({
+    ...activeDirectoryAccounts.map(member => ({ ...member, guild_code: affiliationByMember.get("account:"+String(member.user_id)) || null, is_manual_record: false })),
+    ...manualGuildMembers.filter(member => member.active === true).map(member => ({
       ...member,
       user_id: null,
       guild_code: affiliationByMember.get("manual:"+String(member.id)) || null,
