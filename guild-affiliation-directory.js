@@ -30,7 +30,7 @@
     const style = document.createElement("style");
     style.id = "guild-directory-styles";
     style.textContent = [
-      ".gd-root{display:grid;gap:16px;color:var(--text).gd-root[hidden]{display:none!important}",
+      ".gd-root{display:grid;gap:16px;color:var(--text)}.gd-root[hidden]{display:none!important}",
       ".gd-panel{padding:22px;margin-bottom:20px;border:1px solid var(--line);border-radius:8px;background:rgba(12,8,10,.92)}",
       ".gd-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}",
       ".gd-head h2{font-size:20px;margin:2px 0}.gd-muted{color:var(--muted);font-size:15px;line-height:1.55}",
@@ -42,14 +42,14 @@
       ".gd-field:focus-visible,.gd-button:focus-visible{outline:2px solid #ff6674;outline-offset:2px}",
       ".gd-table-wrap{overflow:auto}.gd-table{width:100%;min-width:1050px;border-collapse:collapse}",
       ".gd-table th,.gd-table td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;vertical-align:middle;font-size:15px}",
-      ".gd-table th{color:var(--gold-light);font-weight:800;white-space:nowrap}.gd-name{font-weight:800}.gd-sub{display:block;color:#aaa;font-size:15px}",
+      ".gd-table th{color:var(--red-bright,#e54858);font-weight:800;white-space:nowrap}.gd-name{font-weight:800}.gd-sub{display:block;color:#aaa;font-size:15px}",
       ".gd-pill{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid rgba(255,255,255,.14);border-radius:99px;font-size:15px;font-weight:800;white-space:nowrap}",
       ".gd-pill.am{background:rgba(217,54,67,.12);border-color:rgba(217,54,67,.42);color:#ff9da5}.gd-pill.pm{background:rgba(118,92,190,.13);border-color:rgba(118,92,190,.42);color:#cbbcff}",
       ".gd-pill.none{background:rgba(255,255,255,.04);color:#bbb}.gd-pill.manual{color:#ff9da5;border-color:rgba(217,54,67,.42);background:rgba(217,54,67,.12)}",
       ".gd-button{min-height:39px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.03);color:var(--text);font:600 15px var(--font);cursor:pointer}",
       ".gd-button.primary{background:linear-gradient(110deg,#7d1824,#c22b3b);border-color:var(--red-bright);color:#fff}.gd-button:disabled{opacity:.45;cursor:not-allowed}",
       ".gd-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.gd-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px}",
-      ".gd-inline-select{min-height:34px;padding:5px 7px;font-size:15px;border-radius:5px}.gd-member-actions{gap:6px;flex-wrap:nowrap}.gd-member-actions .btn{min-height:30px;padding:5px 9px;font-size:15px;white-space:nowrap}.gd-member-actions .member-row-remove{display:inline-grid;place-items:center;width:30px;min-width:30px;height:30px;padding:0;border:0;background:transparent;color:#ff5968;font-size:27px;line-height:1;cursor:pointer}.gd-member-actions .manual-member-toggle-btn.is-suspend{color:#fff;background:linear-gradient(135deg,#8f1e2b,#c52b3c);border:1px solid rgba(255,143,151,.72)}.gd-member-actions .manual-member-toggle-btn.is-activate{color:#ffe8b5;background:linear-gradient(135deg,#55401c,#80602a);border:1px solid rgba(232,190,112,.72)}",
+      ".gd-inline-select{min-height:34px;padding:5px 7px;font-size:15px;border-radius:5px}.gd-class-display{display:inline-flex;align-items:center;gap:7px;color:var(--class-color,#aaa);font-weight:850;white-space:nowrap}.gd-class-display img{width:25px;height:25px;object-fit:contain;filter:drop-shadow(0 0 4px color-mix(in srgb,var(--class-color,#aaa) 35%,transparent))}.gd-member-actions{gap:6px;flex-wrap:nowrap}.gd-member-actions .btn{min-height:30px;padding:5px 9px;font-size:15px;white-space:nowrap}.gd-member-actions .member-row-remove{display:inline-grid;place-items:center;width:30px;min-width:30px;height:30px;padding:0;border:0;background:transparent;color:#ff5968;font-size:27px;line-height:1;cursor:pointer}.gd-member-actions .manual-member-toggle-btn.is-suspend{color:#fff;background:linear-gradient(135deg,#8f1e2b,#c52b3c);border:1px solid rgba(255,143,151,.72)}.gd-member-actions .manual-member-toggle-btn.is-activate{color:#ffe8b5;background:linear-gradient(135deg,#55401c,#80602a);border:1px solid rgba(232,190,112,.72)}",
       ".gd-empty{padding:28px;text-align:center;color:#aaa;font-size:15px}.gd-modal{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:16px}",
       ".gd-dialog{width:min(560px,100%);max-height:88vh;overflow:auto;padding:21px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);box-shadow:0 24px 70px #000a}",
       ".gd-dialog h2{margin:0 0 4px;font-size:20px}.gd-dialog label{display:grid;gap:6px;margin:14px 0;color:#ddd;font-size:15px}",
@@ -180,10 +180,9 @@
           ? renderGuildPresenceStatus(row.member_id)
           : '<span class="guild-presence-status is-offline"><span class="guild-presence-dot"></span>ออฟไลน์</span>';
         const accountLabel = row.record_type === "account" ? "เชื่อมต่อแล้ว" : "ยังไม่มีบัญชีผู้ใช้งาน";
-        const classOptions = ["Ironclad","Bloodstrom","Celestune","Numina","Sylph","Nightwaker","Dragonsvelte","Mystech"];
-        const classCell = canAssign()
-          ? '<select class="gd-field gd-inline-select" data-gd-class="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'" aria-label="เปลี่ยนคลาสของ '+esc(row.character_name||"สมาชิก")+'"><option value="" disabled '+(!row.game_class?'selected':'')+'>เลือกคลาส</option>'+classOptions.map(name=>'<option value="'+name+'" '+(row.game_class===name?'selected':'')+'>'+name+'</option>').join("")+'</select>'
-          : '<span class="manual-member-class" style="--class-color:'+esc(cls?.color||"var(--muted)")+'">'+esc(row.game_class||"—")+'</span>';
+        const classCell = '<span class="gd-class-display" style="--class-color:'+esc(cls?.color||"var(--muted)")+'">'+
+          (cls?.iconPath?'<img src="'+esc(cls.iconPath)+'" alt="" loading="lazy" onerror="this.style.display=\'none\'">':'')+
+          '<span>'+esc(row.game_class||"—")+'</span></span>';
         const positionCell = canAssign()
           ? '<select class="gd-field gd-inline-select gd-position-select" data-gd-position="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'"><option value="">ยังไม่ได้กำหนด</option>'+(typeof GUILD_POSITIONS!=="undefined"?GUILD_POSITIONS:[]).map(position=>'<option value="'+esc(position)+'" '+(row.guild_position===position?'selected':'')+'>'+esc(position)+'</option>').join("")+'</select>'
           : esc(row.guild_position||"ยังไม่ได้กำหนด");
@@ -403,31 +402,6 @@
         const selected=affiliation.value;
         if(selected===(row.guild_code||"unassigned"))return;
         openAssign(identity,kind,selected);
-        return;
-      }
-      const classSelect=event.target.closest("[data-gd-class]");
-      if(classSelect){
-        if(!canAssign()){renderRows();return;}
-        const identity=classSelect.dataset.gdClass,kind=classSelect.dataset.gdKind;
-        const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind);
-        if(!row)return;
-        const previous=row.game_class;
-        classSelect.disabled=true;
-        try{
-          const {error}=await supabaseClient.rpc("set_guild_member_class",{
-            p_user_id:kind==="account"?identity:null,
-            p_manual_member_id:kind==="manual"?identity:null,
-            p_game_class:classSelect.value
-          });
-          if(error)throw error;
-          cache.clear();
-          if(typeof loadManualMemberManagement==="function")window.memberManagementLoadPromise=loadManualMemberManagement();
-          await Promise.resolve(window.memberManagementLoadPromise);
-          await loadDirectory(true);
-        }catch(error){
-          alert("ไม่สามารถเปลี่ยนคลาสได้: "+(error.message||"Unknown error"));
-          classSelect.value=previous;
-        }finally{classSelect.disabled=false;}
         return;
       }
       const position=event.target.closest("[data-gd-position]");
