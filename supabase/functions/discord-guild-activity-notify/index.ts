@@ -13,6 +13,7 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
   status, headers: { ...corsHeaders, "Content-Type": "application/json" }
 });
 const plainText = (value: string) => String(value || "")
+  .replace(/\[\[WAR_CONFIG:[\s\S]*?\]\]/g, "")
   .replace(/<br\s*\/?>/gi, "\n")
   .replace(/<\/(p|div|li)>/gi, "\n")
   .replace(/<[^>]*>/g, " ")
@@ -23,6 +24,20 @@ const plainText = (value: string) => String(value || "")
   .replace(/\s+/g, " ")
   .trim()
   .slice(0, 850);
+const warRoundLabel = (description: string, startTime: string | null) => {
+  const match = String(description || "").match(/\[\[WAR_CONFIG:(\{.*?\})\]\]/);
+  if (match) {
+    try {
+      const config = JSON.parse(match[1]);
+      if (Array.isArray(config.rounds) && config.rounds.length) {
+        return config.rounds.map((value: unknown) => String(value).slice(0, 5)).join(" / ") + " น.";
+      }
+    } catch {
+      // Fall back to the event's stored start time for legacy events.
+    }
+  }
+  return String(startTime || "-").slice(0, 5) + " น.";
+};
 
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -82,11 +97,12 @@ Deno.serve(async (request) => {
     if (kind === "war_signup") {
       table = "war_events";
       const { data, error } = await admin.from(table)
-        .select("id,event_name,event_date,start_time,registration_type,signup_opens_at,signup_closes_at,description,discord_message_id,discord_sent_at")
+        .select("id,event_name,event_date,start_time,registration_type,signup_opens_at,signup_closes_at,description,status,discord_message_id,discord_sent_at")
         .eq("id", recordId).maybeSingle();
       if (error || !data) return json({ success: false, message: "War Signup Event not found" }, 404);
       record = data;
       if (!isManager) return json({ success: false, message: "Management permission required" }, 403);
+      if (record.status === "cancelled") return json({ success: false, message: "This Guild War event has been cancelled" }, 409);
     } else if (kind === "activity") {
       table = "guild_activities";
       const { data, error } = await admin.from(table)
@@ -118,21 +134,94 @@ Deno.serve(async (request) => {
     }
 
     const authorName = author?.character_name || author?.nickname || author?.discord_name || requesterName;
+    let warSignupRows: any[] = [];
+    let warSignupMembers: any[] = [];
+    if (kind === "war_signup") {
+      const [signupResult, memberResult] = await Promise.all([
+        admin.from("war_signups").select("member_id,queue_position,status").eq("event_id", recordId).neq("status", "cancelled").order("queue_position", { ascending: true }),
+        admin.from("guild_members").select("user_id,character_name,nickname,game_class,active").eq("active", true)
+      ]);
+      if (signupResult.error || memberResult.error) return json({ success: false, message: "Unable to load Guild War registration roster" }, 500);
+      warSignupRows = signupResult.data || [];
+      const memberMap = new Map((memberResult.data || []).map((m: any) => [m.user_id, m]));
+      warSignupMembers = warSignupRows.map(row => ({ ...row, member: memberMap.get(row.member_id) })).filter(row => row.member);
+    }
+    const now = Date.now();
+    const deadlineMs = record?.registration_type === "official" && record?.event_date
+      ? new Date(String(record.event_date).slice(0, 10) + "T14:00:00+07:00").getTime()
+      : (record?.signup_closes_at ? new Date(record.signup_closes_at).getTime() : NaN);
+    const isSignupClosed = record?.status === "cancelled" || !Number.isFinite(deadlineMs) || now >= deadlineMs;
+    const isSignupOpen = Boolean(record?.signup_opens_at) && now >= new Date(record.signup_opens_at).getTime() && !isSignupClosed && record.status !== "cancelled";
+    const roleForClass = (value: unknown) => {
+      const gameClass = String(value || "").trim().toLowerCase();
+      if (gameClass === "ironclad") return "Tank";
+      if (gameClass === "sylph") return "Healer";
+      if (gameClass === "bloodstrom") return "Bloodstrom";
+      return "DPS";
+    };
+    const roleOrder = ["Tank", "DPS", "Bloodstrom", "Healer"];
+    const roleGroups = new Map<string, any[]>(roleOrder.map(role => [role, []]));
+    for (const row of warSignupMembers) roleGroups.get(roleForClass(row.member.game_class))!.push(row);
+    const formatDate = (value: string | null) => {
+      if (!value) return "-";
+      const parts = String(value).slice(0, 10).split("-");
+      return parts.length === 3 ? parts[2] + "/" + parts[1] + "/" + parts[0] : "-";
+    };
+    const formatDateTime = (value: string | null) => {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "-";
+      return new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Bangkok", day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+      }).format(date).replace(",", "");
+    };
+    const signupFields: any[] = [
+      { name: "ผู้ลงชื่อทั้งหมด", value: String(warSignupRows.length) + " / 80 คน", inline: true },
+      { name: "ตัวจริง", value: String(warSignupRows.filter(x => Number(x.queue_position) <= 60).length) + " / 60 คน", inline: true },
+      { name: "ตัวสำรอง", value: String(warSignupRows.filter(x => Number(x.queue_position) > 60).length) + " / 20 คน", inline: true }
+    ];
+    for (const role of roleOrder) {
+      const roleRows = roleGroups.get(role) || [];
+      const names = roleRows.map((x: any) => String(x.member.character_name || x.member.nickname || "สมาชิก"));
+      const chunks: string[] = [];
+      let chunk = "";
+      for (const name of names) {
+        const next = chunk ? chunk + "\n" + name : name;
+        if (next.length > 980 && chunk) {
+          chunks.push(chunk);
+          chunk = name;
+        } else {
+          chunk = next;
+        }
+      }
+      if (chunk) chunks.push(chunk);
+      if (!chunks.length) chunks.push("—");
+      chunks.forEach((value, index) => signupFields.push({
+        name: index === 0 ? role + " · " + roleRows.length + " คน" : role + " · ต่อ",
+        value,
+        inline: true
+      }));
+    }
+    const signupStatus = record?.status === "cancelled" ? "CANCELLED" : isSignupClosed ? "CLOSED" : isSignupOpen ? "OPEN" : "SCHEDULED";
+    const kindLabel = record.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
+    const closeLabel = record.registration_type === "official" && record.event_date
+      ? formatDateTime(String(record.event_date).slice(0, 10) + "T14:00:00+07:00")
+      : formatDateTime(record.signup_closes_at);
     const embed = kind === "war_signup" ? {
-      title: "⚔️ 4AM GUILD · เปิดลงชื่อ Guild War",
-      description: "มีการสร้างกิจกรรมลงชื่อวอร์ใหม่ สมาชิกสามารถตรวจสอบกำหนดการและติดตามรายชื่อได้จากเว็บไซต์กิลด์",
-      color: 0xC52B3B,
-      fields: [
-        { name: "กิจกรรม", value: String(record.event_name || "-").slice(0, 250), inline: false },
-        { name: "ประเภท", value: record.registration_type === "practice" ? "ซ้อมวอร์" : "วอร์จริง", inline: true },
-        { name: "วันที่วอร์", value: record.event_date ? new Date(record.event_date + "T00:00:00+07:00").toLocaleDateString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "long" }) : "-", inline: true },
-        { name: "เวลาเริ่มวอร์", value: String(record.start_time || "-").slice(0, 5) + " น.", inline: true },
-        { name: "เปิดรับสมัคร", value: record.signup_opens_at ? new Date(record.signup_opens_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) : "-", inline: true },
-        { name: "ปิดรับสมัคร", value: record.signup_closes_at ? new Date(record.signup_closes_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) : "-", inline: true },
-        { name: "จำนวนที่รับ", value: "สูงสุด 80 คน · ตัวจริง 60 คน · สำรอง 20 คน", inline: false },
-        { name: "รายละเอียด", value: plainText(String(record.description || "").replace(/\[\[WAR_CONFIG:[\s\S]*?\]\]/g, "")) || "ไม่มีรายละเอียดเพิ่มเติม", inline: false }
-      ],
-      footer: { text: "4AM GUILD · War Registration" },
+      title: "4AM SIGN-UP",
+      description: "**◥◣④AM◥◣ " + kindLabel + "**" +
+        "\n**" + String(record.event_name || "4AM SIGN-UP") + "**" +
+        "\nวันที่ " + formatDate(record.event_date) + " · เวลา " + String(record.start_time || "-").slice(0, 5) + " น." +
+        "\nสถานะ: **" + signupStatus + "**" +
+        "\nเปิดรับสมัคร: **" + formatDateTime(record.signup_opens_at) + " น.**" +
+        "\nปิดรับสมัคร: **" + closeLabel + " น.**" +
+        "\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/)" +
+        "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง",
+      color: 0xD92D45,
+      fields: signupFields,
+      image: { url: "https://raw.githubusercontent.com/Koftfiiz/4AM-GUILD/main/assets/animated-4am-logo.gif" },
+      footer: { text: "4AM GUILD · รายชื่อซิงก์กับเว็บไซต์" },
       timestamp: new Date().toISOString()
     } : kind === "activity" ? {
       title: "มีกิจกรรมใหม่จาก 4AM GUILD",
@@ -158,17 +247,31 @@ Deno.serve(async (request) => {
       timestamp: record.created_at
     };
 
-    const isWarUpdate = kind === "war_signup" && Boolean(record.discord_message_id);
-    const discordMessageUrl = "https://discord.com/api/v10/channels/" + channelId + "/messages";
-    const discordResponse = await fetch(isWarUpdate ? discordMessageUrl + "/" + record.discord_message_id : discordMessageUrl, {
-      method: isWarUpdate ? "PATCH" : "POST",
-      headers: { "Authorization": "Bot " + botToken, "Content-Type": "application/json" },
-      body: JSON.stringify({ embeds: [embed], allowed_mentions: { parse: [] } })
-    });
+    const messagePayload: any = { embeds: [embed], allowed_mentions: { parse: [] } };
+    if (kind === "war_signup") {
+      messagePayload.components = [{
+        type: 1,
+        components: [
+          { type: 2, style: 3, label: "เข้าร่วม", custom_id: "war_signup_join:" + recordId, disabled: isSignupClosed || record.status === "cancelled" },
+          { type: 2, style: 4, label: "ถอนชื่อออก", custom_id: "war_signup_leave:" + recordId, disabled: isSignupClosed || record.status === "cancelled" }
+        ]
+      }];
+      if (isSignupClosed || record.status === "cancelled") {
+        embed.description += "\n\n**This event is closed**";
+      }
+    }
+    const discordResponse = await fetch(
+      "https://discord.com/api/v10/channels/" + channelId + "/messages" + (kind === "war_signup" && record.discord_message_id ? "/" + record.discord_message_id : ""),
+      {
+        method: kind === "war_signup" && record.discord_message_id ? "PATCH" : "POST",
+        headers: { "Authorization": "Bot " + botToken, "Content-Type": "application/json" },
+        body: JSON.stringify(messagePayload)
+      }
+    );
     if (!discordResponse.ok) {
       const details = await discordResponse.text();
       await admin.from(table).update(kind === "war_signup" ? { discord_send_error: details.slice(0, 1000) } : { discord_notification_error: details.slice(0, 1000) }).eq("id", recordId);
-      return json({ success: false, message: isWarUpdate ? "Discord could not update the existing message" : "Discord API rejected the message", details: details.slice(0, 500) }, 502);
+      return json({ success: false, message: "Discord API rejected the message", details: details.slice(0, 500) }, 502);
     }
 
     const discordMessage = await discordResponse.json();
@@ -176,8 +279,8 @@ Deno.serve(async (request) => {
       ? { discord_message_id: String(discordMessage.id), discord_sent_at: new Date().toISOString(), discord_send_error: null }
       : { discord_notified_at: new Date().toISOString(), discord_notification_error: null };
     const { error: updateError } = await admin.from(table).update(updatePayload).eq("id", recordId);
-    if (updateError) return json({ success: false, message: isWarUpdate ? "Discord updated, but notification state could not be saved" : "Discord sent, but notification state could not be saved", updated: isWarUpdate }, 500);
-    return json({ success: true, updated: isWarUpdate });
+    if (updateError) return json({ success: false, message: "Discord sent, but notification state could not be saved" }, 500);
+    return json({ success: true });
   } catch (error) {
     console.error("discord-guild-activity-notify:", error);
     return json({ success: false, message: error instanceof Error ? error.message : "Unexpected error" }, 500);
