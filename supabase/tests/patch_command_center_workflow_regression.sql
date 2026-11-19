@@ -13,8 +13,8 @@ begin
  if jsonb_array_length(d->'items')<>9 then
   raise exception 'Expected 9 canonical directory rows (8 active accounts + 1 Manual-only), got %',jsonb_array_length(d->'items');
  end if;
- if (d->'counts'->>'account')::int<>7 or (d->'counts'->>'manual')::int<>1 then
-  raise exception 'Linked Manual rows were duplicated or directory counts are incorrect';
+ if (d->'counts'->>'account')::int<>8 or (d->'counts'->>'manual')::int<>1 then
+  raise exception 'Expected 8 canonical accounts + 1 Manual-only row; linked Manual rows must not be duplicated';
  end if;
  if (d->>'limit')::int<>100 then raise exception 'Directory page size was not clamped to 100'; end if;
  d:=public.get_guild_member_directory(null,'4AM','all','account',50,0);
