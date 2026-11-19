@@ -98,6 +98,15 @@ begin
   end if;
 
   if not (
+    select pg_get_functiondef('public.snapshot_due_patch_rosters()'::regprocedure)
+      like '%aff.started_at <= r.starts_at%'
+      and pg_get_functiondef('public.snapshot_due_patch_rosters()'::regprocedure)
+      like '%aff.ended_at > r.starts_at%'
+  ) then
+    raise exception 'Opening Patch snapshot must use affiliation validity at round starts_at';
+  end if;
+
+  if not (
     select pg_get_functiondef('public.get_patch_command_center(uuid,text,text,integer,integer)'::regprocedure)
       like '%review_queue_total%'
       and pg_get_functiondef('public.get_patch_command_center(uuid,text,text,integer,integer)'::regprocedure)
