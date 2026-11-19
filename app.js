@@ -4447,12 +4447,13 @@ async function uploadPortfolioImage(file, portfolioId, caption="", sortOrder=0, 
   if (!currentUser) throw new Error("กรุณาเข้าสู่ระบบก่อน");
   if (!file || !file.type.startsWith("image/")) throw new Error("กรุณาเลือกรูปภาพ");
 
-  // Convert supported static portfolio images to WebP consistently.
+  // Prefer WebP for static portfolio images, but never block a member upload
+  // when the browser cannot decode/convert the original JPG or PNG.
   // Animated GIF files are kept unchanged to preserve their animation.
-  const uploadFile = file.type === "image/gif"
+  const uploadFile = file.type === "image/gif" || file.type === "image/svg+xml"
     ? file
-    : await prepareStorageImageForUpload(file, { maxDimension: 2880, quality: 0.92, forceWebP: true });
-  if (!["image/webp","image/gif","image/svg+xml"].includes(uploadFile.type)) {
+    : await prepareStorageImageForUpload(file, { maxDimension: 2880, quality: 0.92, forceWebP: false });
+  if (!["image/webp","image/jpeg","image/png","image/gif","image/svg+xml"].includes(uploadFile.type)) {
     throw new Error("รองรับภาพ Portfolio เป็น JPG, PNG, WEBP, GIF หรือ SVG เท่านั้น");
   }
   const ext = (uploadFile.name.split(".").pop() || "jpg").toLowerCase();
