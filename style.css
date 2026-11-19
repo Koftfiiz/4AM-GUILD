@@ -8906,3 +8906,34 @@ body.gallery-lightbox-open{overflow:hidden}
 .portfolio-webp-migration-actions{display:flex;justify-content:flex-start;margin-top:16px;}
 .portfolio-webp-migration-actions .btn{min-height:44px;font-size:15px;}
 @media(max-width:640px){.portfolio-webp-migration-panel .panel-heading{flex-direction:column;}.portfolio-webp-migration-actions .btn{width:100%;}}
+
+
+/* War signup actions: green join, red withdraw, neutral closed state. */
+.war-signup-join-btn{
+  background:linear-gradient(110deg,#16713b,#239b54);
+  border:1px solid rgba(111,230,155,.55);
+  color:#fff;
+  font-weight:700;
+  box-shadow:0 4px 16px rgba(20,140,70,.22);
+}
+.war-signup-join-btn:hover:not(:disabled){
+  filter:brightness(1.12);
+  box-shadow:0 0 18px rgba(35,180,90,.32);
+  transform:translateY(-1px);
+}
+.war-signup-withdraw-btn{
+  background:linear-gradient(110deg,#721625,#b51f35);
+  border:1px solid rgba(240,100,120,.55);
+  color:#fff;
+}
+.war-signup-closed-btn{
+  background:rgba(120,120,120,.12);
+  border:1px solid rgba(160,160,160,.28);
+  color:#a8a8a8;
+  cursor:not-allowed;
+}
+.war-signup-own-status{min-width:150px}
+@media(max-width:700px){
+  .war-signup-action{align-items:stretch}
+  .war-signup-join-btn,.war-signup-withdraw-btn,.war-signup-closed-btn{width:100%}
+}
