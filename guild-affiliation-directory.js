@@ -56,6 +56,19 @@
       ".gd-modal[hidden]{display:none}.gd-history-list{display:grid;gap:9px;max-height:min(55vh,520px);overflow:auto}",
       ".gd-history-item{padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#151519}.gd-history-item strong{font-size:16px}.gd-history-item p{margin:5px 0 0;color:#aaa;font-size:15px;line-height:1.5}",
       ".gd-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.gd-detail{padding:12px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:#151519;min-width:0}.gd-detail span{display:block;color:#aaa;font-size:15px;margin-bottom:5px}.gd-detail strong{display:block;color:#fff;font-size:15px;overflow-wrap:anywhere}",
+      ".gd-record-status{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid rgba(76,211,127,.3);border-radius:999px;background:rgba(76,211,127,.08);color:#83e6a5;font-size:15px;font-weight:850;white-space:nowrap}",
+      ".gd-record-status.is-inactive{border-color:rgba(229,72,88,.3);background:rgba(229,72,88,.08);color:#f08c96}",
+      ".gd-record-status.is-manual{border-color:rgba(76,211,127,.3);background:rgba(76,211,127,.08);color:#83e6a5}",
+      ".gd-sequence{text-align:center;font-weight:800;color:#aaa}",
+      ".gd-class-panel{display:grid;gap:10px}.gd-legacy-quality-host{display:grid;gap:10px}",
+      ".gd-root .manual-member-quality-strip{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}",
+      ".gd-root .manual-member-class-summary{display:flex;flex-wrap:wrap;gap:9px}",
+      ".gd-root .member-admin-quality-card{min-height:78px;padding:12px;border:1px solid rgba(232,51,63,.25);border-radius:11px;background:rgba(255,255,255,.025);color:#fff;text-align:left;cursor:pointer}",
+      ".gd-root .member-admin-quality-card span{display:block;color:#aaa;font-size:15px}.gd-root .member-admin-quality-card strong{display:block;margin-top:5px;font-size:23px}",
+      ".gd-root .member-admin-quality-card.is-active{border-color:#e54858;background:rgba(229,72,88,.12)}",
+      "@media(max-width:900px){.gd-root .manual-member-quality-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}",
+      "@media(max-width:520px){.gd-root .manual-member-quality-strip{grid-template-columns:repeat(2,minmax(0,1fr))}"
+
       "@media(max-width:900px){.gd-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.gd-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}",
       "@media(max-width:520px){.gd-toolbar{grid-template-columns:1fr}.gd-panel{padding:14px}.gd-stats{gap:8px}.gd-stat strong{font-size:21px}.gd-detail-grid{grid-template-columns:1fr}}"
     ].join("");
@@ -91,8 +104,8 @@
             <button class="gd-button primary" type="submit">ค้นหา</button>
           </form>
           <div class="gd-table-wrap"><table class="gd-table"><thead><tr>
-            <th>ตัวละคร</th><th>ชื่อเล่น</th><th>คลาส</th><th>Discord</th><th>สังกัดกิลด์</th><th>ประเภทบัญชี</th><th>สถานะสมาชิก</th><th>จัดการ</th>
-          </tr></thead><tbody id="gd-rows"><tr><td colspan="8" class="gd-empty">กำลังโหลดข้อมูลสมาชิก...</td></tr></tbody></table></div>
+            <th>ลำดับ</th><th>ตัวละคร</th><th>ชื่อเล่น</th><th>คลาส</th><th>ตำแหน่งกิลด์</th><th>Discord Health</th><th>สังกัดกิลด์</th><th>สถานะสมาชิก</th><th>ออนไลน์</th><th>วันที่เข้าระบบ</th><th>จัดการ</th>
+          </tr></thead><tbody id="gd-rows"><tr><td colspan="11" class="gd-empty">กำลังโหลดข้อมูลสมาชิก...</td></tr></tbody></table></div>
           <div class="gd-pagination"><span class="gd-muted" id="gd-page-label" aria-live="polite">—</span><div class="gd-actions"><button class="gd-button" id="gd-prev" type="button">← ก่อนหน้า</button><button class="gd-button" id="gd-next" type="button">ถัดไป →</button></div></div>
         </section>
       </section>
@@ -192,7 +205,7 @@
     const key=keyForRequest(),cached=cache.get(key);
     if(!force&&cached&&Date.now()-cached.at<45_000){Object.assign(state,{rows:enrichDirectoryRows(cached.data.items||[]),total:cached.data.total||0,counts:cached.data.counts||null});renderStats(state.counts);renderRows();return;}
     state.busy=true;
-    if(tbody)tbody.innerHTML='<tr><td colspan="8" class="gd-empty">กำลังโหลดข้อมูลสมาชิก...</td></tr>';
+    if(tbody)tbody.innerHTML='<tr><td colspan="11" class="gd-empty">กำลังโหลดข้อมูลสมาชิก...</td></tr>';
     try{
       const {data,error}=await supabaseClient.rpc("get_guild_member_directory",{
         p_search:state.search||null,p_guild_filter:state.guild,p_class_filter:state.gameClass,
@@ -203,7 +216,7 @@
       cache.set(key,{at:Date.now(),data});renderStats(state.counts);renderRows();
     }catch(error){
       console.error("[Member Management Center]",error);
-      if(tbody)tbody.innerHTML='<tr><td colspan="8" class="gd-empty">ไม่สามารถโหลดข้อมูลสมาชิกได้: '+esc(error.message||"Unknown error")+'</td></tr>';
+      if(tbody)tbody.innerHTML='<tr><td colspan="11" class="gd-empty">ไม่สามารถโหลดข้อมูลสมาชิกได้: '+esc(error.message||"Unknown error")+'</td></tr>';
     }finally{
       state.busy=false;renderRows();
       if(directoryRealtimePending){directoryRealtimePending=false;queueDirectoryRealtimeRefresh();}
