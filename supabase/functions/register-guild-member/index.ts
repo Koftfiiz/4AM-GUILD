@@ -255,7 +255,7 @@ Deno.serve(async (req: Request) => {
     const ageValue = body.age;
     const allowedClasses = ["Ironclad", "Bloodstrom", "Celestune", "Numina", "Sylph", "Nightwaker", "Dragonsvelte", "Mystech"];
     if (!characterName || characterName.length > 40) return jsonResponse(400, { success: false, message: "กรุณากรอกชื่อตัวละครไม่เกิน 40 ตัวอักษร" });
-    if (!/^[0-9]{10,12}$/.test(gameUID)) return jsonResponse(400, { success: false, message: "Game UID ต้องเป็นตัวเลข 10–12 หลักเท่านั้น" });
+    if (!/^[0-9]{5,12}$/.test(gameUID)) return jsonResponse(400, { success: false, message: "Game UID ต้องเป็นตัวเลข 5–12 หลักเท่านั้น" });
     if (!allowedClasses.includes(gameClass)) return jsonResponse(400, { success: false, message: "ไม่พบ Class ที่ถูกต้อง" });
     if (!nickname || nickname.length > 40) return jsonResponse(400, { success: false, message: "กรุณากรอกชื่อเล่นไม่เกิน 40 ตัวอักษร" });
     let age: number | null = null;
