@@ -80,7 +80,7 @@
     const legacyOverview=$("portfolio-review-overview");
     const legacyMembers=document.querySelector("#page-portfolio-review-center .portfolio-review-list-panel");
     const legacyPortfolio=$("page-portfolio");
-    if(legacyPortfolio){const host=$("pc-legacy-portfolio-host");while(legacyPortfolio.firstChild)host?.appendChild(legacyPortfolio.firstChild);legacyPortfolio.classList.add("hidden");}
+    if(legacyPortfolio){const host=$("pc-legacy-portfolio-host");if(host){while(legacyPortfolio.firstChild)host.appendChild(legacyPortfolio.firstChild);}legacyPortfolio.classList.add("hidden");}
     if(legacyOverview)$("pc-legacy-overview-host")?.appendChild(legacyOverview);
     if(legacyMembers)$("pc-legacy-member-cards-host")?.appendChild(legacyMembers);
     document.querySelectorAll('.sidebar [data-page="'+LEGACY_PAGE+'"],.sidebar [data-page="'+REVIEW_PAGE+'"]').forEach(item=>item.remove());
@@ -417,6 +417,11 @@
     originalOpen.call(this,target);
     if(target===PAGE){
       showTab(portfolioTarget?"portfolio":reviewTarget?"queue":"overview");
+      document.querySelectorAll(".section-tab-navigation [data-go-page]").forEach(button=>{
+        const active=button.dataset.goPage===(portfolioTarget?"portfolio":PAGE);
+        button.classList.toggle("is-active",active);
+        if(active)button.setAttribute("aria-current","page");else button.removeAttribute("aria-current");
+      });
       state.search=reviewTarget?($("pc-queue-search")?.value.trim()||""):"";
       state.status=reviewTarget?($("pc-queue-status")?.value||"all"):"all";
       state.page=0;
