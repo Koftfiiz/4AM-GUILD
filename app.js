@@ -6463,7 +6463,7 @@ function openWarSignupTimePicker(){
   const existing=wrapper.querySelector(".war-time-picker-popover");
   if(existing){existing.remove();return;}
   document.querySelectorAll(".war-time-picker-popover").forEach(panel=>panel.remove());
-  const current=/^([01]\\d|2[0-3]):[0-5]\\d$/.test(input.value)?input.value:"20:00";
+  const current=/^([01]\d|2[0-3]):[0-5]\d$/.test(input.value)?input.value:"20:00";
   const [currentHour,currentMinute]=current.split(":");
   const hourOptions=Array.from({length:24},(_,i)=>String(i).padStart(2,"0")).map(v=>'<option value="'+v+'"'+(v===currentHour?" selected":"")+'>'+v+'</option>').join("");
   const minuteOptions=Array.from({length:60},(_,i)=>String(i).padStart(2,"0")).map(v=>'<option value="'+v+'"'+(v===currentMinute?" selected":"")+'>'+v+'</option>').join("");
@@ -6579,7 +6579,7 @@ async function createWarSignupEvent(form){
   const description=$("war-signup-description").value.trim(),editId=$("war-signup-edit-id").value;
   const openDate=parseDisplayDateTime(opens),closeDate=parseDisplayDateTime(closes),showError=t=>{message.textContent=t;message.className="message error";};
   if(!name||!date||!startTime||!opens||!closes){showError("กรุณากรอกข้อมูลที่จำเป็นให้ครบ");return;}
-  if(type==="practice"&&!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(startTime)){
+  if(type==="practice"&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(startTime)){
     showError("กรุณาเลือกเวลาเริ่มวอร์ระหว่าง 00:00–23:59 ในรูปแบบ HH:mm");
     return;
   }
@@ -6647,7 +6647,7 @@ function registerWarRecordAndAttendanceEvents(){
     const display=$("war-signup-start-time-display"),hidden=$("war-signup-start-time");
     if(!display||!hidden||$("war-signup-type")?.value!=="practice")return;
     const value=String(display.value||"").trim();
-    if(/^([01]\\d|2[0-3]):[0-5]\\d$/.test(value))hidden.value=value;
+    if(/^([01]\d|2[0-3]):[0-5]\d$/.test(value))hidden.value=value;
   };
   $("war-signup-start-time-display")?.addEventListener("click",()=>openWarSignupTimePicker());
   $("war-signup-start-time-display")?.addEventListener("keydown",event=>{
