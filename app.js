@@ -113,14 +113,14 @@ const AVATAR_BUCKET = "character-avatars";
 const PORTFOLIO_BUCKET = "portfolio-images";
 
 const CLASS_DATA = [
-  { name: "Ironclad", color: "#e6b84f", iconPath: "assets/class-icon/Ironclad.png" },
-  { name: "Bloodstrom", color: "#e54858", iconPath: "assets/class-icon/Bloodstrom.png" },
-  { name: "Celestune", color: "#477be8", iconPath: "assets/class-icon/Celestune.png" },
-  { name: "Numina", color: "#9b83df", iconPath: "assets/class-icon/Numina.png" },
-  { name: "Sylph", color: "#dfa6ce", iconPath: "assets/class-icon/Sylph.png" },
-  { name: "Nightwaker", color: "#9ce8ea", iconPath: "assets/class-icon/Nightwaker.png" },
-  { name: "Dragonsvelte", color: "#42c98e", iconPath: "assets/class-icon/Dragonsvelte.png" },
-  { name: "Mystech", color: "#f2dc83", iconPath: "assets/class-icon/Mystech.png" }
+  { name: "Ironclad", color: "#e6b84f", iconPath: "/assets/class-icon/Ironclad.png" },
+  { name: "Bloodstrom", color: "#e54858", iconPath: "/assets/class-icon/Bloodstrom.png" },
+  { name: "Celestune", color: "#477be8", iconPath: "/assets/class-icon/Celestune.png" },
+  { name: "Numina", color: "#9b83df", iconPath: "/assets/class-icon/Numina.png" },
+  { name: "Sylph", color: "#dfa6ce", iconPath: "/assets/class-icon/Sylph.png" },
+  { name: "Nightwaker", color: "#9ce8ea", iconPath: "/assets/class-icon/Nightwaker.png" },
+  { name: "Dragonsvelte", color: "#42c98e", iconPath: "/assets/class-icon/Dragonsvelte.png" },
+  { name: "Mystech", color: "#f2dc83", iconPath: "/assets/class-icon/Mystech.png" }
 ];
 
 // ตำแหน่งภายในกิลด์ 4AM เรียงจากสูงสุดไปต่ำสุด
