@@ -157,6 +157,7 @@ Deno.serve(async (request) => {
       if (gameClass === "ironclad") return "Tank";
       if (gameClass === "sylph") return "Healer";
       if (gameClass === "bloodstrom") return "Bloodstrom";
+      if (gameClass === "mystech") return "DPS";
       return "DPS";
     };
     const roleOrder = ["Tank", "DPS", "Bloodstrom", "Healer"];
