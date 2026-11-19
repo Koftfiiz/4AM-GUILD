@@ -67,16 +67,20 @@
   function ensurePage() {
     const page = $("page-member-management");
     if (!page || $("member-admin-affiliation-panel")) return;
+    const legacyQuality = page.querySelector("#manual-member-quality-strip");
+    const legacyClassHeading = page.querySelector(".manual-member-class-summary-heading");
+    const legacyClassSummary = page.querySelector("#manual-member-class-summary");
     page.querySelector(".member-admin-overview")?.classList.add("hidden");
     page.querySelector(".manual-member-list-panel")?.classList.add("hidden");
     const addTrigger = $("manual-member-add-trigger");
     if (addTrigger) addTrigger.classList.add("gd-add-member-trigger");
-    const oldTabs = page.querySelector(".section-tab-navigation");
-    if (oldTabs) oldTabs.classList.add("hidden");
+    // Keep the shared section navigation visible for switching between the
+    // public directory and this management-only center.
     page.insertAdjacentHTML("beforeend", `
       <section id="member-admin-affiliation-panel" class="gd-root" aria-label="ศูนย์จัดการสมาชิก">
         <div class="gd-head"><div><span class="section-kicker">MEMBER MANAGEMENT CENTER</span><h2>ศูนย์จัดการสมาชิก</h2><p class="gd-muted">จัดการข้อมูลสมาชิก สังกัดกิลด์</p></div><button class="gd-button" id="gd-refresh" type="button">↻ รีเฟรช</button></div>
-        <section class="gd-stats" id="gd-stats" aria-live="polite"></section>
+        <section class="gd-legacy-quality-host" id="gd-quality-host" aria-label="สรุปสถานะสมาชิก"></section>
+        <section class="gd-panel gd-class-panel"><div id="gd-class-heading-host"></div><div id="gd-class-summary-host"></div></section>
         <section class="gd-panel">
           <div class="gd-head"><div><h2>รายชื่อสมาชิกทั้งหมด</h2><p class="gd-muted">ค้นหา กรอง และจัดการข้อมูลสมาชิกจากรายการเดียว</p></div></div>
           <form class="gd-toolbar" id="gd-filter-form">
@@ -99,6 +103,9 @@
       </section></div>
       <div class="gd-modal" id="gd-modal" hidden><form class="gd-dialog" id="gd-assign-form" role="dialog" aria-modal="true" aria-labelledby="gd-assign-title"><h2 id="gd-assign-title">เปลี่ยนสังกัดกิลด์</h2><p class="gd-muted" id="gd-member-label"></p><label>สังกัดใหม่<select class="gd-field" id="gd-new-guild" required><option value="">เลือกสังกัด</option><option value="4AM">4AM</option><option value="4PM">4PM</option></select></label><label>เหตุผลในการเปลี่ยนสังกัด<input class="gd-field" id="gd-reason" maxlength="160" placeholder="ระบุเหตุผล (ไม่บังคับ)"></label><p class="gd-status" id="gd-assign-status" role="status" aria-live="polite"></p><div class="gd-dialog-actions"><button class="gd-button" id="gd-cancel" type="button">ยกเลิก</button><button class="gd-button primary" id="gd-save" type="submit">บันทึกข้อมูล</button></div></form></div>
       <div class="gd-modal" id="gd-history-modal" hidden><section class="gd-dialog" role="dialog" aria-modal="true" aria-labelledby="gd-history-title"><h2 id="gd-history-title">ประวัติการเปลี่ยนสังกัด</h2><p class="gd-muted" id="gd-history-member"></p><div class="gd-history-list" id="gd-history-list" aria-live="polite"><p class="gd-muted">กำลังโหลดประวัติ...</p></div><div class="gd-dialog-actions"><button class="gd-button" id="gd-history-close" type="button">ปิด</button></div></section></div>`);
+    if (legacyQuality) $("gd-quality-host")?.append(legacyQuality);
+    if (legacyClassHeading) $("gd-class-heading-host")?.append(legacyClassHeading);
+    if (legacyClassSummary) $("gd-class-summary-host")?.append(legacyClassSummary);
     styles();
     bindEvents();
   }
