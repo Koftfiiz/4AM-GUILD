@@ -3,7 +3,7 @@
 
   const PAGE = "member-management";
   const LEGACY_PAGE = "guild-directory";
-  const PAGE_SIZE = 100;
+  const PAGE_SIZE = 50;
   const cache = new Map();
   const state = { search:"", guild:"all", gameClass:"all", recordType:"all", healthFilter:"all", page:0, rows:[], suspendedRows:[], total:0, counts:null, busy:false };
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
