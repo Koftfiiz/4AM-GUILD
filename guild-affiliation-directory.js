@@ -3,7 +3,7 @@
 
   const PAGE = "member-management";
   const LEGACY_PAGE = "guild-directory";
-  const PAGE_SIZE = 50;
+  const PAGE_SIZE = 100;
   const cache = new Map();
   const state = { search:"", guild:"all", gameClass:"all", recordType:"all", healthFilter:"all", page:0, rows:[], total:0, counts:null, busy:false };
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
@@ -67,7 +67,7 @@
       ".gd-root .member-admin-quality-card span{display:block;color:#aaa;font-size:15px}.gd-root .member-admin-quality-card strong{display:block;margin-top:5px;font-size:23px}",
       ".gd-root .member-admin-quality-card.is-active{border-color:#e54858;background:rgba(229,72,88,.12)}",
       "@media(max-width:900px){.gd-root .manual-member-quality-strip{grid-template-columns:repeat(3,minmax(0,1fr))}}",
-      "@media(max-width:520px){.gd-root .manual-member-quality-strip{grid-template-columns:repeat(2,minmax(0,1fr))}"
+      "@media(max-width:520px){.gd-root .manual-member-quality-strip{grid-template-columns:repeat(2,minmax(0,1fr))}}",
 
       "@media(max-width:900px){.gd-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.gd-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}",
       "@media(max-width:520px){.gd-toolbar{grid-template-columns:1fr}.gd-panel{padding:14px}.gd-stats{gap:8px}.gd-stat strong{font-size:21px}.gd-detail-grid{grid-template-columns:1fr}}"
