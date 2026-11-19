@@ -3003,7 +3003,7 @@ async function updateManualGuildMemberStatus(id) {
   const member = manualGuildMembers.find(item => item.id === id);
   if (!member) return;
   const { data, error } = await supabaseClient.from("guild_manual_members")
-    .update({ active: !member.active, updated_by: currentUser.id, updated_at: new Date().toISOString() })
+    .update({ active: !member.active })
     .eq("id", id).select("*").single();
   if (error) { alert("เปลี่ยนสถานะไม่สำเร็จ: " + error.message); return; }
   Object.assign(member, data);
