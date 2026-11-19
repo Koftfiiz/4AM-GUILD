@@ -1,6 +1,6 @@
 (() => {
   "use strict";
-  const PAGE="patch-command-center", REVIEW_PAGE="patch-review-queue", PAGE_SIZE=50;
+  const PAGE="portfolio-review-center", LEGACY_PAGE="patch-command-center", REVIEW_PAGE="patch-review-queue", PAGE_SIZE=50;
   const state={roundId:null,tab:"overview",search:"",status:"all",page:0,data:null,busy:false,workspace:null,workspaceTab:"overview",reviewTarget:null};
   const $=id=>document.getElementById(id);
   const esc=value=>String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -32,30 +32,14 @@
     document.head.appendChild(style);
   }
 
-  if (typeof PAGE_TITLES !== "undefined") PAGE_TITLES[PAGE] = "Patch Submission Command Center";
+  if (typeof PAGE_TITLES !== "undefined") PAGE_TITLES[PAGE] = "ศูนย์ตรวจสอบแฟ้ม";
   function ensurePage(){
-    const existingPage=$("page-patch-command-center");
-    const directoryNav=document.querySelector('.sidebar .nav-item[data-page="guild-directory"]');
-    const memberNav=document.querySelector('.sidebar .nav-item[data-page="members"]');
-    const nav=directoryNav?.parentElement||memberNav?.parentElement;
-    if(nav&&!document.querySelector('.sidebar .nav-item[data-page="'+PAGE+'"]')){
-      const button=document.createElement("button");button.type="button";button.className="nav-item management-only is-role-hidden";button.dataset.page=PAGE;button.dataset.managementOnly="";button.setAttribute("aria-hidden","true");
-      button.innerHTML='<svg class="icon"><use href="#i-folder-image"/></svg><span>Patch Command Center</span>';
-      (directoryNav||memberNav).insertAdjacentElement("afterend",button);
-      button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();window.openGuildPage(PAGE);});
-    }
-    const commandNav=document.querySelector('.sidebar .nav-item[data-page="'+PAGE+'"]');
-    if(commandNav&&!document.querySelector('.sidebar .nav-item[data-page="'+REVIEW_PAGE+'"]')){
-      const button=document.createElement("button");button.type="button";button.className="nav-item management-only is-role-hidden";button.dataset.page=REVIEW_PAGE;button.dataset.managementOnly="";button.setAttribute("aria-hidden","true");
-      button.innerHTML='<svg class="icon"><use href="#i-shield-check"/></svg><span>Review Queue</span>';
-      commandNav.insertAdjacentElement("afterend",button);
-      button.addEventListener("click",event=>{event.preventDefault();event.stopPropagation();window.openGuildPage(REVIEW_PAGE);});
-    }
-    if(existingPage)return;
-    const main=document.querySelector(".main-area");if(!main)return;
-    const page=document.createElement("section");page.id="page-patch-command-center";page.className="page page-padded hidden";
-    page.innerHTML=`
-      <div class="page-intro"><span class="section-kicker">PATCH OPERATIONS</span><h1>PATCH SUBMISSION COMMAND CENTER</h1><p>ศูนย์ควบคุมการส่งแฟ้ม ตรวจสอบสถานะ และจัดการประวัติ Patch ของสมาชิก 4AM</p></div>
+    const page=$("page-portfolio-review-center");
+    if(!page)return;
+    if($("patch-command-center-root"))return;
+    const root=document.createElement("div");
+    root.id="patch-command-center-root";
+    root.innerHTML=`
       <div class="pc-root">
         <section class="pc-panel">
           <div class="pc-head"><div><span class="pc-kicker">ACTIVE PATCH</span><h2 id="pc-round-title">กำลังโหลด Patch...</h2><p class="pc-muted" id="pc-round-dates">—</p></div><div class="pc-toolbar"><select class="pc-field" id="pc-round-select" aria-label="เลือก Patch"></select><button class="pc-btn" id="pc-refresh" type="button">↻ รีเฟรช</button></div></div>
@@ -71,23 +55,39 @@
           </form>
           <p class="pc-muted" id="pc-create-status" role="status" aria-live="polite"></p>
         </section>
-        <nav class="pc-tabs" aria-label="Patch Command Center"><button class="pc-tab active" data-pc-tab="overview">ภาพรวม</button><button class="pc-tab" data-pc-tab="members">สมาชิก / Workspace</button><button class="pc-tab" data-pc-tab="queue">Review Queue</button><button class="pc-tab" data-pc-tab="history">Patch History</button></nav>
+        <nav class="pc-tabs" aria-label="ศูนย์ตรวจสอบแฟ้ม">
+          <button class="pc-tab active" data-pc-tab="overview" type="button">ภาพรวม</button>
+          <button class="pc-tab" data-pc-tab="members" type="button">สมาชิก</button>
+          <button class="pc-tab" data-pc-tab="queue" type="button">คิวตรวจสอบ</button>
+          <button class="pc-tab" data-pc-tab="history" type="button">ประวัติ Patch</button>
+        </nav>
         <section id="pc-view-overview" class="pc-view">
           <div class="pc-stats" id="pc-stats"></div>
           <div class="pc-split" style="margin-top:14px"><section class="pc-panel"><div class="pc-head"><div><h2>ต้องติดตาม</h2><p class="pc-muted">สมาชิกที่ยังไม่ส่งหรือมีรายการต้องแก้ไข</p></div></div><div id="pc-attention" class="pc-list"></div></section><section class="pc-panel"><div class="pc-head"><div><h2>กิจกรรมล่าสุด</h2><p class="pc-muted">การเปลี่ยนสถานะ Submission</p></div></div><div id="pc-activity" class="pc-list"></div></section></div>
+          <div id="pc-legacy-overview-host"></div>
         </section>
-        <section id="pc-view-members" class="pc-view pc-hidden"><section class="pc-panel"><div class="pc-head"><div><h2>Patch Member Roster</h2><p class="pc-muted">Snapshot สมาชิก 4AM ณ เวลาเริ่ม Patch และสมาชิกที่ย้ายเข้า 4AM ระหว่าง Patch</p></div></div><div class="pc-toolbar"><input class="pc-field" id="pc-member-search" maxlength="80" placeholder="ค้นหาสมาชิก"><select class="pc-field" id="pc-member-status"><option value="all">ทุกสถานะ</option><option value="not_submitted">ยังไม่ส่ง</option><option value="partial">ส่งไม่ครบ</option><option value="pending">รอตรวจ</option><option value="reviewing">กำลังตรวจ</option><option value="approved">ผ่านแล้ว</option><option value="revision_required">ต้องแก้ไข</option></select><button class="pc-btn" id="pc-member-search-btn" type="button">ค้นหา</button></div><div class="pc-table-wrap"><table class="pc-table"><thead><tr><th>สมาชิก</th><th>Class</th><th>Roster Source</th><th>แฟ้มทั้งหมด</th><th>ส่งแล้ว</th><th>สถานะ</th><th></th></tr></thead><tbody id="pc-member-rows"></tbody></table></div><div class="pc-toolbar" style="justify-content:space-between;margin-top:12px"><span class="pc-muted" id="pc-member-page-label">—</span><div class="pc-toolbar"><button class="pc-btn" id="pc-member-prev" type="button">← ก่อนหน้า</button><button class="pc-btn" id="pc-member-next" type="button">ถัดไป →</button></div></div></section></section>
-        <section id="pc-view-queue" class="pc-view pc-hidden"><section class="pc-panel"><div class="pc-head"><div><h2>Review Queue</h2><p class="pc-muted">ตรวจสอบ Submission ทีละรายการ พร้อมบันทึกผลและเหตุผลการแก้ไข</p></div></div><div class="pc-toolbar"><input class="pc-field" id="pc-queue-search" maxlength="80" placeholder="ค้นหาสมาชิกหรือชื่อแฟ้ม"><select class="pc-field" id="pc-queue-status"><option value="all">ทุกสถานะ</option><option value="pending">รอตรวจ</option><option value="reviewing">กำลังตรวจ</option><option value="approved">ผ่านแล้ว</option><option value="revision_required">ต้องแก้ไข</option></select><button class="pc-btn" id="pc-queue-search-btn" type="button">ค้นหา</button></div><div class="pc-table-wrap"><table class="pc-table"><thead><tr><th>สมาชิก</th><th>แฟ้ม</th><th>Version</th><th>วันที่ส่ง</th><th>สถานะ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody id="pc-queue-rows"></tbody></table></div><div class="pc-muted" id="pc-queue-count"></div><div class="pc-pagination"><span class="pc-muted" id="pc-queue-page-label">—</span><div class="pc-toolbar"><button class="pc-btn" id="pc-queue-prev" type="button">← ก่อนหน้า</button><button class="pc-btn" id="pc-queue-next" type="button">ถัดไป →</button></div></div></section></section>
-        <section id="pc-view-history" class="pc-view pc-hidden"><section class="pc-panel"><div class="pc-head"><div><h2>Patch History & Archive</h2><p class="pc-muted">ดูรอบก่อนหน้าและเรียกดู Snapshot เดิม โดยไม่แก้ไขข้อมูลสมาชิกในประวัติ</p></div></div><div id="pc-history-list" class="pc-list"></div></section></section>
+        <section id="pc-view-members" class="pc-view pc-hidden">
+          <section class="pc-panel"><div class="pc-head"><div><h2>สมาชิกใน Patch</h2><p class="pc-muted">Snapshot สมาชิก 4AM ณ เวลาเริ่ม Patch และสมาชิกที่ย้ายเข้า 4AM ระหว่าง Patch</p></div></div><div class="pc-toolbar"><input class="pc-field" id="pc-member-search" maxlength="80" placeholder="ค้นหาสมาชิก"><select class="pc-field" id="pc-member-status"><option value="all">ทุกสถานะ</option><option value="not_submitted">ยังไม่ส่ง</option><option value="partial">ส่งไม่ครบ</option><option value="pending">รอตรวจ</option><option value="reviewing">กำลังตรวจ</option><option value="approved">ผ่านแล้ว</option><option value="revision_required">ต้องแก้ไข</option></select><button class="pc-btn" id="pc-member-search-btn" type="button">ค้นหา</button></div><div class="pc-table-wrap"><table class="pc-table"><thead><tr><th>สมาชิก</th><th>Class</th><th>Roster Source</th><th>แฟ้มทั้งหมด</th><th>ส่งแล้ว</th><th>สถานะ</th><th></th></tr></thead><tbody id="pc-member-rows"></tbody></table></div><div class="pc-toolbar" style="justify-content:space-between;margin-top:12px"><span class="pc-muted" id="pc-member-page-label">—</span><div class="pc-toolbar"><button class="pc-btn" id="pc-member-prev" type="button">← ก่อนหน้า</button><button class="pc-btn" id="pc-member-next" type="button">ถัดไป →</button></div></div></section>
+          <div id="pc-legacy-member-cards-host"></div>
+        </section>
+        <section id="pc-view-queue" class="pc-view pc-hidden"><section class="pc-panel"><div class="pc-head"><div><h2>คิวตรวจสอบ Submission</h2><p class="pc-muted">ตรวจสอบ Submission ทีละรายการ พร้อมบันทึกผลและเหตุผลการแก้ไข</p></div></div><div class="pc-toolbar"><input class="pc-field" id="pc-queue-search" maxlength="80" placeholder="ค้นหาสมาชิกหรือชื่อแฟ้ม"><select class="pc-field" id="pc-queue-status"><option value="all">ทุกสถานะ</option><option value="pending">รอตรวจ</option><option value="reviewing">กำลังตรวจ</option><option value="approved">ผ่านแล้ว</option><option value="revision_required">ต้องแก้ไข</option></select><button class="pc-btn" id="pc-queue-search-btn" type="button">ค้นหา</button></div><div class="pc-table-wrap"><table class="pc-table"><thead><tr><th>สมาชิก</th><th>แฟ้ม</th><th>Version</th><th>วันที่ส่ง</th><th>สถานะ</th><th>หมายเหตุ</th><th></th></tr></thead><tbody id="pc-queue-rows"></tbody></table></div><div class="pc-muted" id="pc-queue-count"></div><div class="pc-pagination"><span class="pc-muted" id="pc-queue-page-label">—</span><div class="pc-toolbar"><button class="pc-btn" id="pc-queue-prev" type="button">← ก่อนหน้า</button><button class="pc-btn" id="pc-queue-next" type="button">ถัดไป →</button></div></div></section></section>
+        <section id="pc-view-history" class="pc-view pc-hidden"><section class="pc-panel"><div class="pc-head"><div><h2>ประวัติ Patch</h2><p class="pc-muted">ดูรอบก่อนหน้าและเรียกดู Snapshot เดิม โดยไม่แก้ไขข้อมูลสมาชิกในประวัติ</p></div></div><div id="pc-history-list" class="pc-list"></div></section></section>
         <section id="pc-workspace" class="pc-panel pc-hidden"></section>
       </div>
       <div class="pc-modal pc-hidden" id="pc-review-modal"><form class="pc-dialog" id="pc-review-form"><h2>ตรวจสอบ Patch Submission</h2><p class="pc-muted" id="pc-review-member"></p><label>ผลการตรวจ<select class="pc-field" id="pc-review-status"><option value="reviewing">กำลังตรวจ</option><option value="approved">ผ่านแล้ว</option><option value="revision_required">ต้องแก้ไข</option></select></label><label id="pc-review-note-wrap">หมายเหตุ / สิ่งที่ต้องแก้ไข<textarea class="pc-field" id="pc-review-note" rows="3" maxlength="1000" placeholder="ระบุรายละเอียดเมื่อเลือกต้องแก้ไข"></textarea></label><p class="pc-muted" id="pc-review-error" role="status"></p><div class="pc-dialog-actions"><button class="pc-btn" id="pc-review-cancel" type="button">ยกเลิก</button><button class="pc-btn primary" id="pc-review-save" type="submit">บันทึกผลตรวจ</button></div></form></div>`;
-    main.appendChild(page);injectStyles();bindEvents();
+    page.appendChild(root);
+    const legacyOverview=$("portfolio-review-overview");
+    const legacyMembers=document.querySelector("#page-portfolio-review-center .portfolio-review-list-panel");
+    if(legacyOverview)$("pc-legacy-overview-host")?.appendChild(legacyOverview);
+    if(legacyMembers)$("pc-legacy-member-cards-host")?.appendChild(legacyMembers);
+    document.querySelectorAll('.sidebar [data-page="'+LEGACY_PAGE+'"],.sidebar [data-page="'+REVIEW_PAGE+'"]').forEach(item=>item.remove());
+    injectStyles();
+    bindEvents();
   }
 
   function showTab(tab){
     state.tab=tab;
-    document.querySelectorAll("[data-pc-tab]").forEach(b=>b.classList.toggle("active",b.dataset.pcTab===tab));
+    document.querySelectorAll("#patch-command-center-root [data-pc-tab]").forEach(b=>b.classList.toggle("active",b.dataset.pcTab===tab));
     ["overview","members","queue","history"].forEach(v=>$("pc-view-"+v)?.classList.toggle("pc-hidden",v!==tab));
     $("pc-workspace")?.classList.add("pc-hidden");
   }
@@ -377,7 +377,7 @@
   }
 
   function bindEvents(){
-    document.querySelectorAll("[data-pc-tab]").forEach(b=>b.addEventListener("click",()=>{showTab(b.dataset.pcTab);if(b.dataset.pcTab==="queue"){state.search=$("pc-queue-search").value.trim();state.status=$("pc-queue-status").value;state.page=0;void loadCommandCenter(true)}else if(b.dataset.pcTab==="members"){state.search=$("pc-member-search").value.trim();state.status=$("pc-member-status").value;state.page=0;void loadCommandCenter(true)}else{state.search="";state.status="all";state.page=0;void loadCommandCenter(true)}}));
+    document.querySelectorAll("#patch-command-center-root [data-pc-tab]").forEach(b=>b.addEventListener("click",()=>{showTab(b.dataset.pcTab);if(b.dataset.pcTab==="queue"){state.search=$("pc-queue-search").value.trim();state.status=$("pc-queue-status").value;state.page=0;void loadCommandCenter(true)}else if(b.dataset.pcTab==="members"){state.search=$("pc-member-search").value.trim();state.status=$("pc-member-status").value;state.page=0;void loadCommandCenter(true)}else{state.search="";state.status="all";state.page=0;void loadCommandCenter(true)}}));
     $("pc-round-select")?.addEventListener("change",e=>setRound(e.target.value));
     $("pc-refresh")?.addEventListener("click",()=>void loadCommandCenter(true));
     $("pc-toggle-create")?.addEventListener("click",()=>{$("pc-create-form").classList.toggle("pc-hidden");$("pc-toggle-create").textContent=$("pc-create-form").classList.contains("pc-hidden")?"แสดงแบบฟอร์ม":"ซ่อนแบบฟอร์ม"});
@@ -406,7 +406,8 @@
   const originalOpen=window.openGuildPage||openGuildPage;
   window.openGuildPage=function(pageName){
     const reviewTarget=pageName===REVIEW_PAGE;
-    let target=reviewTarget?PAGE:pageName;
+    const legacyPatchTarget=pageName===LEGACY_PAGE;
+    let target=(reviewTarget||legacyPatchTarget)?PAGE:pageName;
     if(target===PAGE&&!allowed())target="dashboard";
     originalOpen.call(this,target);
     if(target===PAGE){
@@ -415,10 +416,8 @@
       state.status=reviewTarget?($("pc-queue-status")?.value||"all"):"all";
       state.page=0;
       activate();
-      document.querySelector('.sidebar .nav-item[data-page="'+PAGE+'"]')?.classList.toggle("active",!reviewTarget);
-      document.querySelector('.sidebar .nav-item[data-page="'+REVIEW_PAGE+'"]')?.classList.toggle("active",reviewTarget);
     }
   };
   ensurePage();
-  window.addEventListener("4am:app-ready",()=>{if(typeof syncManagementMenuVisibility==="function")syncManagementMenuVisibility();if($("page-patch-command-center")&&!$("page-patch-command-center").classList.contains("hidden"))activate();});
+  window.addEventListener("4am:app-ready",()=>{if(typeof syncManagementMenuVisibility==="function")syncManagementMenuVisibility();if($("page-portfolio-review-center")&&!$("page-portfolio-review-center").classList.contains("hidden"))activate();});
 })();
