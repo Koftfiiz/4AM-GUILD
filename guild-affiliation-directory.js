@@ -144,26 +144,43 @@
   function renderRows() {
     const tbody = $("gd-rows");
     if (!tbody) return;
-    if (!state.rows.length) {
-      tbody.innerHTML = '<tr><td colspan="8" class="gd-empty">ไม่พบสมาชิกที่ตรงกับเงื่อนไข</td></tr>';
+    const filteredRows = state.rows.filter(row => {
+      if (state.healthFilter === "incomplete") return !row.game_uid || !row.nickname || !row.guild_position;
+      return state.healthFilter === "all" || row.discordHealth?.key === state.healthFilter;
+    });
+    if (!filteredRows.length) {
+      tbody.innerHTML = '<tr><td colspan="11" class="gd-empty">ไม่พบสมาชิกที่ตรงกับเงื่อนไข</td></tr>';
     } else {
-      tbody.innerHTML = state.rows.map((row,index) => {
+      tbody.innerHTML = filteredRows.map((row,index) => {
         const identity = row.member_id || row.manual_member_id;
         const guildClass = row.guild_code === "4AM" ? "am" : row.guild_code === "4PM" ? "pm" : "none";
         const guildLabel = row.guild_code || "ยังไม่ระบุสังกัด";
-        const statusLabel = row.record_type === "manual" ? "Manual" : (row.membership_status || (row.active ? "Active" : "Inactive"));
-        const buttons = '<button class="gd-button" type="button" data-gd-detail="'+index+'">ข้อมูลสมาชิก</button>'+
-          (canAssign() ? '<button class="gd-button" type="button" data-gd-assign="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">เปลี่ยนสังกัด</button>' : '')+
+        const cls = typeof getClassInfo === "function" ? getClassInfo(row.game_class) : null;
+        const statusLabel = row.record_type === "manual" ? "Manual" : (row.active === false ? "Inactive" : "Active");
+        const statusClass = row.record_type === "manual" ? "is-manual" : (row.active === false ? "is-inactive" : "is-active");
+        const health = row.discordHealth || {label:"ตรวจสอบไม่ได้",tone:"muted"};
+        const presence = row.record_type === "account" && typeof renderGuildPresenceStatus === "function"
+          ? renderGuildPresenceStatus(row.member_id)
+          : '<span class="guild-presence-status is-offline"><span class="guild-presence-dot"></span>ออฟไลน์</span>';
+        const buttons = '<button class="gd-button" type="button" data-gd-detail="'+index+'">ข้อมูลสมาชิก</button>' +
+          (canAssign() ? '<button class="gd-button" type="button" data-gd-position="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">ตำแหน่งกิลด์</button>' : '') +
+          (canAssign() ? '<button class="gd-button" type="button" data-gd-assign="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">เปลี่ยนสังกัด</button>' : '') +
           ((canAssign() || (row.record_type==="account" && String(currentUser?.id)===String(row.member_id))) ? '<button class="gd-button" type="button" data-gd-history="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">ดูประวัติ</button>' : '');
-        return '<tr><td><span class="gd-name">'+esc(row.character_name||"—")+'</span></td>'+
-          '<td>'+esc(row.nickname||"—")+'</td><td>'+esc(row.game_class||"—")+'</td><td>'+esc(row.discord_name||"—")+'</td>'+
-          '<td><span class="gd-pill '+guildClass+'">'+esc(guildLabel)+'</span></td>'+
-          '<td><span class="gd-pill '+(row.record_type==="manual"?"manual":"")+'">'+(row.record_type==="manual"?"Manual":"บัญชีเว็บไซต์")+'</span></td>'+
-          '<td>'+esc(statusLabel)+'</td><td><div class="gd-actions">'+buttons+'</div></td></tr>';
+        return '<tr><td class="gd-sequence">'+(state.page*PAGE_SIZE+index+1).toLocaleString("th-TH")+'</td>' +
+          '<td><span class="gd-name">'+esc(row.character_name||"—")+'</span></td>' +
+          '<td>'+esc(row.nickname||"—")+'</td>' +
+          '<td><span class="manual-member-class" style="--class-color:'+esc(cls?.color||"#aaa")+'">'+esc(row.game_class||"—")+'</span></td>' +
+          '<td>'+esc(row.guild_position||"ยังไม่ได้กำหนด")+'</td>' +
+          '<td><span class="member-admin-health-pill is-'+esc(health.tone||"muted")+'">'+esc(health.label||"ตรวจสอบไม่ได้")+'</span></td>' +
+          '<td><span class="gd-pill '+guildClass+'">'+esc(guildLabel)+'</span></td>' +
+          '<td><span class="gd-record-status '+statusClass+'">'+esc(statusLabel)+'</span></td>' +
+          '<td>'+presence+'</td><td>'+esc(formatBangkokDateTime(row.created_at))+'</td>' +
+          '<td><div class="gd-actions">'+buttons+'</div></td></tr>';
       }).join("");
     }
     const pages=Math.max(1,Math.ceil(state.total/PAGE_SIZE));
-    $("gd-page-label").textContent="แสดง "+(state.total?state.page*PAGE_SIZE+1:0)+"–"+Math.min((state.page+1)*PAGE_SIZE,state.total)+" จาก "+state.total+" รายชื่อ · หน้า "+(state.page+1)+" / "+pages;
+    const visibleTotal = state.healthFilter === "all" ? state.total : filteredRows.length;
+    $("gd-page-label").textContent="แสดง "+(filteredRows.length?state.page*PAGE_SIZE+1:0)+"–"+Math.min((state.page+1)*PAGE_SIZE,visibleTotal)+" จาก "+visibleTotal+" รายชื่อ · หน้า "+(state.page+1)+" / "+pages;
     $("gd-prev").disabled=state.page<=0||state.busy;
     $("gd-next").disabled=(state.page+1)*PAGE_SIZE>=state.total||state.busy;
   }
