@@ -49,6 +49,21 @@ begin
     raise exception 'Patch roster must be unique per round/member';
   end if;
 
+  if has_table_privilege('anon','public.portfolio_patch_roster','INSERT')
+     or has_table_privilege('anon','public.portfolio_patch_roster','UPDATE')
+     or has_table_privilege('anon','public.portfolio_patch_roster','DELETE')
+     or has_table_privilege('authenticated','public.portfolio_patch_roster','INSERT')
+     or has_table_privilege('authenticated','public.portfolio_patch_roster','UPDATE')
+     or has_table_privilege('authenticated','public.portfolio_patch_roster','DELETE')
+     or has_table_privilege('authenticated','public.portfolio_patch_roster','TRUNCATE') then
+    raise exception 'Patch roster must remain immutable to client roles';
+  end if;
+
+  if has_function_privilege('anon','public.snapshot_due_patch_rosters()','EXECUTE')
+     or has_function_privilege('authenticated','public.snapshot_due_patch_rosters()','EXECUTE') then
+    raise exception 'Internal Patch snapshot worker must not be executable by client roles';
+  end if;
+
   if not exists (
     select 1 from pg_policies
     where schemaname='public' and tablename='portfolio_patch_submission_reviews'
