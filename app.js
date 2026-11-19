@@ -1998,9 +1998,9 @@ async function loadMembers(forceRefresh = false) {
   if (!memberDirectoryRealtimeChannel) {
     memberDirectoryRealtimeChannel = supabaseClient.channel("public-member-directory-affiliations")
       .on("postgres_changes", { event: "*", schema: "public", table: "guild_member_affiliations" }, () => {
+        memberDirectoryCacheExpiresAt = 0;
         const page = $("page-members");
         if (!page || page.classList.contains("hidden")) return;
-        memberDirectoryCacheExpiresAt = 0;
         void loadMembers(true);
       })
       .subscribe();
