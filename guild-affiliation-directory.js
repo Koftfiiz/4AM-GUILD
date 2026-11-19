@@ -151,7 +151,8 @@
 
   function renderStats(counts) {
     const values = [["สมาชิกทั้งหมด",counts?.all??0],["สมาชิก 4AM",counts?.["4AM"]??0],["สมาชิก 4PM",counts?.["4PM"]??0],["ยังไม่ระบุสังกัด",counts?.unassigned??0]];
-    $("gd-stats").innerHTML = values.map(([label,value]) => '<article class="gd-stat"><span>'+esc(label)+'</span><strong>'+Number(value).toLocaleString("th-TH")+'</strong></article>').join("");
+    const target = $("gd-stats"); if (!target) return;
+    target.innerHTML = values.map(([label,value]) => '<article class="gd-stat"><span>'+esc(label)+'</span><strong>'+Number(value).toLocaleString("th-TH")+'</strong></article>').join("");
   }
 
   function renderRows() {
@@ -346,10 +347,14 @@
     });
   }
 
-  function activate(){
+  async function activate(){
     ensurePage();if(!isAllowed())return;
     const page=$("page-member-management");
-    if(page&&!page.classList.contains("hidden")){window.setGuildAffiliationRealtime?.(true);void loadDirectory();}
+    if(page&&!page.classList.contains("hidden")){
+      window.setGuildAffiliationRealtime?.(true);
+      await Promise.resolve(window.memberManagementLoadPromise);
+      await loadDirectory();
+    }
   }
 
   const originalOpen=window.openGuildPage||openGuildPage;
