@@ -274,7 +274,7 @@
       ["เริ่มสังกัดเมื่อ",formatBangkokDateTime(row.affiliation_started_at)]
     ];
     $("gd-detail-grid").innerHTML=values.map(([label,value])=>'<div class="gd-detail"><span>'+esc(label)+'</span><strong>'+esc(value||"—")+'</strong></div>').join("");
-    $("gd-detail-history").hidden=!(canAssign()||(row.record_type==="account"&&String(currentUser?.id)===String(row.member_id)));
+    $("gd-detail-history").hidden=!canAssign();
     $("gd-detail-modal").hidden=false;
   }
   function closeDetail(){$("gd-detail-modal").hidden=true;detailRow=null;}
@@ -287,7 +287,7 @@
     $("gd-new-guild").value=initialCode||row.guild_code||"unassigned";$("gd-reason").value="";$("gd-assign-status").textContent="";
     $("gd-modal").hidden=false;$("gd-new-guild").focus();
   }
-  function closeAssign(){$("gd-modal").hidden=true;editing=null;}
+  function closeAssign(){$("gd-modal").hidden=true;editing=null;renderRows();}
   function closeHistory(){$("gd-history-modal").hidden=true;}
 
   async function openHistory(identity,kind){
@@ -358,28 +358,85 @@
     $("gd-detail-modal")?.addEventListener("click",event=>{if(event.target===$("gd-detail-modal"))closeDetail();});
     $("gd-detail-history")?.addEventListener("click",()=>{if(!detailRow)return;const row=detailRow;closeDetail();void openHistory(row.member_id||row.manual_member_id,row.record_type);});
     $("gd-rows")?.addEventListener("click",event=>{
-      const detail=event.target.closest("[data-gd-detail]"),assign=event.target.closest("[data-gd-assign]"),history=event.target.closest("[data-gd-history]");
-      if(detail)openDetail(detail.dataset.gdDetail,detail.dataset.gdKind);
-      else if(assign)openAssign(assign.dataset.gdAssign,assign.dataset.gdKind);
-      else if(history)void openHistory(history.dataset.gdHistory,history.dataset.gdKind);
+      const view=event.target.closest("[data-gd-view]");
+      const edit=event.target.closest("[data-gd-edit]");
+      const toggle=event.target.closest("[data-gd-toggle]");
+      const remove=event.target.closest("[data-gd-remove]");
+      const identity=view?.dataset.gdView||edit?.dataset.gdEdit||toggle?.dataset.gdToggle||remove?.dataset.gdRemove;
+      const kind=view?.dataset.gdKind||edit?.dataset.gdKind||toggle?.dataset.gdKind||remove?.dataset.gdKind;
+      const row=identity?state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind):null;
+      if(!row)return;
+      if(view&&typeof openMemberAdminProfile==="function"){
+        openMemberAdminProfile({...row,_recordType:row.record_type,user_id:row.member_id||null,id:row.manual_member_id||null});
+      }else if(edit){
+        if(kind==="account"&&typeof editLinkedGuildMember==="function")void editLinkedGuildMember(identity);
+        else if(kind==="manual"&&typeof editManualGuildMember==="function")void editManualGuildMember(identity);
+      }else if(toggle){
+        if(kind==="account"&&typeof updateLinkedGuildMemberStatus==="function")void updateLinkedGuildMemberStatus(identity);
+        else if(kind==="manual"&&typeof updateManualGuildMemberStatus==="function")void updateManualGuildMemberStatus(identity);
+      }else if(remove&&typeof removeGuildMemberRecord==="function"){
+        void removeGuildMemberRecord(kind,identity);
+      }
     });
     $("gd-rows")?.addEventListener("change",async event=>{
-      const select=event.target.closest("[data-gd-position]");if(!select||!canAssign())return;
-      const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(select.dataset.gdPosition)&&item.record_type===select.dataset.gdKind);
-      if(!row)return;
-      select.disabled=true;
-      try{
-        const value=select.value||null;
-        const query=row.record_type==="manual"
-          ? supabaseClient.from("guild_manual_members").update({guild_position:value}).eq("id",row.manual_member_id)
-          : supabaseClient.from("guild_members").update({guild_position:value}).eq("user_id",row.member_id);
-        const {error}=await query;if(error)throw error;
-        cache.clear();
-        if(typeof loadManualMemberManagement==="function")window.memberManagementLoadPromise=loadManualMemberManagement();
-        await Promise.resolve(window.memberManagementLoadPromise);
-        await loadDirectory(true);
-      }catch(error){alert("ไม่สามารถบันทึกตำแหน่งกิลด์ได้: "+(error.message||"Unknown error"));select.value=row.guild_position||"";}
-      finally{select.disabled=false;}
+      const affiliation=event.target.closest("[data-gd-affiliation]");
+      if(affiliation){
+        const identity=affiliation.dataset.gdAffiliation,kind=affiliation.dataset.gdKind;
+        const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind);
+        if(!row)return;
+        const selected=affiliation.value;
+        if(selected===(row.guild_code||"unassigned"))return;
+        openAssign(identity,kind,selected);
+        return;
+      }
+      const classSelect=event.target.closest("[data-gd-class]");
+      if(classSelect){
+        if(!canAssign()){renderRows();return;}
+        const identity=classSelect.dataset.gdClass,kind=classSelect.dataset.gdKind;
+        const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind);
+        if(!row)return;
+        const previous=row.game_class;
+        classSelect.disabled=true;
+        try{
+          const {error}=await supabaseClient.rpc("set_guild_member_class",{
+            p_user_id:kind==="account"?identity:null,
+            p_manual_member_id:kind==="manual"?identity:null,
+            p_game_class:classSelect.value
+          });
+          if(error)throw error;
+          cache.clear();
+          if(typeof loadManualMemberManagement==="function")window.memberManagementLoadPromise=loadManualMemberManagement();
+          await Promise.resolve(window.memberManagementLoadPromise);
+          await loadDirectory(true);
+        }catch(error){
+          alert("ไม่สามารถเปลี่ยนคลาสได้: "+(error.message||"Unknown error"));
+          classSelect.value=previous;
+        }finally{classSelect.disabled=false;}
+        return;
+      }
+      const position=event.target.closest("[data-gd-position]");
+      if(position){
+        if(!canAssign())return;
+        const identity=position.dataset.gdPosition,kind=position.dataset.gdKind;
+        const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind);
+        if(!row)return;
+        const previous=row.guild_position;
+        position.disabled=true;
+        try{
+          const value=position.value||null;
+          const query=kind==="manual"
+            ? supabaseClient.from("guild_manual_members").update({guild_position:value}).eq("id",identity)
+            : supabaseClient.from("guild_members").update({guild_position:value}).eq("user_id",identity);
+          const {error}=await query;if(error)throw error;
+          cache.clear();
+          if(typeof loadManualMemberManagement==="function")window.memberManagementLoadPromise=loadManualMemberManagement();
+          await Promise.resolve(window.memberManagementLoadPromise);
+          await loadDirectory(true);
+        }catch(error){
+          alert("ไม่สามารถบันทึกตำแหน่งกิลด์ได้: "+(error.message||"Unknown error"));
+          position.value=previous||"";
+        }finally{position.disabled=false;}
+      }
     });
   }
 
