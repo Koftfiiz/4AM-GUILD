@@ -696,8 +696,14 @@ async function loadApplication() {
     renderClassLegend();
     renderWarLayout();
 
-    // Restore the last page after authentication and member permissions are ready.
-    openGuildPage(getLastGuildPage());
+    // Resolve a direct URL first, then restore the previous page only for the site root.
+    const initialPage = getLastGuildPage();
+    const initialRoute = window.__guildInitialRoute;
+    openGuildPage(initialPage, {
+      routePath: initialRoute?.path || getGuildDefaultRoutePath(initialPage),
+      warTab: initialRoute?.warTab || undefined,
+      replaceHistory: true
+    });
 
     await handleDiscordCallback();
     window.dispatchEvent(new Event("4am:app-ready"));
@@ -8800,9 +8806,120 @@ function syncManagementMenuVisibility() {
   });
 }
 
+
+const GUILD_URL_ROUTES = Object.freeze({
+  "/dashboard": { page: "dashboard" },
+  "/guild-rules": { page: "rules" },
+  "/members": { page: "members" },
+  "/members/list": { page: "members" },
+  "/members/manage": { page: "member-management" },
+  "/guildwar": { page: "war-center", warTab: "overview" },
+  "/guildwar/overview": { page: "war-center", warTab: "overview" },
+  "/guildwar/signup": { page: "war-center", warTab: "signup" },
+  "/guildwar/announcement": { page: "war-center", warTab: "roster" },
+  "/guildwar/leave": { page: "war-center", warTab: "leave" },
+  "/guildwar/party": { page: "war-center", warTab: "party" },
+  "/guildwar/results": { page: "war-center", warTab: "match-records" },
+  "/guildwar/report": { page: "war-center", warTab: "attendance-report" },
+  "/game-guides": { page: "guides" },
+  "/portfolio": { page: "portfolio" },
+  "/portfolio/members": { page: "portfolio" },
+  "/portfolio/review": { page: "portfolio-review-center" },
+  "/community": { page: "guild-news" },
+  "/community/news": { page: "guild-news" },
+  "/community/activities": { page: "guild-activities" },
+  "/community/board": { page: "community-board" },
+  "/duck-race": { page: "duck-race" },
+  "/feedback": { page: "feedback" }
+});
+
+const GUILD_MAIN_ROUTE_PATHS = Object.freeze({
+  dashboard: "/dashboard",
+  rules: "/guild-rules",
+  members: "/members",
+  "member-management": "/members/manage",
+  "war-center": "/guildwar",
+  war: "/guildwar/party",
+  "war-attendance": "/guildwar/announcement",
+  "war-signup": "/guildwar/signup",
+  "war-leave": "/guildwar/leave",
+  "war-stats": "/guildwar/results",
+  "war-attendance-stats": "/guildwar/report",
+  guides: "/game-guides",
+  portfolio: "/portfolio",
+  "portfolio-review-center": "/portfolio/review",
+  "guild-news": "/community",
+  "guild-activities": "/community/activities",
+  "community-board": "/community/board",
+  "duck-race": "/duck-race",
+  feedback: "/feedback"
+});
+
+const GUILD_TAB_ROUTE_PATHS = Object.freeze({
+  members: "/members/list",
+  "member-management": "/members/manage",
+  war: "/guildwar/party",
+  "war-attendance": "/guildwar/announcement",
+  "war-signup": "/guildwar/signup",
+  "war-leave": "/guildwar/leave",
+  "war-stats": "/guildwar/results",
+  "war-attendance-stats": "/guildwar/report",
+  portfolio: "/portfolio/members",
+  "portfolio-review-center": "/portfolio/review",
+  "guild-news": "/community/news",
+  "guild-activities": "/community/activities",
+  "community-board": "/community/board"
+});
+
+function normalizeGuildRoutePath(path) {
+  const value = String(path || "/").split("?")[0].split("#")[0];
+  const normalized = value.replace(/\/+$/, "") || "/";
+  return normalized.toLowerCase();
+}
+
+function getGuildDefaultRoutePath(pageName) {
+  if (pageName === "war-center") {
+    const warPaths = {
+      overview: "/guildwar",
+      signup: "/guildwar/signup",
+      roster: "/guildwar/announcement",
+      leave: "/guildwar/leave",
+      party: "/guildwar/party",
+      "match-records": "/guildwar/results",
+      "attendance-report": "/guildwar/report"
+    };
+    return warPaths[window.activeWarCenterTab || "overview"] || "/guildwar";
+  }
+  return GUILD_MAIN_ROUTE_PATHS[pageName] || null;
+}
+
+function getGuildTabRoutePath(pageName) {
+  return GUILD_TAB_ROUTE_PATHS[pageName] || getGuildDefaultRoutePath(pageName);
+}
+
+function resolveGuildBrowserRoute(path) {
+  return GUILD_URL_ROUTES[normalizeGuildRoutePath(path)] || null;
+}
+
 const LAST_GUILD_PAGE_KEY = "4am-guild:last-page";
 
 function getLastGuildPage() {
+  const currentPath = normalizeGuildRoutePath(window.location.pathname);
+  const currentRoute = resolveGuildBrowserRoute(currentPath);
+
+  if (currentRoute) {
+    window.__guildInitialRoute = {
+      path: currentPath,
+      warTab: currentRoute.warTab || null
+    };
+    return currentRoute.page;
+  }
+
+  if (currentPath !== "/") {
+    window.__guildInitialRoute = { path: "/dashboard", warTab: null };
+    return "dashboard";
+  }
+
   try {
     const savedPage = window.localStorage.getItem(LAST_GUILD_PAGE_KEY);
     return savedPage && PAGE_TITLES[savedPage] ? savedPage : "dashboard";
@@ -8832,7 +8949,7 @@ function loadWarCenterTab(tab = "overview") {
   if(active==="attendance-report"&&isManagement())loadWarAttendanceStatistics();
 }
 
-function openGuildPage(pageName) {
+function openGuildPage(pageName, options = {}) {
   if (["war","war-stats","war-attendance-stats"].includes(pageName) && !isManagement()) {
     pageName = "war-attendance";
   }
@@ -8853,13 +8970,31 @@ function openGuildPage(pageName) {
 
   const warTabs = {war:"party","war-attendance":"roster","war-signup":"signup","war-leave":"leave","war-stats":"match-records","war-attendance-stats":"attendance-report"};
   if(warTabs[pageName]){window.activeWarCenterTab=warTabs[pageName];pageName="war-center";}
-  else if(pageName==="war-center"){window.activeWarCenterTab="overview";}
+  else if(pageName==="war-center"){window.activeWarCenterTab=options.warTab || "overview";}
 
   // Remember the current section so a hard refresh returns to the same page.
   try {
     window.localStorage.setItem(LAST_GUILD_PAGE_KEY, pageName);
   } catch (error) {
     console.warn("Unable to save current page:", error);
+  }
+
+  const pendingInitialRoute = window.__guildInitialRoute;
+  const requestedPath = options.routePath || pendingInitialRoute?.path || null;
+  const requestedRoute = requestedPath ? resolveGuildBrowserRoute(requestedPath) : null;
+  const requestedRouteMatches = requestedRoute &&
+    requestedRoute.page === pageName &&
+    (!requestedRoute.warTab || requestedRoute.warTab === (window.activeWarCenterTab || "overview"));
+  const nextRoutePath = requestedRouteMatches
+    ? normalizeGuildRoutePath(requestedPath)
+    : getGuildDefaultRoutePath(pageName);
+
+  if (pendingInitialRoute) window.__guildInitialRoute = null;
+
+  if (nextRoutePath && options.skipHistory !== true &&
+      normalizeGuildRoutePath(window.location.pathname) !== nextRoutePath) {
+    const method = options.replaceHistory || pendingInitialRoute ? "replaceState" : "pushState";
+    window.history[method]({ guildRoute: true }, "", nextRoutePath);
   }
 
   document.querySelectorAll(".page").forEach((page) => {
@@ -9340,6 +9475,24 @@ function registerDiscordIntegrationEvents() {
 // ==========================================
 
 function registerAppEventListeners() {
+  if (!window.__guildRoutingPopstateBound) {
+    window.__guildRoutingPopstateBound = true;
+    window.addEventListener("popstate", () => {
+      const path = normalizeGuildRoutePath(window.location.pathname);
+      const route = resolveGuildBrowserRoute(path);
+      if (!route) {
+        window.history.replaceState({ guildRoute: true }, "", "/dashboard");
+        openGuildPage("dashboard", { skipHistory: true });
+        return;
+      }
+      openGuildPage(route.page, {
+        routePath: path,
+        warTab: route.warTab || undefined,
+        skipHistory: true
+      });
+    });
+  }
+
   $("logout-btn")?.addEventListener("click", logout);
 
   $("member-search")?.addEventListener("input", filterMembers);
@@ -9452,11 +9605,28 @@ function registerAppEventListeners() {
   registerAppearanceEvents();
   registerDiscordIntegrationEvents();
 
-  document.querySelectorAll("[data-war-center-tab]").forEach(button => button.addEventListener("click", () => loadWarCenterTab(button.dataset.warCenterTab)));
+  const warTabRoutePaths = {
+    overview: "/guildwar/overview",
+    signup: "/guildwar/signup",
+    roster: "/guildwar/announcement",
+    leave: "/guildwar/leave",
+    party: "/guildwar/party",
+    "match-records": "/guildwar/results",
+    "attendance-report": "/guildwar/report"
+  };
+  document.querySelectorAll("[data-war-center-tab]").forEach(button => button.addEventListener("click", () => {
+    const tab = button.dataset.warCenterTab;
+    openGuildPage("war-center", { warTab: tab, routePath: warTabRoutePaths[tab] || "/guildwar" });
+  }));
 
   document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
     button.addEventListener("click", () => {
-      openGuildPage(button.dataset.page);
+      const sidebarPage = button.dataset.page;
+      const pageName = sidebarPage === "community-board" ? "guild-news" : sidebarPage;
+      const routePath = sidebarPage === "community-board"
+        ? "/community"
+        : getGuildDefaultRoutePath(pageName);
+      openGuildPage(pageName, { routePath });
     });
   });
 
@@ -9494,7 +9664,8 @@ function registerAppEventListeners() {
 
   document.querySelectorAll("[data-go-page]").forEach((button) => {
     button.addEventListener("click", () => {
-      openGuildPage(button.dataset.goPage);
+      const targetPage = button.dataset.goPage;
+      openGuildPage(targetPage, { routePath: getGuildTabRoutePath(targetPage) });
       const scrollTarget = button.dataset.scrollTarget;
       if (scrollTarget) {
         window.requestAnimationFrame(() => {
