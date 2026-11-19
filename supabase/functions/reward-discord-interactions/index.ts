@@ -120,6 +120,195 @@ Deno.serve(async (request: Request) => {
     return jsonResponse({ type: 4, data: { content: "ไม่พบ Discord User ID", flags: 64 } });
   }
 
+  async function linkedMember() {
+    const link = await supabase.from("discord_accounts").select("user_id,verified,guild_member_verified").eq("discord_user_id", discordUserId).maybeSingle();
+    if (link.error || !link.data || link.data.verified !== true || link.data.guild_member_verified !== true) return null;
+    const member = await supabase.from("guild_members").select("user_id,character_name,nickname,role,active").eq("user_id", link.data.user_id).eq("active", true).maybeSingle();
+    return member.error ? null : member.data;
+  }
+  async function getRoster(eventId: string) {
+    const [eventQ, partiesQ] = await Promise.all([
+      supabase.from("war_events").select("id,event_name,event_date,is_published,status,description").eq("id", eventId).maybeSingle(),
+      supabase.from("war_parties").select("id,raid,party_number,war_party_members(member_id)").eq("event_id", eventId).order("raid").order("party_number")
+    ]);
+    if (eventQ.error || !eventQ.data || !eventQ.data.is_published || eventQ.data.status === "cancelled" || partiesQ.error) throw new Error("ไม่พบกิจกรรมวอร์ที่เผยแพร่ หรือกิจกรรมถูกยกเลิกแล้ว");
+    const configMatch = String(eventQ.data.description || "").match(/\[\[WAR_CONFIG:(\{.*?\})\]\]/);
+    let roundTimes = ["20:00", "20:30"];
+    if (configMatch) {
+      try {
+        const config = JSON.parse(configMatch[1]);
+        if (Array.isArray(config.rounds) && config.rounds.length >= 1 && config.rounds.length <= 2) {
+          roundTimes = config.rounds.map((value: unknown) => String(value).slice(0, 5));
+        }
+      } catch {
+        // Keep the legacy two-round default for older published events.
+      }
+    }
+    const event = { ...eventQ.data, round_times: roundTimes, round_numbers: roundTimes.map((_: string, index: number) => index + 1) };
+    const rows = (partiesQ.data || []).flatMap((party: any) => (party.war_party_members || []).map((slot: any) => ({ member_id: slot.member_id, raid: party.raid, party_number: party.party_number })));
+    const ids = [...new Set(rows.map((x: any) => x.member_id))];
+    if (!ids.length) throw new Error("กิจกรรมนี้ยังไม่มีรายชื่อสมาชิกที่จัดลงตี้");
+    const [membersQ, reservesQ, checkinsQ] = await Promise.all([
+      supabase.from("guild_members").select("user_id,character_name,nickname,active").in("user_id", ids).eq("active", true),
+      supabase.from("war_signups").select("member_id,queue_position,status,available_rounds").eq("event_id", eventId).eq("status", "standby").order("queue_position"),
+      supabase.from("war_round_checkins").select("member_id,round_number,checked_in_at").eq("event_id", eventId)
+    ]);
+    if (membersQ.error || reservesQ.error || checkinsQ.error) throw new Error("โหลดข้อมูลสมาชิก ตัวสำรอง หรือเช็กชื่อไม่สำเร็จ กรุณาตรวจสอบ SQL WAR_ATTENDANCE_CENTER_V2");
+    const reserveIds = (reservesQ.data || []).map((x: any) => x.member_id);
+    const reserveMembersQ = reserveIds.length ? await supabase.from("guild_members").select("user_id,character_name,nickname,active").in("user_id", reserveIds).eq("active", true) : { data: [], error: null };
+    if (reserveMembersQ.error) throw reserveMembersQ.error;
+    const members = new Map((membersQ.data || []).map((m: any) => [m.user_id, m]));
+    const reserveMembers = new Map((reserveMembersQ.data || []).map((m: any) => [m.user_id, m]));
+    const roster = rows.filter((x: any) => members.has(x.member_id)).map((x: any) => ({ ...x, member: members.get(x.member_id) }));
+    const reserves = (reservesQ.data || []).filter((x: any) => reserveMembers.has(x.member_id)).map((x: any) => ({ ...x, available_rounds: Array.isArray(x.available_rounds) ? x.available_rounds.map(Number) : [1, 2], member: reserveMembers.get(x.member_id) }));
+    return { event, roster, reserves, checkins: checkinsQ.data || [] };
+  }
+  function buildMessage(data: any) {
+    const { event, roster, reserves, checkins } = data;
+    const checkMap = new Map(checkins.map((x: any) => [x.round_number + ":" + x.member_id, x]));
+    const fields: any[] = [];
+    const displayName = (x: any) => String(x.member.character_name || x.member.nickname || "สมาชิก");
+    const list = (items: any[], reserve = false) => items.map((x: any) => {
+      const place = reserve ? "สำรอง" : (x.raid + x.party_number);
+      return displayName(x) + " (" + place + ")";
+    }).join("\n").slice(0, 1020) || "—";
+    const rounds = Array.isArray(event.round_numbers) ? event.round_numbers : [1, 2];
+    for (const round of rounds) {
+      const mainDone = roster.filter((x: any) => checkMap.has(round + ":" + x.member_id));
+      const mainPending = roster.filter((x: any) => !checkMap.has(round + ":" + x.member_id));
+      const roundReserves = reserves.filter((x: any) => x.available_rounds.includes(round));
+      const reserveDone = roundReserves.filter((x: any) => checkMap.has(round + ":" + x.member_id));
+      const reservePending = roundReserves.filter((x: any) => !checkMap.has(round + ":" + x.member_id));
+      const roundTime = event.round_times?.[round - 1] || "-";
+      fields.push({ name: "ROUND 0" + round + " · " + roundTime + " · ตัวจริงยืนยันแล้ว " + mainDone.length + "/" + roster.length, value: list(mainDone), inline: false });
+      fields.push({ name: "ROUND 0" + round + " · ตัวจริงยังไม่ยืนยัน " + mainPending.length, value: list(mainPending), inline: false });
+      fields.push({ name: "ROUND 0" + round + " · ตัวสำรองยืนยันแล้ว " + reserveDone.length + "/" + roundReserves.length, value: list(reserveDone, true), inline: false });
+      fields.push({ name: "ROUND 0" + round + " · ตัวสำรองยังไม่ยืนยัน " + reservePending.length, value: list(reservePending, true), inline: false });
+    }
+    return {
+      content: "📋 **4AM GUILD — WAR CHECK-IN**\nกิจกรรม: **" + event.event_name + "** · " + event.event_date + "\nสมาชิกกดยืนยันแยกตามรอบ กรุณาตรวจสอบว่ากดยืนยันครบตามความพร้อมจริง",
+      embeds: [{ color: 0xD92D45, title: "WAR READINESS", description: "รายชื่ออ้างอิงจาก Planned Roster และรายชื่อสำรองที่ลงชื่อไว้บนเว็บไซต์ · การกดยืนยันไม่ใช่การยืนยันว่าเข้าตี้ในเกมแล้ว", fields, footer: { text: "4AM GUILD · Discord Check-in" } }],
+      components: [{ type: 1, components: (event.round_numbers || [1, 2]).map((round: number) => ({
+        type: 2, style: 3, label: "✓ ยืนยัน Round 0" + round, custom_id: "war_checkin:" + event.id + ":" + round
+      })) }]
+    };
+  }
+
+
+  async function buildWarSignupMessage(eventId: string) {
+    const { data: event, error: eventError } = await supabase
+      .from("war_events")
+      .select("id,event_name,event_date,start_time,registration_type,signup_opens_at,signup_closes_at,status")
+      .eq("id", eventId).maybeSingle();
+    if (eventError || !event) throw new Error("ไม่พบกิจกรรม Guild War นี้");
+
+    const [signupsQ, membersQ] = await Promise.all([
+      supabase.from("war_signups").select("member_id,queue_position,status").eq("event_id", eventId).neq("status", "cancelled").order("queue_position", { ascending: true }),
+      supabase.from("guild_members").select("user_id,character_name,nickname,game_class,active").eq("active", true)
+    ]);
+    if (signupsQ.error || membersQ.error) throw new Error("โหลดรายชื่อผู้สมัคร Guild War ไม่สำเร็จ");
+    const members = new Map((membersQ.data || []).map((m: any) => [m.user_id, m]));
+    const rows = (signupsQ.data || []).map((row: any) => ({ ...row, member: members.get(row.member_id) })).filter((row: any) => row.member);
+
+    const roleForClass = (value: unknown) => {
+      const gameClass = String(value || "").trim().toLowerCase();
+      if (gameClass === "ironclad") return "Tank";
+      if (gameClass === "sylph") return "Healer";
+      if (gameClass === "bloodstrom") return "Bloodstrom";
+      if (gameClass === "mystech") return "DPS";
+      return "DPS";
+    };
+    const roleOrder = ["Tank", "DPS", "Bloodstrom", "Healer"];
+    const roleGroups = new Map<string, any[]>(roleOrder.map(role => [role, []]));
+    for (const row of rows) roleGroups.get(roleForClass(row.member.game_class))!.push(row);
+
+    const formatDate = (value: string | null) => {
+      if (!value) return "-";
+      const parts = String(value).slice(0, 10).split("-");
+      return parts.length === 3 ? parts[2] + "/" + parts[1] + "/" + parts[0] : "-";
+    };
+    const formatDateTime = (value: string | null) => {
+      if (!value) return "-";
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return "-";
+      return new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Bangkok", day: "2-digit", month: "2-digit", year: "numeric",
+        hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+      }).format(date).replace(",", "");
+    };
+    const officialDeadline = event.registration_type === "official" && event.event_date
+      ? new Date(String(event.event_date).slice(0, 10) + "T14:00:00+07:00").getTime()
+      : new Date(event.signup_closes_at || "").getTime();
+    const opens = new Date(event.signup_opens_at || "").getTime();
+    const closed = event.status === "cancelled" || !Number.isFinite(officialDeadline) || Date.now() >= officialDeadline;
+    const open = !closed && Number.isFinite(opens) && Date.now() >= opens;
+    const state = event.status === "cancelled" ? "CANCELLED" : closed ? "CLOSED" : open ? "OPEN" : "SCHEDULED";
+    const fields: any[] = [
+      { name: "**ผู้ลงชื่อทั้งหมด**", value: rows.length + " / 80 คน", inline: true },
+      { name: "**ตัวจริง**", value: rows.filter((x: any) => Number(x.queue_position) <= 60).length + " / 60 คน", inline: true },
+      { name: "**ตัวสำรอง**", value: rows.filter((x: any) => Number(x.queue_position) > 60).length + " / 20 คน", inline: true }
+    ];
+    const roleIcons: Record<string, string> = { Tank: "🛡️", DPS: "⚔️", Bloodstrom: "🩸", Healer: "💚" };
+    for (const role of roleOrder) {
+      const roleRows = roleGroups.get(role) || [];
+      fields.push({
+        name: roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**",
+        value: "\u200b",
+        inline: true
+      });
+    }
+    const rosterLines = rows.filter((x: any) => Number(x.queue_position) <= 60)
+      .map((x: any) => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
+    const reserveLines = rows.filter((x: any) => Number(x.queue_position) > 60)
+      .map((x: any) => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
+    const addRosterFields = (heading: string, lines: string[]) => {
+      const chunks: string[] = [];
+      let chunk = "";
+      for (const line of lines) {
+        const next = chunk ? chunk + "\n" + line : line;
+        if (next.length > 980 && chunk) { chunks.push(chunk); chunk = line; }
+        else chunk = next;
+      }
+      if (chunk) chunks.push(chunk);
+      if (!chunks.length) chunks.push("—");
+      chunks.forEach((value, index) => fields.push({
+        name: index === 0 ? heading : heading + " · ต่อ",
+        value,
+        inline: false
+      }));
+    };
+    addRosterFields("**เข้าร่วม (" + rosterLines.length + " คน)**", rosterLines);
+    addRosterFields("**รายชื่อสำรอง (" + reserveLines.length + " คน)**", reserveLines);
+
+    const kindLabel = event.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
+    const description = "**◥◣④AM◥◣ " + kindLabel + "**" +
+      "\n\n**" + String(event.event_name || "4AM SIGN-UP") + "**" +
+      "\n\n**วันที่ " + formatDate(event.event_date) + " · เวลา " + String(event.start_time || "-").slice(0, 5) + " น.**" +
+      "\n**สถานะ: " + state + "**" +
+      "\n**เปิดรับสมัคร: " + formatDateTime(event.signup_opens_at) + " น.**" +
+      "\n**ปิดรับสมัคร: " + formatDateTime(event.registration_type === "official" && event.event_date ? String(event.event_date).slice(0, 10) + "T14:00:00+07:00" : event.signup_closes_at) + " น.**" +
+      "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง";
+    return {
+      embeds: [{
+        color: 0xD92D45,
+        title: "4AM SIGN-UP",
+        description,
+        fields,
+        image: { url: "https://raw.githubusercontent.com/Koftfiiz/4AM-GUILD/main/assets/animated-4am-logo.gif" },
+        footer: { text: "4AM GUILD · รายชื่อซิงก์กับเว็บไซต์" },
+        timestamp: new Date().toISOString()
+      }],
+      components: [{
+        type: 1,
+        components: [
+          { type: 2, style: 3, label: "เข้าร่วม", custom_id: "war_signup_join:" + eventId, disabled: closed },
+          { type: 2, style: 4, label: "ถอนชื่อออก", custom_id: "war_signup_leave:" + eventId, disabled: closed }
+        ]
+      }],
+      allowed_mentions: { parse: [] }
+    };
+  }
+
   // Slash command: /reward-open title:<name> signup_closes_at:<ISO timestamp> (uses the latest published Guild War)
   if (interaction.type === 2 && interaction.data?.name === "reward-open") {
     const options = Array.isArray(interaction.data.options) ? interaction.data.options : [];
@@ -150,7 +339,7 @@ Deno.serve(async (request: Request) => {
   }
 
   // Buttons: join, cancel, or refresh the participant count.
-  if (interaction.type === 3) {
+  if (interaction.type === 3 && String(interaction.data?.custom_id || "").startsWith("reward_")) {
     const customId = String(interaction.data?.custom_id || "");
     const [action, eventId] = customId.split(":");
     if (!eventId || !["reward_join", "reward_leave", "reward_count"].includes(action)) {
@@ -200,6 +389,119 @@ Deno.serve(async (request: Request) => {
       message.components[0].components[1].disabled = true;
     }
     return jsonResponse({ type: 7, data: message });
+  }
+
+
+  if (interaction.type === 3 && String(interaction.data?.custom_id || "").startsWith("war_signup_join:")) {
+    const eventId = String(interaction.data.custom_id).slice("war_signup_join:".length);
+    if (!/^[0-9a-f-]{36}$/i.test(eventId)) {
+      return jsonResponse({ type: 4, data: { content: "ปุ่มเข้าร่วมวอร์ไม่ถูกต้อง", flags: 64 } });
+    }
+    const actor = await linkedMember();
+    if (!actor) {
+      return jsonResponse({ type: 4, data: { content: "กรุณาเชื่อมบัญชี Discord กับสมาชิก 4AM GUILD และยืนยันการเชื่อมต่อก่อนลงชื่อวอร์", flags: 64 } });
+    }
+    const { data: eventRow, error: eventError } = await supabase
+      .from("war_events")
+      .select("event_name,signup_opens_at,signup_closes_at,status")
+      .eq("id", eventId).maybeSingle();
+    if (eventError || !eventRow) return jsonResponse({ type: 4, data: { content: "ไม่พบกิจกรรม Guild War นี้", flags: 64 } });
+    if (eventRow.status === "cancelled") return jsonResponse({ type: 4, data: { content: "กิจกรรม Guild War นี้ถูกยกเลิกแล้ว", flags: 64 } });
+    const now = Date.now();
+    const opens = new Date(eventRow.signup_opens_at || 0).getTime();
+    const closes = new Date(eventRow.signup_closes_at || 0).getTime();
+    if (!Number.isFinite(opens) || now < opens) {
+      const label = eventRow.signup_opens_at ? new Date(eventRow.signup_opens_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) : "ยังไม่กำหนด";
+      return jsonResponse({ type: 4, data: { content: "ยังไม่ถึงเวลาเปิดรับสมัคร Guild War · เปิดรับสมัคร " + label + " น.", flags: 64 } });
+    }
+    if (!Number.isFinite(closes) || now >= closes) {
+      try {
+        const closedMessage = await buildWarSignupMessage(eventId);
+        return jsonResponse({ type: 7, data: closedMessage });
+      } catch (e) {
+        return jsonResponse({ type: 4, data: { content: e instanceof Error ? e.message : "ปิดรับสมัครแล้ว", flags: 64 } });
+      }
+    }
+    const { data: joined, error: joinError } = await supabase.rpc("join_war_signup_from_discord", {
+      p_event_id: eventId,
+      p_discord_user_id: discordUserId
+    });
+    if (joinError || !joined?.success) {
+      return jsonResponse({ type: 4, data: { content: joinError?.message || joined?.message || "ลงชื่อเข้าร่วมวอร์ไม่สำเร็จ", flags: 64 } });
+    }
+    try {
+      const updatedMessage = await buildWarSignupMessage(eventId);
+      return jsonResponse({ type: 7, data: updatedMessage });
+    } catch (e) {
+      return jsonResponse({ type: 4, data: { content: "ลงชื่อสำเร็จ แต่รีเฟรชรายชื่อใน Discord ไม่สำเร็จ: " + (e instanceof Error ? e.message : "unknown error"), flags: 64 } });
+    }
+  }
+
+  if (interaction.type === 3 && String(interaction.data?.custom_id || "").startsWith("war_signup_leave:")) {
+    const eventId = String(interaction.data.custom_id).slice("war_signup_leave:".length);
+    if (!/^[0-9a-f-]{36}$/i.test(eventId)) {
+      return jsonResponse({ type: 4, data: { content: "ปุ่มถอนชื่อออกไม่ถูกต้อง", flags: 64 } });
+    }
+    const actor = await linkedMember();
+    if (!actor) {
+      return jsonResponse({ type: 4, data: { content: "กรุณาเชื่อมบัญชี Discord กับสมาชิก 4AM GUILD และยืนยันการเชื่อมต่อก่อนถอนชื่อ", flags: 64 } });
+    }
+    const { data: cancelled, error: cancelError } = await supabase.rpc("cancel_war_signup_from_discord", {
+      p_event_id: eventId,
+      p_discord_user_id: discordUserId
+    });
+    if (cancelError || !cancelled?.success) {
+      return jsonResponse({ type: 4, data: { content: cancelError?.message || cancelled?.message || "ถอนชื่อออกไม่สำเร็จ", flags: 64 } });
+    }
+    try {
+      const updatedMessage = await buildWarSignupMessage(eventId);
+      return jsonResponse({ type: 7, data: updatedMessage });
+    } catch (e) {
+      return jsonResponse({ type: 4, data: { content: "ถอนชื่อสำเร็จ แต่รีเฟรชรายชื่อใน Discord ไม่สำเร็จ: " + (e instanceof Error ? e.message : "unknown error"), flags: 64 } });
+    }
+  }
+
+  if (interaction.type === 2 && interaction.data?.name === "war-checkin") {
+    const actor = await linkedMember();
+    if (!actor || !["developer", "leader", "management"].includes(String(actor.role).toLowerCase())) {
+      return jsonResponse({ type: 4, data: { content: "คำสั่งนี้สงวนสิทธิ์สำหรับ Management ขึ้นไป และต้องเชื่อม Discord กับบัญชี 4AM GUILD แล้ว", flags: 64 } });
+    }
+    const eventId = getOption(interaction.data.options || [], "event_id");
+    if (!/^[0-9a-f-]{36}$/i.test(eventId)) return jsonResponse({ type: 4, data: { content: "กรุณาระบุ Event ID ที่ถูกต้อง", flags: 64 } });
+    try {
+      const data = await getRoster(eventId);
+      return jsonResponse({ type: 4, data: buildMessage(data) });
+    } catch (e) {
+      return jsonResponse({ type: 4, data: { content: e instanceof Error ? e.message : "เปิดระบบเช็กชื่อไม่สำเร็จ", flags: 64 } });
+    }
+  }
+
+  if (interaction.type === 3) {
+    const customId = String(interaction.data?.custom_id || "");
+    const match = customId.match(/^war_checkin:([0-9a-f-]{36}):(1|2)$/i);
+    if (!match) return jsonResponse({ type: 4, data: { content: "ปุ่มเช็กชื่อไม่ถูกต้อง", flags: 64 } });
+    const [, eventId, roundText] = match;
+    const round = Number(roundText);
+    const actor = await linkedMember();
+    if (!actor) return jsonResponse({ type: 4, data: { content: "กรุณาเชื่อมบัญชี Discord กับสมาชิก 4AM GUILD และยืนยันการเชื่อมต่อก่อน", flags: 64 } });
+    try {
+      const data = await getRoster(eventId);
+      if (!data.event.round_numbers.includes(round)) {
+        return jsonResponse({ type: 4, data: { content: "กิจกรรมนี้ไม่มี Round 0" + round, flags: 64 } });
+      }
+      const rosterMember = data.roster.find((x: any) => x.member_id === actor.user_id);
+      const reserveMember = data.reserves.find((x: any) => x.member_id === actor.user_id && x.available_rounds.includes(round));
+      if (!rosterMember && !reserveMember) return jsonResponse({ type: 4, data: { content: "คุณไม่มีรายชื่อเป็นตัวจริงหรือตัวสำรองที่พร้อมสำหรับ Round 0" + round + " จึงไม่สามารถกดยืนยันรอบนี้ได้", flags: 64 } });
+      const saved = await supabase.from("war_round_checkins").upsert({
+        event_id: eventId, round_number: round, member_id: actor.user_id,
+        discord_user_id: discordUserId, checked_in_at: new Date().toISOString()
+      }, { onConflict: "event_id,round_number,member_id" });
+      if (saved.error) throw saved.error;
+      const refreshed = await getRoster(eventId);
+      return jsonResponse({ type: 7, data: buildMessage(refreshed) });
+    } catch (e) {
+      return jsonResponse({ type: 4, data: { content: e instanceof Error ? e.message : "บันทึกการยืนยันไม่สำเร็จ", flags: 64 } });
+    }
   }
 
   return jsonResponse({ type: 4, data: { content: "ไม่รองรับคำสั่งนี้", flags: 64 } });
