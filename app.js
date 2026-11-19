@@ -6115,14 +6115,17 @@ async function loadWarSignups(){
       :formatTime(event.start_time)+" น.";
     const capacity=rows.length+"/80";
     let action="";
+    const ownRounds=Array.isArray(own?.available_rounds)?own.available_rounds.map(Number):[1,2];
+    const ownAvailability=ownRounds.length===2?"พร้อมทั้งสองรอบ":ownRounds.includes(1)?"พร้อมเฉพาะ Round 1":"พร้อมเฉพาะ Round 2";
+    const ownStatus=own?'<div class="war-signup-own-status"><strong>คุณลงชื่อแล้ว · คิวที่ '+(own.queue_position||"—")+'</strong><span>'+(Number(own.queue_position)<=60?"ตัวจริง":"ตัวสำรอง")+'</span>'+(Number(own.queue_position)>60?'<small>'+ownAvailability+'</small>':"")+'</div>':"";
     if(state==="cancelled"){
       action='<span class="war-signup-status">กิจกรรมนี้ถูกยกเลิกแล้ว</span>';
+    }else if(state==="closed"){
+      action=ownStatus+'<button class="btn btn-sm war-signup-closed-btn" type="button" disabled>ปิดรับสมัครแล้ว</button>';
     }else if(own){
-      const ownRounds=Array.isArray(own.available_rounds)?own.available_rounds.map(Number):[1,2];
-      const ownAvailability=ownRounds.length===2?"พร้อมทั้งสองรอบ":ownRounds.includes(1)?"พร้อมเฉพาะ Round 1":"พร้อมเฉพาะ Round 2";
-      action='<div class="war-signup-own-status"><strong>คุณลงชื่อแล้ว · คิวที่ '+(own.queue_position||"—")+'</strong><span>'+(Number(own.queue_position)<=60?"ตัวจริง":"ตัวสำรอง")+'</span>'+(Number(own.queue_position)>60?'<small>'+ownAvailability+'</small>':"")+'</div>';
+      action=ownStatus+'<button class="btn btn-danger btn-sm war-signup-withdraw-btn" type="button" data-war-signup-withdraw="'+escapeHTML(event.id)+'">ถอนชื่อออก</button>';
     }else if(state==="open"&&rows.length<80){
-      action='<button class="btn btn-primary btn-sm" type="button" data-war-signup-join="'+escapeHTML(event.id)+'">เข้าร่วมวอร์</button>';
+      action='<button class="btn btn-sm war-signup-join-btn" type="button" data-war-signup-join="'+escapeHTML(event.id)+'">เข้าร่วม</button>';
     }else if(state==="open"&&rows.length>=80){
       action='<span class="war-signup-status">รายชื่อครบ 80 คนแล้ว</span>';
     }else if(state==="scheduled"){
@@ -6368,6 +6371,21 @@ function registerWarLeaveEvents(){
   });
 }
 
+async function syncWarSignupDiscord(eventId){
+  try{
+    const {data,error}=await supabaseClient.functions.invoke("discord-guild-activity-notify",{body:{kind:"war_signup",event_id:eventId}});
+    if(error){
+      let message=error.message||"เรียก Discord Sync ไม่สำเร็จ";
+      try{if(error.context&&typeof error.context.json==="function"){const body=await error.context.json();message=body.message||body.details||message;}}catch(_){}
+      return {ok:false,message};
+    }
+    if(!data?.success)return {ok:false,message:data?.message||"Discord Sync ไม่สำเร็จ"};
+    return {ok:true,skipped:Boolean(data.skipped)};
+  }catch(error){
+    return {ok:false,message:error?.message||"Discord Sync ไม่สำเร็จ"};
+  }
+}
+
 async function joinWarSignup(eventId,button){
   if(!currentUser||!eventId||!button)return;
   try{
@@ -6405,14 +6423,33 @@ async function joinWarSignup(eventId,button){
     if(error)throw error;
     const result=Array.isArray(data)?data[0]:data;
     const availabilityLabel=roundCount===1?"พร้อม Round 1":choice==="12"?"พร้อมทั้งสองรอบ":choice==="1"?"พร้อมเฉพาะ Round 1":"พร้อมเฉพาะ Round 2";
+    const discordSync=await syncWarSignupDiscord(eventId);
+    await loadWarSignups();
     alert("ลงชื่อวอร์เรียบร้อยแล้ว · คิวที่ "+(result?.queue_position??"—")+
       (result?.signup_status==="standby"?" (ตัวสำรอง)":" (ตัวจริง)")+
-      "\nความพร้อมที่บันทึก: "+availabilityLabel);
-    await loadWarSignups();
+      "\nความพร้อมที่บันทึก: "+availabilityLabel+
+      (discordSync.ok?(discordSync.skipped?"":"\nอัปเดตประกาศ Discord แล้ว"):"\n⚠️ บันทึกบนเว็บไซต์แล้ว แต่ซิงก์ Discord ไม่สำเร็จ: "+discordSync.message));
   }catch(error){
     console.error("War signup error:",error);
     alert(error.message||"ลงชื่อวอร์ไม่สำเร็จ");
-    button.disabled=false;button.textContent="เข้าร่วมวอร์";
+    button.disabled=false;button.textContent="เข้าร่วม";
+  }
+}
+async function withdrawWarSignup(eventId,button){
+  if(!currentUser||!eventId||!button)return;
+  if(!confirm("ยืนยันถอนชื่อออกจากกิจกรรม Guild War นี้ใช่หรือไม่?"))return;
+  button.disabled=true;button.textContent="กำลังถอนชื่อ...";
+  try{
+    const {data,error}=await supabaseClient.rpc("cancel_war_signup",{p_event_id:eventId});
+    if(error)throw error;
+    const discordSync=await syncWarSignupDiscord(eventId);
+    await loadWarSignups();
+    alert((data?.message||"ถอนชื่อออกจากกิจกรรมเรียบร้อยแล้ว")+
+      (discordSync.ok?(discordSync.skipped?"":"\nอัปเดตประกาศ Discord แล้ว"):"\n⚠️ ถอนชื่อบนเว็บไซต์แล้ว แต่ซิงก์ Discord ไม่สำเร็จ: "+discordSync.message));
+  }catch(error){
+    console.error("War signup withdrawal error:",error);
+    alert(error.message||"ถอนชื่อออกไม่สำเร็จ");
+    button.disabled=false;button.textContent="ถอนชื่อออก";
   }
 }
 function isDoubleOfficialSaturday(dateValue){
@@ -6657,8 +6694,9 @@ function registerWarRecordAndAttendanceEvents(){
   $("war-signup-start-time-display")?.addEventListener("change",syncWarSignupStartTime);
   $("war-signup-create-form")?.addEventListener("submit",async e=>{e.preventDefault();await createWarSignupEvent(e.currentTarget);});
   $("war-signup-content")?.addEventListener("click",e=>{
-    const join=e.target.closest("[data-war-signup-join]"),edit=e.target.closest("[data-war-signup-edit]"),del=e.target.closest("[data-war-signup-delete]"),cancel=e.target.closest("[data-war-signup-cancel]"),evidence=e.target.closest("[data-war-signup-evidence]"),discord=e.target.closest("[data-war-signup-discord]");
+    const join=e.target.closest("[data-war-signup-join]"),withdraw=e.target.closest("[data-war-signup-withdraw]"),edit=e.target.closest("[data-war-signup-edit]"),del=e.target.closest("[data-war-signup-delete]"),cancel=e.target.closest("[data-war-signup-cancel]"),evidence=e.target.closest("[data-war-signup-evidence]"),discord=e.target.closest("[data-war-signup-discord]");
     if(join)joinWarSignup(join.dataset.warSignupJoin,join);
+    if(withdraw)withdrawWarSignup(withdraw.dataset.warSignupWithdraw,withdraw);
     if(discord)sendWarSignupEventToDiscord(discord.dataset.warSignupDiscord,discord);
     if(edit)startEditWarSignupEvent(edit.dataset.warSignupEdit);
     if(evidence)exportWarSignupEvidence(evidence.dataset.warSignupEvidence,evidence);
@@ -6675,7 +6713,7 @@ function isWarRealtimePageActive() {
 
 function syncAppRealtimeSubscriptions(pageName) {
   const communityPages = ["community-board", "guild-news", "guild-activities"];
-  const shouldSubscribeToWar = pageName === "war-center";
+  const shouldSubscribeToWar = pageName === "war-center" || pageName === "war-signup";
   const shouldSubscribeToActivity = pageName === "dashboard" || communityPages.includes(pageName);
   const shouldSubscribeToFeedback = pageName === "feedback";
 
@@ -6733,7 +6771,12 @@ function subscribeToWarRealtime() {
   warRealtimeChannel = supabaseClient
     .channel("guild-war-live-updates")
     .on("postgres_changes", { event: "*", schema: "public", table: "war_events" }, () => {
-      if (isWarRealtimePageActive()) void loadWarEvents();
+      if (!isWarRealtimePageActive()) return;
+      if (!$("page-war-signup")?.classList.contains("hidden")) void loadWarSignups();
+      else void loadWarEvents();
+    })
+    .on("postgres_changes", { event: "*", schema: "public", table: "war_signups" }, () => {
+      if (!$("page-war-signup")?.classList.contains("hidden")) void loadWarSignups();
     })
     .on("postgres_changes", { event: "*", schema: "public", table: "war_parties" }, async () => {
       if (!isWarRealtimePageActive()) return;
