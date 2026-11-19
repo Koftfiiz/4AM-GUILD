@@ -8950,7 +8950,11 @@ function loadWarCenterTab(tab = "overview") {
 }
 
 function openGuildPage(pageName, options = {}) {
-  if (["war","war-stats","war-attendance-stats"].includes(pageName) && !isManagement()) {
+  if (
+    (["war","war-stats","war-attendance-stats"].includes(pageName) ||
+      (pageName === "war-center" && ["party","match-records","attendance-report"].includes(options.warTab))) &&
+    !isManagement()
+  ) {
     pageName = "war-attendance";
   }
   if (pageName === "member-management" && !isManagement()) pageName = "members";
