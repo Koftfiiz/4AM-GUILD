@@ -9398,19 +9398,16 @@ function registerAppEventListeners() {
     if (!button) return;
     event.preventDefault();
     if (isRolePreviewActive()) { alert("Role Preview เป็นโหมดอ่านอย่างเดียว"); return; }
-    const userId = button.dataset.memberCardEdit, manualId = button.dataset.memberCardManual;
-    if (manualId) { if (isManagement()) editManualGuildMember(manualId); return; }
+    // Management+ must use the Member Management Center, never the card pencil.
+    if (isManagement()) return;
+    const userId = button.dataset.memberCardEdit;
+    if (button.dataset.memberCardManual) return;
     const member = directoryMembers.find(row => !row.is_manual_record && String(row.user_id) === String(userId));
-    if (!member) return;
-    if (canManageMemberProfiles()) {
-      void editLinkedGuildMember(userId);
-    } else if (String(currentUser?.id) === String(userId)) {
-      openMemberCardEditor(member);
-    } else {
-      alert(isRolePreviewActive()
-        ? "Role Preview เป็นโหมดอ่านอย่างเดียว กรุณาออกจาก Preview เพื่อแก้ไขข้อมูลสมาชิก"
-        : "ไม่มีสิทธิ์แก้ไขข้อมูลสมาชิกคนนี้");
+    if (!member || String(currentUser?.id) !== String(userId)) {
+      alert("สมาชิกทั่วไปสามารถแก้ไขข้อมูลได้เฉพาะการ์ดของตัวเอง");
+      return;
     }
+    openMemberCardEditor(member);
   });
   $("member-card-edit-modal")?.addEventListener("click", event => {
     if (event.target.closest("[data-member-card-edit-close]")) closeMemberCardEditor();
