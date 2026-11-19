@@ -8,7 +8,7 @@
   const allowed=()=>activeMember()&&typeof isManagement==="function"&&isManagement()&&!(typeof isRolePreviewActive==="function"&&isRolePreviewActive());
   const statusText={not_submitted:"ยังไม่ส่ง",partial:"ส่งไม่ครบ",pending:"รอตรวจ",reviewing:"กำลังตรวจ",approved:"ผ่านแล้ว",revision_required:"ต้องแก้ไข",submitted:"ส่ง Patch",resubmitted:"ส่ง Version ใหม่"};
   const statusPill=s=>'<span class="pc-pill pc-'+esc(s)+'">'+esc(statusText[s]||s||"—")+'</span>';
-  const dateLabel=v=>{if(!v)return "—";const d=new Date(v);return Number.isNaN(d.getTime())?"—":d.toLocaleString("th-TH",{dateStyle:"medium",timeStyle:"short"});};
+  const dateLabel=v=>{if(!v)return "—";const d=new Date(v);if(Number.isNaN(d.getTime()))return "—";const parts=new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Bangkok",day:"2-digit",month:"2-digit",year:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(d);const get=type=>parts.find(part=>part.type===type)?.value||"";return get("day")+"/"+get("month")+"/"+get("year")+" "+get("hour")+":"+get("minute");};
 
   function injectStyles(){
     if($("pc-styles"))return;
