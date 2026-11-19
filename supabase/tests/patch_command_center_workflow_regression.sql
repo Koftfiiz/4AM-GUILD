@@ -10,8 +10,8 @@ do $$
 declare d jsonb; blocked boolean:=false;
 begin
  d:=public.get_guild_member_directory(null,'all','all','all',1000,0);
- if jsonb_array_length(d->'items')<>8 then
-  raise exception 'Expected 8 canonical directory rows, got %',jsonb_array_length(d->'items');
+ if jsonb_array_length(d->'items')<>9 then
+  raise exception 'Expected 9 canonical directory rows (8 active accounts + 1 Manual-only), got %',jsonb_array_length(d->'items');
  end if;
  if (d->'counts'->>'account')::int<>7 or (d->'counts'->>'manual')::int<>1 then
   raise exception 'Linked Manual rows were duplicated or directory counts are incorrect';
