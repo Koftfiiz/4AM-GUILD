@@ -41,11 +41,11 @@
     root.id="patch-command-center-root";
     root.innerHTML=`
       <div class="pc-root">
-        <section class="pc-panel">
+        <section class="pc-panel" data-pc-center-only>
           <div class="pc-head"><div><span class="pc-kicker">ACTIVE PATCH</span><h2 id="pc-round-title">กำลังโหลด Patch...</h2><p class="pc-muted" id="pc-round-dates">—</p></div><div class="pc-toolbar"><select class="pc-field" id="pc-round-select" aria-label="เลือก Patch"></select><button class="pc-btn" id="pc-refresh" type="button">↻ รีเฟรช</button></div></div>
           <div class="pc-toolbar" id="pc-round-actions"></div>
         </section>
-        <section class="pc-panel" id="pc-create-panel">
+        <section class="pc-panel" id="pc-create-panel" data-pc-center-only>
           <div class="pc-head"><div><h2>สร้าง Patch รอบใหม่</h2><p class="pc-muted">กำหนดช่วงเวลาเปิดรับส่งแฟ้ม ระบบจะสร้าง Snapshot Roster เมื่อถึงเวลาเริ่มต้น</p></div><button class="pc-btn" id="pc-toggle-create" type="button">แสดงแบบฟอร์ม</button></div>
           <form id="pc-create-form" class="pc-form pc-hidden">
             <label>ชื่อ Patch<input name="round_name" maxlength="120" required placeholder="เช่น Patch 2.1.2"></label>
@@ -55,12 +55,13 @@
           </form>
           <p class="pc-muted" id="pc-create-status" role="status" aria-live="polite"></p>
         </section>
-        <nav class="pc-tabs" aria-label="ศูนย์ตรวจสอบแฟ้ม">
+        <nav class="pc-tabs" aria-label="ศูนย์ตรวจสอบแฟ้ม" data-pc-center-only>
           <button class="pc-tab active" data-pc-tab="overview" type="button">ภาพรวม</button>
           <button class="pc-tab" data-pc-tab="members" type="button">สมาชิก</button>
           <button class="pc-tab" data-pc-tab="queue" type="button">คิวตรวจสอบ</button>
           <button class="pc-tab" data-pc-tab="history" type="button">ประวัติ Patch</button>
         </nav>
+        <section id="pc-view-portfolio" class="pc-view pc-hidden"><div id="pc-legacy-portfolio-host"></div></section>
         <section id="pc-view-overview" class="pc-view">
           <div class="pc-stats" id="pc-stats"></div>
           <div class="pc-split" style="margin-top:14px"><section class="pc-panel"><div class="pc-head"><div><h2>ต้องติดตาม</h2><p class="pc-muted">สมาชิกที่ยังไม่ส่งหรือมีรายการต้องแก้ไข</p></div></div><div id="pc-attention" class="pc-list"></div></section><section class="pc-panel"><div class="pc-head"><div><h2>กิจกรรมล่าสุด</h2><p class="pc-muted">การเปลี่ยนสถานะ Submission</p></div></div><div id="pc-activity" class="pc-list"></div></section></div>
@@ -78,6 +79,8 @@
     page.appendChild(root);
     const legacyOverview=$("portfolio-review-overview");
     const legacyMembers=document.querySelector("#page-portfolio-review-center .portfolio-review-list-panel");
+    const legacyPortfolio=$("page-portfolio");
+    if(legacyPortfolio){const host=$("pc-legacy-portfolio-host");while(legacyPortfolio.firstChild)host?.appendChild(legacyPortfolio.firstChild);legacyPortfolio.classList.add("hidden");}
     if(legacyOverview)$("pc-legacy-overview-host")?.appendChild(legacyOverview);
     if(legacyMembers)$("pc-legacy-member-cards-host")?.appendChild(legacyMembers);
     document.querySelectorAll('.sidebar [data-page="'+LEGACY_PAGE+'"],.sidebar [data-page="'+REVIEW_PAGE+'"]').forEach(item=>item.remove());
@@ -90,6 +93,7 @@
     document.querySelectorAll("#patch-command-center-root [data-pc-tab]").forEach(b=>b.classList.toggle("active",b.dataset.pcTab===tab));
     ["overview","members","queue","history"].forEach(v=>$("pc-view-"+v)?.classList.toggle("pc-hidden",v!==tab));
     $("pc-workspace")?.classList.add("pc-hidden");
+    document.querySelectorAll("#patch-command-center-root [data-pc-center-only]").forEach(node=>node.classList.toggle("pc-hidden",tab==="portfolio"));
   }
 
   function roundStatusLabel(round){if(round?.archived_at)return "เก็บเข้าคลัง";return round?.status==="open"?"เปิดรับส่ง":"ปิดรับส่ง";}
@@ -405,13 +409,14 @@
   function activate(){ensurePage();if(!allowed())return;window.setPatchCommandCenterRealtime?.(true);void loadCommandCenter(true);}
   const originalOpen=window.openGuildPage||openGuildPage;
   window.openGuildPage=function(pageName){
+    const portfolioTarget=pageName==="portfolio";
     const reviewTarget=pageName===REVIEW_PAGE;
     const legacyPatchTarget=pageName===LEGACY_PAGE;
-    let target=(reviewTarget||legacyPatchTarget)?PAGE:pageName;
+    let target=(portfolioTarget||reviewTarget||legacyPatchTarget)?PAGE:pageName;
     if(target===PAGE&&!allowed())target="dashboard";
     originalOpen.call(this,target);
     if(target===PAGE){
-      showTab(reviewTarget?"queue":"overview");
+      showTab(portfolioTarget?"portfolio":reviewTarget?"queue":"overview");
       state.search=reviewTarget?($("pc-queue-search")?.value.trim()||""):"";
       state.status=reviewTarget?($("pc-queue-status")?.value||"all"):"all";
       state.page=0;
