@@ -2004,10 +2004,13 @@ async function loadMembers(forceRefresh = false) {
 
   const [accountsResult, manualResult] = await Promise.all([
     fetchAllRowsPaged(() => supabaseClient.from("guild_members")
-      .select("user_id,character_name,game_class,nickname,discord_name,age,role,active,created_at,updated_at,display_position,avatar_url,guild_position,game_uid,member_cover_crop_settings,member_cover_url,membership_status,reviewed_at,avatar_crop_settings")
+      // Select the live table schema instead of hard-coding optional profile columns.
+      // Staging is intentionally leaner than Production; missing optional fields remain undefined.
+      .select("*")
       .order("created_at", { ascending: true })),
     fetchAllRowsPaged(() => supabaseClient.from("guild_manual_members")
-      .select("id,character_name,game_class,nickname,discord_name,age,guild_position,active,discord_user_id,discord_username,discord_global_name,discord_server_nickname,discord_avatar_url,linked_user_id,linked_at,created_at,updated_at")
+      // Keep the directory compatible with the focused Staging schema and the full Production schema.
+      .select("*")
       .eq("active", true).is("linked_user_id", null)
       .order("character_name", { ascending: true }))
   ]);
