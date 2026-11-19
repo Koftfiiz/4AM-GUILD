@@ -264,7 +264,7 @@
     $("gd-detail-subtitle").textContent=(row.nickname||"—")+" · "+(row.game_class||"—");
     const health=row.discordHealth||{label:"ตรวจสอบไม่ได้"};
     const values=[
-      ["ตัวละคร",row.character_name],["ชื่อเล่น",row.nickname],["คลาส",row.game_class],
+      ["ตัวละคร",row.character_name],["ชื่อเล่น",row.nickname],["สถานะบัญชี",row.record_type==="account"?"เชื่อมต่อแล้ว":"ยังไม่มีบัญชีผู้ใช้งาน"],["คลาส",row.game_class],
       ["ตำแหน่งกิลด์",row.guild_position||"ยังไม่ได้กำหนด"],["Discord Health",health.label],
       ["Discord",row.discord_name],["Discord Username",row.discord_username],
       ["Discord Global Name",row.discord_global_name],["Discord User ID",row.discord_user_id],
@@ -366,8 +366,8 @@
       const kind=view?.dataset.gdKind||edit?.dataset.gdKind||toggle?.dataset.gdKind||remove?.dataset.gdKind;
       const row=identity?state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind):null;
       if(!row)return;
-      if(view&&typeof openMemberAdminProfile==="function"){
-        openMemberAdminProfile({...row,_recordType:row.record_type,user_id:row.member_id||null,id:row.manual_member_id||null});
+      if(view){
+        openDetail(identity,kind);
       }else if(edit){
         if(kind==="account"&&typeof editLinkedGuildMember==="function")void editLinkedGuildMember(identity);
         else if(kind==="manual"&&typeof editManualGuildMember==="function")void editManualGuildMember(identity);
