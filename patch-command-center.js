@@ -141,7 +141,7 @@
 
   let patchRealtimeEnabled=false,patchRealtimeChannel=null,patchRealtimeRoundId=null,patchRealtimeTimer=null,patchRealtimePending=false;
   function queuePatchRealtimeRefresh(){
-    const page=$("page-patch-command-center");
+    const page=$("page-portfolio-review-center");
     if(!patchRealtimeEnabled||!page||page.classList.contains("hidden"))return;
     if(patchRealtimeTimer)window.clearTimeout(patchRealtimeTimer);
     patchRealtimeTimer=window.setTimeout(()=>{
