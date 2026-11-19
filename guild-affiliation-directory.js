@@ -5,7 +5,7 @@
   const LEGACY_PAGE = "guild-directory";
   const PAGE_SIZE = 50;
   const cache = new Map();
-  const state = { search:"", guild:"all", gameClass:"all", recordType:"all", page:0, rows:[], total:0, counts:null, busy:false };
+  const state = { search:"", guild:"all", gameClass:"all", recordType:"all", healthFilter:"all", page:0, rows:[], total:0, counts:null, busy:false };
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
   const $ = id => document.getElementById(id);
   const isAllowed = () => !!currentUser && !!currentMember && currentMember.active === true &&
@@ -112,6 +112,30 @@
 
   function keyForRequest() { return JSON.stringify([state.search,state.guild,state.gameClass,state.recordType,state.page]); }
 
+  function enrichDirectoryRows(rows) {
+    const accounts = new Map((typeof allMembers !== "undefined" ? allMembers : []).map(member => [String(member.user_id), member]));
+    const manuals = typeof manualGuildMembers !== "undefined" ? manualGuildMembers : [];
+    const manualById = new Map(manuals.map(member => [String(member.id), member]));
+    return (rows || []).map(row => {
+      const account = row.record_type === "account";
+      const source = account ? (accounts.get(String(row.member_id)) || {}) : (manualById.get(String(row.manual_member_id)) || {});
+      const linkedManual = account ? manuals.find(member => String(member.linked_user_id || "") === String(row.member_id)) : null;
+      const merged = { ...source, ...row };
+      merged.game_uid = source.game_uid || linkedManual?.game_uid || null;
+      merged.guild_position = source.guild_position || linkedManual?.guild_position || null;
+      merged.discord_user_id = source.discord_user_id || linkedManual?.discord_user_id || null;
+      merged.discord_username = source.discord_username || linkedManual?.discord_username || null;
+      merged.discord_global_name = source.discord_global_name || linkedManual?.discord_global_name || null;
+      merged.created_at = source.created_at || row.created_at || null;
+      merged._recordType = row.record_type;
+      merged.user_id = row.member_id || null;
+      merged.linked_user_id = row.record_type === "manual" ? source.linked_user_id : null;
+      merged.discordHealth = typeof getMemberAdminDiscordHealth === "function" ? getMemberAdminDiscordHealth(merged) : {key:"unknown",label:"ตรวจสอบไม่ได้",tone:"muted"};
+      merged.online = account && typeof isGuildMemberOnline === "function" ? isGuildMemberOnline(row.member_id) : false;
+      return merged;
+    });
+  }
+
   function renderStats(counts) {
     const values = [["สมาชิกทั้งหมด",counts?.all??0],["สมาชิก 4AM",counts?.["4AM"]??0],["สมาชิก 4PM",counts?.["4PM"]??0],["ยังไม่ระบุสังกัด",counts?.unassigned??0]];
     $("gd-stats").innerHTML = values.map(([label,value]) => '<article class="gd-stat"><span>'+esc(label)+'</span><strong>'+Number(value).toLocaleString("th-TH")+'</strong></article>').join("");
@@ -149,7 +173,7 @@
     const tbody=$("gd-rows");
     if (state.busy) return;
     const key=keyForRequest(),cached=cache.get(key);
-    if(!force&&cached&&Date.now()-cached.at<45_000){Object.assign(state,{rows:cached.data.items||[],total:cached.data.total||0,counts:cached.data.counts||null});renderStats(state.counts);renderRows();return;}
+    if(!force&&cached&&Date.now()-cached.at<45_000){Object.assign(state,{rows:enrichDirectoryRows(cached.data.items||[]),total:cached.data.total||0,counts:cached.data.counts||null});renderStats(state.counts);renderRows();return;}
     state.busy=true;
     if(tbody)tbody.innerHTML='<tr><td colspan="8" class="gd-empty">กำลังโหลดข้อมูลสมาชิก...</td></tr>';
     try{
@@ -158,7 +182,7 @@
         p_record_type:state.recordType,p_limit:PAGE_SIZE,p_offset:state.page*PAGE_SIZE
       });
       if(error)throw error;
-      Object.assign(state,{rows:data?.items||[],total:Number(data?.total||0),counts:data?.counts||{}});
+      Object.assign(state,{rows:enrichDirectoryRows(data?.items||[]),total:Number(data?.total||0),counts:data?.counts||{}});
       cache.set(key,{at:Date.now(),data});renderStats(state.counts);renderRows();
     }catch(error){
       console.error("[Member Management Center]",error);
@@ -260,6 +284,18 @@
 
   function bindEvents(){
     $("gd-filter-form")?.addEventListener("submit",event=>{event.preventDefault();state.search=$("gd-search").value.trim();state.guild=$("gd-guild").value;state.gameClass=$("gd-class").value;state.recordType=$("gd-type").value;state.page=0;void loadDirectory(true);});
+    $("manual-member-class-summary")?.addEventListener("click",event=>{
+      const button=event.target.closest("[data-manual-member-class]");if(!button)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      state.gameClass=button.dataset.manualMemberClass||"all";
+      $("gd-class").value=state.gameClass;state.page=0;void loadDirectory(true);
+    },true);
+    $("manual-member-quality-strip")?.addEventListener("click",event=>{
+      const button=event.target.closest("[data-quality-filter]");if(!button)return;
+      event.preventDefault();event.stopImmediatePropagation();
+      state.healthFilter=button.dataset.qualityFilter||"all";state.page=0;renderRows();
+      $("manual-member-quality-strip").querySelectorAll("[data-quality-filter]").forEach(item=>item.classList.toggle("is-active",item===button));
+    },true);
     $("gd-prev")?.addEventListener("click",()=>{if(state.page>0){state.page--;void loadDirectory();}});
     $("gd-next")?.addEventListener("click",()=>{if((state.page+1)*PAGE_SIZE<state.total){state.page++;void loadDirectory();}});
     $("gd-refresh")?.addEventListener("click",()=>{cache.clear();void loadDirectory(true);});
