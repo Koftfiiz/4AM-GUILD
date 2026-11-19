@@ -2054,7 +2054,9 @@ async function loadMembers(forceRefresh = false) {
   // Suspended / pending / inactive accounts remain in allMembers for the
   // Management Center, but must not appear in public counts or filters.
   const activeDirectoryAccounts = allMembers.filter(member =>
-    member.active === true && member.membership_status === "active"
+    member.active === true &&
+    member.membership_status !== "suspended" &&
+    member.membership_status !== "pending_review"
   );
   directoryMembers = [
     ...activeDirectoryAccounts.map(member => ({ ...member, guild_code: affiliationByMember.get("account:"+String(member.user_id)) || null, is_manual_record: false })),
