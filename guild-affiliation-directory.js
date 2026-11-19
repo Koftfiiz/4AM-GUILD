@@ -217,7 +217,7 @@
     const key=keyForRequest(),cached=cache.get(key);
     if(!force&&cached&&Date.now()-cached.at<45_000){Object.assign(state,{rows:enrichDirectoryRows(cached.data.items||[]),total:cached.data.total||0,counts:cached.data.counts||null});renderStats(state.counts);renderRows();return;}
     state.busy=true;
-    if(tbody)tbody.innerHTML='<tr><td colspan="11" class="gd-empty">กำลังโหลดข้อมูลสมาชิก...</td></tr>';
+    if(tbody)tbody.innerHTML='<tr><td colspan="10" class="gd-empty">กำลังโหลดข้อมูลสมาชิก...</td></tr>';
     try{
       const {data,error}=await supabaseClient.rpc("get_guild_member_directory",{
         p_search:state.search||null,p_guild_filter:state.guild,p_class_filter:state.gameClass,
@@ -228,7 +228,7 @@
       cache.set(key,{at:Date.now(),data});renderStats(state.counts);renderRows();
     }catch(error){
       console.error("[Member Management Center]",error);
-      if(tbody)tbody.innerHTML='<tr><td colspan="11" class="gd-empty">ไม่สามารถโหลดข้อมูลสมาชิกได้: '+esc(error.message||"Unknown error")+'</td></tr>';
+      if(tbody)tbody.innerHTML='<tr><td colspan="10" class="gd-empty">ไม่สามารถโหลดข้อมูลสมาชิกได้: '+esc(error.message||"Unknown error")+'</td></tr>';
     }finally{
       state.busy=false;renderRows();
       if(directoryRealtimePending){directoryRealtimePending=false;queueDirectoryRealtimeRefresh();}
