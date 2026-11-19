@@ -408,8 +408,41 @@
         if(kind==="account"&&typeof editLinkedGuildMember==="function")void editLinkedGuildMember(identity);
         else if(kind==="manual"&&typeof editManualGuildMember==="function")void editManualGuildMember(identity);
       }else if(toggle){
-        if(kind==="account"&&typeof updateLinkedGuildMemberStatus==="function")void updateLinkedGuildMemberStatus(identity);
-        else if(kind==="manual"&&typeof updateManualGuildMemberStatus==="function")void updateManualGuildMemberStatus(identity);
+        // Suspended rows are loaded by this module and may not exist in the
+        // legacy global member caches. Reactivate the exact row directly.
+        void (async()=>{
+          if(!isAllowed())return;
+          toggle.disabled=true;
+          try{
+            let query;
+            if(kind==="manual"){
+              query=supabaseClient.from("guild_manual_members")
+                .update({active:true})
+                .eq("id",identity)
+                .is("linked_user_id",null)
+                .select("id")
+                .single();
+            }else if(kind==="account"){
+              query=supabaseClient.from("guild_members")
+                .update({active:true,membership_status:"active"})
+                .eq("user_id",identity)
+                .select("user_id")
+                .single();
+            }else{
+              throw new Error("ไม่รู้จักประเภทบัญชีสมาชิก");
+            }
+            const {data,error}=await query;
+            if(error)throw error;
+            if(!data)throw new Error("ไม่พบข้อมูลสมาชิกที่ต้องการเปิดใช้งาน");
+            cache.clear();
+            await loadDirectory(true);
+            if(typeof loadMembers==="function")await loadMembers(true);
+          }catch(error){
+            console.error("[Member Management Center] Reactivate member:",error);
+            alert("เปิดใช้งานสมาชิกไม่สำเร็จ: "+(error?.message||"กรุณาลองอีกครั้ง"));
+            toggle.disabled=false;
+          }
+        })();
       }else if(remove&&typeof removeGuildMemberRecord==="function"){
         void removeGuildMemberRecord(kind,identity);
       }
