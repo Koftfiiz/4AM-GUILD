@@ -348,6 +348,24 @@
       else if(assign)openAssign(assign.dataset.gdAssign,assign.dataset.gdKind);
       else if(history)void openHistory(history.dataset.gdHistory,history.dataset.gdKind);
     });
+    $("gd-rows")?.addEventListener("change",async event=>{
+      const select=event.target.closest("[data-gd-position]");if(!select||!canAssign())return;
+      const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(select.dataset.gdPosition)&&item.record_type===select.dataset.gdKind);
+      if(!row)return;
+      select.disabled=true;
+      try{
+        const value=select.value||null;
+        const query=row.record_type==="manual"
+          ? supabaseClient.from("guild_manual_members").update({guild_position:value}).eq("id",row.manual_member_id)
+          : supabaseClient.from("guild_members").update({guild_position:value}).eq("user_id",row.member_id);
+        const {error}=await query;if(error)throw error;
+        cache.clear();
+        if(typeof loadManualMemberManagement==="function")window.memberManagementLoadPromise=loadManualMemberManagement();
+        await Promise.resolve(window.memberManagementLoadPromise);
+        await loadDirectory(true);
+      }catch(error){alert("ไม่สามารถบันทึกตำแหน่งกิลด์ได้: "+(error.message||"Unknown error"));select.value=row.guild_position||"";}
+      finally{select.disabled=false;}
+    });
   }
 
   async function activate(){
