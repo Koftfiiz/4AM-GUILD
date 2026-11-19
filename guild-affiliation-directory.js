@@ -5,7 +5,7 @@
   const LEGACY_PAGE = "guild-directory";
   const PAGE_SIZE = 100;
   const cache = new Map();
-  const state = { search:"", guild:"all", gameClass:"all", recordType:"all", healthFilter:"all", page:0, rows:[], total:0, counts:null, busy:false };
+  const state = { search:"", guild:"all", gameClass:"all", recordType:"all", healthFilter:"all", page:0, rows:[], suspendedRows:[], total:0, counts:null, busy:false };
   const esc = value => String(value ?? "").replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
   const $ = id => document.getElementById(id);
   const isAllowed = () => !!currentUser && !!currentMember && currentMember.active === true &&
@@ -42,6 +42,7 @@
       ".gd-field:focus-visible,.gd-button:focus-visible{outline:2px solid #ff6674;outline-offset:2px}",
       ".gd-table-wrap{overflow:auto}.gd-table{width:100%;min-width:1050px;border-collapse:collapse}",
       ".gd-table th,.gd-table td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;vertical-align:middle;font-size:15px}",
+      ".gd-suspended-panel{border-color:rgba(229,72,88,.42);background:linear-gradient(180deg,rgba(229,72,88,.055),rgba(12,8,10,.92))}.gd-suspended-panel h2{color:#ff8793}.gd-suspended-count{display:inline-flex;padding:7px 11px;border:1px solid rgba(229,72,88,.45);border-radius:99px;color:#ff9da5;font-size:15px;font-weight:800}.gd-suspended-table{min-width:760px}"
       ".gd-table th{color:var(--red-bright,#e54858);font-weight:800;white-space:nowrap}.gd-name{font-weight:800}.gd-sub{display:block;color:#aaa;font-size:15px}",
       ".gd-pill{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid rgba(255,255,255,.14);border-radius:99px;font-size:15px;font-weight:800;white-space:nowrap}",
       ".gd-pill.am{background:rgba(217,54,67,.12);border-color:rgba(217,54,67,.42);color:#ff9da5}.gd-pill.pm{background:rgba(118,92,190,.13);border-color:rgba(118,92,190,.42);color:#cbbcff}",
@@ -108,6 +109,10 @@
             <th>ลำดับ</th><th>ตัวละคร</th><th>คลาส</th><th>ตำแหน่งกิลด์</th><th>Discord Health</th><th>สังกัดกิลด์</th><th>สถานะสมาชิก</th><th>ออนไลน์</th><th>วันที่เข้าระบบ</th><th>จัดการ</th>
           </tr></thead><tbody id="gd-rows"><tr><td colspan="10" class="gd-empty">กำลังโหลดข้อมูลสมาชิก...</td></tr></tbody></table></div>
           <div class="gd-pagination"><span class="gd-muted" id="gd-page-label" aria-live="polite">—</span><div class="gd-actions"><button class="gd-button" id="gd-prev" type="button">← ก่อนหน้า</button><button class="gd-button" id="gd-next" type="button">ถัดไป →</button></div></div>
+        </section>
+        <section class="gd-panel gd-suspended-panel" aria-labelledby="gd-suspended-title">
+          <div class="gd-head"><div><h2 id="gd-suspended-title">โซนสมาชิกที่ถูกระงับ</h2><p class="gd-muted">แยกจากรายชื่อสมาชิกปกติ และยังสามารถตรวจสอบหรือเปิดใช้งานกลับได้</p></div><span class="gd-suspended-count" id="gd-suspended-count">0 รายชื่อ</span></div>
+          <div class="gd-table-wrap"><table class="gd-table gd-suspended-table"><thead><tr><th>ลำดับ</th><th>ตัวละคร</th><th>คลาส</th><th>สถานะสมาชิก</th><th>วันที่เข้าระบบ</th><th>จัดการ</th></tr></thead><tbody id="gd-suspended-rows"><tr><td colspan="6" class="gd-empty">กำลังโหลดข้อมูลสมาชิกที่ถูกระงับ...</td></tr></tbody></table></div>
         </section>
       </section>
       <div class="gd-modal" id="gd-modal" hidden><form class="gd-dialog" id="gd-assign-form" role="dialog" aria-modal="true" aria-labelledby="gd-assign-title"><h2 id="gd-assign-title">เปลี่ยนสังกัดกิลด์</h2><p class="gd-muted" id="gd-member-label"></p><label>สังกัดใหม่<select class="gd-field" id="gd-new-guild" required><option value="">เลือกสังกัด</option><option value="4AM">4AM</option><option value="4PM">4PM</option><option value="unassigned">ยังไม่ระบุสังกัด</option></select></label><label>เหตุผลในการเปลี่ยนสังกัด<input class="gd-field" id="gd-reason" maxlength="500" required placeholder="ระบุเหตุผล"></label><p class="gd-status" id="gd-assign-status" role="status" aria-live="polite"></p><div class="gd-dialog-actions"><button class="gd-button" id="gd-cancel" type="button">ยกเลิก</button><button class="gd-button primary" id="gd-save" type="submit">บันทึกข้อมูล</button></div></form></div>
@@ -204,12 +209,32 @@
     $("gd-next").disabled=(state.page+1)*PAGE_SIZE>=state.total||state.busy;
   }
 
+  async function loadSuspendedMembers() {
+    const target=$("gd-suspended-rows"), count=$("gd-suspended-count");
+    try {
+      const results=await Promise.all([
+        supabaseClient.from("guild_members").select("user_id,character_name,game_class,nickname,discord_name,role,active,membership_status,created_at,game_uid,guild_position").or("active.eq.false,membership_status.neq.active"),
+        supabaseClient.from("guild_manual_members").select("id,character_name,game_class,nickname,discord_name,active,created_at,game_uid,guild_position,linked_user_id").eq("active",false)
+      ]);
+      if(results[0].error)throw results[0].error; if(results[1].error)throw results[1].error;
+      const rows=[...(results[0].data||[]).map(x=>({...x,record_type:"account",member_id:x.user_id})),...(results[1].data||[]).filter(x=>!x.linked_user_id).map(x=>({...x,record_type:"manual",manual_member_id:x.id,membership_status:"suspended"}))];
+      state.suspendedRows=enrichDirectoryRows(rows);
+      if(count)count.textContent=rows.length.toLocaleString("th-TH")+" รายชื่อ";
+      if(!target)return;
+      if(!rows.length){target.innerHTML='<tr><td colspan="6" class="gd-empty">ไม่มีสมาชิกที่ถูกระงับ</td></tr>';return;}
+      target.innerHTML=state.suspendedRows.map((row,i)=>{
+        const id=row.member_id||row.manual_member_id, account=row.record_type==="account"?"เชื่อมต่อแล้ว":"ยังไม่มีบัญชีผู้ใช้งาน";
+        const actions='<div class="gd-actions gd-member-actions"><button class="btn btn-outline btn-sm" type="button" data-gd-view="'+esc(id)+'" data-gd-kind="'+row.record_type+'">ดูข้อมูล</button><button class="btn btn-outline btn-sm" type="button" data-gd-edit="'+esc(id)+'" data-gd-kind="'+row.record_type+'">แก้ไข</button><button class="btn btn-sm manual-member-toggle-btn is-activate" type="button" data-gd-toggle="'+esc(id)+'" data-gd-kind="'+row.record_type+'">เปิดใช้งาน</button><button class="member-row-remove" type="button" data-gd-remove="'+esc(id)+'" data-gd-kind="'+row.record_type+'" aria-label="นำสมาชิกออกจากกิลด์">−</button></div>';
+        return '<tr><td class="gd-sequence">'+(i+1).toLocaleString("th-TH")+'</td><td><span class="gd-name">'+esc(row.character_name||"—")+'</span><span class="gd-sub">ชื่อเล่น: '+esc(row.nickname||"—")+' · '+account+'</span></td><td>'+esc(row.game_class||"—")+'</td><td><span class="gd-record-status is-inactive">ถูกระงับ</span></td><td>'+esc(formatBangkokDateTime(row.created_at))+'</td><td>'+actions+'</td></tr>';
+      }).join("");
+    } catch(error) { console.error("[Member Management Center] Suspended members:",error); if(target)target.innerHTML='<tr><td colspan="6" class="gd-empty">ไม่สามารถโหลดข้อมูลสมาชิกที่ถูกระงับได้: '+esc(error.message||"Unknown error")+'</td></tr>'; if(count)count.textContent="—"; }
+  }
   async function loadDirectory(force=false) {
     if (!isAllowed()) return;
     const tbody=$("gd-rows");
     if (state.busy) return;
     const key=keyForRequest(),cached=cache.get(key);
-    if(!force&&cached&&Date.now()-cached.at<45_000){Object.assign(state,{rows:enrichDirectoryRows(cached.data.items||[]),total:cached.data.total||0,counts:cached.data.counts||null});renderStats(state.counts);renderRows();return;}
+    if(!force&&cached&&Date.now()-cached.at<45_000){Object.assign(state,{rows:enrichDirectoryRows(cached.data.items||[]),total:cached.data.total||0,counts:cached.data.counts||null});renderStats(state.counts);renderRows();await loadSuspendedMembers();return;}
     state.busy=true;
     if(tbody)tbody.innerHTML='<tr><td colspan="10" class="gd-empty">กำลังโหลดข้อมูลสมาชิก...</td></tr>';
     try{
@@ -219,7 +244,7 @@
       });
       if(error)throw error;
       Object.assign(state,{rows:enrichDirectoryRows(data?.items||[]),total:Number(data?.total||0),counts:data?.counts||{}});
-      cache.set(key,{at:Date.now(),data});renderStats(state.counts);renderRows();
+      cache.set(key,{at:Date.now(),data});renderStats(state.counts);renderRows();await loadSuspendedMembers();
     }catch(error){
       console.error("[Member Management Center]",error);
       if(tbody)tbody.innerHTML='<tr><td colspan="10" class="gd-empty">ไม่สามารถโหลดข้อมูลสมาชิกได้: '+esc(error.message||"Unknown error")+'</td></tr>';
@@ -253,7 +278,7 @@
 
   let editing=null,detailRow=null;
   function openDetail(identity,kind){
-    const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&(!kind||item.record_type===kind));
+    const row=[...state.rows,...state.suspendedRows].find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&(!kind||item.record_type===kind));
     const drawer=$("member-admin-profile-drawer"),content=$("member-admin-profile-content");
     if(!row||!drawer||!content)return;
     detailRow=row;
@@ -322,7 +347,7 @@
 
   function openAssign(identity,kind,initialCode){
     if(!canAssign()){alert("คุณไม่มีสิทธิ์ดำเนินการนี้");return;}
-    const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity));
+    const row=[...state.rows,...state.suspendedRows].find(item=>String(item.member_id||item.manual_member_id)===String(identity));
     if(!row)return;editing=row;
     $("gd-member-label").textContent=(row.character_name||"—")+" · "+(row.game_class||"—");
     $("gd-new-guild").value=initialCode||row.guild_code||"unassigned";$("gd-reason").value="";$("gd-assign-status").textContent="";
@@ -368,14 +393,14 @@
     $("gd-assign-form")?.addEventListener("submit",saveAssign);
     $("member-admin-profile-drawer")?.addEventListener("click",event=>{if(event.target.closest("[data-member-admin-drawer-close]"))closeDetail();});
     document.addEventListener("keydown",event=>{if(event.key==="Escape"&&detailRow)closeDetail();});
-    $("gd-rows")?.addEventListener("click",event=>{
+    $("member-admin-affiliation-panel")?.addEventListener("click",event=>{
       const view=event.target.closest("[data-gd-view]");
       const edit=event.target.closest("[data-gd-edit]");
       const toggle=event.target.closest("[data-gd-toggle]");
       const remove=event.target.closest("[data-gd-remove]");
       const identity=view?.dataset.gdView||edit?.dataset.gdEdit||toggle?.dataset.gdToggle||remove?.dataset.gdRemove;
       const kind=view?.dataset.gdKind||edit?.dataset.gdKind||toggle?.dataset.gdKind||remove?.dataset.gdKind;
-      const row=identity?state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind):null;
+      const row=identity?[...state.rows,...state.suspendedRows].find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind):null;
       if(!row)return;
       if(view){
         openDetail(identity,kind);
@@ -389,11 +414,11 @@
         void removeGuildMemberRecord(kind,identity);
       }
     });
-    $("gd-rows")?.addEventListener("change",async event=>{
+    $("member-admin-affiliation-panel")?.addEventListener("change",async event=>{
       const affiliation=event.target.closest("[data-gd-affiliation]");
       if(affiliation){
         const identity=affiliation.dataset.gdAffiliation,kind=affiliation.dataset.gdKind;
-        const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind);
+        const row=[...state.rows,...state.suspendedRows].find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind);
         if(!row)return;
         const selected=affiliation.value;
         if(selected===(row.guild_code||"unassigned"))return;
@@ -404,7 +429,7 @@
       if(position){
         if(!canAssign())return;
         const identity=position.dataset.gdPosition,kind=position.dataset.gdKind;
-        const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind);
+        const row=[...state.rows,...state.suspendedRows].find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&item.record_type===kind);
         if(!row)return;
         const previous=row.guild_position;
         position.disabled=true;
