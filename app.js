@@ -6456,6 +6456,26 @@ function updateWarSignupDateControls(selectedIso="",useDefault=false){
     ?"ซ้อมวอร์: เลือกวันที่เองได้จากปฏิทิน"
     :(outsideRange?"Event เดิมอยู่นอก 2 วันเสาร์ถัดไป กรุณาเลือกวันใหม่จากรายการก่อนบันทึก":"วอร์จริง: เลือกได้เฉพาะ 2 วันเสาร์ที่ใกล้จะถึง");
 }
+function openWarSignupTimePicker(){
+  const input=$("war-signup-start-time"),display=$("war-signup-start-time-display");
+  if(!input||!display||$("war-signup-type")?.value!=="practice")return;
+  const wrapper=display.closest(".form-group");if(!wrapper)return;
+  const existing=wrapper.querySelector(".war-time-picker-popover");
+  if(existing){existing.remove();return;}
+  document.querySelectorAll(".war-time-picker-popover").forEach(panel=>panel.remove());
+  const current=/^([01]\\d|2[0-3]):[0-5]\\d$/.test(input.value)?input.value:"20:00";
+  const [currentHour,currentMinute]=current.split(":");
+  const hourOptions=Array.from({length:24},(_,i)=>String(i).padStart(2,"0")).map(v=>'<option value="'+v+'"'+(v===currentHour?" selected":"")+'>'+v+'</option>').join("");
+  const minuteOptions=Array.from({length:60},(_,i)=>String(i).padStart(2,"0")).map(v=>'<option value="'+v+'"'+(v===currentMinute?" selected":"")+'>'+v+'</option>').join("");
+  const panel=document.createElement("div");panel.className="war-time-picker-popover";
+  panel.innerHTML='<div class="war-time-picker-heading"><strong>เลือกเวลาเริ่มวอร์</strong><span>24 ชั่วโมง</span></div><div class="war-time-picker-selects"><label>ชั่วโมง (00–23)<select class="war-time-hour" aria-label="ชั่วโมง">'+hourOptions+'</select></label><span class="war-time-picker-colon">:</span><label>นาที (00–59)<select class="war-time-minute" aria-label="นาที">'+minuteOptions+'</select></label></div><div class="war-time-picker-actions"><button type="button" class="war-time-cancel">ยกเลิก</button><button type="button" class="war-time-apply">ยืนยันเวลา</button></div>';
+  wrapper.appendChild(panel);
+  panel.querySelector(".war-time-cancel").addEventListener("click",()=>panel.remove());
+  panel.querySelector(".war-time-apply").addEventListener("click",()=>{
+    const value=panel.querySelector(".war-time-hour").value+":"+panel.querySelector(".war-time-minute").value;
+    input.value=value;display.value=value;panel.remove();
+  });
+}
 async function updateWarSignupTimeForDate(){
   const type=$("war-signup-type")?.value;
   const date=parseDisplayDate($("war-signup-event-date")?.value);
@@ -6464,12 +6484,15 @@ async function updateWarSignupTimeForDate(){
   const note=$("war-signup-time-note");
   if(!input||!display)return;
   if(type==="practice"){
-    // Practice signup events allow a freely editable start time.
-    display.readOnly=false;
-    display.removeAttribute("data-activity-time-input");
-    display.value=input.value||display.value||"";
+    // Practice signup events use a dedicated 24-hour picker (00:00–23:59).
+    input.value=input.value||"20:00";
+    display.readOnly=true;
+    display.setAttribute("aria-haspopup","dialog");
+    display.setAttribute("aria-label","เลือกเวลาเริ่มวอร์ รูปแบบ 24 ชั่วโมง");
+    display.value=input.value;
     display.required=true;
-    if(note)note.textContent="ซ้อมวอร์: เลือกหรือพิมพ์เวลาเริ่มวอร์ได้เอง (24 ชั่วโมง)";
+    display.style.cursor="pointer";
+    if(note)note.textContent="ซ้อมวอร์: เลือกเวลาได้ทุกนาที ตั้งแต่ 00:00–23:59 (24 ชั่วโมง)";
     return;
   }
   display.readOnly=true;
@@ -6556,6 +6579,10 @@ async function createWarSignupEvent(form){
   const description=$("war-signup-description").value.trim(),editId=$("war-signup-edit-id").value;
   const openDate=parseDisplayDateTime(opens),closeDate=parseDisplayDateTime(closes),showError=t=>{message.textContent=t;message.className="message error";};
   if(!name||!date||!startTime||!opens||!closes){showError("กรุณากรอกข้อมูลที่จำเป็นให้ครบ");return;}
+  if(type==="practice"&&!/^([01]\\d|2[0-3]):[0-5]\\d$/.test(startTime)){
+    showError("กรุณาเลือกเวลาเริ่มวอร์ระหว่าง 00:00–23:59 ในรูปแบบ HH:mm");
+    return;
+  }
   if(type==="official"&&!editId){
     showError("วอร์จริงสร้างโดยระบบอัตโนมัติแล้ว ไม่ต้องสร้าง Event เอง");
     return;
@@ -6622,6 +6649,10 @@ function registerWarRecordAndAttendanceEvents(){
     const value=String(display.value||"").trim();
     if(/^([01]\\d|2[0-3]):[0-5]\\d$/.test(value))hidden.value=value;
   };
+  $("war-signup-start-time-display")?.addEventListener("click",()=>openWarSignupTimePicker());
+  $("war-signup-start-time-display")?.addEventListener("keydown",event=>{
+    if(event.key==="Enter"||event.key===" "){event.preventDefault();openWarSignupTimePicker();}
+  });
   $("war-signup-start-time-display")?.addEventListener("input",syncWarSignupStartTime);
   $("war-signup-start-time-display")?.addEventListener("change",syncWarSignupStartTime);
   $("war-signup-create-form")?.addEventListener("submit",async e=>{e.preventDefault();await createWarSignupEvent(e.currentTarget);});
