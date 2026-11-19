@@ -182,7 +182,7 @@
         const accountLabel = row.record_type === "account" ? "เชื่อมต่อแล้ว" : "ยังไม่มีบัญชีผู้ใช้งาน";
         const classOptions = ["Ironclad","Bloodstrom","Celestune","Numina","Sylph","Nightwaker","Dragonsvelte","Mystech"];
         const classCell = canAssign()
-          ? '<select class="gd-field gd-inline-select" data-gd-class="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'" aria-label="เปลี่ยนคลาสของ '+esc(row.character_name||"สมาชิก")+'">'+classOptions.map(name=>'<option value="'+name+'" '+(row.game_class===name?'selected':'')+'>'+name+'</option>').join("")+'</select>'
+          ? '<select class="gd-field gd-inline-select" data-gd-class="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'" aria-label="เปลี่ยนคลาสของ '+esc(row.character_name||"สมาชิก")+'"><option value="" disabled '+(!row.game_class?'selected':'')+'>เลือกคลาส</option>'+classOptions.map(name=>'<option value="'+name+'" '+(row.game_class===name?'selected':'')+'>'+name+'</option>').join("")+'</select>'
           : '<span class="manual-member-class" style="--class-color:'+esc(cls?.color||"var(--muted)")+'">'+esc(row.game_class||"—")+'</span>';
         const positionCell = canAssign()
           ? '<select class="gd-field gd-inline-select gd-position-select" data-gd-position="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'"><option value="">ยังไม่ได้กำหนด</option>'+(typeof GUILD_POSITIONS!=="undefined"?GUILD_POSITIONS:[]).map(position=>'<option value="'+esc(position)+'" '+(row.guild_position===position?'selected':'')+'>'+esc(position)+'</option>').join("")+'</select>'
@@ -302,14 +302,30 @@
         .eq(kind==="account"?"user_id":"manual_member_id",identity)
         .order("created_at",{ascending:false}).limit(50);
       if(error)throw error;
-      $("gd-history-list").innerHTML=(data||[]).length?(data||[]).map(item=>{
-        const oldLabel=item.old_guild_code||"ยังไม่ระบุสังกัด";
-        const newLabel=item.new_guild_code==="unassigned"?"ยังไม่ระบุสังกัด":(item.new_guild_code||"ยังไม่ระบุสังกัด");
-        return '<article class="gd-history-item"><strong>'+esc(oldLabel)+' → '+esc(newLabel)+'</strong>'+
-          '<p>ดำเนินการโดย: '+esc(item.actor_display_name||"—")+'</p>'+
-          '<p>วันที่ดำเนินการ: '+esc(formatBangkokDateTime(item.created_at))+'</p>'+
-          '<p>เหตุผลในการเปลี่ยนสังกัด: '+esc(item.change_reason||"—")+'</p></article>';
-      }).join(""):'<p class="gd-muted">ยังไม่มีประวัติการเปลี่ยนสังกัด</p>';
+      if((data||[]).length){
+        $("gd-history-list").innerHTML=data.map(item=>{
+          const oldLabel=item.old_guild_code||"ยังไม่ระบุสังกัด";
+          const newLabel=item.new_guild_code==="unassigned"?"ยังไม่ระบุสังกัด":(item.new_guild_code||"ยังไม่ระบุสังกัด");
+          return '<article class="gd-history-item"><strong>'+esc(oldLabel)+' → '+esc(newLabel)+'</strong>'+
+            '<p>ดำเนินการโดย: '+esc(item.actor_display_name||"—")+'</p>'+
+            '<p>วันที่ดำเนินการ: '+esc(formatBangkokDateTime(item.created_at))+'</p>'+
+            '<p>เหตุผลในการเปลี่ยนสังกัด: '+esc(item.change_reason||"—")+'</p></article>';
+        }).join("");
+      }else{
+        let legacy=supabaseClient.from("guild_member_affiliations")
+          .select("id,started_at,ended_at,change_reason,guilds(code)")
+          .order("started_at",{ascending:false}).limit(50);
+        legacy=kind==="account"?legacy.eq("user_id",identity):legacy.eq("manual_member_id",identity);
+        const fallback=await legacy;
+        if(fallback.error)throw fallback.error;
+        $("gd-history-list").innerHTML=(fallback.data||[]).length?fallback.data.map(item=>
+          '<article class="gd-history-item"><strong>สังกัด: '+esc(item.guilds?.code||"ยังไม่ระบุสังกัด")+'</strong>'+
+          '<p>ดำเนินการโดย: ไม่พบข้อมูลย้อนหลัง</p>'+
+          '<p>วันที่ดำเนินการ: '+esc(formatBangkokDateTime(item.started_at))+'</p>'+
+          '<p>เหตุผลในการเปลี่ยนสังกัด: '+esc(item.change_reason||"ไม่พบข้อมูลย้อนหลัง")+'</p>'+
+          '<p>สิ้นสุด: '+esc(item.ended_at?formatBangkokDateTime(item.ended_at):"ปัจจุบัน")+'</p></article>'
+        ).join(""):'<p class="gd-muted">ยังไม่มีประวัติการเปลี่ยนสังกัด</p>';
+      }
     }catch(error){
       $("gd-history-list").innerHTML='<p class="gd-status">ไม่สามารถโหลดข้อมูลสมาชิกได้: '+esc(error.message||"Unknown error")+'</p>';
     }
