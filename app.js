@@ -2738,7 +2738,7 @@ function renderManualMemberManagement() {
     return `<tr>
       <td class="manual-member-number" style="text-align:center;font-weight:700;">${index + 1}</td>
       <td><strong>${escapeHTML(name)}</strong><small>ชื่อเล่น: ${escapeHTML(member.nickname || "-")} · ${identityNote}</small></td>
-      <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"}">${escapeHTML(member.game_class || "ยังไม่ระบุ")}</span></td>
+      <td><span class="manual-member-class" style="--class-color:${cls?.color || "#aaa"};color:${cls?.color || "#aaa"}">${cls?.iconPath ? `<img src="${escapeHTML(cls.iconPath)}" alt="" loading="lazy" style="width:22px;height:22px;object-fit:contain;vertical-align:middle;margin-right:7px">` : ""}${escapeHTML(member.game_class || "ยังไม่ระบุ")}</span></td>
       <td>${escapeHTML(member.guild_position || "ยังไม่ได้กำหนด")}</td>
       <td><span class="member-admin-health-pill is-${discordHealth.tone}">${escapeHTML(discordHealth.label)}</span></td>
       <td><span class="manual-member-status ${member.active ? "is-active" : "is-inactive"}">${member.active ? "Active" : "Inactive"}</span></td>
