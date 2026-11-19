@@ -110,11 +110,6 @@
           <div class="gd-pagination"><span class="gd-muted" id="gd-page-label" aria-live="polite">—</span><div class="gd-actions"><button class="gd-button" id="gd-prev" type="button">← ก่อนหน้า</button><button class="gd-button" id="gd-next" type="button">ถัดไป →</button></div></div>
         </section>
       </section>
-      <div class="gd-modal" id="gd-detail-modal" hidden><section class="gd-dialog" role="dialog" aria-modal="true" aria-labelledby="gd-detail-title">
-        <div class="gd-head"><div><h2 id="gd-detail-title">ข้อมูลสมาชิก</h2><p class="gd-muted" id="gd-detail-subtitle"></p></div><button class="gd-button" id="gd-detail-close" type="button">ปิด</button></div>
-        <div class="gd-detail-grid" id="gd-detail-grid"></div>
-        <section class="gd-detail-history-section"><h3>ประวัติสังกัดกิลด์</h3><div class="gd-history-list" id="gd-detail-history-list" aria-live="polite"><p class="gd-muted">กำลังโหลดประวัติ...</p></div></section>
-      </section></div>
       <div class="gd-modal" id="gd-modal" hidden><form class="gd-dialog" id="gd-assign-form" role="dialog" aria-modal="true" aria-labelledby="gd-assign-title"><h2 id="gd-assign-title">เปลี่ยนสังกัดกิลด์</h2><p class="gd-muted" id="gd-member-label"></p><label>สังกัดใหม่<select class="gd-field" id="gd-new-guild" required><option value="">เลือกสังกัด</option><option value="4AM">4AM</option><option value="4PM">4PM</option><option value="unassigned">ยังไม่ระบุสังกัด</option></select></label><label>เหตุผลในการเปลี่ยนสังกัด<input class="gd-field" id="gd-reason" maxlength="500" required placeholder="ระบุเหตุผล"></label><p class="gd-status" id="gd-assign-status" role="status" aria-live="polite"></p><div class="gd-dialog-actions"><button class="gd-button" id="gd-cancel" type="button">ยกเลิก</button><button class="gd-button primary" id="gd-save" type="submit">บันทึกข้อมูล</button></div></form></div>
 `);
     if (legacyQuality) $("gd-quality-host")?.append(legacyQuality);
@@ -258,28 +253,34 @@
 
   let editing=null,detailRow=null;
   function openDetail(identity,kind){
-    const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&(!kind||item.record_type===kind));if(!row)return;detailRow=row;
-    $("gd-detail-title").textContent=row.character_name||"ข้อมูลสมาชิก";
-    $("gd-detail-subtitle").textContent=(row.nickname||"—")+" · "+(row.game_class||"—");
+    const row=state.rows.find(item=>String(item.member_id||item.manual_member_id)===String(identity)&&(!kind||item.record_type===kind));
+    const drawer=$("member-admin-profile-drawer"),content=$("member-admin-profile-content");
+    if(!row||!drawer||!content)return;
+    detailRow=row;
     const health=row.discordHealth||{label:"ตรวจสอบไม่ได้"};
-    const values=[
-      ["ตัวละคร",row.character_name],["ชื่อเล่น",row.nickname],["สถานะบัญชี",row.record_type==="account"?"เชื่อมต่อแล้ว":"ยังไม่มีบัญชีผู้ใช้งาน"],["คลาส",row.game_class],
-      ["ตำแหน่งกิลด์",row.guild_position||"ยังไม่ได้กำหนด"],["Discord Health",health.label],
-      ["Discord",row.discord_name],["Discord Username",row.discord_username],
-      ["Discord Global Name",row.discord_global_name],["Discord User ID",row.discord_user_id],
-      ["สังกัดปัจจุบัน",row.guild_code||"ยังไม่ระบุสังกัด"],
-      ["สถานะสมาชิก",row.record_type==="manual"?"Manual":(row.active===false?"Inactive":"Active")],
-      ["ออนไลน์",row.online?"ออนไลน์":"ออฟไลน์"],["วันที่เข้าระบบ",formatBangkokDateTime(row.created_at)],
-      ["เริ่มสังกัดเมื่อ",formatBangkokDateTime(row.affiliation_started_at)]
-    ];
-    $("gd-detail-grid").innerHTML=values.map(([label,value])=>'<div class="gd-detail"><span>'+esc(label)+'</span><strong>'+esc(value||"—")+'</strong></div>').join("");
-    $("gd-detail-modal").hidden=false;
+    const accountLabel=row.record_type==="account"?"เชื่อมต่อแล้ว":"ยังไม่มีบัญชีผู้ใช้งาน";
+    const rowHtml=(label,value)=>'<div class="member-admin-profile-row"><span>'+esc(label)+'</span><strong>'+esc(value||"—")+'</strong></div>';
+    const classInfo=typeof getClassInfo==="function"?getClassInfo(row.game_class):null;
+    content.innerHTML=
+      '<div class="member-admin-profile-identity">'+(classInfo?.iconPath?'<img src="'+esc(classInfo.iconPath)+'" alt="">':'<span class="member-admin-profile-avatar">◈</span>')+
+      '<div><h4>'+esc(row.character_name||"ไม่ระบุชื่อ")+'</h4><span style="color:'+esc(classInfo?.color||"#ff8a96")+'">'+esc(row.game_class||"ยังไม่ระบุคลาส")+'</span><p class="member-admin-health-detail">'+esc(row.nickname||"—")+' · '+accountLabel+'</p></div></div>'+
+      '<section class="member-admin-profile-section"><h4>ข้อมูลตัวละคร</h4>'+rowHtml("ตัวละคร",row.character_name)+rowHtml("UID ตัวละคร",row.game_uid)+rowHtml("คลาส",row.game_class)+rowHtml("ตำแหน่งกิลด์",row.guild_position)+rowHtml("สังกัดปัจจุบัน",row.guild_code||"ยังไม่ระบุสังกัด")+'</section>'+
+      '<section class="member-admin-profile-section"><h4>ข้อมูลส่วนตัวสมาชิก</h4>'+rowHtml("ชื่อเล่น",row.nickname)+rowHtml("สถานะบัญชี",accountLabel)+rowHtml("สถานะสมาชิก",row.record_type==="manual"?"Manual":(row.active===false?"Inactive":"Active"))+rowHtml("ออนไลน์",row.online?"ออนไลน์":"ออฟไลน์")+rowHtml("วันที่เข้าระบบ",formatBangkokDateTime(row.created_at))+rowHtml("เริ่มสังกัดเมื่อ",formatBangkokDateTime(row.affiliation_started_at))+'</section>'+
+      '<section class="member-admin-profile-section"><h4>ข้อมูลบัญชี Discord</h4><div class="member-admin-health-pill is-'+esc(health.tone||"muted")+'">'+esc(health.label||"ตรวจสอบไม่ได้")+'</div>'+rowHtml("Discord",row.discord_name)+rowHtml("Discord Username",row.discord_username)+rowHtml("Discord Global Name",row.discord_global_name)+rowHtml("Discord User ID",row.discord_user_id)+'</section>'+
+      '<section class="member-admin-profile-section"><h4>ประวัติสังกัดกิลด์</h4><div id="member-admin-affiliation-history" class="gd-history-list" aria-live="polite"><p class="gd-muted">กำลังโหลดประวัติ...</p></div></section>';
+    $("member-admin-profile-title").textContent=row.character_name||"ข้อมูลสมาชิก";
+    drawer.classList.remove("hidden");
+    document.body.classList.add("member-admin-drawer-open");
     void loadQuickViewHistory(row);
   }
-  function closeDetail(){$("gd-detail-modal").hidden=true;detailRow=null;}
+  function closeDetail(){
+    $("member-admin-profile-drawer")?.classList.add("hidden");
+    document.body.classList.remove("member-admin-drawer-open");
+    detailRow=null;
+  }
 
   async function loadQuickViewHistory(row){
-    const target=$("gd-detail-history-list");
+    const target=$("member-admin-affiliation-history");
     if(!target)return;
     target.innerHTML='<p class="gd-muted">กำลังโหลดประวัติ...</p>';
     try{
@@ -365,8 +366,8 @@
     $("gd-cancel")?.addEventListener("click",closeAssign);
     $("gd-modal")?.addEventListener("click",event=>{if(event.target===$("gd-modal"))closeAssign();});
     $("gd-assign-form")?.addEventListener("submit",saveAssign);
-    $("gd-detail-close")?.addEventListener("click",closeDetail);
-    $("gd-detail-modal")?.addEventListener("click",event=>{if(event.target===$("gd-detail-modal"))closeDetail();});
+    $("member-admin-profile-drawer")?.addEventListener("click",event=>{if(event.target.closest("[data-member-admin-drawer-close]"))closeDetail();});
+    document.addEventListener("keydown",event=>{if(event.key==="Escape"&&detailRow)closeDetail();});
     $("gd-rows")?.addEventListener("click",event=>{
       const view=event.target.closest("[data-gd-view]");
       const edit=event.target.closest("[data-gd-edit]");

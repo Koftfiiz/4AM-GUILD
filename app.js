@@ -125,6 +125,7 @@ let currentMember = null;
 let rolePreviewRole = null;
 let allMembers = [];
 let memberDirectoryCacheExpiresAt = 0;
+let memberDirectoryRealtimeChannel = null;
 let portfolioDataCacheExpiresAt = 0;
 let guildMemberBonds = [];
 let bondRelationshipsLoadError = "";
@@ -1994,6 +1995,16 @@ async function fetchAllRowsPaged(queryFactory, pageSize = 100) {
 
 async function loadMembers(forceRefresh = false) {
   const container = $("members-list");
+  if (!memberDirectoryRealtimeChannel) {
+    memberDirectoryRealtimeChannel = supabaseClient.channel("public-member-directory-affiliations")
+      .on("postgres_changes", { event: "*", schema: "public", table: "guild_member_affiliations" }, () => {
+        const page = $("page-members");
+        if (!page || page.classList.contains("hidden")) return;
+        memberDirectoryCacheExpiresAt = 0;
+        void loadMembers(true);
+      })
+      .subscribe();
+  }
   if (!forceRefresh && Date.now() < memberDirectoryCacheExpiresAt) {
     renderMembers(directoryMembers);
     if ($("portfolio-member-grid")) await renderPortfolioMemberDirectory();
@@ -2002,17 +2013,17 @@ async function loadMembers(forceRefresh = false) {
   memberDirectoryCacheExpiresAt = 0;
   if (container) container.innerHTML = `<p class="muted">กำลังโหลดรายชื่อสมาชิก...</p>`;
 
-  const [accountsResult, manualResult] = await Promise.all([
+  const [accountsResult, manualResult, affiliationResult] = await Promise.all([
     fetchAllRowsPaged(() => supabaseClient.from("guild_members")
-      // Use only columns shared by the focused Staging schema and Production.
-      // Avoid select("*"): PostgREST may expand it from a stale schema cache containing removed columns.
       .select("user_id,character_name,game_class,nickname,discord_name,role,active,membership_status,created_at")
       .order("created_at", { ascending: true })),
     fetchAllRowsPaged(() => supabaseClient.from("guild_manual_members")
-      // Keep manual directory reads limited to columns confirmed in both environments.
       .select("id,character_name,game_class,nickname,discord_name,active,linked_user_id,created_at")
       .eq("active", true).is("linked_user_id", null)
-      .order("character_name", { ascending: true }))
+      .order("character_name", { ascending: true })),
+    fetchAllRowsPaged(() => supabaseClient.from("guild_member_affiliations")
+      .select("user_id,manual_member_id,guilds(code)")
+      .is("ended_at", null))
   ]);
 
   if (accountsResult.error) {
@@ -2028,11 +2039,23 @@ async function loadMembers(forceRefresh = false) {
     console.warn("Load manual guild members:", manualResult.error);
   }
 
+  const affiliationByMember = new Map();
+  if (affiliationResult.error) {
+    console.warn("Load current guild affiliations:", affiliationResult.error);
+  } else {
+    (affiliationResult.data || []).forEach(item => {
+      const guild = Array.isArray(item.guilds) ? item.guilds[0] : item.guilds;
+      const code = guild?.code || null;
+      if (item.user_id) affiliationByMember.set("account:"+String(item.user_id), code);
+      if (item.manual_member_id) affiliationByMember.set("manual:"+String(item.manual_member_id), code);
+    });
+  }
   directoryMembers = [
-    ...allMembers.map(member => ({ ...member, is_manual_record: false })),
+    ...allMembers.map(member => ({ ...member, guild_code: affiliationByMember.get("account:"+String(member.user_id)) || null, is_manual_record: false })),
     ...manualGuildMembers.map(member => ({
       ...member,
       user_id: null,
+      guild_code: affiliationByMember.get("manual:"+String(member.id)) || null,
       role: "member",
       is_manual_record: true
     }))
@@ -2078,6 +2101,8 @@ function renderMembers(members) {
     const name = getMemberName(member), className = getMemberClass(member);
     const classInfo = getClassInfo(className), classColor = classInfo?.color || "#8b8b8b";
     const guildPosition = member.guild_position || "ยังไม่ได้กำหนดตำแหน่ง";
+    const guildCode = member.guild_code || "unassigned";
+    const guildLabel = guildCode === "unassigned" ? "ยังไม่ระบุสังกัด" : guildCode;
     const gameUID = String(member.game_uid || "");
     const recordType = member.is_manual_record ? "manual" : "account";
     const avatarKey = member.user_id || member.id || name;
@@ -2089,7 +2114,7 @@ function renderMembers(members) {
         ${editButton}
         <div class="member-avatar"><img class="member-avatar-image" data-member-avatar-user-id="${escapeHTML(avatarKey)}" src="${DEFAULT_AVATAR}" alt="รูปโปรไฟล์ ${escapeHTML(name)}" loading="lazy" onerror="this.onerror=null;this.src='${DEFAULT_AVATAR}'"></div>
         <div class="member-info">
-          <div class="member-details"><h4>${escapeHTML(name)}</h4><span class="member-guild-position-badge">${escapeHTML(guildPosition)}</span><small class="member-secondary-name"><strong>ชื่อเล่น:</strong> <span>${escapeHTML(member.nickname || "-")}</span></small><small class="member-secondary-name"><strong>Discord:</strong> <span>${escapeHTML(member.discord_name || "-")}</span></small><small class="member-secondary-name"><strong>อายุ:</strong> <span>${member.age ? `${escapeHTML(member.age)} ปี` : "-"}</span></small></div>
+          <div class="member-details"><h4>${escapeHTML(name)}</h4><span class="member-guild-position-badge">${escapeHTML(guildPosition)}</span><span class="member-guild-affiliation-badge is-${guildCode==="4AM"?"4am":guildCode==="4PM"?"4pm":"unassigned"}">${escapeHTML(guildLabel)}</span><small class="member-secondary-name"><strong>ชื่อเล่น:</strong> <span>${escapeHTML(member.nickname || "-")}</span></small><small class="member-secondary-name"><strong>Discord:</strong> <span>${escapeHTML(member.discord_name || "-")}</span></small><small class="member-secondary-name"><strong>อายุ:</strong> <span>${member.age ? `${escapeHTML(member.age)} ปี` : "-"}</span></small></div>
           <div class="member-game-uid"><span class="member-uid-label">UID ตัวละคร</span><span class="member-uid-value">${escapeHTML(gameUID || "-")}</span>${gameUID ? `<button type="button" class="btn btn-outline copy-member-game-uid" data-game-uid="${escapeHTML(gameUID)}">คัดลอก UID</button>` : ""}</div>
         </div>
         <div class="member-class" style="--class-color:${escapeHTML(classColor)}">${classInfo?.iconPath ? `<img class="member-class-icon" src="${escapeHTML(classInfo.iconPath)}" alt="${escapeHTML(className)}" loading="lazy" onerror="this.style.display='none'">` : ""}<span>${escapeHTML(className)}</span>${member.is_manual_record ? '<span class="member-record-status">Manual</span>' : ""}</div>
@@ -6771,6 +6796,7 @@ function syncAppRealtimeSubscriptions(pageName) {
 }
 
 function removeAppRealtimeChannels() {
+  if (memberDirectoryRealtimeChannel) { void supabaseClient.removeChannel(memberDirectoryRealtimeChannel); memberDirectoryRealtimeChannel = null; }
   if (typeof window.setGuildAffiliationRealtime === "function") window.setGuildAffiliationRealtime(false);
   if (typeof window.setPatchCommandCenterRealtime === "function") window.setPatchCommandCenterRealtime(false);
   for (const channel of [warRealtimeChannel, guildActivityRealtimeChannel, guildActivityCommentsRealtimeChannel, feedbackRealtimeChannel]) {
