@@ -133,12 +133,14 @@
       const account = row.record_type === "account";
       const source = account ? (accounts.get(String(row.member_id)) || {}) : (manualById.get(String(row.manual_member_id)) || {});
       const linkedManual = account ? manuals.find(member => String(member.linked_user_id || "") === String(row.member_id)) : null;
+      const discordAccount = account && typeof discordAccountDirectory !== "undefined" ? discordAccountDirectory.get(String(row.member_id)) : null;
       const merged = { ...source, ...row };
       merged.game_uid = source.game_uid || linkedManual?.game_uid || null;
       merged.guild_position = source.guild_position || linkedManual?.guild_position || null;
-      merged.discord_user_id = source.discord_user_id || linkedManual?.discord_user_id || null;
-      merged.discord_username = source.discord_username || linkedManual?.discord_username || null;
-      merged.discord_global_name = source.discord_global_name || linkedManual?.discord_global_name || null;
+      merged.discord_user_id = source.discord_user_id || linkedManual?.discord_user_id || discordAccount?.discord_user_id || null;
+      merged.discord_username = source.discord_username || linkedManual?.discord_username || discordAccount?.discord_username || null;
+      merged.discord_global_name = source.discord_global_name || linkedManual?.discord_global_name || discordAccount?.discord_global_name || null;
+      merged.discord_connection_status = discordAccount?.discord_connection_status || null;
       merged.created_at = source.created_at || row.created_at || null;
       merged._recordType = row.record_type;
       merged.user_id = row.member_id || null;
