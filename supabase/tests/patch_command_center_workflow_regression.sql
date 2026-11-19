@@ -234,3 +234,60 @@ begin
  if n<>0 then raise exception 'Member can read another member affiliation history'; end if;
 end $$;
 rollback;
+
+
+-- 10) A delayed opening snapshot uses the affiliation valid at Patch start,
+-- even when the member has transferred out before the snapshot worker runs.
+begin;
+select set_config('request.jwt.claim.sub','10000000-0000-4000-8000-000000000001',true);
+do $$
+declare
+ rid uuid;
+ original_affiliation_id uuid;
+ v_started_at timestamptz;
+ v_round_start timestamptz;
+ v_transfer_at timestamptz;
+begin
+ select aff.id,aff.started_at into original_affiliation_id,v_started_at
+ from public.guild_member_affiliations aff
+ join public.guilds g on g.id=aff.guild_id
+ where aff.user_id='10000000-0000-4000-8000-000000000001'
+   and g.code='4AM' and aff.ended_at is null;
+ if original_affiliation_id is null then
+  raise exception 'Expected active 4AM affiliation fixture for delayed snapshot test';
+ end if;
+ v_round_start:=v_started_at+interval '1 second';
+ if v_round_start>=clock_timestamp()-interval '10 seconds' then
+  raise exception '4AM affiliation fixture is too recent for historical snapshot test';
+ end if;
+ v_transfer_at:=v_round_start+interval '5 seconds';
+
+ rid:=public.create_portfolio_patch_round(
+  'QA delayed opening snapshot',clock_timestamp()+interval '1 day',clock_timestamp()+interval '3 days'
+ );
+ update public.portfolio_update_rounds
+  set starts_at=v_round_start
+  where id=rid and roster_snapshot_at is null;
+
+ update public.guild_member_affiliations
+  set ended_at=v_transfer_at
+  where id=original_affiliation_id and ended_at is null;
+ if not found then raise exception 'Could not close historical 4AM affiliation fixture'; end if;
+
+ insert into public.guild_member_affiliations(guild_id,user_id,started_at,change_reason)
+ select g.id,'10000000-0000-4000-8000-000000000001',v_transfer_at,'QA delayed snapshot transfer'
+ from public.guilds g where g.code='4PM';
+
+ perform public.snapshot_due_patch_rosters();
+
+ if not exists(
+  select 1 from public.portfolio_patch_roster
+  where round_id=rid
+   and member_id='10000000-0000-4000-8000-000000000001'
+   and affiliation_id=original_affiliation_id
+   and roster_source='opening_snapshot'
+ ) then
+  raise exception 'Delayed snapshot did not preserve the member affiliated with 4AM at round start';
+ end if;
+end $$;
+rollback;
