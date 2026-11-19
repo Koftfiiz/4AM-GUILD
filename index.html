@@ -46,7 +46,7 @@
             tracker.src = "portfolio-tracker.js?v=portfolio-roster-snapshot-20261119-r2";
             tracker.onload = () => {
               const directory = document.createElement("script");
-              directory.src = "guild-affiliation-directory.js?v=20261119-r4";
+              directory.src = "guild-affiliation-directory.js?v=20261119-r5";
               directory.onload = () => {
                 const commandCenter = document.createElement("script");
                 commandCenter.src = "patch-command-center.js?v=20261119-r10";
@@ -553,7 +553,7 @@
         <div class="page-intro">
           <span class="section-kicker">MEMBER ADMINISTRATION</span>
           <h1>จัดการรายชื่อสมาชิก</h1>
-          <p>เพิ่มและดูแลข้อมูลสมาชิกด้วยตนเอง โดยไม่จำเป็นต้องมีบัญชีเข้าใช้งานแอปก่อน</p>
+          <p>ศูนย์กลางบริหารข้อมูลสมาชิก บัญชี Discord และสังกัดกิลด์ 4AM / 4PM</p>
         </div>
         <nav class="section-tab-navigation" aria-label="เมนูย่อย"><button type="button" data-go-page="members">รายชื่อสมาชิก</button>
 <button type="button" data-go-page="member-management" data-management-only class="management-only is-role-hidden" aria-hidden="true">จัดการรายชื่อสมาชิก</button></nav>
@@ -561,9 +561,9 @@
         <section class="member-admin-overview">
           <div class="member-admin-stat">
             <span class="member-admin-stat-icon">◎</span>
-            <div><small>MANUAL DIRECTORY</small><strong id="manual-member-summary">กำลังโหลด...</strong></div>
+            <div><small>MEMBER MANAGEMENT</small><strong id="manual-member-summary">กำลังโหลด...</strong></div>
           </div>
-          <div class="member-admin-note"><strong>ข้อมูลสมาชิก Manual</strong><span>รายชื่อในส่วนนี้จะแสดงในหน้ารายชื่อสมาชิก แต่ยังไม่สามารถ Login หรือเข้าร่วมระบบวอร์จนกว่าจะเชื่อมบัญชีผู้ใช้</span></div>
+          <div class="member-admin-note"><strong>ศูนย์กลางข้อมูลสมาชิก</strong><span>จัดการสมาชิกที่ลงทะเบียนผ่านเว็บไซต์และรายชื่อ Manual ได้จากหน้าจอเดียว พร้อมดูสถานะบัญชีและข้อมูลสังกัด</span></div>
         </section>
 
         <button type="button" id="manual-member-add-trigger" class="manual-member-add-card">
