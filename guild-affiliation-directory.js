@@ -1,7 +1,8 @@
 (() => {
   "use strict";
 
-  const PAGE = "guild-directory";
+  const PAGE = "member-management";
+  const LEGACY_PAGE = "guild-directory";
   const CACHE_TTL = 45_000;
   const PAGE_SIZE = 50;
   const cache = new Map();
@@ -12,7 +13,7 @@
   }[char]));
   const $ = id => document.getElementById(id);
   const isAllowed = () => !!currentUser && !!currentMember && currentMember.active === true &&
-    currentMember.membership_status === "active";
+    currentMember.membership_status === "active" && typeof isManagement === "function" && isManagement();
   const canAssign = () => isAllowed() && typeof canManageMemberProfiles === "function" &&
     canManageMemberProfiles() && !(typeof isRolePreviewActive === "function" && isRolePreviewActive());
 
@@ -21,7 +22,11 @@
     const style = document.createElement("style");
     style.id = "guild-directory-styles";
     style.textContent = [
-      ".gd-root{display:grid;gap:16px;color:#f4f4f5}",
+      ".gd-workspace-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0 16px;padding:5px;border:1px solid rgba(232,51,63,.2);border-radius:12px;background:rgba(255,255,255,.025)}",
+      ".gd-workspace-tab{min-height:42px;padding:9px 16px;border:1px solid transparent;border-radius:9px;background:transparent;color:#aaa;font-size:15px;font-weight:750;cursor:pointer}",
+      ".gd-workspace-tab[aria-selected=true]{border-color:rgba(232,51,63,.4);background:rgba(217,54,67,.14);color:#ff9da5}",
+      ".gd-workspace-tab:focus-visible,.gd-button:focus-visible,.gd-field:focus-visible{outline:2px solid #ff6674;outline-offset:2px}",
+      ".gd-root{display:grid;gap:16px;color:#f4f4f5}.gd-root[hidden]{display:none!important}",
       ".gd-panel{padding:18px;border:1px solid rgba(232,51,63,.22);border-radius:14px;background:linear-gradient(145deg,#21191c,#121214)}",
       ".gd-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}",
       ".gd-head h2{font-size:20px;margin:2px 0}.gd-muted{color:#aaa;font-size:15px;line-height:1.55}",
@@ -46,53 +51,64 @@
       ".gd-dialog h2{margin:0 0 4px;font-size:20px}.gd-dialog label{display:grid;gap:6px;margin:14px 0;color:#ddd;font-size:15px}",
       ".gd-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.gd-status{min-height:22px;color:#ff9da5;font-size:15px}.gd-modal[hidden]{display:none}.gd-history-list{display:grid;gap:9px;max-height:min(55vh,520px);overflow:auto}.gd-history-item{padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#151519}.gd-history-item strong{font-size:16px}.gd-history-item p{margin:5px 0 0;color:#aaa;font-size:15px;line-height:1.5}",
       "@media(max-width:900px){.gd-toolbar{grid-template-columns:repeat(2,minmax(0,1fr))}.gd-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}",
-      "@media(max-width:520px){.gd-toolbar{grid-template-columns:1fr}.gd-panel{padding:14px}.gd-stats{gap:8px}.gd-stat strong{font-size:21px}}"
+      "@media(max-width:520px){.gd-toolbar{grid-template-columns:1fr}.gd-panel{padding:14px}.gd-stats{gap:8px}.gd-stat strong{font-size:21px}.gd-workspace-tabs{display:grid;grid-template-columns:1fr 1fr}.gd-workspace-tab{padding:9px 8px}}"
     ].join("");
     document.head.appendChild(style);
   }
 
-  if (typeof PAGE_TITLES !== "undefined") PAGE_TITLES[PAGE] = "Guild Directory";
+  if (typeof PAGE_TITLES !== "undefined") PAGE_TITLES[LEGACY_PAGE] = "จัดการรายชื่อสมาชิก";
+
+  function setAdminView(view) {
+    const affiliationView = view === "affiliations";
+    const page = $("page-member-management");
+    if (!page || !isAllowed()) return;
+    page.querySelectorAll("[data-member-admin-view]").forEach(button => {
+      const selected = button.dataset.memberAdminView === view;
+      button.setAttribute("aria-selected", selected ? "true" : "false");
+      button.classList.toggle("is-active", selected);
+    });
+    [".member-admin-overview", "#manual-member-add-trigger", ".manual-member-list-panel"].forEach(selector => {
+      page.querySelectorAll(selector).forEach(element => element.classList.toggle("hidden", affiliationView));
+    });
+    const panel = $("member-admin-affiliation-panel");
+    if (panel) panel.hidden = !affiliationView;
+    if (affiliationView) {
+      window.setGuildAffiliationRealtime?.(true);
+      cache.clear();
+      void loadDirectory();
+    } else {
+      window.setGuildAffiliationRealtime?.(false);
+    }
+  }
 
   function ensurePage() {
-    if ($("page-guild-directory")) return;
-    const nav = document.querySelector(".sidebar-nav");
-    const memberNav = document.querySelector('.sidebar .nav-item[data-page="members"]');
-    if (nav && memberNav && !document.querySelector('.sidebar .nav-item[data-page="guild-directory"]')) {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "nav-item";
-      button.dataset.page = PAGE;
-      button.innerHTML = '<svg class="icon"><use href="#i-users"/></svg><span>Guild Directory</span>';
-      memberNav.insertAdjacentElement("afterend", button);
-      button.addEventListener("click", event => {
-        event.preventDefault(); event.stopPropagation();
-        window.openGuildPage(PAGE);
-      });
-    }
-    const main = document.querySelector(".main-area");
-    if (!main) return;
-    const page = document.createElement("section");
-    page.id = "page-guild-directory";
-    page.className = "page page-padded hidden";
-    page.innerHTML = `
-      <div class="page-intro"><span class="section-kicker">GUILD AFFILIATION</span><h1>Guild Directory</h1><p>รายชื่อสมาชิก 4AM และ 4PM ในหน้ารวมเดียว พร้อมจัดการสังกัดและประวัติการย้าย</p></div>
-      <div class="gd-root">
-        <section class="gd-stats" id="gd-stats"></section>
+    const page = $("page-member-management");
+    if (!page || $("member-admin-affiliation-panel")) return;
+    const existingTabs = page.querySelector(".section-tab-navigation");
+    if (existingTabs) existingTabs.insertAdjacentHTML("afterend", `
+      <nav class="gd-workspace-tabs" role="tablist" aria-label="เครื่องมือจัดการสมาชิก">
+        <button type="button" class="gd-workspace-tab is-active" data-member-admin-view="members" role="tab" aria-selected="true">ข้อมูลสมาชิก</button>
+        <button type="button" class="gd-workspace-tab" data-member-admin-view="affiliations" role="tab" aria-selected="false">สังกัดกิลด์ 4AM / 4PM</button>
+      </nav>`);
+    page.insertAdjacentHTML("beforeend", `
+      <section id="member-admin-affiliation-panel" class="gd-root" role="tabpanel" aria-label="จัดการสังกัดกิลด์" hidden>
+        <div class="gd-head"><div><span class="section-kicker">GUILD AFFILIATION</span><h2>จัดการสังกัดกิลด์</h2><p class="gd-muted">จัดการสังกัด 4AM และ 4PM พร้อมตรวจสอบประวัติการเปลี่ยนสังกัดจากหน้าจัดการสมาชิก</p></div><button class="gd-button" id="gd-refresh" type="button">↻ รีเฟรช</button></div>
+        <section class="gd-stats" id="gd-stats" aria-live="polite"></section>
         <section class="gd-panel">
-          <div class="gd-head"><div><h2>Member Directory</h2><p class="gd-muted">ค้นหาและกรองข้อมูลจากฐานข้อมูลโดยตรง · แสดงครั้งละ ${PAGE_SIZE} รายชื่อ</p></div><button class="gd-button" id="gd-refresh" type="button">↻ รีเฟรช</button></div>
+          <div class="gd-head"><div><h2>รายชื่อสมาชิกและสังกัด</h2><p class="gd-muted">ค้นหาและกรองข้อมูลจากฐานข้อมูล · แสดงครั้งละ ${PAGE_SIZE} รายชื่อ</p></div></div>
           <form class="gd-toolbar" id="gd-filter-form">
-            <input class="gd-field" id="gd-search" type="search" maxlength="80" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น หรือ Discord">
-            <select class="gd-field" id="gd-guild"><option value="all">ทุกสังกัด</option><option value="4AM">4AM</option><option value="4PM">4PM</option><option value="unassigned">ยังไม่กำหนดสังกัด</option></select>
-            <select class="gd-field" id="gd-class"><option value="all">ทุก Class</option><option>Ironclad</option><option>Bloodstrom</option><option>Celestune</option><option>Numina</option><option>Sylph</option><option>Nightwaker</option><option>Dragonsvelte</option><option>Mystech</option></select>
-            <select class="gd-field" id="gd-type"><option value="all">ทุกประเภท</option><option value="account">บัญชีเว็บไซต์</option><option value="manual">Manual เท่านั้น</option></select>
+            <input class="gd-field" id="gd-search" type="search" maxlength="80" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น หรือ Discord" aria-label="ค้นหาสมาชิก">
+            <select class="gd-field" id="gd-guild" aria-label="กรองตามสังกัด"><option value="all">ทุกสังกัด</option><option value="4AM">4AM</option><option value="4PM">4PM</option><option value="unassigned">ยังไม่กำหนดสังกัด</option></select>
+            <select class="gd-field" id="gd-class" aria-label="กรองตาม Class"><option value="all">ทุก Class</option><option>Ironclad</option><option>Bloodstrom</option><option>Celestune</option><option>Numina</option><option>Sylph</option><option>Nightwaker</option><option>Dragonsvelte</option><option>Mystech</option></select>
+            <select class="gd-field" id="gd-type" aria-label="กรองตามประเภทบัญชี"><option value="all">ทุกประเภท</option><option value="account">บัญชีเว็บไซต์</option><option value="manual">Manual เท่านั้น</option></select>
             <button class="gd-button primary" type="submit">ค้นหา</button>
           </form>
-          <div class="gd-table-wrap"><table class="gd-table"><thead><tr><th>สมาชิก</th><th>Class</th><th>Discord</th><th>ประเภท</th><th>สังกัด</th><th>จัดการ</th></tr></thead><tbody id="gd-rows"><tr><td colspan="6" class="gd-empty">กำลังโหลด...</td></tr></tbody></table></div>
-          <div class="gd-pagination"><span class="gd-muted" id="gd-page-label">—</span><div class="gd-actions"><button class="gd-button" id="gd-prev" type="button">← ก่อนหน้า</button><button class="gd-button" id="gd-next" type="button">ถัดไป →</button></div></div>
+          <div class="gd-table-wrap"><table class="gd-table"><thead><tr><th scope="col">สมาชิก</th><th scope="col">Class</th><th scope="col">Discord</th><th scope="col">ประเภท</th><th scope="col">สังกัด</th><th scope="col">การดำเนินการ</th></tr></thead><tbody id="gd-rows"><tr><td colspan="6" class="gd-empty">กำลังโหลด...</td></tr></tbody></table></div>
+          <div class="gd-pagination"><span class="gd-muted" id="gd-page-label" aria-live="polite">—</span><div class="gd-actions"><button class="gd-button" id="gd-prev" type="button">← ก่อนหน้า</button><button class="gd-button" id="gd-next" type="button">ถัดไป →</button></div></div>
         </section>
-      </div>
-      <div class="gd-modal" id="gd-modal" hidden><form class="gd-dialog" id="gd-assign-form"><h2>กำหนดสังกัดสมาชิก</h2><p class="gd-muted" id="gd-member-label"></p><label>สังกัดใหม่<select class="gd-field" id="gd-new-guild" required><option value="">เลือกสังกัด</option><option value="4AM">4AM</option><option value="4PM">4PM</option></select></label><label>เหตุผลในการเปลี่ยนสังกัด<input class="gd-field" id="gd-reason" maxlength="160" placeholder="ระบุเหตุผล (ไม่บังคับ)"></label><p class="gd-status" id="gd-assign-status" role="status" aria-live="polite"></p><div class="gd-dialog-actions"><button class="gd-button" id="gd-cancel" type="button">ยกเลิก</button><button class="gd-button primary" id="gd-save" type="submit">บันทึกสังกัด</button></div></form></div>\n      <div class="gd-modal" id="gd-history-modal" hidden><section class="gd-dialog" role="dialog" aria-modal="true" aria-labelledby="gd-history-title"><h2 id="gd-history-title">ประวัติสังกัดสมาชิก</h2><p class="gd-muted" id="gd-history-member"></p><div class="gd-history-list" id="gd-history-list" aria-live="polite"><p class="gd-muted">กำลังโหลดประวัติ...</p></div><div class="gd-dialog-actions"><button class="gd-button" id="gd-history-close" type="button">ปิด</button></div></section></div>`;
-    main.appendChild(page);
+      </section>
+      <div class="gd-modal" id="gd-modal" hidden><form class="gd-dialog" id="gd-assign-form" role="dialog" aria-modal="true" aria-labelledby="gd-assign-title"><h2 id="gd-assign-title">กำหนดสังกัดสมาชิก</h2><p class="gd-muted" id="gd-member-label"></p><label>สังกัดใหม่<select class="gd-field" id="gd-new-guild" required><option value="">เลือกสังกัด</option><option value="4AM">4AM</option><option value="4PM">4PM</option></select></label><label>เหตุผลในการเปลี่ยนสังกัด<input class="gd-field" id="gd-reason" maxlength="160" placeholder="ระบุเหตุผล (ไม่บังคับ)"></label><p class="gd-status" id="gd-assign-status" role="status" aria-live="polite"></p><div class="gd-dialog-actions"><button class="gd-button" id="gd-cancel" type="button">ยกเลิก</button><button class="gd-button primary" id="gd-save" type="submit">บันทึกสังกัด</button></div></form></div>
+      <div class="gd-modal" id="gd-history-modal" hidden><section class="gd-dialog" role="dialog" aria-modal="true" aria-labelledby="gd-history-title"><h2 id="gd-history-title">ประวัติสังกัดสมาชิก</h2><p class="gd-muted" id="gd-history-member"></p><div class="gd-history-list" id="gd-history-list" aria-live="polite"><p class="gd-muted">กำลังโหลดประวัติ...</p></div><div class="gd-dialog-actions"><button class="gd-button" id="gd-history-close" type="button">ปิด</button></div></section></div>`);
     styles();
     bindEvents();
   }
@@ -132,7 +148,7 @@
         return '<tr><td><span class="gd-name">'+esc(row.character_name)+'</span><span class="gd-sub">'+esc(row.nickname || "ไม่ระบุชื่อเล่น")+'</span></td>'+
           '<td>'+esc(row.game_class)+'</td><td>'+esc(row.discord_name || "—")+'</td>'+
           '<td><span class="gd-pill '+(row.record_type==="manual"?"manual":"")+'">'+(row.record_type==="manual"?"Manual":"บัญชีเว็บไซต์")+'</span></td>'+
-          '<td><span class="gd-pill '+guildClass+'">'+esc(guildLabel)+'</span></td><td>'+assign+'</td></tr>';
+          '<td><span class="gd-pill '+guildClass+'">'+esc(guildLabel)+'</span></td><td>'+actions+'</td></tr>';
       }).join("");
     }
     const pages = Math.max(1,Math.ceil(state.total/PAGE_SIZE));
@@ -174,8 +190,9 @@
 
   let directoryRealtimeChannel=null,directoryRealtimeTimer=null,directoryRealtimePending=false;
   function queueDirectoryRealtimeRefresh(){
-    const page=$("page-guild-directory");
-    if(!page||page.classList.contains("hidden"))return;
+    const page=$("page-member-management");
+    const panel=$("member-admin-affiliation-panel");
+    if(!page||page.classList.contains("hidden")||!panel||panel.hidden)return;
     if(directoryRealtimeTimer)window.clearTimeout(directoryRealtimeTimer);
     directoryRealtimeTimer=window.setTimeout(()=>{
       directoryRealtimeTimer=null;
@@ -266,6 +283,11 @@
   }
 
   function bindEvents() {
+    $("page-member-management")?.querySelector(".gd-workspace-tabs")?.addEventListener("click",event=>{
+      const button=event.target.closest("[data-member-admin-view]");
+      if(!button)return;
+      setAdminView(button.dataset.memberAdminView);
+    });
     $("gd-filter-form")?.addEventListener("submit",event=>{
       event.preventDefault(); state.search=$("gd-search").value.trim(); state.guild=$("gd-guild").value;
       state.gameClass=$("gd-class").value; state.recordType=$("gd-type").value; state.page=0; void loadDirectory(true);
@@ -289,21 +311,31 @@
   function activate() {
     ensurePage();
     if (!isAllowed()) return;
-    window.setGuildAffiliationRealtime?.(true);
-    void loadDirectory();
+    const page=$("page-member-management"),panel=$("member-admin-affiliation-panel");
+    if(page&&!page.classList.contains("hidden")&&panel&&!panel.hidden){
+      window.setGuildAffiliationRealtime?.(true);
+      void loadDirectory();
+    }
   }
 
   const originalOpen = window.openGuildPage || openGuildPage;
   window.openGuildPage = function(pageName) {
-    let target=pageName;
-    if (target===PAGE && !isAllowed()) target="dashboard";
-    originalOpen.call(this,target);
-    if (target===PAGE) activate();
+    const legacyAffiliationRoute = pageName === LEGACY_PAGE;
+    let target = legacyAffiliationRoute ? PAGE : pageName;
+    if (target === PAGE && !isAllowed()) target = "dashboard";
+    if (target !== PAGE) window.setGuildAffiliationRealtime?.(false);
+    originalOpen.call(this, target);
+    if (target === PAGE) {
+      ensurePage();
+      if (legacyAffiliationRoute) setAdminView("affiliations");
+      else activate();
+    }
   };
 
   ensurePage();
   window.addEventListener("4am:app-ready",()=> {
+    ensurePage();
     if (typeof syncManagementMenuVisibility==="function") syncManagementMenuVisibility();
-    if ($("page-guild-directory") && !$("page-guild-directory").classList.contains("hidden")) activate();
+    activate();
   });
 })();
