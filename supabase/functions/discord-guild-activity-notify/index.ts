@@ -192,15 +192,30 @@ Deno.serve(async (request) => {
       { name: "**ตัวสำรอง**", value: String(warSignupRows.filter(x => Number(x.queue_position) > 60).length) + " / 20 คน", inline: true }
     ];
     const roleIcons: Record<string, string> = { Tank: "🛡️", DPS: "⚔️", Bloodstrom: "🩸", Healer: "💚" };
-    for (const role of roleOrder) {
+    const addSpacingField = (blankLines: number) => signupFields.push({
+      name: "\u200b",
+      value: "\u200b" + "\n".repeat(blankLines),
+      inline: false
+    });
+    addSpacingField(2);
+    for (const role of ["Tank", "DPS"]) {
       const roleRows = roleGroups.get(role) || [];
       signupFields.push({
         name: roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**",
         value: "\u200b",
         inline: true
       });
-      if (role === "DPS") signupFields.push({ name: "\u200b", value: "\u200b", inline: false });
     }
+    addSpacingField(1);
+    for (const role of ["Bloodstrom", "Healer"]) {
+      const roleRows = roleGroups.get(role) || [];
+      signupFields.push({
+        name: roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**",
+        value: "\u200b",
+        inline: true
+      });
+    }
+    addSpacingField(2);
     const rosterLines = warSignupMembers.filter(x => Number(x.queue_position) <= 60)
       .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
     const reserveLines = warSignupMembers.filter(x => Number(x.queue_position) > 60)
@@ -209,14 +224,17 @@ Deno.serve(async (request) => {
       const chunks: string[] = [];
       let chunk = "";
       for (const line of lines) {
+        if (line.length > 1000) {
+          throw new Error("A member display name is too long to fit in a single Discord signup announcement.");
+        }
         const next = chunk ? chunk + "\n" + line : line;
-        if (next.length > 980 && chunk) { chunks.push(chunk); chunk = line; }
+        if (next.length > 1000 && chunk) { chunks.push(chunk); chunk = line; }
         else chunk = next;
       }
       if (chunk) chunks.push(chunk);
       if (!chunks.length) chunks.push("—");
       chunks.forEach((value, index) => signupFields.push({
-        name: index === 0 ? heading : heading + " · ต่อ",
+        name: index === 0 ? heading : "\u200b",
         value,
         inline: false
       }));
@@ -232,9 +250,10 @@ Deno.serve(async (request) => {
       title: "4AM SIGN-UP",
       description: "**◥◣④AM◥◣ " + kindLabel + "**" +
         "\n\n**" + String(record.event_name || "4AM SIGN-UP") + "**" +
-        "\n\n**วันที่ " + formatDate(record.event_date) + " · เวลา " + String(record.start_time || "-").slice(0, 5) + " น.**" +
-        "\n**สถานะ: " + signupStatus + "**" +
-        "\n**เปิดรับสมัคร: " + formatDateTime(record.signup_opens_at) + " น.**" +
+        "\n\n**วันที่/เวลา เริ่มวอร์ :**" +
+        "\n**" + formatDate(record.event_date) + " " + String(record.start_time || "-").slice(0, 5) + " น.**" +
+        "\n\n**สถานะ : " + signupStatus + "**" +
+        "\n\n**เปิดรับสมัคร: " + formatDateTime(record.signup_opens_at) + " น.**" +
         "\n**ปิดรับสมัคร: " + closeLabel + " น.**" +
         "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/)" +
         "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง",
@@ -266,6 +285,24 @@ Deno.serve(async (request) => {
       footer: { text: "4AM GUILD · Activity Comments" },
       timestamp: record.created_at
     };
+
+    if (kind === "war_signup") {
+      const fields = Array.isArray(embed.fields) ? embed.fields : [];
+      const embedCharacterCount = String(embed.title || "").length
+        + String(embed.description || "").length
+        + fields.reduce((total: number, field: any) => total + String(field.name || "").length + String(field.value || "").length, 0)
+        + String(embed.footer?.text || "").length;
+      const invalidField = fields.some((field: any) =>
+        String(field.name || "").length > 256 || String(field.value || "").length > 1024
+      );
+      if (fields.length > 25 || String(embed.title || "").length > 256
+        || String(embed.description || "").length > 4096 || embedCharacterCount > 6000 || invalidField) {
+        return json({
+          success: false,
+          message: "Guild War signup roster exceeds Discord's single-message limits. No Part 2 message was sent; shorten display names or reduce announcement text."
+        }, 413);
+      }
+    }
 
     const messagePayload: any = { embeds: [embed], allowed_mentions: { parse: [] } };
     if (kind === "war_signup") {
