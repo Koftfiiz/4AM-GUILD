@@ -101,7 +101,16 @@ Deno.serve(async (request) => {
         .eq("id", recordId).maybeSingle();
       if (error || !data) return json({ success: false, message: "War Signup Event not found" }, 404);
       record = data;
-      if (!isManager) return json({ success: false, message: "Management permission required" }, 403);
+      if (!isManager) {
+        if (!record.discord_message_id) {
+          return json({ success: true, skipped: true, message: "No Discord signup announcement has been published yet" });
+        }
+        const { data: ownSignup, error: ownSignupError } = await admin.from("war_signups")
+          .select("id").eq("event_id", recordId).eq("member_id", authData.user.id).maybeSingle();
+        if (ownSignupError || !ownSignup) {
+          return json({ success: false, message: "Only a member who has joined this event can refresh its Discord signup message" }, 403);
+        }
+      }
       if (record.status === "cancelled") return json({ success: false, message: "This Guild War event has been cancelled" }, 409);
     } else if (kind === "activity") {
       table = "guild_activities";
