@@ -49,6 +49,7 @@
       ".gd-button{min-height:39px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.03);color:var(--text);font:600 15px var(--font);cursor:pointer}",
       ".gd-button.primary{background:linear-gradient(110deg,#7d1824,#c22b3b);border-color:var(--red-bright);color:#fff}.gd-button:disabled{opacity:.45;cursor:not-allowed}",
       ".gd-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.gd-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px}",
+      ".gd-inline-select{min-height:34px;padding:5px 7px;font-size:15px;border-radius:5px}.gd-member-actions{gap:6px;flex-wrap:nowrap}.gd-member-actions .btn{min-height:30px;padding:5px 9px;font-size:15px;white-space:nowrap}.gd-member-actions .member-row-remove{display:inline-grid;place-items:center;width:30px;min-width:30px;height:30px;padding:0;border:0;background:transparent;color:#ff5968;font-size:27px;line-height:1;cursor:pointer}.gd-member-actions .manual-member-toggle-btn.is-suspend{color:#fff;background:linear-gradient(135deg,#8f1e2b,#c52b3c);border:1px solid rgba(255,143,151,.72)}.gd-member-actions .manual-member-toggle-btn.is-activate{color:#ffe8b5;background:linear-gradient(135deg,#55401c,#80602a);border:1px solid rgba(232,190,112,.72)}",
       ".gd-empty{padding:28px;text-align:center;color:#aaa;font-size:15px}.gd-modal{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:16px}",
       ".gd-dialog{width:min(560px,100%);max-height:88vh;overflow:auto;padding:21px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);box-shadow:0 24px 70px #000a}",
       ".gd-dialog h2{margin:0 0 4px;font-size:20px}.gd-dialog label{display:grid;gap:6px;margin:14px 0;color:#ddd;font-size:15px}",
@@ -165,7 +166,7 @@
       return state.healthFilter === "all" || row.discordHealth?.key === state.healthFilter;
     });
     if (!filteredRows.length) {
-      tbody.innerHTML = '<tr><td colspan="11" class="gd-empty">ไม่พบสมาชิกที่ตรงกับเงื่อนไข</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="10" class="gd-empty">ไม่พบสมาชิกที่ตรงกับเงื่อนไข</td></tr>';
     } else {
       tbody.innerHTML = filteredRows.map((row,index) => {
         const identity = row.member_id || row.manual_member_id;
@@ -178,19 +179,28 @@
         const presence = row.record_type === "account" && typeof renderGuildPresenceStatus === "function"
           ? renderGuildPresenceStatus(row.member_id)
           : '<span class="guild-presence-status is-offline"><span class="guild-presence-dot"></span>ออฟไลน์</span>';
-        const buttons = '<button class="gd-button" type="button" data-gd-detail="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">ข้อมูลสมาชิก</button>' +
-          (canAssign() ? '<button class="gd-button" type="button" data-gd-assign="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">เปลี่ยนสังกัด</button>' : '') +
-          ((canAssign() || (row.record_type==="account" && String(currentUser?.id)===String(row.member_id))) ? '<button class="gd-button" type="button" data-gd-history="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">ดูประวัติ</button>' : '');
-        return '<tr><td class="gd-sequence">'+(state.page*PAGE_SIZE+index+1).toLocaleString("th-TH")+'</td>' +
-          '<td><span class="gd-name">'+esc(row.character_name||"—")+'</span></td>' +
-          '<td>'+esc(row.nickname||"—")+'</td>' +
-          '<td><span class="manual-member-class" style="--class-color:'+esc(cls?.color||"#aaa")+'">'+esc(row.game_class||"—")+'</span></td>' +
-          '<td>'+(canAssign() ? '<select class="gd-field gd-position-select" data-gd-position="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'"><option value="">ยังไม่ได้กำหนด</option>'+(typeof GUILD_POSITIONS!=="undefined"?GUILD_POSITIONS:[]).map(position=>'<option value="'+esc(position)+'" '+(row.guild_position===position?'selected':'')+'>'+esc(position)+'</option>').join("")+'</select>' : esc(row.guild_position||"ยังไม่ได้กำหนด"))+'</td>' +
-          '<td><span class="member-admin-health-pill is-'+esc(health.tone||"muted")+'">'+esc(health.label||"ตรวจสอบไม่ได้")+'</span></td>' +
-          '<td><span class="gd-pill '+guildClass+'">'+esc(guildLabel)+'</span></td>' +
-          '<td><span class="gd-record-status '+statusClass+'">'+esc(statusLabel)+'</span></td>' +
-          '<td>'+presence+'</td><td>'+esc(formatBangkokDateTime(row.created_at))+'</td>' +
-          '<td><div class="gd-actions">'+buttons+'</div></td></tr>';
+        const accountLabel = row.record_type === "account" ? "เชื่อมต่อแล้ว" : "ยังไม่มีบัญชีผู้ใช้งาน";
+        const classOptions = ["Ironclad","Bloodstrom","Celestune","Numina","Sylph","Nightwaker","Dragonsvelte","Mystech"];
+        const classCell = canAssign()
+          ? '<select class="gd-field gd-inline-select" data-gd-class="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'" aria-label="เปลี่ยนคลาสของ '+esc(row.character_name||"สมาชิก")+'">'+classOptions.map(name=>'<option value="'+name+'" '+(row.game_class===name?'selected':'')+'>'+name+'</option>').join("")+'</select>'
+          : '<span class="manual-member-class" style="--class-color:'+esc(cls?.color||"var(--muted)")+'">'+esc(row.game_class||"—")+'</span>';
+        const positionCell = canAssign()
+          ? '<select class="gd-field gd-inline-select gd-position-select" data-gd-position="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'"><option value="">ยังไม่ได้กำหนด</option>'+(typeof GUILD_POSITIONS!=="undefined"?GUILD_POSITIONS:[]).map(position=>'<option value="'+esc(position)+'" '+(row.guild_position===position?'selected':'')+'>'+esc(position)+'</option>').join("")+'</select>'
+          : esc(row.guild_position||"ยังไม่ได้กำหนด");
+        const affiliationCell = canAssign()
+          ? '<select class="gd-field gd-inline-select gd-affiliation-select" data-gd-affiliation="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'" aria-label="เปลี่ยนสังกัดของ '+esc(row.character_name||"สมาชิก")+'"><option value="unassigned" '+(!row.guild_code?'selected':'')+'>ยังไม่ระบุสังกัด</option><option value="4AM" '+(row.guild_code==="4AM"?'selected':'')+'>4AM</option><option value="4PM" '+(row.guild_code==="4PM"?'selected':'')+'>4PM</option></select>'
+          : '<span class="gd-pill '+guildClass+'">'+esc(guildLabel)+'</span>';
+        const actions = '<div class="gd-actions gd-member-actions">'+
+          '<button class="btn btn-outline btn-sm" type="button" data-gd-view="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">ดูข้อมูล</button>'+
+          '<button class="btn btn-outline btn-sm" type="button" data-gd-edit="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">แก้ไข</button>'+
+          '<button class="btn btn-sm manual-member-toggle-btn '+(row.active===false?'is-activate':'is-suspend')+'" type="button" data-gd-toggle="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'">'+(row.active===false?'เปิดใช้งาน':'ระงับ')+'</button>'+
+          '<button class="member-row-remove" type="button" data-gd-remove="'+esc(identity)+'" data-gd-kind="'+esc(row.record_type)+'" aria-label="นำสมาชิกออกจากกิลด์" title="นำสมาชิกออกจากกิลด์">−</button></div>';
+        return '<tr><td class="gd-sequence">'+(state.page*PAGE_SIZE+index+1).toLocaleString("th-TH")+'</td>'+
+          '<td><span class="gd-name">'+esc(row.character_name||"—")+'</span><span class="gd-sub">ชื่อเล่น: '+esc(row.nickname||"—")+' · '+accountLabel+'</span></td>'+
+          '<td>'+classCell+'</td><td>'+positionCell+'</td>'+
+          '<td><span class="member-admin-health-pill is-'+esc(health.tone||"muted")+'">'+esc(health.label||"ตรวจสอบไม่ได้")+'</span></td>'+
+          '<td>'+affiliationCell+'</td><td><span class="gd-record-status '+statusClass+'">'+esc(statusLabel)+'</span></td>'+
+          '<td>'+presence+'</td><td>'+esc(formatBangkokDateTime(row.created_at))+'</td><td>'+actions+'</td></tr>';
       }).join("");
     }
     const pages=Math.max(1,Math.ceil(state.total/PAGE_SIZE));
