@@ -85,3 +85,20 @@ The final Guild Affiliation migration revokes direct `INSERT`, `UPDATE`, and `DE
 ## Staging app permission parity
 
 The Staging app grant/RLS follow-up now restores the authenticated write privileges required by the existing Management member editor and Manual directory, while keeping row-level policies as the authorization boundary. Discord Account writes remain Developer-only. Anonymous table privileges are revoked for the feature schema. The Guild Affiliation and Patch schema contract tests still pass after this alignment.
+
+## Final regression revalidation — 2026-11-19
+
+- Re-ran the Guild Affiliation schema contract and Patch Command Center schema contract against the Free Staging project; both passed.
+- Re-ran the complete transactional Patch workflow regression suite; all scenarios passed and the suite completed its rollback blocks.
+- The regression run exposed two staging drift issues: the applied directory RPC did not reject NULL guild/record-type filters, and the applied review RPC did not reject a NULL review status. Both were corrected with additive Staging follow-up migrations; the canonical feature migrations already contain the guards.
+- Corrected the regression test's normal-member reviewer check to use a fixed non-existent submission UUID. The previous test referenced a local variable outside its PL/pgSQL block and therefore did not test the intended authorization boundary.
+- Verified all 10 exposed SECURITY DEFINER helpers/RPCs are not executable by `anon`; authenticated execution remains intentional and is protected by each function's membership/role checks. The security advisor still reports these expected callable SECURITY DEFINER functions and the inherited Auth leaked-password-protection setting.
+- New feature modules pass the static theme/typography checks: no declarations below 15px and no gold-theme matches.
+- The latest feature-branch Vercel Preview for commit `d3b2dd17b026a6dba4cf6e55358001939464032b` built successfully and is `READY`.
+- Production was not migrated, modified, merged, or deployed.
+
+## Remaining release gate
+
+- Real browser QA with an authenticated Staging user is still required for Guild Directory, Command Center, Member Workspace, Review Queue/Patch History, and the existing Portfolio Tracker flows.
+- Complete desktop/mobile visual review, keyboard/focus and screen-reader checks, and end-to-end navigation checks before calling Phase 7 fully accepted.
+- Do not merge or deploy to Production until those checks pass and the user explicitly approves the release.
