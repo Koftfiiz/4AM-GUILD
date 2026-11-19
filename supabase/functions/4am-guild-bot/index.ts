@@ -97,13 +97,56 @@ Deno.serve(async (request: Request) => {
     return jsonResponse({ error: "Invalid JSON body" }, 400);
   }
 
+  // Acknowledge Discord component interactions immediately, then finish the
+  // database work in the Edge Runtime background and update the original message.
+  const respond = (body: unknown, status = 200): Response => {
+    const result = body as Record<string, any>;
+    if (
+      interaction.type === 3 &&
+      (result?.type === 4 || result?.type === 7) &&
+      interaction.application_id &&
+      interaction.token
+    ) {
+      const webhookUrl = "https://discord.com/api/v10/webhooks/" +
+        encodeURIComponent(String(interaction.application_id)) + "/" +
+        encodeURIComponent(String(interaction.token));
+      const isUpdate = result.type === 7;
+      const payload = isUpdate
+        ? result.data
+        : { ...(result.data || {}), flags: 64 };
+      const task = (async () => {
+        const response = await fetch(
+          isUpdate ? webhookUrl + "/messages/@original" : webhookUrl,
+          {
+            method: isUpdate ? "PATCH" : "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          },
+        );
+        if (!response.ok) {
+          const detail = (await response.text()).slice(0, 500);
+          throw new Error("Discord follow-up failed (" + response.status + "): " + detail);
+        }
+      })().catch((error) => {
+        console.error("[DISCORD INTERACTION] Deferred response failed:", error instanceof Error ? error.message : String(error));
+      });
+      const edgeRuntime = (globalThis as any).EdgeRuntime;
+      if (edgeRuntime && typeof edgeRuntime.waitUntil === "function") {
+        edgeRuntime.waitUntil(task);
+        return jsonResponse({ type: 6 });
+      }
+      console.error("[DISCORD INTERACTION] EdgeRuntime.waitUntil unavailable; using synchronous response.");
+    }
+    return jsonResponse(body, status);
+  };
+
   // Discord PING handshake.
-  if (interaction.type === 1) return jsonResponse({ type: 1 });
+  if (interaction.type === 1) return respond({ type: 1 });
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
   if (!supabaseUrl || !serviceRoleKey) {
-    return jsonResponse({ type: 4, data: { content: "ระบบยังตั้งค่า Supabase Secret ไม่ครบ", flags: 64 } });
+    return respond({ type: 4, data: { content: "ระบบยังตั้งค่า Supabase Secret ไม่ครบ", flags: 64 } });
   }
 
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
@@ -112,12 +155,12 @@ Deno.serve(async (request: Request) => {
 
   const expectedGuildId = Deno.env.get("DISCORD_GUILD_ID") || "";
   if (expectedGuildId && interaction.guild_id !== expectedGuildId) {
-    return jsonResponse({ type: 4, data: { content: "คำสั่งนี้ใช้ได้เฉพาะ Discord Server ของ 4AM เท่านั้น", flags: 64 } });
+    return respond({ type: 4, data: { content: "คำสั่งนี้ใช้ได้เฉพาะ Discord Server ของ 4AM เท่านั้น", flags: 64 } });
   }
 
   const discordUserId = String(interaction.member?.user?.id || interaction.user?.id || "");
   if (!discordUserId) {
-    return jsonResponse({ type: 4, data: { content: "ไม่พบ Discord User ID", flags: 64 } });
+    return respond({ type: 4, data: { content: "ไม่พบ Discord User ID", flags: 64 } });
   }
 
   async function linkedMember() {
@@ -318,7 +361,7 @@ Deno.serve(async (request: Request) => {
 
     const closeDate = new Date(closesAt);
     if (!title || title.length > 120 || !closesAt || Number.isNaN(closeDate.getTime()) || closeDate.getTime() <= Date.now()) {
-      return jsonResponse({ type: 4, data: { content: "กรุณาระบุชื่อกิจกรรมและเวลาปิดรับสมัครในอนาคตให้ถูกต้อง", flags: 64 } });
+      return respond({ type: 4, data: { content: "กรุณาระบุชื่อกิจกรรมและเวลาปิดรับสมัครในอนาคตให้ถูกต้อง", flags: 64 } });
     }
 
     const { data, error } = await supabase.rpc("create_reward_event_from_discord", {
@@ -329,14 +372,14 @@ Deno.serve(async (request: Request) => {
       p_signup_closes_at: closeDate.toISOString(),
     });
     if (error || !data?.success) {
-      return jsonResponse({ type: 4, data: { content: error?.message || data?.message || "เปิดกิจกรรมไม่สำเร็จ หรือไม่มีสิทธิ์ฝ่ายบริหาร", flags: 64 } });
+      return respond({ type: 4, data: { content: error?.message || data?.message || "เปิดกิจกรรมไม่สำเร็จ หรือไม่มีสิทธิ์ฝ่ายบริหาร", flags: 64 } });
     }
 
     const eventId = String(data.event_id);
     const warName = String(data.war_event_name || "Guild War");
     const closeLabel = closeDate.toLocaleString("th-TH", { timeZone: "Asia/Bangkok", dateStyle: "short", timeStyle: "short" });
     const content = "🎁 **4AM GUILD — " + title + "**\nอ้างอิงรายชื่อจาก: **" + warName + "**\nปิดรับลงชื่อ: **" + closeLabel + " น.**\n\nผู้มีสิทธิ์: สมาชิกที่อยู่ในรายชื่อ Guild War ทั้งตัวจริงและตัวสำรองเท่านั้น\nกดปุ่มด้านล่างเพื่อลงชื่อหรือยกเลิกได้ก่อนปิดรับสมัคร.";
-    return jsonResponse({ type: 4, data: discordMessage(content, eventId, 0) });
+    return respond({ type: 4, data: discordMessage(content, eventId, 0) });
   }
 
   // Buttons: join, cancel, or refresh the participant count.
@@ -344,7 +387,7 @@ Deno.serve(async (request: Request) => {
     const customId = String(interaction.data?.custom_id || "");
     const [action, eventId] = customId.split(":");
     if (!eventId || !["reward_join", "reward_leave", "reward_count"].includes(action)) {
-      return jsonResponse({ type: 4, data: { content: "ปุ่มกิจกรรมไม่ถูกต้อง", flags: 64 } });
+      return respond({ type: 4, data: { content: "ปุ่มกิจกรรมไม่ถูกต้อง", flags: 64 } });
     }
 
     let result: any = { success: true, message: "จำนวนผู้ลงทะเบียนปัจจุบัน" };
@@ -377,7 +420,7 @@ Deno.serve(async (request: Request) => {
       .maybeSingle();
 
     if (!eventRow) {
-      return jsonResponse({ type: 4, data: { content: "ไม่พบกิจกรรมนี้", flags: 64 } });
+      return respond({ type: 4, data: { content: "ไม่พบกิจกรรมนี้", flags: 64 } });
     }
     const closed = eventRow.status !== "open" || !eventRow.signup_closes_at || new Date(eventRow.signup_closes_at).getTime() <= Date.now();
     const content = (result.success === false ? "⚠️ " : "✅ ") +
@@ -389,38 +432,38 @@ Deno.serve(async (request: Request) => {
       message.components[0].components[0].disabled = true;
       message.components[0].components[1].disabled = true;
     }
-    return jsonResponse({ type: 7, data: message });
+    return respond({ type: 7, data: message });
   }
 
 
   if (interaction.type === 3 && String(interaction.data?.custom_id || "").startsWith("war_signup_join:")) {
     const eventId = String(interaction.data.custom_id).slice("war_signup_join:".length);
     if (!/^[0-9a-f-]{36}$/i.test(eventId)) {
-      return jsonResponse({ type: 4, data: { content: "ปุ่มเข้าร่วมวอร์ไม่ถูกต้อง", flags: 64 } });
+      return respond({ type: 4, data: { content: "ปุ่มเข้าร่วมวอร์ไม่ถูกต้อง", flags: 64 } });
     }
     const actor = await linkedMember();
     if (!actor) {
-      return jsonResponse({ type: 4, data: { content: "กรุณาเชื่อมบัญชี Discord กับสมาชิก 4AM GUILD และยืนยันการเชื่อมต่อก่อนลงชื่อวอร์", flags: 64 } });
+      return respond({ type: 4, data: { content: "กรุณาเชื่อมบัญชี Discord กับสมาชิก 4AM GUILD และยืนยันการเชื่อมต่อก่อนลงชื่อวอร์", flags: 64 } });
     }
     const { data: eventRow, error: eventError } = await supabase
       .from("war_events")
       .select("event_name,signup_opens_at,signup_closes_at,status")
       .eq("id", eventId).maybeSingle();
-    if (eventError || !eventRow) return jsonResponse({ type: 4, data: { content: "ไม่พบกิจกรรม Guild War นี้", flags: 64 } });
-    if (eventRow.status === "cancelled") return jsonResponse({ type: 4, data: { content: "กิจกรรม Guild War นี้ถูกยกเลิกแล้ว", flags: 64 } });
+    if (eventError || !eventRow) return respond({ type: 4, data: { content: "ไม่พบกิจกรรม Guild War นี้", flags: 64 } });
+    if (eventRow.status === "cancelled") return respond({ type: 4, data: { content: "กิจกรรม Guild War นี้ถูกยกเลิกแล้ว", flags: 64 } });
     const now = Date.now();
     const opens = new Date(eventRow.signup_opens_at || 0).getTime();
     const closes = new Date(eventRow.signup_closes_at || 0).getTime();
     if (!Number.isFinite(opens) || now < opens) {
       const label = eventRow.signup_opens_at ? new Date(eventRow.signup_opens_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) : "ยังไม่กำหนด";
-      return jsonResponse({ type: 4, data: { content: "ยังไม่ถึงเวลาเปิดรับสมัคร Guild War · เปิดรับสมัคร " + label + " น.", flags: 64 } });
+      return respond({ type: 4, data: { content: "ยังไม่ถึงเวลาเปิดรับสมัคร Guild War · เปิดรับสมัคร " + label + " น.", flags: 64 } });
     }
     if (!Number.isFinite(closes) || now >= closes) {
       try {
         const closedMessage = await buildWarSignupMessage(eventId);
-        return jsonResponse({ type: 7, data: closedMessage });
+        return respond({ type: 7, data: closedMessage });
       } catch (e) {
-        return jsonResponse({ type: 4, data: { content: e instanceof Error ? e.message : "ปิดรับสมัครแล้ว", flags: 64 } });
+        return respond({ type: 4, data: { content: e instanceof Error ? e.message : "ปิดรับสมัครแล้ว", flags: 64 } });
       }
     }
     const { data: joined, error: joinError } = await supabase.rpc("join_war_signup_from_discord", {
@@ -428,82 +471,82 @@ Deno.serve(async (request: Request) => {
       p_discord_user_id: discordUserId
     });
     if (joinError || !joined?.success) {
-      return jsonResponse({ type: 4, data: { content: joinError?.message || joined?.message || "ลงชื่อเข้าร่วมวอร์ไม่สำเร็จ", flags: 64 } });
+      return respond({ type: 4, data: { content: joinError?.message || joined?.message || "ลงชื่อเข้าร่วมวอร์ไม่สำเร็จ", flags: 64 } });
     }
     try {
       const updatedMessage = await buildWarSignupMessage(eventId);
-      return jsonResponse({ type: 7, data: updatedMessage });
+      return respond({ type: 7, data: updatedMessage });
     } catch (e) {
-      return jsonResponse({ type: 4, data: { content: "ลงชื่อสำเร็จ แต่รีเฟรชรายชื่อใน Discord ไม่สำเร็จ: " + (e instanceof Error ? e.message : "unknown error"), flags: 64 } });
+      return respond({ type: 4, data: { content: "ลงชื่อสำเร็จ แต่รีเฟรชรายชื่อใน Discord ไม่สำเร็จ: " + (e instanceof Error ? e.message : "unknown error"), flags: 64 } });
     }
   }
 
   if (interaction.type === 3 && String(interaction.data?.custom_id || "").startsWith("war_signup_leave:")) {
     const eventId = String(interaction.data.custom_id).slice("war_signup_leave:".length);
     if (!/^[0-9a-f-]{36}$/i.test(eventId)) {
-      return jsonResponse({ type: 4, data: { content: "ปุ่มถอนชื่อออกไม่ถูกต้อง", flags: 64 } });
+      return respond({ type: 4, data: { content: "ปุ่มถอนชื่อออกไม่ถูกต้อง", flags: 64 } });
     }
     const actor = await linkedMember();
     if (!actor) {
-      return jsonResponse({ type: 4, data: { content: "กรุณาเชื่อมบัญชี Discord กับสมาชิก 4AM GUILD และยืนยันการเชื่อมต่อก่อนถอนชื่อ", flags: 64 } });
+      return respond({ type: 4, data: { content: "กรุณาเชื่อมบัญชี Discord กับสมาชิก 4AM GUILD และยืนยันการเชื่อมต่อก่อนถอนชื่อ", flags: 64 } });
     }
     const { data: cancelled, error: cancelError } = await supabase.rpc("cancel_war_signup_from_discord", {
       p_event_id: eventId,
       p_discord_user_id: discordUserId
     });
     if (cancelError || !cancelled?.success) {
-      return jsonResponse({ type: 4, data: { content: cancelError?.message || cancelled?.message || "ถอนชื่อออกไม่สำเร็จ", flags: 64 } });
+      return respond({ type: 4, data: { content: cancelError?.message || cancelled?.message || "ถอนชื่อออกไม่สำเร็จ", flags: 64 } });
     }
     try {
       const updatedMessage = await buildWarSignupMessage(eventId);
-      return jsonResponse({ type: 7, data: updatedMessage });
+      return respond({ type: 7, data: updatedMessage });
     } catch (e) {
-      return jsonResponse({ type: 4, data: { content: "ถอนชื่อสำเร็จ แต่รีเฟรชรายชื่อใน Discord ไม่สำเร็จ: " + (e instanceof Error ? e.message : "unknown error"), flags: 64 } });
+      return respond({ type: 4, data: { content: "ถอนชื่อสำเร็จ แต่รีเฟรชรายชื่อใน Discord ไม่สำเร็จ: " + (e instanceof Error ? e.message : "unknown error"), flags: 64 } });
     }
   }
 
   if (interaction.type === 2 && interaction.data?.name === "war-checkin") {
     const actor = await linkedMember();
     if (!actor || !["developer", "leader", "management"].includes(String(actor.role).toLowerCase())) {
-      return jsonResponse({ type: 4, data: { content: "คำสั่งนี้สงวนสิทธิ์สำหรับ Management ขึ้นไป และต้องเชื่อม Discord กับบัญชี 4AM GUILD แล้ว", flags: 64 } });
+      return respond({ type: 4, data: { content: "คำสั่งนี้สงวนสิทธิ์สำหรับ Management ขึ้นไป และต้องเชื่อม Discord กับบัญชี 4AM GUILD แล้ว", flags: 64 } });
     }
     const eventId = getOption(interaction.data.options || [], "event_id");
-    if (!/^[0-9a-f-]{36}$/i.test(eventId)) return jsonResponse({ type: 4, data: { content: "กรุณาระบุ Event ID ที่ถูกต้อง", flags: 64 } });
+    if (!/^[0-9a-f-]{36}$/i.test(eventId)) return respond({ type: 4, data: { content: "กรุณาระบุ Event ID ที่ถูกต้อง", flags: 64 } });
     try {
       const data = await getRoster(eventId);
-      return jsonResponse({ type: 4, data: buildMessage(data) });
+      return respond({ type: 4, data: buildMessage(data) });
     } catch (e) {
-      return jsonResponse({ type: 4, data: { content: e instanceof Error ? e.message : "เปิดระบบเช็กชื่อไม่สำเร็จ", flags: 64 } });
+      return respond({ type: 4, data: { content: e instanceof Error ? e.message : "เปิดระบบเช็กชื่อไม่สำเร็จ", flags: 64 } });
     }
   }
 
   if (interaction.type === 3) {
     const customId = String(interaction.data?.custom_id || "");
     const match = customId.match(/^war_checkin:([0-9a-f-]{36}):(1|2)$/i);
-    if (!match) return jsonResponse({ type: 4, data: { content: "ปุ่มเช็กชื่อไม่ถูกต้อง", flags: 64 } });
+    if (!match) return respond({ type: 4, data: { content: "ปุ่มเช็กชื่อไม่ถูกต้อง", flags: 64 } });
     const [, eventId, roundText] = match;
     const round = Number(roundText);
     const actor = await linkedMember();
-    if (!actor) return jsonResponse({ type: 4, data: { content: "กรุณาเชื่อมบัญชี Discord กับสมาชิก 4AM GUILD และยืนยันการเชื่อมต่อก่อน", flags: 64 } });
+    if (!actor) return respond({ type: 4, data: { content: "กรุณาเชื่อมบัญชี Discord กับสมาชิก 4AM GUILD และยืนยันการเชื่อมต่อก่อน", flags: 64 } });
     try {
       const data = await getRoster(eventId);
       if (!data.event.round_numbers.includes(round)) {
-        return jsonResponse({ type: 4, data: { content: "กิจกรรมนี้ไม่มี Round 0" + round, flags: 64 } });
+        return respond({ type: 4, data: { content: "กิจกรรมนี้ไม่มี Round 0" + round, flags: 64 } });
       }
       const rosterMember = data.roster.find((x: any) => x.member_id === actor.user_id);
       const reserveMember = data.reserves.find((x: any) => x.member_id === actor.user_id && x.available_rounds.includes(round));
-      if (!rosterMember && !reserveMember) return jsonResponse({ type: 4, data: { content: "คุณไม่มีรายชื่อเป็นตัวจริงหรือตัวสำรองที่พร้อมสำหรับ Round 0" + round + " จึงไม่สามารถกดยืนยันรอบนี้ได้", flags: 64 } });
+      if (!rosterMember && !reserveMember) return respond({ type: 4, data: { content: "คุณไม่มีรายชื่อเป็นตัวจริงหรือตัวสำรองที่พร้อมสำหรับ Round 0" + round + " จึงไม่สามารถกดยืนยันรอบนี้ได้", flags: 64 } });
       const saved = await supabase.from("war_round_checkins").upsert({
         event_id: eventId, round_number: round, member_id: actor.user_id,
         discord_user_id: discordUserId, checked_in_at: new Date().toISOString()
       }, { onConflict: "event_id,round_number,member_id" });
       if (saved.error) throw saved.error;
       const refreshed = await getRoster(eventId);
-      return jsonResponse({ type: 7, data: buildMessage(refreshed) });
+      return respond({ type: 7, data: buildMessage(refreshed) });
     } catch (e) {
-      return jsonResponse({ type: 4, data: { content: e instanceof Error ? e.message : "บันทึกการยืนยันไม่สำเร็จ", flags: 64 } });
+      return respond({ type: 4, data: { content: e instanceof Error ? e.message : "บันทึกการยืนยันไม่สำเร็จ", flags: 64 } });
     }
   }
 
-  return jsonResponse({ type: 4, data: { content: "ไม่รองรับคำสั่งนี้", flags: 64 } });
+  return respond({ type: 4, data: { content: "ไม่รองรับคำสั่งนี้", flags: 64 } });
 });
