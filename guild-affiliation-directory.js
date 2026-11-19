@@ -367,6 +367,9 @@
       });
       if(error)throw error;
       cache.clear();closeAssign();closeDetail();await loadDirectory(true);
+      // Refresh the public member directory immediately after an affiliation change.
+      // Do not rely only on Realtime delivery: the public page may be open in another tab.
+      if(typeof loadMembers==="function")await loadMembers(true);
     }catch(error){$("gd-assign-status").textContent=error.message||"ไม่สามารถบันทึกข้อมูลได้";}
     finally{button.disabled=false;button.textContent="บันทึกข้อมูล";}
   }
