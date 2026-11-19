@@ -2108,7 +2108,7 @@ function renderMembers(members) {
     const avatarKey = member.user_id || member.id || name;
     const isOwn = Boolean(currentUser?.id && member.user_id && String(member.user_id) === String(currentUser.id));
     // Public directory pencil is reserved for a member editing their own profile. Management+ use the Member Management Center exclusively.
-    const canEdit = !isRolePreviewActive() && !isManagement() && isOwn;
+    const canEdit = !isRolePreviewActive() && isOwn;
     const editButton = canEdit ? `<button type="button" class="member-card-edit" data-member-card-edit="${escapeHTML(member.user_id || "")}" data-member-card-manual="${member.is_manual_record ? escapeHTML(member.id) : ""}" aria-label="แก้ไขข้อมูล ${escapeHTML(name)}" title="แก้ไขข้อมูลสมาชิก"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>` : "";
     return `
       <article class="member-card member-directory-card" data-member-kind="${recordType}" style="--member-class-color:${escapeHTML(classColor)}">
@@ -2134,7 +2134,7 @@ function renderMembers(members) {
 function openMemberCardEditor(member) {
   const modal = $("member-card-edit-modal"), form = $("member-card-edit-form");
   if (!modal || !form || !member || member.is_manual_record || !member.user_id) return;
-  if (isRolePreviewActive() || isManagement() || String(member.user_id) !== String(currentUser?.id || "")) return;
+  if (isRolePreviewActive() || String(member.user_id) !== String(currentUser?.id || "")) return;
   $("member-card-edit-user-id").value = member.user_id;
   form.elements.character_name.value = member.character_name || "";
   form.elements.nickname.value = member.nickname || "";
@@ -2163,7 +2163,7 @@ async function saveMemberCardEditor(form) {
   if (!target) return;
   const isOwn = userId === String(currentUser.id);
   if (isRolePreviewActive()) { alert("Role Preview เป็นโหมดอ่านอย่างเดียว"); return; }
-  if (!isOwn || isManagement()) { alert("การแก้ไขผ่านปุ่มดินสอบนการ์ดอนุญาตเฉพาะสมาชิกทั่วไปที่แก้ไขข้อมูลของตัวเองเท่านั้น"); return; }
+  if (!isOwn) { alert("สามารถแก้ไขข้อมูลผ่านปุ่มดินสอบนการ์ดได้เฉพาะการ์ดของตัวเองเท่านั้น"); return; }
   const characterName = String(form.elements.character_name.value || "").trim();
   const nickname = String(form.elements.nickname.value || "").trim();
   const gameClass = String(form.elements.game_class.value || "").trim();
@@ -9398,13 +9398,12 @@ function registerAppEventListeners() {
     if (!button) return;
     event.preventDefault();
     if (isRolePreviewActive()) { alert("Role Preview เป็นโหมดอ่านอย่างเดียว"); return; }
-    // Management+ must use the Member Management Center, never the card pencil.
-    if (isManagement()) return;
+    // Every role may edit only their own public member card; other members are managed in the Member Management Center.
     const userId = button.dataset.memberCardEdit;
     if (button.dataset.memberCardManual) return;
     const member = directoryMembers.find(row => !row.is_manual_record && String(row.user_id) === String(userId));
     if (!member || String(currentUser?.id) !== String(userId)) {
-      alert("สมาชิกทั่วไปสามารถแก้ไขข้อมูลได้เฉพาะการ์ดของตัวเอง");
+      alert("สามารถแก้ไขข้อมูลได้เฉพาะการ์ดของตัวเอง");
       return;
     }
     openMemberCardEditor(member);
