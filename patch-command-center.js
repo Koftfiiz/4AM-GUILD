@@ -91,7 +91,7 @@
   function showTab(tab){
     state.tab=tab;
     document.querySelectorAll("#patch-command-center-root [data-pc-tab]").forEach(b=>b.classList.toggle("active",b.dataset.pcTab===tab));
-    ["overview","members","queue","history"].forEach(v=>$("pc-view-"+v)?.classList.toggle("pc-hidden",v!==tab));
+    ["portfolio","overview","members","queue","history"].forEach(v=>$("pc-view-"+v)?.classList.toggle("pc-hidden",v!==tab));
     $("pc-workspace")?.classList.add("pc-hidden");
     document.querySelectorAll("#patch-command-center-root [data-pc-center-only]").forEach(node=>node.classList.toggle("pc-hidden",tab==="portfolio"));
   }
