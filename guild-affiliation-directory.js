@@ -30,32 +30,32 @@
     const style = document.createElement("style");
     style.id = "guild-directory-styles";
     style.textContent = [
-      ".gd-root{display:grid;gap:16px;color:#f4f4f5}.gd-root[hidden]{display:none!important}",
-      ".gd-panel{padding:18px;border:1px solid rgba(232,51,63,.22);border-radius:14px;background:linear-gradient(145deg,#21191c,#121214)}",
+      ".gd-root{display:grid;gap:16px;color:var(--text).gd-root[hidden]{display:none!important}",
+      ".gd-panel{padding:22px;margin-bottom:20px;border:1px solid var(--line);border-radius:8px;background:rgba(12,8,10,.92)}",
       ".gd-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}",
-      ".gd-head h2{font-size:20px;margin:2px 0}.gd-muted{color:#aaa;font-size:15px;line-height:1.55}",
+      ".gd-head h2{font-size:20px;margin:2px 0}.gd-muted{color:var(--muted);font-size:15px;line-height:1.55}",
       ".gd-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}",
-      ".gd-stat{padding:13px;border:1px solid rgba(232,51,63,.18);border-radius:11px;background:rgba(255,255,255,.025)}",
+      ".gd-stat{padding:13px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.025)}",
       ".gd-stat span{display:block;color:#aaa;font-size:15px}.gd-stat strong{display:block;font-size:24px;margin-top:3px}",
-      ".gd-toolbar{display:grid;grid-template-columns:minmax(220px,1.6fr) repeat(3,minmax(135px,1fr)) auto;gap:9px;margin-bottom:14px}",
-      ".gd-field{width:100%;min-width:0;min-height:43px;padding:9px 11px;border:1px solid rgba(232,51,63,.32);border-radius:9px;background:#101012;color:#fff;font-size:15px}",
+      ".gd-toolbar{display:grid;grid-template-columns:minmax(220px,1.6fr) repeat(2,minmax(135px,1fr)) auto;gap:9px;margin-bottom:14px}",
+      ".gd-field{width:100%;min-width:0;min-height:43px;padding:9px 11px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--text);font:15px var(--font)}",
       ".gd-field:focus-visible,.gd-button:focus-visible{outline:2px solid #ff6674;outline-offset:2px}",
       ".gd-table-wrap{overflow:auto}.gd-table{width:100%;min-width:1050px;border-collapse:collapse}",
       ".gd-table th,.gd-table td{padding:12px 10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;vertical-align:middle;font-size:15px}",
-      ".gd-table th{color:#f08a92;font-weight:800;white-space:nowrap}.gd-name{font-weight:800}.gd-sub{display:block;color:#aaa;font-size:15px}",
+      ".gd-table th{color:var(--gold-light);font-weight:800;white-space:nowrap}.gd-name{font-weight:800}.gd-sub{display:block;color:#aaa;font-size:15px}",
       ".gd-pill{display:inline-flex;align-items:center;padding:5px 9px;border:1px solid rgba(255,255,255,.14);border-radius:99px;font-size:15px;font-weight:800;white-space:nowrap}",
       ".gd-pill.am{background:rgba(217,54,67,.12);border-color:rgba(217,54,67,.42);color:#ff9da5}.gd-pill.pm{background:rgba(118,92,190,.13);border-color:rgba(118,92,190,.42);color:#cbbcff}",
       ".gd-pill.none{background:rgba(255,255,255,.04);color:#bbb}.gd-pill.manual{color:#ff9da5;border-color:rgba(217,54,67,.42);background:rgba(217,54,67,.12)}",
-      ".gd-button{min-height:39px;padding:8px 12px;border:1px solid rgba(255,255,255,.16);border-radius:9px;background:#29292f;color:#fff;font-size:15px;font-weight:700;cursor:pointer}",
-      ".gd-button.primary{background:#d93643;border-color:#d93643}.gd-button:disabled{opacity:.45;cursor:not-allowed}",
+      ".gd-button{min-height:39px;padding:8px 12px;border:1px solid var(--line);border-radius:6px;background:rgba(255,255,255,.03);color:var(--text);font:600 15px var(--font);cursor:pointer}",
+      ".gd-button.primary{background:linear-gradient(110deg,#7d1824,#c22b3b);border-color:var(--red-bright);color:#fff}.gd-button:disabled{opacity:.45;cursor:not-allowed}",
       ".gd-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap}.gd-pagination{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:14px}",
       ".gd-empty{padding:28px;text-align:center;color:#aaa;font-size:15px}.gd-modal{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,.72);display:grid;place-items:center;padding:16px}",
-      ".gd-dialog{width:min(560px,100%);max-height:88vh;overflow:auto;padding:21px;border:1px solid rgba(232,51,63,.4);border-radius:16px;background:#1c1c21;box-shadow:0 24px 70px #000a}",
+      ".gd-dialog{width:min(560px,100%);max-height:88vh;overflow:auto;padding:21px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);box-shadow:0 24px 70px #000a}",
       ".gd-dialog h2{margin:0 0 4px;font-size:20px}.gd-dialog label{display:grid;gap:6px;margin:14px 0;color:#ddd;font-size:15px}",
       ".gd-dialog-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px}.gd-status{min-height:22px;color:#ff9da5;font-size:15px}",
       ".gd-modal[hidden]{display:none}.gd-history-list{display:grid;gap:9px;max-height:min(55vh,520px);overflow:auto}",
-      ".gd-history-item{padding:12px;border:1px solid rgba(255,255,255,.1);border-radius:10px;background:#151519}.gd-history-item strong{font-size:16px}.gd-history-item p{margin:5px 0 0;color:#aaa;font-size:15px;line-height:1.5}",
-      ".gd-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.gd-detail{padding:12px;border:1px solid rgba(255,255,255,.09);border-radius:10px;background:#151519;min-width:0}.gd-detail span{display:block;color:#aaa;font-size:15px;margin-bottom:5px}.gd-detail strong{display:block;color:#fff;font-size:15px;overflow-wrap:anywhere}",
+      ".gd-history-item{padding:12px;border:1px solid var(--line);border-radius:7px;background:rgba(255,255,255,.025)}.gd-history-item strong{font-size:16px}.gd-history-item p{margin:5px 0 0;color:#aaa;font-size:15px;line-height:1.5}",
+      ".gd-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}.gd-detail{padding:12px;border:1px solid var(--line);border-radius:7px;background:rgba(255,255,255,.025);min-width:0}.gd-detail span{display:block;color:#aaa;font-size:15px;margin-bottom:5px}.gd-detail strong{display:block;color:#fff;font-size:15px;overflow-wrap:anywhere}",
       ".gd-record-status{display:inline-flex;align-items:center;padding:4px 9px;border:1px solid rgba(76,211,127,.3);border-radius:999px;background:rgba(76,211,127,.08);color:#83e6a5;font-size:15px;font-weight:850;white-space:nowrap}",
       ".gd-record-status.is-inactive{border-color:rgba(229,72,88,.3);background:rgba(229,72,88,.08);color:#f08c96}",
       ".gd-record-status.is-manual{border-color:rgba(76,211,127,.3);background:rgba(76,211,127,.08);color:#83e6a5}",
@@ -75,7 +75,7 @@
     document.head.appendChild(style);
   }
 
-  if (typeof PAGE_TITLES !== "undefined") PAGE_TITLES[LEGACY_PAGE] = "จัดการรายชื่อสมาชิก";
+  if (typeof PAGE_TITLES !== "undefined") PAGE_TITLES[LEGACY_PAGE] = "ศูนย์จัดการสมาชิก";
 
   function ensurePage() {
     const page = $("page-member-management");
@@ -100,21 +100,21 @@
             <input class="gd-field" id="gd-search" type="search" maxlength="80" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น หรือ Discord..." aria-label="ค้นหาชื่อตัวละคร ชื่อเล่น หรือ Discord">
             <select class="gd-field" id="gd-guild" aria-label="สังกัดกิลด์"><option value="all">ทั้งหมด</option><option value="4AM">4AM</option><option value="4PM">4PM</option><option value="unassigned">ไม่ระบุสังกัด</option></select>
             <select class="gd-field" id="gd-class" aria-label="คลาสตัวละคร"><option value="all">ทุกคลาส</option><option>Ironclad</option><option>Bloodstrom</option><option>Celestune</option><option>Numina</option><option>Sylph</option><option>Nightwaker</option><option>Dragonsvelte</option><option>Mystech</option></select>
-            <select class="gd-field" id="gd-type" aria-label="ประเภทบัญชี"><option value="all">ทุกประเภท</option><option value="account">บัญชีเว็บไซต์</option><option value="manual">Manual</option></select>
+            
             <button class="gd-button primary" type="submit">ค้นหา</button>
           </form>
           <div class="gd-table-wrap"><table class="gd-table"><thead><tr>
-            <th>ลำดับ</th><th>ตัวละคร</th><th>ชื่อเล่น</th><th>คลาส</th><th>ตำแหน่งกิลด์</th><th>Discord Health</th><th>สังกัดกิลด์</th><th>สถานะสมาชิก</th><th>ออนไลน์</th><th>วันที่เข้าระบบ</th><th>จัดการ</th>
-          </tr></thead><tbody id="gd-rows"><tr><td colspan="11" class="gd-empty">กำลังโหลดข้อมูลสมาชิก...</td></tr></tbody></table></div>
+            <th>ลำดับ</th><th>ตัวละคร</th><th>คลาส</th><th>ตำแหน่งกิลด์</th><th>Discord Health</th><th>สังกัดกิลด์</th><th>สถานะสมาชิก</th><th>ออนไลน์</th><th>วันที่เข้าระบบ</th><th>จัดการ</th>
+          </tr></thead><tbody id="gd-rows"><tr><td colspan="10" class="gd-empty">กำลังโหลดข้อมูลสมาชิก...</td></tr></tbody></table></div>
           <div class="gd-pagination"><span class="gd-muted" id="gd-page-label" aria-live="polite">—</span><div class="gd-actions"><button class="gd-button" id="gd-prev" type="button">← ก่อนหน้า</button><button class="gd-button" id="gd-next" type="button">ถัดไป →</button></div></div>
         </section>
       </section>
       <div class="gd-modal" id="gd-detail-modal" hidden><section class="gd-dialog" role="dialog" aria-modal="true" aria-labelledby="gd-detail-title">
         <div class="gd-head"><div><h2 id="gd-detail-title">ข้อมูลสมาชิก</h2><p class="gd-muted" id="gd-detail-subtitle"></p></div><button class="gd-button" id="gd-detail-close" type="button">ปิด</button></div>
         <div class="gd-detail-grid" id="gd-detail-grid"></div>
-        <div class="gd-dialog-actions"><button class="gd-button" id="gd-detail-history" type="button">ดูประวัติ</button><button class="gd-button primary" id="gd-detail-assign" type="button">เปลี่ยนสังกัด</button></div>
+        <div class="gd-dialog-actions"><button class="gd-button" id="gd-detail-history" type="button">ดูประวัติ</button></div>
       </section></div>
-      <div class="gd-modal" id="gd-modal" hidden><form class="gd-dialog" id="gd-assign-form" role="dialog" aria-modal="true" aria-labelledby="gd-assign-title"><h2 id="gd-assign-title">เปลี่ยนสังกัดกิลด์</h2><p class="gd-muted" id="gd-member-label"></p><label>สังกัดใหม่<select class="gd-field" id="gd-new-guild" required><option value="">เลือกสังกัด</option><option value="4AM">4AM</option><option value="4PM">4PM</option></select></label><label>เหตุผลในการเปลี่ยนสังกัด<input class="gd-field" id="gd-reason" maxlength="160" placeholder="ระบุเหตุผล (ไม่บังคับ)"></label><p class="gd-status" id="gd-assign-status" role="status" aria-live="polite"></p><div class="gd-dialog-actions"><button class="gd-button" id="gd-cancel" type="button">ยกเลิก</button><button class="gd-button primary" id="gd-save" type="submit">บันทึกข้อมูล</button></div></form></div>
+      <div class="gd-modal" id="gd-modal" hidden><form class="gd-dialog" id="gd-assign-form" role="dialog" aria-modal="true" aria-labelledby="gd-assign-title"><h2 id="gd-assign-title">เปลี่ยนสังกัดกิลด์</h2><p class="gd-muted" id="gd-member-label"></p><label>สังกัดใหม่<select class="gd-field" id="gd-new-guild" required><option value="">เลือกสังกัด</option><option value="4AM">4AM</option><option value="4PM">4PM</option></select></label><label>เหตุผลในการเปลี่ยนสังกัด<input class="gd-field" id="gd-reason" maxlength="500" required placeholder="ระบุเหตุผล"></label><p class="gd-status" id="gd-assign-status" role="status" aria-live="polite"></p><div class="gd-dialog-actions"><button class="gd-button" id="gd-cancel" type="button">ยกเลิก</button><button class="gd-button primary" id="gd-save" type="submit">บันทึกข้อมูล</button></div></form></div>
       <div class="gd-modal" id="gd-history-modal" hidden><section class="gd-dialog" role="dialog" aria-modal="true" aria-labelledby="gd-history-title"><h2 id="gd-history-title">ประวัติการเปลี่ยนสังกัด</h2><p class="gd-muted" id="gd-history-member"></p><div class="gd-history-list" id="gd-history-list" aria-live="polite"><p class="gd-muted">กำลังโหลดประวัติ...</p></div><div class="gd-dialog-actions"><button class="gd-button" id="gd-history-close" type="button">ปิด</button></div></section></div>`);
     if (legacyQuality) $("gd-quality-host")?.append(legacyQuality);
     if (legacyClassHeading) $("gd-class-heading-host")?.append(legacyClassHeading);
@@ -265,7 +265,6 @@
     ];
     $("gd-detail-grid").innerHTML=values.map(([label,value])=>'<div class="gd-detail"><span>'+esc(label)+'</span><strong>'+esc(value||"—")+'</strong></div>').join("");
     $("gd-detail-history").hidden=!(canAssign()||(row.record_type==="account"&&String(currentUser?.id)===String(row.member_id)));
-    $("gd-detail-assign").hidden=!canAssign();
     $("gd-detail-modal").hidden=false;
   }
   function closeDetail(){$("gd-detail-modal").hidden=true;detailRow=null;}
@@ -319,7 +318,7 @@
   }
 
   function bindEvents(){
-    $("gd-filter-form")?.addEventListener("submit",event=>{event.preventDefault();state.search=$("gd-search").value.trim();state.guild=$("gd-guild").value;state.gameClass=$("gd-class").value;state.recordType=$("gd-type").value;state.page=0;void loadDirectory(true);});
+    $("gd-filter-form")?.addEventListener("submit",event=>{event.preventDefault();state.search=$("gd-search").value.trim();state.guild=$("gd-guild").value;state.gameClass=$("gd-class").value;state.recordType="all";state.page=0;void loadDirectory(true);});
     $("manual-member-class-summary")?.addEventListener("click",event=>{
       const button=event.target.closest("[data-manual-member-class]");if(!button)return;
       event.preventDefault();event.stopImmediatePropagation();
@@ -343,7 +342,6 @@
     $("gd-detail-close")?.addEventListener("click",closeDetail);
     $("gd-detail-modal")?.addEventListener("click",event=>{if(event.target===$("gd-detail-modal"))closeDetail();});
     $("gd-detail-history")?.addEventListener("click",()=>{if(!detailRow)return;const row=detailRow;closeDetail();void openHistory(row.member_id||row.manual_member_id,row.record_type);});
-    $("gd-detail-assign")?.addEventListener("click",()=>{if(!detailRow)return;const row=detailRow;closeDetail();openAssign(row.member_id||row.manual_member_id,row.record_type);});
     $("gd-rows")?.addEventListener("click",event=>{
       const detail=event.target.closest("[data-gd-detail]"),assign=event.target.closest("[data-gd-assign]"),history=event.target.closest("[data-gd-history]");
       if(detail)openDetail(detail.dataset.gdDetail,detail.dataset.gdKind);
