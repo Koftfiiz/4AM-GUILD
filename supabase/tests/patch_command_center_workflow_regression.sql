@@ -169,7 +169,7 @@ do $$
 declare blocked boolean:=false;
 begin
  begin
-  perform public.set_patch_submission_review(sid,'approved',null);
+  perform public.set_patch_submission_review('00000000-0000-4000-8000-000000000001'::uuid,'approved',null);
  exception when others then
   if sqlerrm like '%Not authorized to review Patch submissions%' then blocked:=true; else raise; end if;
  end;
