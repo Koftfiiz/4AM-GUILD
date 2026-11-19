@@ -178,32 +178,41 @@ Deno.serve(async (request) => {
       }).format(date).replace(",", "");
     };
     const signupFields: any[] = [
-      { name: "ผู้ลงชื่อทั้งหมด", value: String(warSignupRows.length) + " / 80 คน", inline: true },
-      { name: "ตัวจริง", value: String(warSignupRows.filter(x => Number(x.queue_position) <= 60).length) + " / 60 คน", inline: true },
-      { name: "ตัวสำรอง", value: String(warSignupRows.filter(x => Number(x.queue_position) > 60).length) + " / 20 คน", inline: true }
+      { name: "**ผู้ลงชื่อทั้งหมด**", value: String(warSignupRows.length) + " / 80 คน", inline: true },
+      { name: "**ตัวจริง**", value: String(warSignupRows.filter(x => Number(x.queue_position) <= 60).length) + " / 60 คน", inline: true },
+      { name: "**ตัวสำรอง**", value: String(warSignupRows.filter(x => Number(x.queue_position) > 60).length) + " / 20 คน", inline: true }
     ];
+    const roleIcons: Record<string, string> = { Tank: "🛡️", DPS: "⚔️", Bloodstrom: "🩸", Healer: "💚" };
     for (const role of roleOrder) {
       const roleRows = roleGroups.get(role) || [];
-      const names = roleRows.map((x: any) => String(x.member.character_name || x.member.nickname || "สมาชิก"));
+      signupFields.push({
+        name: roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**",
+        value: "\u200b",
+        inline: true
+      });
+    }
+    const rosterLines = warSignupMembers.filter(x => Number(x.queue_position) <= 60)
+      .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
+    const reserveLines = warSignupMembers.filter(x => Number(x.queue_position) > 60)
+      .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
+    const addRosterFields = (heading: string, lines: string[]) => {
       const chunks: string[] = [];
       let chunk = "";
-      for (const name of names) {
-        const next = chunk ? chunk + "\n" + name : name;
-        if (next.length > 980 && chunk) {
-          chunks.push(chunk);
-          chunk = name;
-        } else {
-          chunk = next;
-        }
+      for (const line of lines) {
+        const next = chunk ? chunk + "\n" + line : line;
+        if (next.length > 980 && chunk) { chunks.push(chunk); chunk = line; }
+        else chunk = next;
       }
       if (chunk) chunks.push(chunk);
       if (!chunks.length) chunks.push("—");
       chunks.forEach((value, index) => signupFields.push({
-        name: index === 0 ? role + " · " + roleRows.length + " คน" : role + " · ต่อ",
+        name: index === 0 ? heading : heading + " · ต่อ",
         value,
-        inline: true
+        inline: false
       }));
-    }
+    };
+    addRosterFields("**เข้าร่วม (" + rosterLines.length + " คน)**", rosterLines);
+    addRosterFields("**รายชื่อสำรอง (" + reserveLines.length + " คน)**", reserveLines);
     const signupStatus = record?.status === "cancelled" ? "CANCELLED" : isSignupClosed ? "CLOSED" : isSignupOpen ? "OPEN" : "SCHEDULED";
     const kindLabel = record.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const closeLabel = record.registration_type === "official" && record.event_date
@@ -212,12 +221,12 @@ Deno.serve(async (request) => {
     const embed = kind === "war_signup" ? {
       title: "4AM SIGN-UP",
       description: "**◥◣④AM◥◣ " + kindLabel + "**" +
-        "\n**" + String(record.event_name || "4AM SIGN-UP") + "**" +
-        "\nวันที่ " + formatDate(record.event_date) + " · เวลา " + String(record.start_time || "-").slice(0, 5) + " น." +
-        "\nสถานะ: **" + signupStatus + "**" +
-        "\nเปิดรับสมัคร: **" + formatDateTime(record.signup_opens_at) + " น.**" +
-        "\nปิดรับสมัคร: **" + closeLabel + " น.**" +
-        "\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/)" +
+        "\n\n**" + String(record.event_name || "4AM SIGN-UP") + "**" +
+        "\n\n**วันที่ " + formatDate(record.event_date) + " · เวลา " + String(record.start_time || "-").slice(0, 5) + " น.**" +
+        "\n**สถานะ: " + signupStatus + "**" +
+        "\n**เปิดรับสมัคร: " + formatDateTime(record.signup_opens_at) + " น.**" +
+        "\n**ปิดรับสมัคร: " + closeLabel + " น.**" +
+        "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/)" +
         "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง",
       color: 0xD92D45,
       fields: signupFields,
