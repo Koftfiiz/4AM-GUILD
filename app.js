@@ -2429,6 +2429,20 @@ async function loadManualMemberManagement() {
   const list = $("manual-member-list");
   if (list) list.innerHTML = '<p class="muted">กำลังโหลดข้อมูลสมาชิก...</p>';
   await loadMembers(true);
+  // Management-only supplemental fields are deliberately fetched here, not in
+  // the public member directory query.
+  const accountAdminResult = await supabaseClient
+    .from("guild_members")
+    .select("user_id,game_uid,guild_position");
+  if (!accountAdminResult.error) {
+    const accountAdminById = new Map((accountAdminResult.data || []).map(row => [String(row.user_id), row]));
+    allMembers = allMembers.map(member => ({
+      ...member,
+      ...(accountAdminById.get(String(member.user_id)) || {})
+    }));
+  } else {
+    console.warn("Member admin profile fields unavailable:", accountAdminResult.error.message);
+  }
   discordAccountDirectory = new Map();
   const discordResult = await supabaseClient.from("discord_accounts").select("user_id,discord_user_id,discord_username,discord_global_name,verified,guild_member_verified,discord_connection_status,verified_at,last_checked_at");
   if (!discordResult.error) discordAccountDirectory = new Map((discordResult.data || []).map(row => [String(row.user_id), row]));
@@ -8916,7 +8930,7 @@ function openGuildPage(pageName) {
   window.scrollTo({ top: 0 });
 
   if (pageName === "members") loadMembers();
-  if (pageName === "member-management" && isManagement()) loadManualMemberManagement();
+  if (pageName === "member-management" && isManagement()) window.memberManagementLoadPromise = loadManualMemberManagement();
   if (pageName === "system-management") loadSystemRoleMembers();
   if (pageName === "discord-integration") loadDiscordIntegrationSettings();
 
