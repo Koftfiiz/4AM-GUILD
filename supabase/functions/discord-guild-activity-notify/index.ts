@@ -192,30 +192,15 @@ Deno.serve(async (request) => {
       { name: "**ตัวสำรอง**", value: String(warSignupRows.filter(x => Number(x.queue_position) > 60).length) + " / 20 คน", inline: true }
     ];
     const roleIcons: Record<string, string> = { Tank: "🛡️", DPS: "⚔️", Bloodstrom: "🩸", Healer: "💚" };
-    const addSpacingField = (blankLines: number) => signupFields.push({
+    const roleSummary = ["Tank", "DPS", "Bloodstrom", "Healer"].map((role) => {
+      const roleRows = roleGroups.get(role) || [];
+      return roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**";
+    });
+    signupFields.push({
       name: "\u200b",
-      value: "\u200b" + "\n".repeat(blankLines),
+      value: roleSummary[0] + "\n" + roleSummary[1] + "\n\n" + roleSummary[2] + "\n" + roleSummary[3],
       inline: false
     });
-    addSpacingField(2);
-    for (const role of ["Tank", "DPS"]) {
-      const roleRows = roleGroups.get(role) || [];
-      signupFields.push({
-        name: roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**",
-        value: "\u200b",
-        inline: true
-      });
-    }
-    addSpacingField(1);
-    for (const role of ["Bloodstrom", "Healer"]) {
-      const roleRows = roleGroups.get(role) || [];
-      signupFields.push({
-        name: roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**",
-        value: "\u200b",
-        inline: true
-      });
-    }
-    addSpacingField(2);
     const rosterLines = warSignupMembers.filter(x => Number(x.queue_position) <= 60)
       .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
     const reserveLines = warSignupMembers.filter(x => Number(x.queue_position) > 60)
@@ -250,8 +235,9 @@ Deno.serve(async (request) => {
       title: "4AM SIGN-UP",
       description: "**◥◣④AM◥◣ " + kindLabel + "**" +
         "\n\n**" + String(record.event_name || "4AM SIGN-UP") + "**" +
-        "\n\n<:Date:593930359985405983> **" + formatDate(record.event_date) + "**　<:Time:593930235658108939> **" + startTimeLabel + " น.**" +
-        "\n\n<:Countdown:858794526176444467> **ปิดรับสมัคร:** " + closeLabel +
+        "\n\n📅 **" + formatDate(record.event_date) + "**　🕒 **" + startTimeLabel + " น.**" +
+        "\n\n⏳ **ปิดรับสมัคร:** " + closeLabel + " น." +
+        "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง" +
         "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/)",
       color: 0xD92D45,
       fields: signupFields,
