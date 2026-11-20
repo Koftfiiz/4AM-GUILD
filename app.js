@@ -9042,7 +9042,17 @@ function openGuildPage(pageName, options = {}) {
   const isCommunityView = communityViews.includes(pageName);
   const targetPage = $(isCommunityView ? "page-community" : "page-" + pageName);
   if (targetPage) targetPage.classList.remove("hidden");
-  syncAppRealtimeSubscriptions(pageName);
+
+  // Render the requested Guild War panel before background subscriptions.
+  // A Realtime setup failure must never prevent the user from switching tabs.
+  if (pageName === "war-center") {
+    loadWarCenterTab(window.activeWarCenterTab || "overview");
+  }
+  try {
+    syncAppRealtimeSubscriptions(pageName);
+  } catch (error) {
+    console.error("Realtime subscription sync failed; page navigation continues:", error);
+  }
   if (isCommunityView) {
     window.activeGuildCommunityView = pageName;
     const copy = {
@@ -9102,7 +9112,6 @@ function openGuildPage(pageName, options = {}) {
   if (pageName === "appearance") renderAppearancePage();
 
   if (pageName === "portfolio" || pageName === "portfolio-review-center") loadPortfolios();
-  if (pageName === "war-center") loadWarCenterTab(window.activeWarCenterTab || "overview");
   if (pageName === "rules") loadGuildRules();
   if (["community-board", "guild-news", "guild-activities"].includes(pageName)) {
     loadGuildActivities();
@@ -9512,6 +9521,32 @@ function registerDiscordIntegrationEvents() {
 // ==========================================
 
 function registerAppEventListeners() {
+  // Delegate Guild War tab clicks from the document so every tab and action
+  // card remains interactive even when individual page listeners change.
+  const warTabRoutePaths = {
+    overview: "/guildwar/overview",
+    signup: "/guildwar/signup",
+    roster: "/guildwar/announcement",
+    leave: "/guildwar/leave",
+    party: "/guildwar/party",
+    "match-records": "/guildwar/results",
+    "attendance-report": "/guildwar/report"
+  };
+  if (!window.__guildWarTabDelegationBound) {
+    window.__guildWarTabDelegationBound = true;
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest?.("[data-war-center-tab]");
+      if (!button) return;
+      const tab = button.dataset.warCenterTab;
+      if (!Object.prototype.hasOwnProperty.call(warTabRoutePaths, tab)) return;
+      event.preventDefault();
+      openGuildPage("war-center", {
+        warTab: tab,
+        routePath: warTabRoutePaths[tab]
+      });
+    });
+  }
+
   if (!window.__guildRoutingPopstateBound) {
     window.__guildRoutingPopstateBound = true;
     window.addEventListener("popstate", () => {
@@ -9636,20 +9671,6 @@ function registerAppEventListeners() {
   $("connect-discord")?.addEventListener("click", connectDiscord);
   registerAppearanceEvents();
   registerDiscordIntegrationEvents();
-
-  const warTabRoutePaths = {
-    overview: "/guildwar/overview",
-    signup: "/guildwar/signup",
-    roster: "/guildwar/announcement",
-    leave: "/guildwar/leave",
-    party: "/guildwar/party",
-    "match-records": "/guildwar/results",
-    "attendance-report": "/guildwar/report"
-  };
-  document.querySelectorAll("[data-war-center-tab]").forEach(button => button.addEventListener("click", () => {
-    const tab = button.dataset.warCenterTab;
-    openGuildPage("war-center", { warTab: tab, routePath: warTabRoutePaths[tab] || "/guildwar" });
-  }));
 
   document.querySelectorAll(".nav-item[data-page], .nav-subitem").forEach((button) => {
     button.addEventListener("click", () => {
