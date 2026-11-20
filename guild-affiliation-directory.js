@@ -32,6 +32,12 @@
     style.textContent = [
       ".gd-root{display:grid;gap:16px;color:var(--text)}.gd-root[hidden]{display:none!important}",
       ".gd-panel{padding:22px;margin-bottom:20px;border:1px solid var(--line);border-radius:8px;background:rgba(12,8,10,.92)}",
+      ".gd-member-list-panel{position:relative;isolation:isolate;overflow:hidden;border:1px solid rgba(157,126,255,.48);background:radial-gradient(ellipse at 7% 0%,rgba(0,190,255,.22),transparent 35%),radial-gradient(ellipse at 38% 0%,rgba(170,76,255,.19),transparent 38%),radial-gradient(ellipse at 96% 16%,rgba(255,70,180,.17),transparent 34%),radial-gradient(ellipse at 72% 100%,rgba(255,188,72,.13),transparent 38%),linear-gradient(145deg,rgba(16,12,22,.98),rgba(8,8,13,.97));box-shadow:inset 0 1px 0 rgba(255,255,255,.10),inset 0 0 42px rgba(137,85,255,.09),0 0 28px rgba(73,151,255,.10)}",
+      ".gd-member-list-panel:before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(112deg,transparent 10%,rgba(83,221,255,.045) 28%,rgba(229,94,255,.065) 48%,rgba(255,177,91,.045) 68%,transparent 88%);opacity:.9}",
+      ".gd-member-list-panel>.gd-head h2{color:#fff;text-shadow:0 0 16px rgba(180,112,255,.25)}",
+      ".gd-member-list-panel .gd-field{background:rgba(7,8,14,.72);border-color:rgba(158,128,255,.28)}",
+      ".gd-member-list-panel .gd-table th{color:#e3caff}",
+      ".gd-member-list-panel .gd-table td{border-bottom-color:rgba(178,155,255,.13)}",
       ".gd-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}",
       ".gd-head h2{font-size:20px;margin:2px 0}.gd-muted{color:var(--muted);font-size:15px;line-height:1.55}",
       ".gd-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}",
@@ -96,7 +102,7 @@
         <div class="gd-head"><div><span class="section-kicker">MEMBER MANAGEMENT CENTER</span><h2>ศูนย์จัดการสมาชิก</h2><p class="gd-muted">จัดการข้อมูลสมาชิก สังกัดกิลด์</p></div></div>
         <section class="gd-legacy-quality-host" id="gd-quality-host" aria-label="สรุปสถานะสมาชิก"></section>
         <section class="gd-panel gd-class-panel"><div id="gd-class-heading-host"></div><div id="gd-class-summary-host"></div></section>
-        <section class="gd-panel">
+        <section class="gd-panel gd-member-list-panel">
           <div class="gd-head"><div><h2>รายชื่อสมาชิกทั้งหมด</h2><p class="gd-muted">ค้นหา กรอง และจัดการข้อมูลสมาชิกจากรายการเดียว</p></div><button class="gd-button" id="gd-refresh" type="button">↻ รีเฟรช</button></div>
           <form class="gd-toolbar" id="gd-filter-form">
             <input class="gd-field" id="gd-search" type="search" maxlength="80" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น หรือ Discord..." aria-label="ค้นหาชื่อตัวละคร ชื่อเล่น หรือ Discord">
