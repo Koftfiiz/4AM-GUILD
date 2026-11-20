@@ -30,7 +30,10 @@ const warRoundLabel = (description: string, startTime: string | null) => {
     try {
       const config = JSON.parse(match[1]);
       if (Array.isArray(config.rounds) && config.rounds.length) {
-        return config.rounds.map((value: unknown) => String(value).slice(0, 5)).join(" / ") + " น.";
+        const rounds = config.rounds.map((value: unknown) => String(value).slice(0, 5));
+        return rounds.length >= 2
+          ? "รอบแรก " + rounds[0] + " น. | รอบสอง " + rounds[1] + " น."
+          : rounds[0] + " น.";
       }
     } catch {
       // Fall back to the event's stored start time for legacy events.
@@ -230,11 +233,16 @@ Deno.serve(async (request) => {
       ? formatDateTime(String(record.event_date).slice(0, 10) + "T14:00:00+07:00")
       : formatDateTime(record.signup_closes_at);
     const startTimeLabel = String(record.start_time || "-").slice(0, 5);
+    const roundLabel = warRoundLabel(String(record.description || ""), record.start_time);
+    const hasTwoOfficialRounds = record.registration_type === "official" && roundLabel.includes(" | ");
+    const eventDateLine = hasTwoOfficialRounds
+      ? "**" + String(record.event_name || "Guild War") + " · " + formatDate(record.event_date) + "** · " + roundLabel
+      : "**" + String(record.event_name || "4AM SIGN-UP") + "**";
     const embed = kind === "war_signup" ? {
       title: "4AM SIGN-UP",
       description: "**◥◣④AM◥◣ " + kindLabel + "**" +
-        "\n\n**" + String(record.event_name || "4AM SIGN-UP") + "**" +
-        "\n\n📅 **" + formatDate(record.event_date) + "**　🕒 **" + startTimeLabel + " น.**" +
+        "\n\n" + eventDateLine +
+        (hasTwoOfficialRounds ? "" : "\n\n📅 **" + formatDate(record.event_date) + "**　🕒 **" + startTimeLabel + " น.**") +
         "\n\n⏳ **ปิดรับสมัคร:** " + closeLabel + " น." +
         "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง" +
         "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/guildwar/signup)",
