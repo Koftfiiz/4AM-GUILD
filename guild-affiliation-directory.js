@@ -77,7 +77,7 @@
     document.head.appendChild(style);
   }
 
-  if (typeof PAGE_TITLES !== "undefined") PAGE_TITLES[LEGACY_PAGE] = "ศูนย์จัดการสมาชิก";
+  if (typeof PAGE_TITLES !== "undefined") PAGE_TITLES[PAGE] = "ศูนย์จัดการสมาชิก";
 
   function ensurePage() {
     const page = $("page-member-management");
@@ -93,11 +93,11 @@
     // public directory and this management-only center.
     page.insertAdjacentHTML("beforeend", `
       <section id="member-admin-affiliation-panel" class="gd-root" aria-label="ศูนย์จัดการสมาชิก">
-        <div class="gd-head"><div><span class="section-kicker">MEMBER MANAGEMENT CENTER</span><h2>ศูนย์จัดการสมาชิก</h2><p class="gd-muted">จัดการข้อมูลสมาชิก สังกัดกิลด์</p></div><button class="gd-button" id="gd-refresh" type="button">↻ รีเฟรช</button></div>
+        <div class="gd-head"><div><span class="section-kicker">MEMBER MANAGEMENT CENTER</span><h2>ศูนย์จัดการสมาชิก</h2><p class="gd-muted">จัดการข้อมูลสมาชิก สังกัดกิลด์</p></div></div>
         <section class="gd-legacy-quality-host" id="gd-quality-host" aria-label="สรุปสถานะสมาชิก"></section>
         <section class="gd-panel gd-class-panel"><div id="gd-class-heading-host"></div><div id="gd-class-summary-host"></div></section>
         <section class="gd-panel">
-          <div class="gd-head"><div><h2>รายชื่อสมาชิกทั้งหมด</h2><p class="gd-muted">ค้นหา กรอง และจัดการข้อมูลสมาชิกจากรายการเดียว</p></div></div>
+          <div class="gd-head"><div><h2>รายชื่อสมาชิกทั้งหมด</h2><p class="gd-muted">ค้นหา กรอง และจัดการข้อมูลสมาชิกจากรายการเดียว</p></div><button class="gd-button" id="gd-refresh" type="button">↻ รีเฟรช</button></div>
           <form class="gd-toolbar" id="gd-filter-form">
             <input class="gd-field" id="gd-search" type="search" maxlength="80" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น หรือ Discord..." aria-label="ค้นหาชื่อตัวละคร ชื่อเล่น หรือ Discord">
             <select class="gd-field" id="gd-guild" aria-label="สังกัดกิลด์"><option value="all">ทั้งหมด</option><option value="4AM">4AM</option><option value="4PM">4PM</option><option value="unassigned">ไม่ระบุสังกัด</option></select>
