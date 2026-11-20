@@ -252,7 +252,7 @@ Deno.serve(async (request) => {
         "\n\n**" + String(record.event_name || "4AM SIGN-UP") + "**" +
         "\n\n<:Date:593930359985405983> **" + formatDate(record.event_date) + "**　<:Time:593930235658108939> **" + startTimeLabel + " น.**" +
         "\n\n<:Countdown:858794526176444467> **ปิดรับสมัคร:** " + closeLabel +
-        "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app())",
+        "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/)",
       color: 0xD92D45,
       fields: signupFields,
       image: { url: "https://raw.githubusercontent.com/Koftfiiz/4AM-GUILD/main/assets/animated-4am-logo.gif" },
