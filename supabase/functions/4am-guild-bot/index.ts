@@ -302,6 +302,7 @@ Deno.serve(async (request: Request) => {
       value: roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n",
       inline: false
     });
+    fields.push({ name: "\u200b", value: "\u200b", inline: false });
     const rosterLines = rows.filter((x: any) => Number(x.queue_position) <= 60)
       .map((x: any) => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
     const reserveLines = rows.filter((x: any) => Number(x.queue_position) > 60)
@@ -332,7 +333,8 @@ Deno.serve(async (request: Request) => {
       "\n\n**" + eventLabel + "**" +
       "\n\n" + startDateTime +
       "\n\n⏳ **ปิดรับสมัคร:** " + formatDateTime(event.registration_type === "official" && event.event_date ? String(event.event_date).slice(0, 10) + "T14:00:00+07:00" : event.signup_closes_at) + " น." +
-      "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง";
+      "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง" +
+      "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/guildwar/signup)";
     return {
       embeds: [{
         color: 0xD92D45,
