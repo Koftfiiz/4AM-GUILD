@@ -241,22 +241,18 @@ Deno.serve(async (request) => {
     };
     addRosterFields("**เข้าร่วม (" + rosterLines.length + " คน)**", rosterLines);
     addRosterFields("**รายชื่อสำรอง (" + reserveLines.length + " คน)**", reserveLines);
-    const signupStatus = record?.status === "cancelled" ? "CANCELLED" : isSignupClosed ? "CLOSED" : isSignupOpen ? "OPEN" : "SCHEDULED";
     const kindLabel = record.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const closeLabel = record.registration_type === "official" && record.event_date
       ? formatDateTime(String(record.event_date).slice(0, 10) + "T14:00:00+07:00")
       : formatDateTime(record.signup_closes_at);
+    const startTimeLabel = String(record.start_time || "-").slice(0, 5);
     const embed = kind === "war_signup" ? {
       title: "4AM SIGN-UP",
       description: "**◥◣④AM◥◣ " + kindLabel + "**" +
         "\n\n**" + String(record.event_name || "4AM SIGN-UP") + "**" +
-        "\n\n**วันที่/เวลา เริ่มวอร์ :**" +
-        "\n**" + formatDate(record.event_date) + " " + String(record.start_time || "-").slice(0, 5) + " น.**" +
-        "\n\n**สถานะ : " + signupStatus + "**" +
-        "\n\n**เปิดรับสมัคร: " + formatDateTime(record.signup_opens_at) + " น.**" +
-        "\n**ปิดรับสมัคร: " + closeLabel + " น.**" +
-        "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/)" +
-        "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง",
+        "\n\n<:Date:593930359985405983> **" + formatDate(record.event_date) + "**　<:Time:593930235658108939> **" + startTimeLabel + " น.**" +
+        "\n\n<:Countdown:858794526176444467> **ปิดรับสมัคร:** " + closeLabel +
+        "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app())",
       color: 0xD92D45,
       fields: signupFields,
       image: { url: "https://raw.githubusercontent.com/Koftfiiz/4AM-GUILD/main/assets/animated-4am-logo.gif" },
