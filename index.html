@@ -40,11 +40,11 @@
           }
 
           const app = document.createElement("script");
-          app.src = "/app.js?v=member-management-center-20261120-r2";
+          app.src = "/app.js?v=member-management-center-20261120-r3";
           app.onload = () => {
             const loadMemberManagementModule = () => {
               const directory = document.createElement("script");
-              directory.src = "/guild-affiliation-directory.js?v=member-management-center-20261120-r2";
+              directory.src = "/guild-affiliation-directory.js?v=member-management-center-20261120-r3";
               directory.onerror = () => console.error("Member Management Center script failed to load.");
               document.head.appendChild(directory);
             };
