@@ -267,16 +267,8 @@ Deno.serve(async (request: Request) => {
 
     const formatThaiDate = (value: string | null) => {
       if (!value) return "-";
-      const dateOnly = String(value).slice(0, 10);
-      const date = new Date(dateOnly + "T00:00:00+07:00");
-      if (Number.isNaN(date.getTime())) return "-";
-      return new Intl.DateTimeFormat("th-TH", {
-        timeZone: "Asia/Bangkok",
-        day: "numeric",
-        month: "long",
-        year: "numeric",
-        calendar: "buddhist"
-      }).format(date);
+      const parts = String(value).slice(0, 10).split("-");
+      return parts.length === 3 ? parts[2] + "/" + parts[1] + "/" + parts[0] : "-";
     };
     const formatDateTime = (value: string | null) => {
       if (!value) return "-";
@@ -335,7 +327,7 @@ Deno.serve(async (request: Request) => {
 
     const kindLabel = event.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const eventLabel = event.registration_type === "practice" ? "ซ้อมวอร์" : String(event.event_name || "GUILD WAR");
-    const startDateTime = "📅 **" + formatThaiDate(event.event_date) + "**　🕒 **" + String(event.start_time || "-").slice(0, 5) + "**";
+    const startDateTime = "📅 **" + formatThaiDate(event.event_date) + "**　🕒 **" + String(event.start_time || "-").slice(0, 5) + " น.**";
     const description = "**◥◣④AM◥◣ " + kindLabel + "**" +
       "\n\n**" + eventLabel + "**" +
       "\n\n" + startDateTime +
