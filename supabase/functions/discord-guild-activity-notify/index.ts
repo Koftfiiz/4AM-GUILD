@@ -196,16 +196,15 @@ Deno.serve(async (request) => {
       const roleRows = roleGroups.get(role) || [];
       return roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**";
     });
-    signupFields.push({
-      name: "\u200b",
-      value: roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3],
-      inline: false
-    });
-    signupFields.push({ name: "\u200b", value: "\u200b", inline: false });
     const rosterLines = warSignupMembers.filter(x => Number(x.queue_position) <= 60)
       .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
     const reserveLines = warSignupMembers.filter(x => Number(x.queue_position) > 60)
       .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
+    signupFields.push({
+      name: "\u200b",
+      value: roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**เข้าร่วม (" + rosterLines.length + " คน)**",
+      inline: false
+    });
     const addRosterFields = (heading: string, lines: string[]) => {
       const chunks: string[] = [];
       let chunk = "";
@@ -225,7 +224,7 @@ Deno.serve(async (request) => {
         inline: false
       }));
     };
-    addRosterFields("**เข้าร่วม (" + rosterLines.length + " คน)**", rosterLines);
+    addRosterFields("\u200b", rosterLines);
     addRosterFields("**รายชื่อสำรอง (" + reserveLines.length + " คน)**", reserveLines);
     const kindLabel = record.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const closeLabel = record.registration_type === "official" && record.event_date
