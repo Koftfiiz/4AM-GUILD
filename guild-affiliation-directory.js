@@ -503,11 +503,11 @@
   }
 
   const originalOpen=window.openGuildPage||openGuildPage;
-  window.openGuildPage=function(pageName){
+  window.openGuildPage=function(pageName,...args){
     const legacyRoute=pageName===LEGACY_PAGE;let target=legacyRoute?PAGE:pageName;
     if(target===PAGE&&!isAllowed())target="dashboard";
     if(target!==PAGE)window.setGuildAffiliationRealtime?.(false);
-    originalOpen.call(this,target);
+    originalOpen.call(this,target,...args);
     if(target===PAGE){ensurePage();activate();}
   };
 
