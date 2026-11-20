@@ -198,7 +198,7 @@ Deno.serve(async (request) => {
     });
     signupFields.push({
       name: "\u200b",
-      value: roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n",
+      value: roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3],
       inline: false
     });
     signupFields.push({ name: "\u200b", value: "\u200b", inline: false });
