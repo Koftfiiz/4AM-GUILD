@@ -8937,3 +8937,8 @@ body.gallery-lightbox-open{overflow:hidden}
   .war-signup-action{align-items:stretch}
   .war-signup-join-btn,.war-signup-withdraw-btn,.war-signup-closed-btn{width:100%}
 }
+
+#page-members .member-directory-card .member-guild-affiliation-badge{display:inline-flex;align-items:center;width:max-content;max-width:100%;margin-top:6px;padding:3px 9px;border:1px solid rgba(225,59,80,.34);border-radius:999px;background:rgba(170,28,48,.12);color:#ff9aa7;font-size:15px;font-weight:800;line-height:1.35}
+#page-members .member-directory-card .member-guild-affiliation-badge.is-4am{border-color:rgba(225,59,80,.48);background:rgba(170,28,48,.18);color:#ff8c9a}
+#page-members .member-directory-card .member-guild-affiliation-badge.is-4pm{border-color:rgba(160,125,220,.42);background:rgba(110,75,160,.16);color:#c9a9ff}
+#page-members .member-directory-card .member-guild-affiliation-badge.is-unassigned{border-color:rgba(160,160,170,.24);background:rgba(120,120,130,.10);color:#c2c2ca}
