@@ -295,7 +295,7 @@ Deno.serve(async (request: Request) => {
     const reserveCount = rows.filter((x: any) => Number(x.queue_position) > 60).length;
     const fields: any[] = [
       {
-        name: "\\u200b",
+        name: "\u200b",
         value: "👥 ผู้สมัคร " + rows.length + "/80  ·  🟢 ตัวจริง " + mainCount + "/60  ·  🔵 สำรอง " + reserveCount + "/20",
         inline: false
       }
@@ -306,8 +306,8 @@ Deno.serve(async (request: Request) => {
       return roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**";
     });
     fields.push({
-      name: "\\u200b",
-      value: roleSummary[0] + "\\n" + roleSummary[1] + "\\n\\n" + roleSummary[2] + "\\n" + roleSummary[3],
+      name: "\u200b",
+      value: roleSummary[0] + "\n" + roleSummary[1] + "\n\n" + roleSummary[2] + "\n" + roleSummary[3],
       inline: false
     });
     const rosterLines = rows.filter((x: any) => Number(x.queue_position) <= 60)
@@ -338,10 +338,10 @@ Deno.serve(async (request: Request) => {
     const startDateTime = "<:Date:593930359985405983> " + formatThaiDate(event.event_date) +
       "　<:Time:593930235658108939> " + String(event.start_time || "-").slice(0, 5);
     const description = "**◥◣④AM◥◣ " + kindLabel + "**" +
-      "\\n\\n**" + eventLabel + "**" +
-      "\\n" + startDateTime +
-      "\\n**ปิดรับสมัคร: " + formatDateTime(event.registration_type === "official" && event.event_date ? String(event.event_date).slice(0, 10) + "T14:00:00+07:00" : event.signup_closes_at) + " น.**" +
-      "\\n\\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง";
+      "\n\n**" + eventLabel + "**" +
+      "\n" + startDateTime +
+      "\n**ปิดรับสมัคร: " + formatDateTime(event.registration_type === "official" && event.event_date ? String(event.event_date).slice(0, 10) + "T14:00:00+07:00" : event.signup_closes_at) + " น.**" +
+      "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง";
     return {
       embeds: [{
         color: 0xD92D45,
