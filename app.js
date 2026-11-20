@@ -2903,7 +2903,7 @@ async function updateManualGuildMemberStatus(id) {
   const member = manualGuildMembers.find(item => item.id === id);
   if (!member) return;
   const { data, error } = await supabaseClient.from("guild_manual_members")
-    .update({ active: !member.active, updated_by: currentUser.id, updated_at: new Date().toISOString() })
+    .update({ active: !member.active })
     .eq("id", id).select("*").single();
   if (error) { alert("เปลี่ยนสถานะไม่สำเร็จ: " + error.message); return; }
   Object.assign(member, data);
@@ -9065,7 +9065,7 @@ function openGuildPage(pageName, options = {}) {
   window.scrollTo({ top: 0 });
 
   if (pageName === "members") loadMembers();
-  if (pageName === "member-management" && isManagement()) loadManualMemberManagement();
+  if (pageName === "member-management" && isManagement()) window.memberManagementLoadPromise = loadManualMemberManagement();
   if (pageName === "system-management") loadSystemRoleMembers();
   if (pageName === "discord-integration") loadDiscordIntegrationSettings();
 
