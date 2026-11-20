@@ -46,7 +46,7 @@ body::before {
   z-index: -2;
   background:
     linear-gradient(180deg, rgba(5, 3, 4, .78), rgba(8, 4, 6, .9)),
-    url("assets/4am-web-bg.jpg") center / cover no-repeat,
+    url("/assets/4am-web-bg.jpg") center / cover no-repeat,
     #060405;
 }
 
@@ -105,7 +105,7 @@ a { color: inherit; text-decoration: none; }
   background:
     radial-gradient(ellipse at 50% 45%, rgba(137, 22, 36, .35), transparent 62%),
     linear-gradient(rgba(5, 3, 4, .45), rgba(5, 3, 4, .8)),
-    url("assets/4am-web-bg.jpg") center / cover no-repeat;
+    url("/assets/4am-web-bg.jpg") center / cover no-repeat;
 }
 
 .login-card {
@@ -306,7 +306,7 @@ a { color: inherit; text-decoration: none; }
   margin-top: auto;
   background:
     linear-gradient(180deg, #070405 0%, rgba(7, 4, 5, .25) 38%, rgba(7, 4, 5, .55) 100%),
-    url("assets/sidebar-art.jpg") center bottom / cover no-repeat;
+    url("/assets/sidebar-art.jpg") center bottom / cover no-repeat;
 }
 
 .sidebar-slogan {
@@ -494,7 +494,7 @@ a { color: inherit; text-decoration: none; }
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(5, 3, 4, .3), transparent 28%, transparent 70%, rgba(6, 4, 5, .85)),
-    url("assets/hero-bg.jpg") center top / cover no-repeat,
+    url("/assets/hero-bg.jpg") center top / cover no-repeat,
     #0a0506;
 }
 
@@ -735,7 +735,7 @@ a { color: inherit; text-decoration: none; }
   right: 0;
   bottom: 0;
   width: 66%;
-  background: url("assets/announcement-bg.jpg") right center / cover no-repeat;
+  background: url("/assets/announcement-bg.jpg") right center / cover no-repeat;
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, .55) 28%, #000 55%);
   mask-image: linear-gradient(90deg, transparent 0%, rgba(0, 0, 0, .55) 28%, #000 55%);
 }
@@ -7664,7 +7664,7 @@ body.member-card-edit-open{overflow-x:hidden;overflow-y:auto}
   background:
     linear-gradient(90deg,rgba(5,5,8,.76),rgba(10,5,8,.24) 48%,rgba(5,5,8,.72)),
     linear-gradient(180deg,rgba(8,8,12,.12),rgba(8,8,12,.88)),
-    url("assets/hero-bg.jpg") center 42%/cover no-repeat,#08080b;
+    url("/assets/hero-bg.jpg") center 42%/cover no-repeat,#08080b;
 }
 #page-dashboard .dashboard-hero::before{background:radial-gradient(ellipse 42% 70% at 50% 58%,rgba(8,8,12,.78),transparent 100%)}
 #page-dashboard .hero-content{margin:0;padding:28px 18px 0}
