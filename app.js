@@ -1936,6 +1936,27 @@ async function fetchAllRowsPaged(queryFactory, pageSize = 100) {
   return { data: rows, error: null };
 }
 
+// Keep the public member-card directory in the same order as the
+// Member Management Center: affiliation first, then guild rank (highest first).
+function compareGuildDirectoryMembers(a, b) {
+  const guildRank = code => code === "4AM" ? 0 : code === "4PM" ? 1 : 2;
+  const affiliationDiff = guildRank(a.guild_code) - guildRank(b.guild_code);
+  if (affiliationDiff) return affiliationDiff;
+
+  const positionA = String(a.guild_position || "").trim();
+  const positionB = String(b.guild_position || "").trim();
+  const missingA = positionA ? 0 : 1;
+  const missingB = positionB ? 0 : 1;
+  if (missingA !== missingB) return missingA - missingB;
+
+  const positionOrder = new Map(GUILD_POSITIONS.map((position, index) => [position, index]));
+  const rankA = positionOrder.has(positionA) ? positionOrder.get(positionA) : Number.MAX_SAFE_INTEGER;
+  const rankB = positionOrder.has(positionB) ? positionOrder.get(positionB) : Number.MAX_SAFE_INTEGER;
+  if (rankA !== rankB) return rankA - rankB;
+
+  return String(a.character_name || "").localeCompare(String(b.character_name || ""), "th");
+}
+
 async function loadMembers(forceRefresh = false) {
   const container = $("members-list");
   if (!forceRefresh && Date.now() < memberDirectoryCacheExpiresAt) {
@@ -1997,7 +2018,7 @@ async function loadMembers(forceRefresh = false) {
       role: "member",
       is_manual_record: true
     }))
-  ].sort((a, b) => String(a.character_name || "").localeCompare(String(b.character_name || ""), "th"));
+  ].sort(compareGuildDirectoryMembers);
 
   memberDirectoryCacheExpiresAt = Date.now() + 45 * 1000;
   renderMembers(directoryMembers);
