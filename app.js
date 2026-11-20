@@ -6149,7 +6149,7 @@ async function loadWarSignups(){
     if(state==="cancelled"){
       action='<span class="war-signup-status">กิจกรรมนี้ถูกยกเลิกแล้ว</span>';
     }else if(state==="closed"){
-      action=ownStatus+'<button class="btn btn-sm war-signup-closed-btn" type="button" disabled>ปิดรับสมัครแล้ว</button>';
+      action='<div class="war-signup-closed-banner" role="status" aria-live="polite">ปิดการลงชื่อแล้ว</div>';
     }else if(own){
       action=ownStatus+'<button class="btn btn-danger btn-sm war-signup-withdraw-btn" type="button" data-war-signup-withdraw="'+escapeHTML(event.id)+'">ถอนชื่อออก</button>';
     }else if(state==="open"&&rows.length<80){
