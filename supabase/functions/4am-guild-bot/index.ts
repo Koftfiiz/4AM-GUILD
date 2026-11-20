@@ -291,10 +291,10 @@ Deno.serve(async (request: Request) => {
     const configuredRounds = event.round_times || [];
     const roundLabel = configuredRounds.length >= 2
       ? "รอบแรก " + configuredRounds[0] + " น. | รอบสอง " + configuredRounds[1] + " น."
-      : String(configuredRounds[0] || event.start_time || "-").slice(0, 5) + " น.";
-    const hasTwoOfficialRounds = event.registration_type === "official" && configuredRounds.length >= 2;
+      : "วอร์รอบเดียว " + String(configuredRounds[0] || event.start_time || "-").slice(0, 5) + " น.";
+    const hasOfficialRoundLabel = event.registration_type === "official";
     const startDateTime = "📅 **" + formatThaiDate(event.event_date) + "**　🕒 **" + String(event.start_time || "-").slice(0, 5) + " น.**";
-    const eventDateLine = hasTwoOfficialRounds
+    const eventDateLine = hasOfficialRoundLabel
       ? "**" + eventLabel + " · " + formatThaiDate(event.event_date) + "** · " + roundLabel
       : "**" + eventLabel + "**";
     const closeLabel = formatDateTime(event.registration_type === "official" && event.event_date
@@ -302,7 +302,7 @@ Deno.serve(async (request: Request) => {
       : event.signup_closes_at);
     const description = "**◥◣④AM◥◣ " + kindLabel + "**" +
       "\n\n" + eventDateLine +
-      (hasTwoOfficialRounds ? "" : "\n\n" + startDateTime) +
+      (hasOfficialRoundLabel ? "" : "\n\n" + startDateTime) +
       "\n\n⏳ **ปิดรับสมัคร:** " + closeLabel + " น." +
       "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง" +
       "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/guildwar/signup)";
