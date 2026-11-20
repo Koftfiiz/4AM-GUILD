@@ -133,7 +133,7 @@ Deno.serve(async (request: Request) => {
   }
   async function getRoster(eventId: string) {
     const [eventQ, partiesQ] = await Promise.all([
-      supabase.from("war_events").select("id,event_name,event_date,is_published,status,description").eq("id", eventId).maybeSingle(),
+      supabase.from("war_events").select("id,event_name,event_date,is_published,status,description,registration_type,start_time,signup_closes_at").eq("id", eventId).maybeSingle(),
       supabase.from("war_parties").select("id,raid,party_number,war_party_members(member_id)").eq("event_id", eventId).order("raid").order("party_number")
     ]);
     if (eventQ.error || !eventQ.data || !eventQ.data.is_published || eventQ.data.status === "cancelled" || partiesQ.error) throw new Error("ไม่พบกิจกรรมวอร์ที่เผยแพร่ หรือกิจกรรมถูกยกเลิกแล้ว");
@@ -288,13 +288,21 @@ Deno.serve(async (request: Request) => {
 
     const kindLabel = event.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const eventLabel = event.registration_type === "practice" ? "ซ้อมวอร์" : String(event.event_name || "GUILD WAR");
+    const configuredRounds = event.round_times || [];
+    const roundLabel = configuredRounds.length >= 2
+      ? "รอบแรก " + configuredRounds[0] + " น. | รอบสอง " + configuredRounds[1] + " น."
+      : String(configuredRounds[0] || event.start_time || "-").slice(0, 5) + " น.";
+    const hasTwoOfficialRounds = event.registration_type === "official" && configuredRounds.length >= 2;
     const startDateTime = "📅 **" + formatThaiDate(event.event_date) + "**　🕒 **" + String(event.start_time || "-").slice(0, 5) + " น.**";
+    const eventDateLine = hasTwoOfficialRounds
+      ? "**" + eventLabel + " · " + formatThaiDate(event.event_date) + "** · " + roundLabel
+      : "**" + eventLabel + "**";
     const closeLabel = formatDateTime(event.registration_type === "official" && event.event_date
       ? String(event.event_date).slice(0, 10) + "T14:00:00+07:00"
       : event.signup_closes_at);
     const description = "**◥◣④AM◥◣ " + kindLabel + "**" +
-      "\n\n**" + eventLabel + "**" +
-      "\n\n" + startDateTime +
+      "\n\n" + eventDateLine +
+      (hasTwoOfficialRounds ? "" : "\n\n" + startDateTime) +
       "\n\n⏳ **ปิดรับสมัคร:** " + closeLabel + " น." +
       "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง" +
       "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/guildwar/signup)";
