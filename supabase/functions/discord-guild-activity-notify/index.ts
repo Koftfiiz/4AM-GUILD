@@ -201,6 +201,7 @@ Deno.serve(async (request) => {
       value: roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n",
       inline: false
     });
+    signupFields.push({ name: "\u200b", value: "\u200b", inline: false });
     const rosterLines = warSignupMembers.filter(x => Number(x.queue_position) <= 60)
       .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
     const reserveLines = warSignupMembers.filter(x => Number(x.queue_position) > 60)
@@ -238,7 +239,7 @@ Deno.serve(async (request) => {
         "\n\n📅 **" + formatDate(record.event_date) + "**　🕒 **" + startTimeLabel + " น.**" +
         "\n\n⏳ **ปิดรับสมัคร:** " + closeLabel + " น." +
         "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง" +
-        "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/)",
+        "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/guildwar/signup)",
       color: 0xD92D45,
       fields: signupFields,
       image: { url: "https://raw.githubusercontent.com/Koftfiiz/4AM-GUILD/main/assets/animated-4am-logo.gif" },
