@@ -335,12 +335,11 @@ Deno.serve(async (request: Request) => {
 
     const kindLabel = event.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const eventLabel = event.registration_type === "practice" ? "ซ้อมวอร์" : String(event.event_name || "GUILD WAR");
-    const startDateTime = "<:Date:593930359985405983> " + formatThaiDate(event.event_date) +
-      "　<:Time:593930235658108939> " + String(event.start_time || "-").slice(0, 5);
+    const startDateTime = "📅 **" + formatThaiDate(event.event_date) + "**　🕒 **" + String(event.start_time || "-").slice(0, 5) + "**";
     const description = "**◥◣④AM◥◣ " + kindLabel + "**" +
       "\n\n**" + eventLabel + "**" +
-      "\n" + startDateTime +
-      "\n**ปิดรับสมัคร: " + formatDateTime(event.registration_type === "official" && event.event_date ? String(event.event_date).slice(0, 10) + "T14:00:00+07:00" : event.signup_closes_at) + " น.**" +
+      "\n\n" + startDateTime +
+      "\n\n⏳ **ปิดรับสมัคร:** " + formatDateTime(event.registration_type === "official" && event.event_date ? String(event.event_date).slice(0, 10) + "T14:00:00+07:00" : event.signup_closes_at) + " น." +
       "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง";
     return {
       embeds: [{
