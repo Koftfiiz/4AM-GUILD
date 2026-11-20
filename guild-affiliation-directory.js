@@ -32,7 +32,7 @@
     style.textContent = [
       ".gd-root{display:grid;gap:16px;color:var(--text)}.gd-root[hidden]{display:none!important}",
       ".gd-panel{padding:22px;margin-bottom:20px;border:1px solid var(--line);border-radius:8px;background:rgba(12,8,10,.92)}",
-      ".gd-panel.gd-member-list-panel{background:radial-gradient(ellipse at 8% 0%,rgba(49,205,224,.16),transparent 38%),radial-gradient(ellipse at 92% 8%,rgba(180,105,255,.17),transparent 42%),radial-gradient(ellipse at 68% 100%,rgba(255,116,188,.13),transparent 40%),radial-gradient(ellipse at 22% 100%,rgba(255,181,91,.10),transparent 38%),linear-gradient(135deg,rgba(8,16,27,.97),rgba(17,12,29,.97) 48%,rgba(22,10,21,.97));border-color:rgba(133,174,221,.32);box-shadow:0 0 24px rgba(75,126,190,.10),inset 0 0 32px rgba(128,91,190,.08)}",
+      ".gd-panel.gd-member-list-panel{background:radial-gradient(ellipse at 7% 0%,#00beff55,transparent 35%),radial-gradient(ellipse at 38% 0%,#aa4cff44,transparent 38%),radial-gradient(ellipse at 96% 16%,#ff46b544,transparent 34%),radial-gradient(ellipse at 72% 100%,#ffbc4840,transparent 38%),linear-gradient(145deg,#17121f,#090a11 72%);border-color:#a58bdf88;box-shadow:inset 0 0 55px #8955ff22,0 0 30px #4997ff20}",
       ".gd-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}",
       ".gd-head h2{font-size:20px;margin:2px 0}.gd-muted{color:var(--muted);font-size:15px;line-height:1.55}",
       ".gd-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}",
