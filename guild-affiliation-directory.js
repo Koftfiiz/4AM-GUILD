@@ -32,6 +32,7 @@
     style.textContent = [
       ".gd-root{display:grid;gap:16px;color:var(--text)}.gd-root[hidden]{display:none!important}",
       ".gd-panel{padding:22px;margin-bottom:20px;border:1px solid var(--line);border-radius:8px;background:rgba(12,8,10,.92)}",
+      ".gd-panel.gd-member-list-panel{background:radial-gradient(ellipse at 8% 0%,rgba(49,205,224,.16),transparent 38%),radial-gradient(ellipse at 92% 8%,rgba(180,105,255,.17),transparent 42%),radial-gradient(ellipse at 68% 100%,rgba(255,116,188,.13),transparent 40%),radial-gradient(ellipse at 22% 100%,rgba(255,181,91,.10),transparent 38%),linear-gradient(135deg,rgba(8,16,27,.97),rgba(17,12,29,.97) 48%,rgba(22,10,21,.97));border-color:rgba(133,174,221,.32);box-shadow:0 0 24px rgba(75,126,190,.10),inset 0 0 32px rgba(128,91,190,.08)}",
       ".gd-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}",
       ".gd-head h2{font-size:20px;margin:2px 0}.gd-muted{color:var(--muted);font-size:15px;line-height:1.55}",
       ".gd-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:14px}",
@@ -96,7 +97,7 @@
         <div class="gd-head"><div><span class="section-kicker">MEMBER MANAGEMENT CENTER</span><h2>ศูนย์จัดการสมาชิก</h2><p class="gd-muted">จัดการข้อมูลสมาชิก สังกัดกิลด์</p></div></div>
         <section class="gd-legacy-quality-host" id="gd-quality-host" aria-label="สรุปสถานะสมาชิก"></section>
         <section class="gd-panel gd-class-panel"><div id="gd-class-heading-host"></div><div id="gd-class-summary-host"></div></section>
-        <section class="gd-panel">
+        <section class="gd-panel gd-member-list-panel">
           <div class="gd-head"><div><h2>รายชื่อสมาชิกทั้งหมด</h2><p class="gd-muted">ค้นหา กรอง และจัดการข้อมูลสมาชิกจากรายการเดียว</p></div><button class="gd-button" id="gd-refresh" type="button">↻ รีเฟรช</button></div>
           <form class="gd-toolbar" id="gd-filter-form">
             <input class="gd-field" id="gd-search" type="search" maxlength="80" placeholder="ค้นหาชื่อตัวละคร ชื่อเล่น หรือ Discord..." aria-label="ค้นหาชื่อตัวละคร ชื่อเล่น หรือ Discord">
