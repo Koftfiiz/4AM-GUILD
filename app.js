@@ -5742,7 +5742,7 @@ async function exportWarImage(raidFilter = null,eventId = selectedWarEventId){
   const toDataUrl=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});
   try{
     const [background,logo,fontCss]=await Promise.all([
-      fetch("assets/4am-web-bg.jpg").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ assets/4am-web-bg.jpg");return response.blob();}).then(toDataUrl),
+      fetch("/assets/4am-web-bg.jpg").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ assets/4am-web-bg.jpg");return response.blob();}).then(toDataUrl),
       fetch("/assets/4am-guild-logo.png?v=20261111b").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ /assets/4am-guild-logo.png?v=20261111b");return response.blob();}).then(toDataUrl),
       getThaiFontCss()
     ]);
@@ -5857,7 +5857,7 @@ async function exportWarPartyImage(partyId){
   const toDataUrl=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});
   try{
     const [bg,logo,fontCss]=await Promise.all([
-      fetch("assets/4am-web-bg.jpg").then(r=>{if(!r.ok)throw Error("ไม่พบภาพพื้นหลัง");return r.blob();}).then(toDataUrl),
+      fetch("/assets/4am-web-bg.jpg").then(r=>{if(!r.ok)throw Error("ไม่พบภาพพื้นหลัง");return r.blob();}).then(toDataUrl),
       fetch("/assets/4am-guild-logo.png?v=20261111b").then(r=>{if(!r.ok)throw Error("ไม่พบโลโก้");return r.blob();}).then(toDataUrl),
       getThaiFontCss()
     ]);
