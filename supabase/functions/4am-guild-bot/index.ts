@@ -265,10 +265,18 @@ Deno.serve(async (request: Request) => {
     const roleGroups = new Map<string, any[]>(roleOrder.map(role => [role, []]));
     for (const row of rows) roleGroups.get(roleForClass(row.member.game_class))!.push(row);
 
-    const formatDate = (value: string | null) => {
+    const formatThaiDate = (value: string | null) => {
       if (!value) return "-";
-      const parts = String(value).slice(0, 10).split("-");
-      return parts.length === 3 ? parts[2] + "/" + parts[1] + "/" + parts[0] : "-";
+      const dateOnly = String(value).slice(0, 10);
+      const date = new Date(dateOnly + "T00:00:00+07:00");
+      if (Number.isNaN(date.getTime())) return "-";
+      return new Intl.DateTimeFormat("th-TH", {
+        timeZone: "Asia/Bangkok",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+        calendar: "buddhist"
+      }).format(date);
     };
     const formatDateTime = (value: string | null) => {
       if (!value) return "-";
@@ -282,25 +290,26 @@ Deno.serve(async (request: Request) => {
     const officialDeadline = event.registration_type === "official" && event.event_date
       ? new Date(String(event.event_date).slice(0, 10) + "T14:00:00+07:00").getTime()
       : new Date(event.signup_closes_at || "").getTime();
-    const opens = new Date(event.signup_opens_at || "").getTime();
     const closed = event.status === "cancelled" || !Number.isFinite(officialDeadline) || Date.now() >= officialDeadline;
-    const open = !closed && Number.isFinite(opens) && Date.now() >= opens;
-    const state = event.status === "cancelled" ? "CANCELLED" : closed ? "CLOSED" : open ? "OPEN" : "SCHEDULED";
+    const mainCount = rows.filter((x: any) => Number(x.queue_position) <= 60).length;
+    const reserveCount = rows.filter((x: any) => Number(x.queue_position) > 60).length;
     const fields: any[] = [
-      { name: "**ผู้ลงชื่อทั้งหมด**", value: rows.length + " / 80 คน", inline: true },
-      { name: "**ตัวจริง**", value: rows.filter((x: any) => Number(x.queue_position) <= 60).length + " / 60 คน", inline: true },
-      { name: "**ตัวสำรอง**", value: rows.filter((x: any) => Number(x.queue_position) > 60).length + " / 20 คน", inline: true }
+      {
+        name: "\\u200b",
+        value: "👥 ผู้สมัคร " + rows.length + "/80  ·  🟢 ตัวจริง " + mainCount + "/60  ·  🔵 สำรอง " + reserveCount + "/20",
+        inline: false
+      }
     ];
     const roleIcons: Record<string, string> = { Tank: "🛡️", DPS: "⚔️", Bloodstrom: "🩸", Healer: "💚" };
-    for (const role of roleOrder) {
+    const roleSummary = roleOrder.map((role) => {
       const roleRows = roleGroups.get(role) || [];
-      fields.push({
-        name: roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**",
-        value: "\u200b",
-        inline: true
-      });
-      if (role === "DPS") fields.push({ name: "\u200b", value: "\u200b", inline: false });
-    }
+      return roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**";
+    });
+    fields.push({
+      name: "\\u200b",
+      value: roleSummary[0] + "\\n" + roleSummary[1] + "\\n\\n" + roleSummary[2] + "\\n" + roleSummary[3],
+      inline: false
+    });
     const rosterLines = rows.filter((x: any) => Number(x.queue_position) <= 60)
       .map((x: any) => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
     const reserveLines = rows.filter((x: any) => Number(x.queue_position) > 60)
@@ -325,13 +334,14 @@ Deno.serve(async (request: Request) => {
     addRosterFields("**รายชื่อสำรอง (" + reserveLines.length + " คน)**", reserveLines);
 
     const kindLabel = event.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
+    const eventLabel = event.registration_type === "practice" ? "ซ้อมวอร์" : String(event.event_name || "GUILD WAR");
+    const startDateTime = "<:Date:593930359985405983> " + formatThaiDate(event.event_date) +
+      "　<:Time:593930235658108939> " + String(event.start_time || "-").slice(0, 5);
     const description = "**◥◣④AM◥◣ " + kindLabel + "**" +
-      "\n\n**" + String(event.event_name || "4AM SIGN-UP") + "**" +
-      "\n\n**วันที่ " + formatDate(event.event_date) + " · เวลา " + String(event.start_time || "-").slice(0, 5) + " น.**" +
-      "\n**สถานะ: " + state + "**" +
-      "\n**เปิดรับสมัคร: " + formatDateTime(event.signup_opens_at) + " น.**" +
-      "\n**ปิดรับสมัคร: " + formatDateTime(event.registration_type === "official" && event.event_date ? String(event.event_date).slice(0, 10) + "T14:00:00+07:00" : event.signup_closes_at) + " น.**" +
-      "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง";
+      "\\n\\n**" + eventLabel + "**" +
+      "\\n" + startDateTime +
+      "\\n**ปิดรับสมัคร: " + formatDateTime(event.registration_type === "official" && event.event_date ? String(event.event_date).slice(0, 10) + "T14:00:00+07:00" : event.signup_closes_at) + " น.**" +
+      "\\n\\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง";
     return {
       embeds: [{
         color: 0xD92D45,
