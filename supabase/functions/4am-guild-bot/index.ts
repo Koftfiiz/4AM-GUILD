@@ -299,7 +299,7 @@ Deno.serve(async (request: Request) => {
     });
     fields.push({
       name: "\u200b",
-      value: roleSummary[0] + "　　" + roleSummary[1] + "\n\n" + roleSummary[2] + "　　" + roleSummary[3],
+      value: roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n",
       inline: false
     });
     const rosterLines = rows.filter((x: any) => Number(x.queue_position) <= 60)
