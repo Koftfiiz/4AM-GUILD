@@ -200,31 +200,30 @@ Deno.serve(async (request) => {
       .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
     const reserveLines = warSignupMembers.filter(x => Number(x.queue_position) > 60)
       .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
-    signupFields.push({
-      name: "\u200b",
-      value: roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**เข้าร่วม (" + rosterLines.length + " คน)**",
-      inline: false
-    });
-    const addRosterFields = (heading: string, lines: string[]) => {
+    const addRosterFields = (heading: string, lines: string[], prefix = "") => {
       const chunks: string[] = [];
-      let chunk = "";
+      let chunk = prefix;
       for (const line of lines) {
         if (line.length > 1000) {
           throw new Error("A member display name is too long to fit in a single Discord signup announcement.");
         }
-        const next = chunk ? chunk + "\n" + line : line;
-        if (next.length > 1000 && chunk) { chunks.push(chunk); chunk = line; }
-        else chunk = next;
+        const next = chunk ? chunk + (chunk.endsWith("\n") ? "" : "\n") + line : line;
+        if (next.length > 1000 && chunk) {
+          chunks.push(chunk);
+          chunk = line;
+        } else {
+          chunk = next;
+        }
       }
       if (chunk) chunks.push(chunk);
-      if (!chunks.length) chunks.push("—");
+      if (!chunks.length) chunks.push(prefix ? prefix + "—" : "—");
       chunks.forEach((value, index) => signupFields.push({
-        name: index === 0 ? heading : "\u200b",
+        name: index === 0 && prefix ? "\u200b" : heading,
         value,
         inline: false
       }));
     };
-    addRosterFields("\u200b", rosterLines);
+    addRosterFields("\u200b", rosterLines, roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**เข้าร่วม (" + rosterLines.length + " คน)**");
     addRosterFields("**รายชื่อสำรอง (" + reserveLines.length + " คน)**", reserveLines);
     const kindLabel = record.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const closeLabel = record.registration_type === "official" && record.event_date
