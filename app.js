@@ -8830,7 +8830,12 @@ const GUILD_URL_ROUTES = Object.freeze({
   "/community/activities": { page: "guild-activities" },
   "/community/board": { page: "community-board" },
   "/duck-race": { page: "duck-race" },
-  "/feedback": { page: "feedback" }
+  "/feedback": { page: "feedback" },
+  "/system-management": { page: "system-management" },
+  "/discord-integration": { page: "discord-integration" },
+  "/developer-tools": { page: "developer-tools" },
+  "/appearance": { page: "appearance" },
+  "/settings": { page: "settings" }
 });
 
 const GUILD_MAIN_ROUTE_PATHS = Object.freeze({
@@ -8852,7 +8857,12 @@ const GUILD_MAIN_ROUTE_PATHS = Object.freeze({
   "guild-activities": "/community/activities",
   "community-board": "/community/board",
   "duck-race": "/duck-race",
-  feedback: "/feedback"
+  feedback: "/feedback",
+  "system-management": "/system-management",
+  "discord-integration": "/discord-integration",
+  "developer-tools": "/developer-tools",
+  appearance: "/appearance",
+  settings: "/settings"
 });
 
 const GUILD_TAB_ROUTE_PATHS = Object.freeze({
