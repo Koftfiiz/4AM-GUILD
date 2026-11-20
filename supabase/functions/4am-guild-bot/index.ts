@@ -299,7 +299,7 @@ Deno.serve(async (request: Request) => {
     });
     fields.push({
       name: "\u200b",
-      value: roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n",
+      value: roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3],
       inline: false
     });
     fields.push({ name: "\u200b", value: "\u200b", inline: false });
