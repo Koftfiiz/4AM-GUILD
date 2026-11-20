@@ -97,48 +97,10 @@ Deno.serve(async (request: Request) => {
     return jsonResponse({ error: "Invalid JSON body" }, 400);
   }
 
-  // Acknowledge Discord component interactions immediately, then finish the
-  // database work in the Edge Runtime background and update the original message.
-  const respond = (body: unknown, status = 200): Response => {
-    const result = body as Record<string, any>;
-    if (
-      interaction.type === 3 &&
-      (result?.type === 4 || result?.type === 7) &&
-      interaction.application_id &&
-      interaction.token
-    ) {
-      const webhookUrl = "https://discord.com/api/v10/webhooks/" +
-        encodeURIComponent(String(interaction.application_id)) + "/" +
-        encodeURIComponent(String(interaction.token));
-      const isUpdate = result.type === 7;
-      const payload = isUpdate
-        ? result.data
-        : { ...(result.data || {}), flags: 64 };
-      const task = (async () => {
-        const response = await fetch(
-          isUpdate ? webhookUrl + "/messages/@original" : webhookUrl,
-          {
-            method: isUpdate ? "PATCH" : "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload),
-          },
-        );
-        if (!response.ok) {
-          const detail = (await response.text()).slice(0, 500);
-          throw new Error("Discord follow-up failed (" + response.status + "): " + detail);
-        }
-      })().catch((error) => {
-        console.error("[DISCORD INTERACTION] Deferred response failed:", error instanceof Error ? error.message : String(error));
-      });
-      const edgeRuntime = (globalThis as any).EdgeRuntime;
-      if (edgeRuntime && typeof edgeRuntime.waitUntil === "function") {
-        edgeRuntime.waitUntil(task);
-        return jsonResponse({ type: 6 });
-      }
-      console.error("[DISCORD INTERACTION] EdgeRuntime.waitUntil unavailable; using synchronous response.");
-    }
-    return jsonResponse(body, status);
-  };
+  // Process the interaction separately so component clicks can be acknowledged
+  // to Discord before any Supabase reads or writes begin.
+  const processInteraction = async (): Promise<Response> => {
+    const respond = (body: unknown, status = 200): Response => jsonResponse(body, status);
 
   // Discord PING handshake.
   if (interaction.type === 1) return respond({ type: 1 });
@@ -553,4 +515,54 @@ Deno.serve(async (request: Request) => {
   }
 
   return respond({ type: 4, data: { content: "ไม่รองรับคำสั่งนี้", flags: 64 } });
+  };
+
+  if (interaction.type === 3) {
+    const edgeRuntime = (globalThis as any).EdgeRuntime;
+    if (!edgeRuntime || typeof edgeRuntime.waitUntil !== "function") {
+      console.error("[DISCORD INTERACTION] EdgeRuntime.waitUntil unavailable");
+      return jsonResponse({ type: 4, data: { content: "ระบบตอบสนอง Discord ยังไม่พร้อม กรุณาลองอีกครั้ง", flags: 64 } });
+    }
+
+    const task = (async () => {
+      const resultResponse = await processInteraction();
+      const result = await resultResponse.json() as Record<string, any>;
+      const webhookUrl = "https://discord.com/api/v10/webhooks/" +
+        encodeURIComponent(String(interaction.application_id)) + "/" +
+        encodeURIComponent(String(interaction.token));
+
+      if (result?.type === 7 && result.data) {
+        const response = await fetch(webhookUrl + "/messages/@original", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(result.data),
+        });
+        if (!response.ok) {
+          const detail = (await response.text()).slice(0, 500);
+          throw new Error("Discord original-message update failed (" + response.status + "): " + detail);
+        }
+      } else if (result?.type === 4 && result.data) {
+        const response = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...result.data, flags: 64 }),
+        });
+        if (!response.ok) {
+          const detail = (await response.text()).slice(0, 500);
+          throw new Error("Discord ephemeral follow-up failed (" + response.status + "): " + detail);
+        }
+      } else {
+        throw new Error("Unexpected deferred component response type: " + String(result?.type));
+      }
+    })().catch((error) => {
+      console.error("[DISCORD INTERACTION] Background processing failed:", error instanceof Error ? error.message : String(error));
+    });
+
+    edgeRuntime.waitUntil(task);
+    // Discord receives the deferred acknowledgement immediately; database
+    // work and message refresh continue in the Edge Runtime background.
+    return jsonResponse({ type: 6 });
+  }
+
+  return await processInteraction();
 });
