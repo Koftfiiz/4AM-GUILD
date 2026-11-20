@@ -40,11 +40,21 @@
           }
 
           const app = document.createElement("script");
-          app.src = "/app.js?v=discord-deleted-war-message-recovery-20261120-r1";
+          app.src = "/app.js?v=member-management-center-20261120-r1";
           app.onload = () => {
+            const loadMemberManagementModule = () => {
+              const directory = document.createElement("script");
+              directory.src = "/guild-affiliation-directory.js?v=member-management-center-20261120-r1";
+              directory.onerror = () => console.error("Member Management Center script failed to load.");
+              document.head.appendChild(directory);
+            };
             const tracker = document.createElement("script");
             tracker.src = "/portfolio-tracker.js?v=portfolio-schedule-labels-20261118-r1";
-            tracker.onerror = () => console.error("Portfolio tracker script failed to load.");
+            tracker.onload = loadMemberManagementModule;
+            tracker.onerror = () => {
+              console.error("Portfolio tracker script failed to load.");
+              loadMemberManagementModule();
+            };
             document.head.appendChild(tracker);
           };
           app.onerror = () => {
@@ -513,7 +523,7 @@
           <p>ทำความรู้จักสมาชิก 4AM GUILD พร้อม Class อาชีพและตำแหน่งภายในกิลด์</p>
         </div>
         <nav class="section-tab-navigation" aria-label="เมนูย่อย"><button type="button" data-go-page="members">รายชื่อสมาชิก</button>
-<button type="button" data-go-page="member-management" data-management-only class="management-only is-role-hidden" aria-hidden="true">จัดการรายชื่อสมาชิก</button></nav>
+<button type="button" data-go-page="member-management" data-management-only class="management-only is-role-hidden" aria-hidden="true">ศูนย์จัดการสมาชิก</button></nav>
 
         <section class="panel member-directory-panel">
           <div class="panel-heading">
