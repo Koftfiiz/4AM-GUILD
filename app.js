@@ -8729,9 +8729,10 @@ function applyAppearanceTheme(id,tokens={}){
 }
 function updateGuildLogo(url){
  const candidate=String(url||"").trim();
- const isLegacyLogo=candidate.includes("i.postimg.cc");
- const isLocalAsset=candidate.startsWith("/")||candidate.startsWith("assets/")||candidate.startsWith("./assets/");
- const safe=(!candidate||isLegacyLogo)?GUILD_LOGO_FALLBACK:(isLocalAsset||/^https?:\/\//i.test(candidate)?candidate:GUILD_LOGO_FALLBACK);
+ const normalizedCandidate=candidate.startsWith("./assets/")?"/"+candidate.slice(2):(candidate.startsWith("assets/")?"/"+candidate:candidate);
+ const isLegacyLogo=normalizedCandidate.includes("i.postimg.cc");
+ const isLocalAsset=normalizedCandidate.startsWith("/");
+ const safe=(!normalizedCandidate||isLegacyLogo)?GUILD_LOGO_FALLBACK:(isLocalAsset||/^https?:\/\//i.test(normalizedCandidate)?normalizedCandidate:GUILD_LOGO_FALLBACK);
  appearanceState.activeLogoUrl=safe;
  document.querySelectorAll(".login-emblem img,.sidebar-brand img,.registration-guild-logo img").forEach(img=>{
   img.onerror=()=>{img.onerror=null;img.src=GUILD_LOGO_FALLBACK};
