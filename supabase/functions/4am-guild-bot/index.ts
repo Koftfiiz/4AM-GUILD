@@ -301,28 +301,27 @@ Deno.serve(async (request: Request) => {
       .map((x: any) => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
     const reserveLines = rows.filter((x: any) => Number(x.queue_position) > 60)
       .map((x: any) => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
-    fields.push({
-      name: "\u200b",
-      value: roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**เข้าร่วม (" + rosterLines.length + " คน)**",
-      inline: false
-    });
-    const addRosterFields = (heading: string, lines: string[]) => {
+    const addRosterFields = (heading: string, lines: string[], prefix = "") => {
       const chunks: string[] = [];
-      let chunk = "";
+      let chunk = prefix;
       for (const line of lines) {
-        const next = chunk ? chunk + "\n" + line : line;
-        if (next.length > 980 && chunk) { chunks.push(chunk); chunk = line; }
-        else chunk = next;
+        const next = chunk ? chunk + (chunk.endsWith("\n") ? "" : "\n") + line : line;
+        if (next.length > 980 && chunk) {
+          chunks.push(chunk);
+          chunk = line;
+        } else {
+          chunk = next;
+        }
       }
       if (chunk) chunks.push(chunk);
-      if (!chunks.length) chunks.push("—");
+      if (!chunks.length) chunks.push(prefix ? prefix + "—" : "—");
       chunks.forEach((value, index) => fields.push({
-        name: index === 0 ? heading : heading + " · ต่อ",
+        name: index === 0 && prefix ? "\u200b" : heading,
         value,
         inline: false
       }));
     };
-    addRosterFields("\u200b", rosterLines);
+    addRosterFields("\u200b", rosterLines, roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**เข้าร่วม (" + rosterLines.length + " คน)**");
     addRosterFields("**รายชื่อสำรอง (" + reserveLines.length + " คน)**", reserveLines);
 
     const kindLabel = event.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
