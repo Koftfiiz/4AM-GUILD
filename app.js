@@ -2023,7 +2023,7 @@ function renderMembers(members) {
     const recordType = member.is_manual_record ? "manual" : "account";
     const avatarKey = member.user_id || member.id || name;
     const isOwn = Boolean(currentUser?.id && member.user_id && String(member.user_id) === String(currentUser.id));
-    const canEdit = !isRolePreviewActive() && (member.is_manual_record ? canManageMemberProfiles() : (isOwn || canManageMemberProfiles()));
+    const canEdit = !isRolePreviewActive() && isOwn && !member.is_manual_record;
     const editButton = canEdit ? `<button type="button" class="member-card-edit" data-member-card-edit="${escapeHTML(member.user_id || "")}" data-member-card-manual="${member.is_manual_record ? escapeHTML(member.id) : ""}" aria-label="แก้ไขข้อมูล ${escapeHTML(name)}" title="แก้ไขข้อมูลสมาชิก"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L8 18l-4 1 1-4Z"/></svg></button>` : "";
     return `
       <article class="member-card member-directory-card" data-member-kind="${recordType}" style="--member-class-color:${escapeHTML(classColor)}">
@@ -9523,19 +9523,14 @@ function registerAppEventListeners() {
     if (!button) return;
     event.preventDefault();
     if (isRolePreviewActive()) { alert("Role Preview เป็นโหมดอ่านอย่างเดียว"); return; }
-    const userId = button.dataset.memberCardEdit, manualId = button.dataset.memberCardManual;
-    if (manualId) { if (isManagement()) editManualGuildMember(manualId); return; }
+    const userId = button.dataset.memberCardEdit;
+    if (!currentUser?.id || String(currentUser.id) !== String(userId)) {
+      alert("ปุ่มแก้ไขในรายชื่อสมาชิกใช้แก้ไขได้เฉพาะตัวละครของคุณเท่านั้น");
+      return;
+    }
     const member = directoryMembers.find(row => !row.is_manual_record && String(row.user_id) === String(userId));
     if (!member) return;
-    if (canManageMemberProfiles()) {
-      void editLinkedGuildMember(userId);
-    } else if (String(currentUser?.id) === String(userId)) {
-      openMemberCardEditor(member);
-    } else {
-      alert(isRolePreviewActive()
-        ? "Role Preview เป็นโหมดอ่านอย่างเดียว กรุณาออกจาก Preview เพื่อแก้ไขข้อมูลสมาชิก"
-        : "ไม่มีสิทธิ์แก้ไขข้อมูลสมาชิกคนนี้");
-    }
+    openMemberCardEditor(member);
   });
   $("member-card-edit-modal")?.addEventListener("click", event => {
     if (event.target.closest("[data-member-card-edit-close]")) closeMemberCardEditor();
