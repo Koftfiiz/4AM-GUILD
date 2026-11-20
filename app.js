@@ -9521,8 +9521,9 @@ function registerDiscordIntegrationEvents() {
 // ==========================================
 
 function registerAppEventListeners() {
-  // Delegate Guild War tab clicks from the document so every tab and action
-  // card remains interactive even when individual page listeners change.
+  // Capture Guild War tab clicks at the window phase. This ensures tab
+  // navigation is handled before document-level capture handlers can cancel
+  // the click, while leaving all non-tab clicks untouched.
   const warTabRoutePaths = {
     overview: "/guildwar/overview",
     signup: "/guildwar/signup",
@@ -9532,19 +9533,22 @@ function registerAppEventListeners() {
     "match-records": "/guildwar/results",
     "attendance-report": "/guildwar/report"
   };
-  if (!window.__guildWarTabDelegationBound) {
-    window.__guildWarTabDelegationBound = true;
-    document.addEventListener("click", (event) => {
-      const button = event.target.closest?.("[data-war-center-tab]");
+  if (!window.__guildWarTabCaptureBound) {
+    window.__guildWarTabCaptureBound = true;
+    window.addEventListener("click", (event) => {
+      const target = event.target instanceof Element ? event.target : event.target?.parentElement;
+      const button = target?.closest("[data-war-center-tab]");
       if (!button) return;
       const tab = button.dataset.warCenterTab;
       if (!Object.prototype.hasOwnProperty.call(warTabRoutePaths, tab)) return;
       event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
       openGuildPage("war-center", {
         warTab: tab,
         routePath: warTabRoutePaths[tab]
       });
-    });
+    }, true);
   }
 
   if (!window.__guildRoutingPopstateBound) {
