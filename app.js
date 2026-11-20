@@ -5419,6 +5419,8 @@ function renderRaid(containerId,raidName,parties=[],options={}){
 
 function warMemberStatus(id){const signup=warAssignmentSignups.find(x=>x.member_id===id),leaveRow=warAssignmentLeaves.find(x=>x.member_id===id&&x.status!=="rejected"),snapshot=warAssignmentRosterSnapshot.find(x=>x.member_id===id),alreadyAssigned=currentWarPartyAssignments.some(x=>x.member_id===id),leave=snapshot?snapshot.roster_status==="leave":!!leaveRow;return {signup,leave,leaveRow,snapshot,absent:snapshot?.roster_status==="absent",addedByManagement:snapshot?.roster_status==="added_by_management",reserve:(snapshot?.roster_status==="reserve"||(!snapshot&&!!signup&&Number(signup.queue_position)>=61))&&!alreadyAssigned,raid:signup?.raid||""};}
 function getWarAssignmentRosterMembers(){
+ const event=allWarEvents.find(item=>item.id===currentWarAssignmentEventId);
+ if(!event?.signup_closes_at||Date.now()<new Date(event.signup_closes_at).getTime())return [];
  const signupIds=new Set(warAssignmentSignups.filter(x=>x.status!=="cancelled").map(x=>x.member_id));
  const managementAddedIds=new Set(warAssignmentRosterSnapshot.filter(x=>x.roster_status==="added_by_management").map(x=>x.member_id));
  const snapshotIds=new Set(warAssignmentRosterSnapshot.map(x=>x.member_id));
