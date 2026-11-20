@@ -317,14 +317,43 @@ Deno.serve(async (request) => {
         embed.description += "\n\n**This event is closed**";
       }
     }
-    const discordResponse = await fetch(
-      "https://discord.com/api/v10/channels/" + channelId + "/messages" + (kind === "war_signup" && record.discord_message_id ? "/" + record.discord_message_id : ""),
+    const discordMessagesUrl = "https://discord.com/api/v10/channels/" + channelId + "/messages";
+    const hasPreviousWarMessage = kind === "war_signup" && Boolean(record.discord_message_id);
+    let discordResponse = await fetch(
+      discordMessagesUrl + (hasPreviousWarMessage ? "/" + record.discord_message_id : ""),
       {
-        method: kind === "war_signup" && record.discord_message_id ? "PATCH" : "POST",
+        method: hasPreviousWarMessage ? "PATCH" : "POST",
         headers: { "Authorization": "Bot " + botToken, "Content-Type": "application/json" },
         body: JSON.stringify(messagePayload)
       }
     );
+    let recreatedDeletedWarMessage = false;
+
+    // If a manager manually deleted the bot's old Discord announcement,
+    // Discord returns 404 / code 10008 (Unknown Message). Re-create it instead
+    // of leaving the database pointing at a message that no longer exists.
+    if (!discordResponse.ok && hasPreviousWarMessage && discordResponse.status === 404) {
+      const previousDetails = await discordResponse.text();
+      let discordErrorCode = 0;
+      try {
+        discordErrorCode = Number(JSON.parse(previousDetails).code || 0);
+      } catch {
+        // Keep the original response as the failure detail below.
+      }
+
+      if (discordErrorCode === 10008) {
+        discordResponse = await fetch(discordMessagesUrl, {
+          method: "POST",
+          headers: { "Authorization": "Bot " + botToken, "Content-Type": "application/json" },
+          body: JSON.stringify(messagePayload)
+        });
+        recreatedDeletedWarMessage = true;
+      } else {
+        await admin.from(table).update({ discord_send_error: previousDetails.slice(0, 1000) }).eq("id", recordId);
+        return json({ success: false, message: "Discord API rejected the message", details: previousDetails.slice(0, 500) }, 502);
+      }
+    }
+
     if (!discordResponse.ok) {
       const details = await discordResponse.text();
       await admin.from(table).update(kind === "war_signup" ? { discord_send_error: details.slice(0, 1000) } : { discord_notification_error: details.slice(0, 1000) }).eq("id", recordId);
@@ -337,7 +366,11 @@ Deno.serve(async (request) => {
       : { discord_notified_at: new Date().toISOString(), discord_notification_error: null };
     const { error: updateError } = await admin.from(table).update(updatePayload).eq("id", recordId);
     if (updateError) return json({ success: false, message: "Discord sent, but notification state could not be saved" }, 500);
-    return json({ success: true });
+    return json({
+      success: true,
+      updated: hasPreviousWarMessage && !recreatedDeletedWarMessage,
+      recreated: recreatedDeletedWarMessage
+    });
   } catch (error) {
     console.error("discord-guild-activity-notify:", error);
     return json({ success: false, message: error instanceof Error ? error.message : "Unexpected error" }, 500);
