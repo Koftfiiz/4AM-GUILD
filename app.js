@@ -144,7 +144,7 @@ const GUILD_POSITIONS = [
 const PAGE_TITLES = {
   dashboard: "ภาพรวมกิลด์",
   members: "รายชื่อสมาชิก",
-  "member-management": "จัดการรายชื่อสมาชิก",
+  "member-management": "ศูนย์จัดการสมาชิก",
   "war-center": "Guild War",
   war: "จัดตี้วอร์",
   "war-attendance": "ประกาศรายชื่อวอร์",
