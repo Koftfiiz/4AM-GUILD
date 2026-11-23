@@ -9499,3 +9499,28 @@ body.gallery-lightbox-open{overflow:hidden}
     height:246px;
   }
 }
+
+
+/* Discord Integration — align ON/OFF beside switch and restore card breathing room */
+#page-discord-integration .discord-route-section-grid{
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));
+}
+#page-discord-integration .discord-route-card-footer{
+  justify-content:flex-end;
+  gap:10px;
+  padding:0 5px 5px 0;
+}
+#page-discord-integration .discord-route-footer-state{
+  order:2;
+  flex:0 0 auto;
+  margin:0;
+}
+#page-discord-integration .discord-route-enabled{
+  order:1;
+  margin:0;
+}
+@media(max-width:700px){
+  #page-discord-integration .discord-route-section-grid{
+    grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));
+  }
+}
