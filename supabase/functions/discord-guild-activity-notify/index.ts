@@ -77,7 +77,16 @@ Deno.serve(async (request) => {
       return json({ success: false, message: "Active guild member required" }, 403);
     }
     const role = String(requester.role || "").toLowerCase();
-    const eventKey = kind === "activity" ? "guild_activity_published" : kind === "comment" ? "guild_activity_comment" : "war_signup_submitted";
+    let existingWarMessage: any = null;
+    if (kind === "war_signup") {
+      const { data, error } = await admin.from("war_events")
+        .select("discord_message_id,discord_channel_id").eq("id", recordId).maybeSingle();
+      if (error) return json({ success: false, message: "Unable to read existing War signup announcement" }, 500);
+      existingWarMessage = data;
+    }
+    const eventKey = kind === "activity" ? "guild_activity_published"
+      : kind === "comment" ? "guild_activity_comment"
+      : existingWarMessage?.discord_message_id ? "war_signup_submitted" : "war_signup_opened";
     const { data: integrationSettings, error: integrationError } = await admin.from("guild_discord_integration_settings")
       .select("mode,test_channel_id,production_enabled").eq("id", 1).maybeSingle();
     if (integrationError || !integrationSettings) return json({ success: false, message: "Discord integration settings are not configured" }, 503);
@@ -85,11 +94,15 @@ Deno.serve(async (request) => {
     if (integrationSettings.mode === "test") {
       channelId = String(integrationSettings.test_channel_id || "");
     } else if (integrationSettings.mode === "production" && integrationSettings.production_enabled === true) {
-      const { data: route } = await admin.from("guild_discord_event_routes")
-        .select("enabled,channel_id").eq("event_key", eventKey).maybeSingle();
-      if (route?.enabled === true) channelId = String(route.channel_id || "");
+      if (kind === "war_signup" && existingWarMessage?.discord_message_id && existingWarMessage?.discord_channel_id) {
+        channelId = String(existingWarMessage.discord_channel_id);
+      } else {
+        const { data: route } = await admin.from("guild_discord_event_routes")
+          .select("enabled,channel_id").eq("event_key", eventKey).maybeSingle();
+        if (route?.enabled === true) channelId = String(route.channel_id || "");
+      }
     }
-    if (!channelId) return json({ success: false, message: "No destination configured for this Discord event; notification was not sent" }, 503);
+    if (!/^\\d{17,20}$/.test(channelId)) return json({ success: false, message: "No valid destination configured for this Discord event; notification was not sent" }, 503);
     const isManager = ["developer", "leader", "management"].includes(role);
     const requesterName = requester.character_name || requester.nickname || requester.discord_name || "สมาชิก 4AM";
 
@@ -159,9 +172,9 @@ Deno.serve(async (request) => {
       warSignupMembers = warSignupRows.map(row => ({ ...row, member: memberMap.get(row.member_id) })).filter(row => row.member);
     }
     const now = Date.now();
-    const deadlineMs = record?.registration_type === "official" && record?.event_date
-      ? new Date(String(record.event_date).slice(0, 10) + "T14:00:00+07:00").getTime()
-      : (record?.signup_closes_at ? new Date(record.signup_closes_at).getTime() : NaN);
+    const deadlineMs = record?.signup_closes_at
+      ? new Date(record.signup_closes_at).getTime()
+      : NaN;
     const isSignupClosed = record?.status === "cancelled" || !Number.isFinite(deadlineMs) || now >= deadlineMs;
     const isSignupOpen = Boolean(record?.signup_opens_at) && now >= new Date(record.signup_opens_at).getTime() && !isSignupClosed && record.status !== "cancelled";
     const roleForClass = (value: unknown) => {
@@ -229,9 +242,7 @@ Deno.serve(async (request) => {
     addRosterFields("\u200b", rosterLines, roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**เข้าร่วม (" + rosterLines.length + " คน)**");
     addRosterFields("**รายชื่อสำรอง (" + reserveLines.length + " คน)**", reserveLines);
     const kindLabel = record.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
-    const closeLabel = record.registration_type === "official" && record.event_date
-      ? formatDateTime(String(record.event_date).slice(0, 10) + "T14:00:00+07:00")
-      : formatDateTime(record.signup_closes_at);
+    const closeLabel = formatDateTime(record.signup_closes_at);
     const startTimeLabel = String(record.start_time || "-").slice(0, 5);
     const roundLabel = warRoundLabel(String(record.description || ""), record.start_time);
     const hasOfficialRoundLabel = record.registration_type === "official";
@@ -244,7 +255,7 @@ Deno.serve(async (request) => {
         "\n\n" + eventDateLine +
         (hasOfficialRoundLabel ? "" : "\n\n📅 **" + formatDate(record.event_date) + "**　🕒 **" + startTimeLabel + " น.**") +
         "\n\n⏳ **ปิดรับสมัคร:** " + closeLabel + " น." +
-        "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง" +
+        (isSignupClosed ? "" : "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง") +
         "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/guildwar/signup)",
       color: 0xD92D45,
       fields: signupFields,
@@ -295,15 +306,23 @@ Deno.serve(async (request) => {
 
     const messagePayload: any = { embeds: [embed], allowed_mentions: { parse: [] } };
     if (kind === "war_signup") {
-      messagePayload.components = [{
-        type: 1,
-        components: [
-          { type: 2, style: 3, label: "เข้าร่วม", custom_id: "war_signup_join:" + recordId, disabled: isSignupClosed || record.status === "cancelled" },
-          { type: 2, style: 4, label: "ถอนชื่อออก", custom_id: "war_signup_leave:" + recordId, disabled: isSignupClosed || record.status === "cancelled" }
-        ]
-      }];
-      if (isSignupClosed || record.status === "cancelled") {
-        embed.description += "\n\n**This event is closed**";
+      const signupClosed = isSignupClosed || record.status === "cancelled";
+      if (signupClosed) {
+        embed.fields.push({
+          name: "🔒 ปิดการลงชื่อแล้ว",
+          value: "การลงชื่อสำหรับกิจกรรมนี้สิ้นสุดแล้ว",
+          inline: false
+        });
+        // Explicitly clear the previous action row when updating an existing Discord post.
+        messagePayload.components = [];
+      } else {
+        messagePayload.components = [{
+          type: 1,
+          components: [
+            { type: 2, style: 3, label: "เข้าร่วม", custom_id: "war_signup_join:" + recordId },
+            { type: 2, style: 4, label: "ถอนชื่อออก", custom_id: "war_signup_leave:" + recordId }
+          ]
+        }];
       }
     }
     const discordMessagesUrl = "https://discord.com/api/v10/channels/" + channelId + "/messages";
@@ -351,7 +370,7 @@ Deno.serve(async (request) => {
 
     const discordMessage = await discordResponse.json();
     const updatePayload = kind === "war_signup"
-      ? { discord_message_id: String(discordMessage.id), discord_sent_at: new Date().toISOString(), discord_send_error: null }
+      ? { discord_message_id: String(discordMessage.id), discord_channel_id: channelId, discord_sent_at: new Date().toISOString(), discord_send_error: null }
       : { discord_notified_at: new Date().toISOString(), discord_notification_error: null };
     const { error: updateError } = await admin.from(table).update(updatePayload).eq("id", recordId);
     if (updateError) return json({ success: false, message: "Discord sent, but notification state could not be saved" }, 500);
