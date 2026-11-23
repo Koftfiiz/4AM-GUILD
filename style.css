@@ -9249,3 +9249,83 @@ body.gallery-lightbox-open{overflow:hidden}
   filter:brightness(1.12);
   box-shadow:0 7px 24px rgba(240,104,62,.38),inset 0 1px rgba(255,255,255,.25);
 }
+
+
+/* Event route cards — match the supplied compact reference layout */
+#page-discord-integration .discord-integration-routes{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;width:100%;max-width:none;margin:12px auto;
+}
+#page-discord-integration .discord-route-row{
+  box-sizing:border-box;display:flex;flex-direction:column;gap:8px;
+  min-width:0;min-height:202px;padding:8px;
+  border:1px solid #c75ac4;border-radius:12px;
+  background:#241d2c;box-shadow:none;transform:none;
+}
+#page-discord-integration .discord-route-row:hover{
+  border-color:#ed79dc;box-shadow:0 0 0 1px rgba(237,121,220,.12);transform:none;
+}
+#page-discord-integration .discord-route-card-heading{
+  display:flex;align-items:center;justify-content:space-between;gap:8px;
+  min-height:24px;padding:0 0 1px;
+}
+#page-discord-integration .discord-route-card-heading h4{
+  min-width:0;margin:0;color:#f7eff8;font-size:15px;font-weight:700;
+  line-height:1.3;overflow-wrap:anywhere;
+}
+#page-discord-integration .discord-route-status{
+  flex:0 0 auto;padding:3px 8px;border-radius:999px;
+  font-size:12px;line-height:1.2;
+}
+#page-discord-integration .discord-route-status.is-on{color:#55d889;background:rgba(32,139,76,.20)}
+#page-discord-integration .discord-route-status.is-off{color:#ff6877;background:rgba(181,45,85,.20)}
+#page-discord-integration .discord-route-field{
+  display:flex;flex-direction:column;justify-content:center;gap:2px;
+  box-sizing:border-box;min-width:0;min-height:52px;padding:7px 9px;
+  border:0;border-radius:9px;background:#171522;color:#f0e9f3;
+}
+#page-discord-integration .discord-route-field>span{
+  display:block;color:#eee6f2;font-size:13px;line-height:1.25;
+}
+#page-discord-integration .discord-route-field input{
+  display:block;width:100%;min-width:0;height:20px;min-height:20px;
+  padding:0;border:0;border-radius:0;outline:0;box-shadow:none;
+  background:transparent;color:#fff;font-size:13px;line-height:20px;
+}
+#page-discord-integration .discord-route-field input::placeholder{color:#a69eaf;opacity:1}
+#page-discord-integration .discord-route-field:focus-within{
+  outline:1px solid rgba(225,105,218,.75);
+}
+#page-discord-integration .discord-route-card-footer{
+  display:flex;align-items:center;justify-content:space-between;
+  min-height:26px;margin-top:auto;padding:0 0 0 1px;
+}
+#page-discord-integration .discord-route-footer-state{
+  font-size:14px;font-weight:700;line-height:1;
+}
+#page-discord-integration .discord-route-footer-state.is-on{color:#55df91}
+#page-discord-integration .discord-route-footer-state.is-off{color:#ff6687}
+#page-discord-integration .discord-route-enabled{
+  display:flex;align-items:center;justify-content:flex-end;
+  width:43px;height:24px;min-height:24px;padding:0;
+  border:0;border-radius:999px;background:#a92f4d;
+}
+#page-discord-integration .discord-route-enabled input{
+  appearance:none;-webkit-appearance:none;position:relative;
+  display:block;width:43px;height:24px;min-height:24px;margin:0;
+  border:0;border-radius:999px;background:#a92f4d;cursor:pointer;
+  box-shadow:none;transition:background .18s ease;
+}
+#page-discord-integration .discord-route-enabled input::before{
+  content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;
+  border-radius:50%;background:#fff;transition:transform .18s ease;
+}
+#page-discord-integration .discord-route-enabled input:checked{
+  background:#398653;border:0;box-shadow:none;
+}
+#page-discord-integration .discord-route-enabled input:checked::before{transform:translateX(19px)}
+#page-discord-integration .discord-route-switch-state{display:none}
+@media(max-width:700px){
+  #page-discord-integration .discord-integration-routes{grid-template-columns:1fr;gap:8px}
+  #page-discord-integration .discord-route-row{min-height:202px}
+}
