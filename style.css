@@ -9369,3 +9369,32 @@ body.gallery-lightbox-open{overflow:hidden}
   #page-discord-integration .discord-route-section{padding:10px}
   #page-discord-integration .discord-route-section-grid{grid-template-columns:1fr;gap:10px}
 }
+
+
+/* Discord Integration event cards — readable spacing and accessible type scale */
+#page-discord-integration .discord-route-section{padding:18px;gap:16px}
+#page-discord-integration .discord-route-section-heading{margin-bottom:16px;padding-bottom:12px;gap:14px}
+#page-discord-integration .discord-route-section-heading h3{font-size:19px;line-height:1.4}
+#page-discord-integration .discord-route-section-heading p{font-size:15px;line-height:1.55}
+#page-discord-integration .discord-route-section-heading>span{font-size:14px;padding:6px 10px}
+#page-discord-integration .discord-route-section-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:16px}
+#page-discord-integration .discord-route-section-grid .discord-route-row{
+  min-height:226px;height:100%;padding:14px;gap:12px;border-radius:13px;
+}
+#page-discord-integration .discord-route-card-heading{min-height:30px;padding-bottom:4px}
+#page-discord-integration .discord-route-card-heading h4{font-size:16px;line-height:1.45}
+#page-discord-integration .discord-route-status{font-size:14px;padding:4px 9px}
+#page-discord-integration .discord-route-field{min-height:60px;padding:9px 12px;gap:5px}
+#page-discord-integration .discord-route-field>span{font-size:15px;line-height:1.4}
+#page-discord-integration .discord-route-field input{height:24px;min-height:24px;font-size:15px;line-height:1.45}
+#page-discord-integration .discord-route-card-footer{min-height:30px;padding-top:2px}
+#page-discord-integration .discord-route-footer-state{font-size:15px}
+#page-discord-integration .discord-route-enabled{width:46px;height:26px}
+#page-discord-integration .discord-route-enabled input{width:46px;height:26px;min-height:26px}
+#page-discord-integration .discord-route-enabled input::before{width:20px;height:20px}
+#page-discord-integration .discord-route-enabled input:checked::before{transform:translateX(20px)}
+@media(max-width:700px){
+ #page-discord-integration .discord-route-section{padding:13px}
+ #page-discord-integration .discord-route-section-grid{grid-template-columns:1fr;gap:12px}
+ #page-discord-integration .discord-route-section-grid .discord-route-row{min-height:220px}
+}
