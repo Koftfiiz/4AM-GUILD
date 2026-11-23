@@ -5180,7 +5180,7 @@ function renderWarLayout(eventId = selectedWarEventId) {
   publishButton?.classList.toggle("hidden",!isManagement()||!confirmed);
   if(publishButton)publishButton.textContent=published?"Publish อัปเดตรายชื่อ":"Publish";
   $("war-export-image")?.classList.toggle("hidden",!confirmed);
-  const sync=$("war-sync-discord");sync?.classList.toggle("hidden",!confirmed);if(sync){sync.disabled=true;sync.title="Discord Bot integration ยังไม่เปิดใช้งาน";}
+  const sync=$("war-sync-discord");sync?.classList.toggle("hidden",!isManagement()||isRolePreviewActive()||!confirmed);if(sync){sync.disabled=false;sync.textContent="ประกาศตี้ใน Discord";sync.title="ส่งรายชื่อและการจัด Party ไปยัง Discord เมื่อกดปุ่มนี้เท่านั้น";}
   const label=$("war-detail-stage-label");if(label)label.textContent=published?"PUBLISHED · สมาชิกมองเห็นแล้ว":confirmed?"DRAFT · ยืนยันรายชื่อแล้ว":"กำลังจัดตี้ · ยังไม่ยืนยัน";
   const notice=$("war-edit-notice");if(notice)notice.textContent=published?"วอร์นี้เผยแพร่แล้ว · ฝ่ายบริหารยังสามารถแก้ไขและบันทึกการจัดตี้ได้":"เลือก + ADD เพื่อจัดสมาชิกผ่านหน้าต่าง Party Management";
   if(boards)boards.innerHTML=letters.map((letter,index)=>`<div class="raid-section" data-raid-section="${letter}"><div class="raid-title"><span class="raid-badge raid-${letter.toLowerCase()}">${letter}</span><div><h2>Raid ${letter}</h2><p>${config.mode==="practice"?"Practice battle formation":"Official battle formation"}</p></div></div><div id="raid-${letter.toLowerCase()}" class="raid-grid"></div></div>`).join("");
@@ -5719,6 +5719,29 @@ if(!document.documentElement.dataset.warDeleteHandlerBound){
     event.stopImmediatePropagation();
     void deleteWarEvent(deleteButton.dataset.warDelete,deleteButton);
   },true);
+}
+
+async function publishWarRosterToDiscord(){
+  if(!isManagement()||isRolePreviewActive())return;
+  const event=allWarEvents.find(item=>item.id===currentWarAssignmentEventId||item.id===selectedWarEventId);
+  if(!event||!event.is_draft_confirmed){
+    alert("กรุณายืนยันการจัดตี้ก่อนประกาศไปยัง Discord");
+    return;
+  }
+  if(!confirm("ยืนยันประกาศรายชื่อและการจัด Party ของ Event นี้ไปยัง Discord หรือไม่?\\n\\n"+event.event_name+"\\n\\nระบบจะส่งเมื่อกดปุ่มนี้เท่านั้น"))return;
+  const button=$("war-sync-discord");
+  if(button){button.disabled=true;button.textContent="กำลังประกาศ...";}
+  try{
+    const {data,error}=await supabaseClient.functions.invoke("discord-war-roster-publish",{body:{event_id:event.id}});
+    if(error)throw error;
+    if(!data?.success)throw new Error(data?.message||"ประกาศตี้ไปยัง Discord ไม่สำเร็จ");
+    alert(data.message||"ประกาศตี้ไปยัง Discord สำเร็จ");
+  }catch(error){
+    console.error("Publish war roster to Discord failed:",error);
+    alert("ประกาศตี้ไปยัง Discord ไม่สำเร็จ: "+(error.message||"กรุณาตรวจสอบ Discord Integration Settings"));
+  }finally{
+    if(button){button.disabled=false;button.textContent="ประกาศตี้ใน Discord";}
+  }
 }
 
 async function publishWarEvent(){
@@ -6958,7 +6981,7 @@ function registerWarCreationEvents(){
   $("war-create-open")?.addEventListener("click",()=>{if(!isManagement())return;selectedWarEventId=null;updateWarCreateMode();$("war-detail-stage")?.classList.add("hidden");$("war-create-panel")?.classList.remove("hidden");$("war-create-message")?.classList.add("hidden");$("war-create-panel")?.scrollIntoView({behavior:"smooth",block:"start"});});
   ["war-create-close","war-create-cancel"].forEach(id=>$(id)?.addEventListener("click",()=>$("war-create-panel")?.classList.add("hidden")));
   $("war-back-to-list")?.addEventListener("click",()=>{$("war-detail-stage")?.classList.add("hidden");$("war-events")?.scrollIntoView({behavior:"smooth",block:"start"});});
-  $("war-confirm-draft")?.addEventListener("click",confirmWarDraft);$("war-publish-event")?.addEventListener("click",publishWarEvent);$("war-export-image")?.addEventListener("click",exportWarImage);$("war-sync-discord")?.addEventListener("click",()=>alert("Discord Bot Sync ยังไม่เปิดใช้งานในขณะนี้"));
+  $("war-confirm-draft")?.addEventListener("click",confirmWarDraft);$("war-publish-event")?.addEventListener("click",publishWarEvent);$("war-export-image")?.addEventListener("click",exportWarImage);$("war-sync-discord")?.addEventListener("click",publishWarRosterToDiscord);
   document.querySelectorAll('input[name="war-mode"]').forEach(input=>input.addEventListener("change",updateWarCreateMode));$("war-raid-count")?.addEventListener("change",updateWarCreateMode);$("war-create-form")?.addEventListener("submit",handleWarCreate);$("war-event-date-display")?.addEventListener("click",openWarDatePicker);$("war-start-time-display")?.addEventListener("click",openPracticeTimePicker);$("war-event-date")?.addEventListener("change",()=>{syncPracticeDateDisplay();});$("war-start-time")?.addEventListener("change",syncPracticeTimeDisplay);$("war-event-date-display")?.addEventListener("input",syncPracticeDateDisplay);$("war-event-date-display")?.addEventListener("blur",()=>{syncPracticeDateDisplay();const input=$("war-event-date-display"),parsed=$("war-event-date")?.value;if(parsed)input.value=formatWarDateDisplay(parsed);});$("war-start-time-display")?.addEventListener("input",syncPracticeTimeDisplay);$("war-start-time-display")?.addEventListener("blur",syncPracticeTimeDisplay);
   const dateInput=$("war-event-date");if(dateInput){const now=new Date(),today=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);dateInput.min=today;}updateWarCreateMode();
 }
