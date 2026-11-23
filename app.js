@@ -9041,7 +9041,7 @@ function openGuildPage(pageName, options = {}) {
     pageName = "dashboard";
   }
   if (pageName === "portfolio-review-center" && !isManagement()) pageName = "portfolio";
-  if (pageName === "discord-integration" && (!isDeveloper() || isRolePreviewActive())) {
+  if (pageName === "discord-integration" && !canManageDiscordIntegration()) {
     pageName = "dashboard";
   }
 
@@ -9330,7 +9330,7 @@ function renderAccountDetails() {
 
 
 // ==========================================
-// DISCORD INTEGRATION SETTINGS (DEVELOPER ONLY)
+// DISCORD INTEGRATION SETTINGS (DEVELOPER + LEADER + MANAGEMENT)
 // ==========================================
 
 const DISCORD_EVENT_ROUTE_DEFINITIONS = [
@@ -9350,7 +9350,10 @@ const DISCORD_EVENT_ROUTE_DEFINITIONS = [
 ];
 
 function canManageDiscordIntegration() {
-  return isDeveloper() && !isRolePreviewActive() && currentMember?.active === true;
+  if (isRolePreviewActive() || currentMember?.active !== true) return false;
+  if (isDeveloper()) return true;
+  const role = String(currentMember?.role || "").toLowerCase();
+  return currentMember?.membership_status === "active" && ["leader", "management"].includes(role);
 }
 
 function renderDiscordIntegrationRoutes(routes = []) {
@@ -9379,7 +9382,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
 
 async function loadDiscordIntegrationSettings() {
   if (!canManageDiscordIntegration()) {
-    alert("Discord Integration Settings อนุญาตเฉพาะ Developer เท่านั้น และไม่สามารถแก้ไขใน Role Preview ได้");
+    alert("Discord Integration Settings อนุญาตเฉพาะ Developer, Leader และ Management ที่เป็นสมาชิก Active และไม่สามารถแก้ไขใน Role Preview ได้");
     openGuildPage("dashboard");
     return;
   }
@@ -9511,7 +9514,7 @@ async function saveDiscordIntegrationSettings() {
 
 async function sendDiscordIntegrationTest() {
   if (!canManageDiscordIntegration()) {
-    alert("เฉพาะ Developer เท่านั้นที่ทดสอบบอทได้");
+    alert("เฉพาะ Developer, Leader และ Management ที่เป็นสมาชิก Active เท่านั้นที่ทดสอบบอทได้");
     return;
   }
   const channelId = String($("discord-integration-test-channel")?.value || "").trim();
@@ -9522,16 +9525,16 @@ async function sendDiscordIntegrationTest() {
   const button = $("discord-integration-test");
   if (button) { button.disabled = true; button.textContent = "กำลังส่งข้อความทดสอบ..."; }
   try {
+    // The diagnostic always targets the dedicated test channel. Do not
+    // change the active delivery mode or Production approval when testing.
     const { error: saveError } = await supabaseClient
       .from("guild_discord_integration_settings")
-      .upsert({
-        id: 1,
-        mode: $("discord-integration-mode").value === "production" ? "production" : "test",
+      .update({
         test_channel_id: channelId,
-        production_enabled: $("discord-integration-production-enabled").checked,
         updated_by: currentUser.id,
         updated_at: new Date().toISOString()
-      }, { onConflict: "id" });
+      })
+      .eq("id", 1);
     if (saveError) throw saveError;
 
     const { data, error } = await supabaseClient.functions.invoke("discord-integration-test", { body: {} });
