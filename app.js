@@ -5456,7 +5456,7 @@ function renderWarAssignmentToolbar(raidCount=2){
 }
 function applyWarAssignmentMemberFilters(){
  const assignedIds=getAssignedWarMemberIds(),q=warAssignmentSearch.trim().toLowerCase(),leaveIds=new Set([...warAssignmentLeaves.filter(x=>x.status!=="rejected").map(x=>x.member_id),...warAssignmentRosterSnapshot.filter(x=>x.roster_status==="leave").map(x=>x.member_id)]),sourceMembers=warAssignmentFilter==="leave"?allMembers.filter(m=>leaveIds.has(m.user_id)):warAssignmentFilter==="absent"?allMembers.filter(m=>m.active===true):getWarAssignmentRosterMembers(),members=sourceMembers.filter(m=>{if(warAssignmentFilter!=="leave"&&assignedIds.has(m.user_id))return false;const st=warMemberStatus(m.user_id);if(warAssignmentFilter==="leave"&&!st.leave)return false;if(warAssignmentFilter==="reserve"&&!st.reserve)return false;if(warAssignmentFilter==="absent"&&!st.absent)return false;if(["A","B","C","D"].includes(warAssignmentFilter)&&st.raid!==warAssignmentFilter)return false;if(warAssignmentClassFilter!=="all"&&getMemberClass(m).toLowerCase()!==warAssignmentClassFilter.toLowerCase())return false;return !q||getMemberName(m).toLowerCase().includes(q)||String(m.game_uid||"").includes(q);});
- const out=$("war-assignment-results");if(out){out.innerHTML=members.length?members.slice(0,40).map(m=>{const info=getClassInfo(getMemberClass(m));if(warAssignmentFilter==="leave"||warAssignmentFilter==="absent")return `<div class="war-assignment-member-pill is-leave-readonly" aria-label="สมาชิกแจ้งลาวอร์: ${escapeHTML(getMemberName(m))}" title="แจ้งลาวอร์ · ไม่สามารถลากเข้าปาร์ตี้ได้" style="--class-color:${info?.color||"#aaa"}"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span>${escapeHTML(getMemberName(m))}</span></div>`;return `<button class="war-assignment-member-pill" data-war-pool-member="${escapeHTML(m.user_id)}" ${isManagement()?'draggable="true"':""} type="button" style="--class-color:${info?.color||"#aaa"}" title="${escapeHTML(getMemberName(m))}"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span>${escapeHTML(getMemberName(m))}</span></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่ตรงกับตัวกรอง</p>';if(members.length>40)out.insertAdjacentHTML("beforeend",`<small class="war-assignment-more">แสดง 40 จาก ${members.length} คน · ใช้ช่องค้นหาเพื่อจำกัดผลลัพธ์</small>`);}
+ const out=$("war-assignment-results");if(out){out.innerHTML=members.length?members.slice(0,40).map(m=>{const info=getClassInfo(getMemberClass(m)),status=warMemberStatus(m.user_id),readOnly=status.leave||status.absent;if(readOnly)return `<div class="war-assignment-member-pill is-leave-readonly" aria-label="สมาชิกสถานะ ${status.leave?"ลาวอร์":"ขาดวอร์"}: ${escapeHTML(getMemberName(m))}" title="${status.leave?"ลาวอร์":"ขาดวอร์"} · ไม่สามารถลากเข้าปาร์ตี้ได้" style="--class-color:${info?.color||"#aaa"}"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span>${escapeHTML(getMemberName(m))}</span></div>`;return `<button class="war-assignment-member-pill" data-war-pool-member="${escapeHTML(m.user_id)}" ${isManagement()?'draggable="true"':""} type="button" style="--class-color:${info?.color||"#aaa"}" title="${escapeHTML(getMemberName(m))}"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span>${escapeHTML(getMemberName(m))}</span></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่ตรงกับตัวกรอง</p>';if(members.length>40)out.insertAdjacentHTML("beforeend",`<small class="war-assignment-more">แสดง 40 จาก ${members.length} คน · ใช้ช่องค้นหาเพื่อจำกัดผลลัพธ์</small>`);}
  document.querySelectorAll("[data-war-filter]").forEach(b=>b.classList.toggle("is-active",b.dataset.warFilter===warAssignmentFilter));document.querySelectorAll("[data-war-class-filter]").forEach(b=>b.classList.toggle("is-active",b.dataset.warClassFilter===warAssignmentClassFilter));
  document.querySelectorAll("[data-raid-section]").forEach(s=>s.classList.toggle("hidden",["leave","reserve","absent"].includes(warAssignmentFilter)||(warAssignmentFilter!=="all"&&s.dataset.raidSection!==warAssignmentFilter)));
 }
@@ -6526,6 +6526,8 @@ function getNextTwoWarSaturdays(){
 }
 function updateWarSignupDateControls(selectedIso="",useDefault=false){
   const type=$("war-signup-type")?.value||"official";
+  const raidGroup=$("war-signup-raid-count")?.closest(".form-group");
+  if(raidGroup)raidGroup.classList.toggle("hidden",type!=="practice");
   const select=$("war-signup-event-date-select");
   const practice=$("war-signup-event-date-practice");
   const canonical=$("war-signup-event-date");
@@ -6613,6 +6615,7 @@ function resetWarSignupForm(){
   $("war-signup-create-form")?.reset();$("war-signup-edit-id").value="";
   $("war-signup-create-confirm").textContent="ยืนยันสร้าง Event ลงชื่อวอร์";
   $("war-signup-create-form")?.classList.remove("is-editing");
+  if($("war-signup-raid-count"))$("war-signup-raid-count").value="4";
   updateWarSignupDateControls("",true);
   updateWarSignupTimeForDate();
 }
@@ -6622,6 +6625,9 @@ async function startEditWarSignupEvent(id){
   if(error){alert("โหลด Event ไม่สำเร็จ: "+error.message);return;}
   $("war-signup-edit-id").value=data.id;$("war-signup-event-name").value=data.event_name||"";
   $("war-signup-type").value=data.registration_type||"official";
+  const savedConfig=String(data.description||"").match(/\[\[WAR_CONFIG:\s*(\{[\s\S]*?\})\s*\]\]/);
+  try{$("war-signup-raid-count").value=String(data.registration_type==="official"?2:(JSON.parse(savedConfig?.[1]||"{}").raidCount||4));}catch{$("war-signup-raid-count").value="4";}
+  updateWarSignupDateControls(String(data.event_date||"").slice(0,10),false);
   const eventDate=String(data.event_date||"").slice(0,10);
   $("war-signup-event-date").value=formatDisplayDate(eventDate);
   $("war-signup-event-date-practice").value=formatDisplayDate(eventDate);
@@ -6717,7 +6723,7 @@ async function createWarSignupEvent(form){
       const savedDescription=[description,existingConfig?.[0]||""].filter(Boolean).join("\\n\\n")||null;
       result=await supabaseClient.from("war_events").update({event_name:name,registration_type:type,event_date:date,start_time:startTime,signup_opens_at:openDate.toISOString(),signup_closes_at:closeDate.toISOString(),description:savedDescription}).eq("id",editId).select("id").single();
     }
-    else result=await supabaseClient.rpc("create_war_signup_event",{p_event_name:name,p_registration_type:type,p_event_date:date,p_start_time:startTime,p_signup_opens_at:openDate.toISOString(),p_signup_closes_at:closeDate.toISOString(),p_description:description||null});
+    else result=await supabaseClient.rpc("create_war_signup_event",{p_event_name:name,p_registration_type:type,p_event_date:date,p_start_time:startTime,p_signup_opens_at:openDate.toISOString(),p_signup_closes_at:closeDate.toISOString(),p_description:description||null,p_raid_count:type==="official"?2:Number($("war-signup-raid-count")?.value||4)});
     if(result.error)throw result.error;
     resetWarSignupForm();form.classList.add("hidden");message.classList.add("hidden");
     alert(editId?"แก้ไข Event เรียบร้อยแล้ว":"ยืนยันสร้าง Event ลงชื่อวอร์เรียบร้อยแล้ว");
