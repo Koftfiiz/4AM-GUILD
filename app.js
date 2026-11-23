@@ -9386,23 +9386,50 @@ function renderDiscordIntegrationRoutes(routes = []) {
     const displayLabel = route.event_label || suggestedLabel;
     return `
       <div class="discord-route-row" data-discord-route="${escapeHTML(key)}">
-        <div class="discord-route-copy">
+        <div class="discord-route-card-heading">
+          <h4>${escapeHTML(displayLabel)}</h4>
+          <span class="discord-route-status ${route.enabled ? "is-on" : "is-off"}">${route.enabled ? "ON" : "OFF"}</span>
+        </div>
+        <label class="discord-route-field">
+          <span>ชื่อ Event</span>
           <input class="discord-route-label-input" type="text" maxlength="80" required data-discord-route-label
             aria-label="ชื่อ Event สำหรับ ${escapeHTML(displayLabel)}" title="แก้ไขชื่อ Event"
             value="${escapeHTML(displayLabel)}">
-        </div>
-        <label class="discord-route-enabled">
-          <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
-          <span class="discord-route-switch-state">OFF</span>
         </label>
-        <input type="text" inputmode="numeric" autocomplete="off" maxlength="20"
-          placeholder="Discord Channel ID"
-          aria-label="Discord Channel ID สำหรับ ${escapeHTML(displayLabel)}"
-          data-discord-route-channel value="${escapeHTML(route.channel_id || "")}">
+        <label class="discord-route-field">
+          <span>Discord Channel ID</span>
+          <input type="text" inputmode="numeric" autocomplete="off" maxlength="20"
+            placeholder="กรอก Channel ID"
+            aria-label="Discord Channel ID สำหรับ ${escapeHTML(displayLabel)}"
+            data-discord-route-channel value="${escapeHTML(route.channel_id || "")}">
+        </label>
+        <div class="discord-route-card-footer">
+          <span class="discord-route-footer-state ${route.enabled ? "is-on" : "is-off"}">${route.enabled ? "ON" : "OFF"}</span>
+          <label class="discord-route-enabled" aria-label="เปิดหรือปิดการแจ้งเตือน">
+            <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
+            <span class="discord-route-switch-state"></span>
+          </label>
+        </div>
       </div>`;
   }).join("");
   updateDiscordRouteOverview();
   filterDiscordIntegrationRoutes();
+  container.querySelectorAll("[data-discord-route]").forEach(row => {
+    const labelInput = row.querySelector("[data-discord-route-label]");
+    const heading = row.querySelector(".discord-route-card-heading h4");
+    const syncLabel = () => { if (heading) heading.textContent = labelInput?.value || ""; };
+    labelInput?.addEventListener("input", syncLabel);
+    const toggle = row.querySelector("[data-discord-route-enabled]");
+    const syncToggle = () => {
+      const enabled = toggle?.checked === true;
+      const status = row.querySelector(".discord-route-status");
+      const footer = row.querySelector(".discord-route-footer-state");
+      if (status) { status.textContent = enabled ? "ON" : "OFF"; status.classList.toggle("is-on", enabled); status.classList.toggle("is-off", !enabled); }
+      if (footer) { footer.textContent = enabled ? "ON" : "OFF"; footer.classList.toggle("is-on", enabled); footer.classList.toggle("is-off", !enabled); }
+    };
+    toggle?.addEventListener("change", syncToggle);
+    syncToggle();
+  });
 }
 async function loadDiscordIntegrationSettings() {
   if (!canManageDiscordIntegration()) {
