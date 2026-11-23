@@ -1314,6 +1314,12 @@
               <span class="discord-integration-future-label">เตรียมตั้งค่าหลังสร้างห้อง Discord</span>
             </div>
             <p class="discord-integration-help">ขณะอยู่ใน TEST MODE ทุกเหตุการณ์จะไปห้องทดสอบก่อน ส่วน Channel ID ด้านล่างใช้เมื่อเปิด Production เท่านั้น ยังไม่จำเป็นต้องกรอกในขั้นตอนนี้</p>
+            <div class="discord-route-toolbar">
+              <label class="discord-route-search"><span>ค้นหา Event</span><input id="discord-route-search" type="search" placeholder="ค้นหาชื่อการแจ้งเตือน..."></label>
+              <label class="discord-route-filter"><span>แสดงรายการ</span><select id="discord-route-filter"><option value="all">ทั้งหมด</option><option value="on">เปิดใช้งาน</option><option value="off">ปิดใช้งาน</option><option value="missing">ยังไม่กำหนด Channel</option></select></label>
+              <div class="discord-route-bulk"><button type="button" class="btn btn-outline" id="discord-route-enable-all">เปิดทั้งหมด</button><button type="button" class="btn btn-outline" id="discord-route-disable-all">ปิดทั้งหมด</button></div>
+            </div>
+            <div class="discord-route-overview" id="discord-route-overview" aria-live="polite"></div>
             <div id="discord-integration-routes" class="discord-integration-routes">
               <p class="muted">กำลังโหลดรายการเหตุการณ์...</p>
             </div>
