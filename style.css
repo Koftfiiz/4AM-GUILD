@@ -9616,3 +9616,8 @@ body.gallery-lightbox-open{overflow:hidden}
     height:260px;
   }
 }
+
+/* Keep the same column width even in groups containing only one event. */
+#page-discord-integration .discord-route-section-grid{
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));
+}
