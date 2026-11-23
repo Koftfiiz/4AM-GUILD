@@ -9376,12 +9376,20 @@ function filterDiscordIntegrationRoutes() {
     const matchesFilter = filter === "all" || (filter === "on" && enabled) || (filter === "off" && !enabled) || (filter === "missing" && !channel.trim());
     row.hidden = !(matchesQuery && matchesFilter);
   });
+  document.querySelectorAll("[data-discord-route-section]").forEach(section => {
+    section.hidden = !section.querySelector("[data-discord-route]:not([hidden])");
+  });
 }
 function renderDiscordIntegrationRoutes(routes = []) {
   const container = $("discord-integration-routes");
   if (!container) return;
   const routeMap = new Map((routes || []).map(route => [route.event_key, route]));
-  container.innerHTML = DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key, suggestedLabel]) => {
+  const routeGroups = [
+    { id: "guild", title: "กิจกรรมกิลด์", subtitle: "ประกาศกิจกรรมและความเคลื่อนไหวภายในกิลด์", keys: ["guild_activity_published", "guild_activity_comment", "member_joined", "feedback_submitted", "duck_race_results"] },
+    { id: "war", title: "Guild War", subtitle: "การลงชื่อ การจัดตี้ และการเช็กชื่อเข้าร่วมวอร์", keys: ["war_signup_opened", "war_signup_submitted", "war_signup_closed", "war_leave_submitted", "war_roster_published", "war_checkin_opened", "war_attendance_finalized"] },
+    { id: "portfolio", title: "Portfolio", subtitle: "การแจ้งเตือนแฟ้มผลงานสมาชิก", keys: ["portfolio_published"] }
+  ];
+  const routeCards = new Map(DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key, label]) => {
     const route = routeMap.get(key) || {};
     const displayLabel = route.event_label || suggestedLabel;
     return `
@@ -9411,6 +9419,17 @@ function renderDiscordIntegrationRoutes(routes = []) {
           </label>
         </div>
       </div>`;
+  }));
+  container.innerHTML = routeGroups.map(group => {
+    const cards = group.keys.map(key => routeCards.get(key)).filter(Boolean).join("");
+    return `
+      <section class="discord-route-section" data-discord-route-section="${group.id}">
+        <header class="discord-route-section-heading">
+          <div><h3>${group.title}</h3><p>${group.subtitle}</p></div>
+          <span>${group.keys.length} EVENTS</span>
+        </header>
+        <div class="discord-route-section-grid">${cards}</div>
+      </section>`;
   }).join("");
   updateDiscordRouteOverview();
   filterDiscordIntegrationRoutes();
