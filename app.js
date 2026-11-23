@@ -9363,7 +9363,6 @@ function renderDiscordIntegrationRoutes(routes = []) {
     return `
       <div class="discord-route-row" data-discord-route="${escapeHTML(key)}">
         <div class="discord-route-copy">
-          <small>${escapeHTML(key)}</small>
           <label class="discord-route-label-field">
             <span>ชื่อแสดงผล</span>
             <input type="text" maxlength="80" required data-discord-route-label
@@ -9373,7 +9372,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
         </div>
         <label class="discord-route-enabled">
           <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
-          <span>เปิดแจ้งเตือน</span>
+          <span class="discord-route-switch-state">OFF</span>
         </label>
         <input type="text" inputmode="numeric" autocomplete="off" maxlength="20"
           placeholder="Discord Channel ID"
