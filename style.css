@@ -9154,3 +9154,55 @@ body.gallery-lightbox-open{overflow:hidden}
   #page-discord-integration{padding:12px;border-radius:12px}
   #page-discord-integration .page-intro{padding:16px}
 }
+
+
+/* Discord Integration Control Center usability layer */
+#page-discord-integration,
+#page-discord-integration *{font-size:15px}
+#page-discord-integration .page-intro h1{font-size:clamp(24px,2vw,30px)}
+#page-discord-integration .panel-heading h3,
+#page-discord-integration .discord-integration-routes-heading h3{font-size:19px}
+#page-discord-integration .discord-integration-routes-heading{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+#page-discord-integration .discord-route-toolbar{
+  display:grid;grid-template-columns:minmax(220px,1fr) minmax(190px,.55fr) auto;
+  gap:12px;align-items:end;margin:16px 0
+}
+#page-discord-integration .discord-route-toolbar label{display:grid;gap:6px;color:#f5e9f5;font-weight:650}
+#page-discord-integration .discord-route-toolbar input,
+#page-discord-integration .discord-route-toolbar select{width:100%;min-width:0;min-height:42px;box-sizing:border-box;padding:8px 11px;border-radius:8px;border:1px solid rgba(196,154,255,.34);background:#100d20;color:#fff}
+#page-discord-integration .discord-route-bulk{display:flex;gap:8px;flex-wrap:wrap}
+#page-discord-integration .discord-route-overview{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:12px 0 18px}
+#page-discord-integration .discord-route-stat{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;border:1px solid rgba(196,154,255,.22);border-radius:10px;background:linear-gradient(120deg,rgba(216,60,168,.12),rgba(67,216,220,.06));color:#e9def1}
+#page-discord-integration .discord-route-stat strong{font-size:22px;color:#fff}
+#page-discord-integration .discord-route-stat[data-stat="on"] strong{color:#62e9a5}
+#page-discord-integration .discord-route-stat[data-stat="off"] strong{color:#ff8ba8}
+#page-discord-integration .discord-integration-routes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:100%;max-width:1320px;margin:14px auto}
+#page-discord-integration .discord-route-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"copy toggle" "channel channel";gap:10px 12px;min-width:0;align-content:start;padding:14px}
+#page-discord-integration .discord-route-row[hidden]{display:none!important}
+#page-discord-integration .discord-route-copy{min-width:0}
+#page-discord-integration .discord-route-label-input{width:100%;min-width:0;box-sizing:border-box;min-height:42px;padding:8px 11px;border-radius:8px;border:1px solid rgba(196,154,255,.34);background:rgba(12,12,30,.82);color:#fff;font-size:15px}
+#page-discord-integration .discord-route-enabled{justify-self:end;align-self:center;min-height:42px}
+#page-discord-integration .discord-route-switch-state::after{font-size:15px}
+#page-discord-integration .discord-route-row>input{grid-area:channel;width:100%;min-width:0;box-sizing:border-box}
+#page-discord-integration .discord-integration-actions{
+  position:sticky;bottom:10px;z-index:5;display:flex;justify-content:flex-end;gap:10px;
+  margin:20px -4px 0;padding:12px;border:1px solid rgba(255,79,163,.25);
+  border-radius:12px;background:rgba(16,13,32,.94);backdrop-filter:blur(14px);
+  box-shadow:0 8px 28px rgba(0,0,0,.35)
+}
+#page-discord-integration .discord-integration-actions button{min-height:44px;font-size:15px}
+#page-discord-integration .discord-integration-help,
+#page-discord-integration .discord-integration-security p,
+#page-discord-integration .discord-production-approval small{font-size:15px}
+@media(max-width:1000px){
+ #page-discord-integration .discord-route-toolbar{grid-template-columns:1fr 1fr}
+ #page-discord-integration .discord-route-bulk{grid-column:1/-1}
+ #page-discord-integration .discord-integration-routes{grid-template-columns:1fr}
+}
+@media(max-width:650px){
+ #page-discord-integration .discord-route-overview{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #page-discord-integration .discord-route-toolbar{grid-template-columns:1fr}
+ #page-discord-integration .discord-route-bulk{grid-column:auto}
+ #page-discord-integration .discord-integration-actions{flex-direction:column}
+ #page-discord-integration .discord-integration-actions button{width:100%}
+}
