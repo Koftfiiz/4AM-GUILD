@@ -9621,3 +9621,29 @@ body.gallery-lightbox-open{overflow:hidden}
 #page-discord-integration .discord-route-section-grid{
   grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));
 }
+
+
+/* Tighten Discord notification card spacing without widening the cards. */
+#page-discord-integration .discord-route-section-grid{
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),210px));
+  justify-content:start;
+  justify-items:stretch;
+  column-gap:12px;
+  row-gap:12px;
+}
+#page-discord-integration .discord-route-section-grid .discord-route-row{
+  width:100%;
+  max-width:210px;
+}
+@media(max-width:700px){
+  #page-discord-integration .discord-route-section-grid{
+    grid-template-columns:minmax(0,1fr);
+    justify-content:stretch;
+    justify-items:center;
+    gap:12px;
+  }
+  #page-discord-integration .discord-route-section-grid .discord-route-row{
+    width:70%;
+    max-width:none;
+  }
+}
