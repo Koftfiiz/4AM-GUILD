@@ -9525,7 +9525,7 @@ async function saveDiscordIntegrationSettings() {
 
 async function sendDiscordIntegrationTest() {
   if (!canManageDiscordIntegration()) {
-    alert("เฉพาะ Developer เท่านั้นที่ทดสอบบอทได้");
+    alert("เฉพาะ Developer, Leader และ Management ที่ Active เท่านั้นที่ทดสอบบอทได้");
     return;
   }
   const channelId = String($("discord-integration-test-channel")?.value || "").trim();
