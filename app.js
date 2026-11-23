@@ -9392,7 +9392,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
   const routeCards = new Map(DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key, label]) => {
     const route = routeMap.get(key) || {};
     const displayLabel = route.event_label || label;
-    return `
+    return [key, `
       <div class="discord-route-row" data-discord-route="${escapeHTML(key)}">
         <div class="discord-route-card-heading">
           <h4>${escapeHTML(displayLabel)}</h4>
@@ -9418,7 +9418,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
             <span class="discord-route-switch-state"></span>
           </label>
         </div>
-      </div>`;
+      </div>`];
   }));
   container.innerHTML = routeGroups.map(group => {
     const cards = group.keys.map(key => routeCards.get(key)).filter(Boolean).join("");
