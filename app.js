@@ -9529,6 +9529,10 @@ async function sendDiscordIntegrationTest() {
     return;
   }
   const channelId = String($("discord-integration-test-channel")?.value || "").trim();
+  if (String($("discord-integration-mode")?.value || "test") !== "test") {
+    showMessage("discord-integration-message", "การส่งข้อความทดสอบใช้ได้เฉพาะ TEST MODE เท่านั้น");
+    return;
+  }
   if (!/^\d{17,20}$/.test(channelId)) {
     showMessage("discord-integration-message", "กรุณากรอก Test Channel ID ให้ถูกต้อง และบันทึกการตั้งค่าก่อนทดสอบ");
     return;
