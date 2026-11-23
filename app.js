@@ -9432,6 +9432,8 @@ function updateDiscordIntegrationModeHelp() {
   if (!help) return;
   const testChannelField = $("discord-integration-test-channel-field");
   if (testChannelField) testChannelField.hidden = mode !== "test";
+  const testButton = $("discord-integration-test");
+  if (testButton) testButton.disabled = mode !== "test";
   if (mode === "test") {
     help.textContent = "TEST MODE: การแจ้งเตือนทุกประเภทจะถูกส่งไปยังห้องทดสอบบอทเท่านั้น ไม่ใช้ Channel ID ของ Production";
   } else if (!productionEnabled) {
