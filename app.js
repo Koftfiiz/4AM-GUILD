@@ -6413,7 +6413,18 @@ async function submitWarLeave(event){
   try{
     const q=await supabaseClient.rpc("submit_war_leave",{p_event_id:eventId,p_reason:reason});
     if(q.error)throw q.error;
-    message.textContent="ส่งคำแจ้งลาวอร์เรียบร้อยแล้ว · ระบบอนุมัติให้อัตโนมัติ";message.className="message success";
+    let notice="ส่งคำแจ้งลาวอร์เรียบร้อยแล้ว · ระบบอนุมัติให้อัตโนมัติ";
+    const requestId=typeof q.data==="string"?q.data:q.data?.id;
+    if(requestId){
+      const {data:discordResult,error:discordError}=await supabaseClient.functions.invoke("discord-war-leave-notify",{body:{request_id:requestId}});
+      if(discordError||discordResult?.success===false){
+        console.warn("War leave Discord notification failed:",discordError||discordResult);
+        notice+=" แต่การแจ้งเตือน Discord ยังไม่สำเร็จ";
+      }else{
+        notice+=" และส่งแจ้งเตือน Discord แล้ว";
+      }
+    }
+    message.textContent=notice;message.className="message success";
     await loadWarLeavePage();
   }catch(error){message.textContent=error.message||"ส่งคำแจ้งลาไม่สำเร็จ";message.className="message error";}
   finally{button.disabled=false;}
