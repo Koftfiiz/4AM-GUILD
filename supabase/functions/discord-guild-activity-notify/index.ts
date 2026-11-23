@@ -86,10 +86,16 @@ Deno.serve(async (request) => {
     }
     const eventKey = kind === "activity" ? "guild_activity_published"
       : kind === "comment" ? "guild_activity_comment"
-      : existingWarMessage?.discord_message_id ? "war_signup_submitted" : "war_signup_opened";
+      : "war_signup_opened";
     const { data: integrationSettings, error: integrationError } = await admin.from("guild_discord_integration_settings")
       .select("mode,test_channel_id,production_enabled").eq("id", 1).maybeSingle();
     if (integrationError || !integrationSettings) return json({ success: false, message: "Discord integration settings are not configured" }, 503);
+    const { data: route, error: routeError } = await admin.from("guild_discord_event_routes")
+      .select("enabled,channel_id").eq("event_key", eventKey).maybeSingle();
+    if (routeError) return json({ success: false, message: "Unable to read Discord event route" }, 503);
+    if (route?.enabled !== true) {
+      return json({ success: true, skipped: true, message: "ปิดการแจ้งเตือน Event นี้ไว้ใน Discord Integration Settings" });
+    }
     let channelId = "";
     if (integrationSettings.mode === "test") {
       channelId = String(integrationSettings.test_channel_id || "");
@@ -97,12 +103,10 @@ Deno.serve(async (request) => {
       if (kind === "war_signup" && existingWarMessage?.discord_message_id && existingWarMessage?.discord_channel_id) {
         channelId = String(existingWarMessage.discord_channel_id);
       } else {
-        const { data: route } = await admin.from("guild_discord_event_routes")
-          .select("enabled,channel_id").eq("event_key", eventKey).maybeSingle();
-        if (route?.enabled === true) channelId = String(route.channel_id || "");
+        channelId = String(route.channel_id || "");
       }
     }
-    if (!/^\\d{17,20}$/.test(channelId)) return json({ success: false, message: "No valid destination configured for this Discord event; notification was not sent" }, 503);
+    if (!/^\d{17,20}$/.test(channelId)) return json({ success: false, message: "No valid destination configured for this Discord event; notification was not sent" }, 503);
     const isManager = ["developer", "leader", "management"].includes(role);
     const requesterName = requester.character_name || requester.nickname || requester.discord_name || "สมาชิก 4AM";
 
