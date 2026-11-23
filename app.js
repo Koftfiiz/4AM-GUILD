@@ -6238,7 +6238,8 @@ async function sendWarSignupEventToDiscord(eventId,button){
       throw new Error(message);
     }
     if(!data?.success)throw new Error(data?.message||"ดำเนินการกับ Discord ไม่สำเร็จ");
-    alert(data.recreated?"ข้อความประกาศเดิมถูกลบจาก Discord แล้ว ระบบสร้างประกาศใหม่ให้เรียบร้อย":data.updated?"อัปเดตประกาศเดิมบน Discord สำเร็จ":data.already_notified?"Event นี้มีประกาศบน Discord แล้ว":"ส่งประกาศ War Signup Event ไป Discord สำเร็จ");
+    if(data.skipped) alert(data.message||"ปิดการแจ้งเตือน Event นี้ไว้ใน Discord Integration Settings");
+    else alert(data.recreated?"ข้อความประกาศเดิมถูกลบจาก Discord แล้ว ระบบสร้างประกาศใหม่ให้เรียบร้อย":data.updated?"อัปเดตประกาศเดิมบน Discord สำเร็จ":data.already_notified?"Event นี้มีประกาศบน Discord แล้ว":"ส่งประกาศ War Signup Event ไป Discord สำเร็จ");
     await loadWarSignups();
   }catch(error){
     console.error("War signup Discord send/update:",error);
@@ -6420,6 +6421,8 @@ async function submitWarLeave(event){
       if(discordError||discordResult?.success===false){
         console.warn("War leave Discord notification failed:",discordError||discordResult);
         notice+=" แต่การแจ้งเตือน Discord ยังไม่สำเร็จ";
+      }else if(discordResult?.skipped){
+        notice+=" (ปิดการแจ้งเตือน Discord ไว้ตามการตั้งค่า)";
       }else{
         notice+=" และส่งแจ้งเตือน Discord แล้ว";
       }
@@ -8303,6 +8306,8 @@ function registerFeedbackEvents() {
       );
       if (error || data?.success === false) {
         alert("ส่ง Discord ไม่สำเร็จ: " + (error?.message || data?.message || "Unknown error"));
+      } else if (data?.skipped) {
+        alert(data.message || "ปิดการแจ้งเตือน Feedback ไว้");
       }
       await loadGuildFeedback();
       return;
@@ -8356,6 +8361,8 @@ function registerFeedbackEvents() {
       if (discordError || discordResult?.success === false) {
         console.warn("Discord notification failed:", discordError || discordResult);
         notice += " แต่การแจ้งเตือน Discord ยังไม่สำเร็จ ทีมดูแลสามารถตรวจสอบและส่งซ้ำได้";
+      } else if (discordResult?.skipped) {
+        notice += " (ปิดการแจ้งเตือน Discord ไว้ตามการตั้งค่า)";
       } else {
         notice += " และส่งแจ้งเตือน Discord แล้ว";
       }
