@@ -8999,11 +8999,14 @@ body.gallery-lightbox-open{overflow:hidden}
   outline:2px solid #ff7180;outline-offset:3px
 }
 #page-discord-integration .discord-route-switch-state{
-  min-width:27px;font-size:12px;font-weight:800;letter-spacing:.04em;color:#ff7180
+  min-width:27px;font-size:0;font-weight:800;letter-spacing:.04em;color:#ff7180
 }
-#page-discord-integration .discord-route-enabled input:checked + .discord-route-switch-state{color:#48df91}
-#page-discord-integration .discord-route-switch-state::after{content:""}
-#page-discord-integration .discord-route-enabled input:checked + .discord-route-switch-state::after{content:""}
+#page-discord-integration .discord-route-switch-state::after{
+  content:"OFF";font-size:12px;color:#ff7180
+}
+#page-discord-integration .discord-route-enabled input:checked + .discord-route-switch-state::after{
+  content:"ON";color:#48df91
+}
 #page-discord-integration .discord-route-row>input{
   grid-area:channel;box-sizing:border-box;width:100%;min-width:0;min-height:42px;
   padding:9px 12px;border:1px solid rgba(232,51,63,.32);border-radius:7px;
