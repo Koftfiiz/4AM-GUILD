@@ -9524,3 +9524,95 @@ body.gallery-lightbox-open{overflow:hidden}
     grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),1fr));
   }
 }
+
+
+/* Discord notification routing — final card sizing, switch inset and Channel ID guidance */
+#page-discord-integration .discord-route-section-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));
+  justify-items:center;
+  align-items:stretch;
+  gap:14px;
+}
+#page-discord-integration .discord-route-section-grid .discord-route-row{
+  box-sizing:border-box;
+  width:70%;
+  min-width:0;
+  min-height:260px;
+  height:260px;
+  padding:14px;
+}
+#page-discord-integration .discord-route-card-footer{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  width:100%;
+  min-height:30px;
+  margin-top:auto;
+  padding:0 12px 10px 0;
+}
+#page-discord-integration .discord-route-enabled{
+  order:1;
+  flex:0 0 46px;
+  width:46px;
+  height:26px;
+  margin:0;
+}
+#page-discord-integration .discord-route-enabled input{
+  width:46px;
+  height:26px;
+  min-height:26px;
+  flex:0 0 46px;
+}
+#page-discord-integration .discord-route-footer-state{
+  order:2;
+  flex:0 0 auto;
+  margin:0;
+  font-size:15px;
+}
+#page-discord-integration .discord-channel-id-tip{
+  display:flex;
+  align-items:center;
+  gap:13px;
+  margin:14px 0 12px;
+  padding:14px 16px;
+  border:1px solid rgba(255,79,163,.48);
+  border-left:4px solid #ff9868;
+  border-radius:11px;
+  background:linear-gradient(105deg,rgba(216,60,168,.20),rgba(118,80,184,.18) 56%,rgba(67,216,220,.12));
+  box-shadow:0 6px 20px rgba(0,0,0,.18),0 0 18px rgba(216,60,168,.08);
+}
+#page-discord-integration .discord-channel-id-tip-icon{
+  flex:0 0 auto;
+  font-size:25px;
+  line-height:1;
+}
+#page-discord-integration .discord-channel-id-tip strong{
+  display:block;
+  margin:0 0 3px;
+  color:#ffe1f1;
+  font-size:16px;
+  font-weight:800;
+}
+#page-discord-integration .discord-channel-id-tip p{
+  margin:0;
+  color:#eee5f7;
+  font-size:15px;
+  line-height:1.55;
+}
+#page-discord-integration .discord-channel-id-tip b{
+  color:#75eff0;
+  font-weight:800;
+}
+@media(max-width:700px){
+  #page-discord-integration .discord-route-section-grid{
+    grid-template-columns:minmax(0,1fr);
+    justify-items:center;
+  }
+  #page-discord-integration .discord-route-section-grid .discord-route-row{
+    width:70%;
+    min-height:260px;
+    height:260px;
+  }
+}
