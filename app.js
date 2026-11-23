@@ -9353,6 +9353,30 @@ function canManageDiscordIntegration() {
   return isManagement() && !isRolePreviewActive() && currentMember?.active === true;
 }
 
+function updateDiscordRouteOverview() {
+  const rows = [...document.querySelectorAll("[data-discord-route]")];
+  const enabled = rows.filter(row => row.querySelector("[data-discord-route-enabled]")?.checked).length;
+  const missing = rows.filter(row => !String(row.querySelector("[data-discord-route-channel]")?.value || "").trim()).length;
+  const overview = $("discord-route-overview");
+  if (overview) overview.innerHTML = [
+    ["EVENT ทั้งหมด", rows.length, "total"],
+    ["เปิดใช้งาน", enabled, "on"],
+    ["ปิดใช้งาน", rows.length - enabled, "off"],
+    ["ยังไม่กำหนดห้อง", missing, "missing"]
+  ].map(([label,value,key]) => `<div class="discord-route-stat" data-stat="${key}"><span>${label}</span><strong>${value}</strong></div>`).join("");
+}
+function filterDiscordIntegrationRoutes() {
+  const query = String($("discord-route-search")?.value || "").trim().toLocaleLowerCase();
+  const filter = $("discord-route-filter")?.value || "all";
+  document.querySelectorAll("[data-discord-route]").forEach(row => {
+    const label = String(row.querySelector("[data-discord-route-label]")?.value || "").toLocaleLowerCase();
+    const channel = String(row.querySelector("[data-discord-route-channel]")?.value || "");
+    const enabled = row.querySelector("[data-discord-route-enabled]")?.checked === true;
+    const matchesQuery = !query || label.includes(query);
+    const matchesFilter = filter === "all" || (filter === "on" && enabled) || (filter === "off" && !enabled) || (filter === "missing" && !channel.trim());
+    row.hidden = !(matchesQuery && matchesFilter);
+  });
+}
 function renderDiscordIntegrationRoutes(routes = []) {
   const container = $("discord-integration-routes");
   if (!container) return;
@@ -9363,12 +9387,9 @@ function renderDiscordIntegrationRoutes(routes = []) {
     return `
       <div class="discord-route-row" data-discord-route="${escapeHTML(key)}">
         <div class="discord-route-copy">
-          <label class="discord-route-label-field">
-            <span>ชื่อแสดงผล</span>
-            <input type="text" maxlength="80" required data-discord-route-label
-              aria-label="ชื่อแสดงผลสำหรับ ${escapeHTML(key)}"
-              value="${escapeHTML(displayLabel)}">
-          </label>
+          <input class="discord-route-label-input" type="text" maxlength="80" required data-discord-route-label
+            aria-label="ชื่อ Event สำหรับ ${escapeHTML(displayLabel)}" title="แก้ไขชื่อ Event"
+            value="${escapeHTML(displayLabel)}">
         </div>
         <label class="discord-route-enabled">
           <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
@@ -9380,6 +9401,8 @@ function renderDiscordIntegrationRoutes(routes = []) {
           data-discord-route-channel value="${escapeHTML(route.channel_id || "")}">
       </div>`;
   }).join("");
+  updateDiscordRouteOverview();
+  filterDiscordIntegrationRoutes();
 }
 async function loadDiscordIntegrationSettings() {
   if (!canManageDiscordIntegration()) {
@@ -9421,6 +9444,7 @@ async function loadDiscordIntegrationSettings() {
   $("discord-integration-current-mode").classList.toggle("is-production", settings?.mode === "production" && settings?.production_enabled);
   renderDiscordIntegrationRoutes(routes || []);
   if (status) status.textContent = "โหลดการตั้งค่าเรียบร้อย";
+  const saveButton = $("discord-integration-save"); if (saveButton) saveButton.textContent = "บันทึกการตั้งค่า";
   updateDiscordIntegrationModeHelp();
 }
 
@@ -9442,6 +9466,16 @@ function updateDiscordIntegrationModeHelp() {
   }
 }
 
+function markDiscordIntegrationDirty() {
+  const button = $("discord-integration-save");
+  if (button && !button.disabled) button.textContent = "บันทึกการเปลี่ยนแปลง";
+}
+function setDiscordRoutesEnabled(enabled) {
+  document.querySelectorAll("[data-discord-route-enabled]").forEach(input => { input.checked = enabled; });
+  updateDiscordRouteOverview();
+  filterDiscordIntegrationRoutes();
+  markDiscordIntegrationDirty();
+}
 async function saveDiscordIntegrationSettings() {
   if (!canManageDiscordIntegration()) {
     alert("ไม่มีสิทธิ์แก้ไข Discord Integration Settings");
@@ -9571,6 +9605,18 @@ function registerDiscordIntegrationEvents() {
   $("discord-integration-mode")?.addEventListener("change", updateDiscordIntegrationModeHelp);
   $("discord-integration-production-enabled")?.addEventListener("change", updateDiscordIntegrationModeHelp);
   $("discord-integration-test")?.addEventListener("click", () => void sendDiscordIntegrationTest());
+  $("discord-route-search")?.addEventListener("input", filterDiscordIntegrationRoutes);
+  $("discord-route-filter")?.addEventListener("change", filterDiscordIntegrationRoutes);
+  $("discord-integration-routes")?.addEventListener("input", event => {
+    if (event.target.matches("[data-discord-route-label], [data-discord-route-channel]")) updateDiscordRouteOverview();
+    markDiscordIntegrationDirty();
+  });
+  $("discord-integration-routes")?.addEventListener("change", event => {
+    if (event.target.matches("[data-discord-route-enabled]")) { updateDiscordRouteOverview(); filterDiscordIntegrationRoutes(); }
+    markDiscordIntegrationDirty();
+  });
+  $("discord-route-enable-all")?.addEventListener("click", () => setDiscordRoutesEnabled(true));
+  $("discord-route-disable-all")?.addEventListener("click", () => setDiscordRoutesEnabled(false));
 }
 
 // ==========================================
