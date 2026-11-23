@@ -116,13 +116,16 @@ Deno.serve(async req => {
       if (settingsError || !settings || routeError) {
         return response(4, { content: "อ่านการตั้งค่า Discord Integration ไม่สำเร็จ", flags: 64 });
       }
+      if (route?.enabled !== true) {
+        return response(4, { content: "ปิดการแจ้งเตือนยืนยันความพร้อมก่อนลงวอร์ไว้ใน Discord Integration Settings", flags: 64 });
+      }
       let channelId = "";
       if (settings.mode === "test") {
         channelId = String(settings.test_channel_id || "");
       } else if (settings.mode === "production" && settings.production_enabled === true && route?.enabled === true) {
         channelId = String(route.channel_id || "");
       }
-      if (route?.enabled === true || settings.mode === "test") {
+      if (route?.enabled === true) {
         const botToken = Deno.env.get("DISCORD_BOT_TOKEN") || "";
         if (!botToken || !/^\\d{17,20}$/.test(channelId)) {
           return response(4, { content: "ยังไม่ได้กำหนดห้อง Discord สำหรับเปิดเช็กชื่อในโหมดปัจจุบัน", flags: 64 });
