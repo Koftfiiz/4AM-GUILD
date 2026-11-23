@@ -9386,10 +9386,10 @@ function renderDiscordIntegrationRoutes(routes = []) {
   const routeMap = new Map((routes || []).map(route => [route.event_key, route]));
   const routeGroups = [
     { id: "general", title: "แจ้งเตือนทั่วไป", keys: ["member_joined"] },
-    { id: "feedback", title: "แจ้งปัญหา / Feedback", keys: ["feedback_submitted"] },
-    { id: "guild", title: "กิจกรรมกิลด์", keys: ["guild_activity_published", "guild_activity_comment", "duck_race_results"] },
     { id: "war", title: "Guild War", keys: ["war_signup_opened", "war_signup_submitted", "war_signup_closed", "war_leave_submitted", "war_roster_published", "war_checkin_opened", "war_attendance_finalized"] },
-    { id: "portfolio", title: "Portfolio", keys: ["portfolio_published"] }
+    { id: "portfolio", title: "แฟ้มผลงาน", keys: ["portfolio_published"] },
+    { id: "guild", title: "Guild Community", keys: ["guild_activity_published", "guild_activity_comment", "duck_race_results"] },
+    { id: "feedback", title: "แจ้งปัญหา / Feedback", keys: ["feedback_submitted"] }
   ];
   const routeCards = new Map(DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key, label]) => {
     const route = routeMap.get(key) || {};
