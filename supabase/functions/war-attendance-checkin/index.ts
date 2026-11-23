@@ -109,6 +109,35 @@ Deno.serve(async req => {
     if (!/^[0-9a-f-]{36}$/i.test(eventId)) return response(4, { content: "กรุณาระบุ Event ID ที่ถูกต้อง", flags: 64 });
     try {
       const data = await getRoster(eventId);
+      const [{ data: settings, error: settingsError }, { data: route, error: routeError }] = await Promise.all([
+        db.from("guild_discord_integration_settings").select("mode,test_channel_id,production_enabled").eq("id", 1).maybeSingle(),
+        db.from("guild_discord_event_routes").select("enabled,channel_id").eq("event_key", "war_checkin_opened").maybeSingle(),
+      ]);
+      if (settingsError || !settings || routeError) {
+        return response(4, { content: "อ่านการตั้งค่า Discord Integration ไม่สำเร็จ", flags: 64 });
+      }
+      let channelId = "";
+      if (settings.mode === "test") {
+        channelId = String(settings.test_channel_id || "");
+      } else if (settings.mode === "production" && settings.production_enabled === true && route?.enabled === true) {
+        channelId = String(route.channel_id || "");
+      }
+      if (route?.enabled === true || settings.mode === "test") {
+        const botToken = Deno.env.get("DISCORD_BOT_TOKEN") || "";
+        if (!botToken || !/^\\d{17,20}$/.test(channelId)) {
+          return response(4, { content: "ยังไม่ได้กำหนดห้อง Discord สำหรับเปิดเช็กชื่อในโหมดปัจจุบัน", flags: 64 });
+        }
+        const posted = await fetch("https://discord.com/api/v10/channels/" + channelId + "/messages", {
+          method: "POST",
+          headers: { Authorization: "Bot " + botToken, "Content-Type": "application/json" },
+          body: JSON.stringify({ ...buildMessage(data), allowed_mentions: { parse: [] } }),
+        });
+        if (!posted.ok) {
+          const detail = (await posted.text()).slice(0, 400);
+          return response(4, { content: "ส่งประกาศเปิดเช็กชื่อไปยัง Discord ไม่สำเร็จ: " + detail, flags: 64 });
+        }
+        return response(4, { content: "เปิดระบบเช็กชื่อและประกาศไปยังห้อง Discord ที่ตั้งค่าไว้เรียบร้อยแล้ว", flags: 64 });
+      }
       return response(4, buildMessage(data));
     } catch (e) {
       return response(4, { content: e instanceof Error ? e.message : "เปิดระบบเช็กชื่อไม่สำเร็จ", flags: 64 });
