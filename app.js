@@ -5502,7 +5502,8 @@ function openWarAssignmentModal(partyId,position,assignmentId=null){
 }
 function renderWarAssignmentModalMembers(){
  const list=$("war-modal-member-list");if(!list||!warAssignmentModalSlot)return;const assigned=getAssignedWarMemberIds(warAssignmentModalSlot.assignmentId),q=String($("war-modal-member-search")?.value||"").toLowerCase(),cls=$("war-assignment-modal")?.dataset.classFilter||"all",reserveOnly=$("war-assignment-modal")?.dataset.reserveOnly==="true";
- const members=allMembers.filter(m=>m.active===true&&!assigned.has(m.user_id)).filter(m=>!reserveOnly||warMemberStatus(m.user_id).reserve).filter(m=>cls==="all"||getMemberClass(m).toLowerCase()===cls.toLowerCase()).filter(m=>!q||getMemberName(m).toLowerCase().includes(q)||String(m.game_uid||"").includes(q)).sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));
+ const eligibleIds=new Set(getWarAssignmentRosterMembers().filter(m=>{const status=warMemberStatus(m.user_id);return !status.leave&&!status.absent;}).map(m=>m.user_id));
+ const members=allMembers.filter(m=>m.active===true&&eligibleIds.has(m.user_id)&&!assigned.has(m.user_id)).filter(m=>!reserveOnly||warMemberStatus(m.user_id).reserve).filter(m=>cls==="all"||getMemberClass(m).toLowerCase()===cls.toLowerCase()).filter(m=>!q||getMemberName(m).toLowerCase().includes(q)||String(m.game_uid||"").includes(q)).sort((a,b)=>getMemberName(a).localeCompare(getMemberName(b),"th"));
  list.innerHTML=members.length?members.map(m=>{const info=getClassInfo(getMemberClass(m));return `<button class="war-modal-member-option" data-war-modal-assign="${escapeHTML(m.user_id)}" style="--class-color:${info?.color||"#aaa"}" type="button"><img src="${escapeHTML(info?.iconPath||"")}" alt=""><span><strong>${escapeHTML(getMemberName(m))}</strong><small>${escapeHTML(getMemberClass(m))} · UID ${escapeHTML(m.game_uid||"—")}</small></span><b>ADD</b></button>`;}).join(""):'<p class="war-assignment-no-results">ไม่พบสมาชิกที่สามารถเพิ่มได้</p>';
 }
 async function persistWarMemberToPartySlot(memberId,slot){
@@ -5510,14 +5511,10 @@ async function persistWarMemberToPartySlot(memberId,slot){
  if(!isManagement()||!event||!slot)return;
  const party=currentWarParties.find(x=>x.id===slot.partyId);if(!party)return;
  if(getAssignedWarMemberIds(slot.assignmentId).has(memberId))throw new Error("สมาชิกคนนี้ถูกจัดลงปาร์ตี้อื่นในวอร์รอบนี้แล้ว");
- const snapshot=warAssignmentRosterSnapshot.find(x=>x.member_id===memberId);
- const signupClosed=Boolean(event.signup_closes_at)&&Date.now()>=new Date(event.signup_closes_at).getTime();
- if(signupClosed&&(!snapshot||["absent","leave"].includes(snapshot.roster_status))){
-  const reason=prompt("สมาชิกคนนี้ไม่ได้ลงชื่อทันเวลา/แจ้งลาไว้ กรุณาระบุเหตุผลที่ฝ่ายบริหารเพิ่มเข้าวอร์:");
-  if(reason===null)return false;
-  if(!reason.trim())throw new Error("กรุณาระบุเหตุผลในการเพิ่มสมาชิก");
-  const add=await supabaseClient.rpc("add_member_to_war_event_roster",{p_event_id:currentWarAssignmentEventId,p_member_id:memberId,p_reason:reason.trim()});
-  if(add.error)throw add.error;
+ const eligible=getWarAssignmentRosterMembers().some(member=>member.user_id===memberId);
+ const status=warMemberStatus(memberId);
+ if(!eligible||status.leave||status.absent){
+  throw new Error(status.leave?"สมาชิกที่แจ้งลาวอร์ไม่สามารถจัดลงปาร์ตี้ได้":"เลือกสมาชิกได้เฉพาะผู้ที่ลงชื่อหรืออยู่ในรายชื่อสำรองเท่านั้น");
  }
  const result=slot.assignmentId
   ?await supabaseClient.from("war_party_members").update({member_id:memberId}).eq("id",slot.assignmentId).select().single()
