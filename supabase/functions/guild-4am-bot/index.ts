@@ -92,7 +92,7 @@ Deno.serve(async (request: Request) => {
 
     const [eventsQ, routeQ, settingsQ] = await Promise.all([
       admin.from("war_events")
-        .select("id,discord_message_id,signup_closes_at,status,discord_signup_is_closed")
+        .select("id,discord_message_id,discord_channel_id,signup_closes_at,status,discord_signup_is_closed")
         .not("discord_message_id", "is", null)
         .not("signup_closes_at", "is", null),
       admin.from("guild_discord_event_routes")
@@ -109,20 +109,24 @@ Deno.serve(async (request: Request) => {
       return jsonResponse({ success: false, error: "Discord integration settings are unavailable" }, 503);
     }
     const mode = String(settingsQ.data.mode || "");
-    let channelId = "";
+    let fallbackChannelId = "";
     if (mode === "test") {
-      channelId = String(settingsQ.data.test_channel_id || "");
-    } else if (mode === "production" && settingsQ.data.production_enabled === true) {
-      if (routeQ.data?.enabled === true) channelId = String(routeQ.data.channel_id || "");
-    }
-    if (!/^\\d{17,20}$/.test(channelId)) {
-      return jsonResponse({ success: false, error: "No valid Discord destination is configured for war signup in the active mode; no fallback was used" }, 503);
+      fallbackChannelId = String(settingsQ.data.test_channel_id || "");
+    } else if (mode === "production" && settingsQ.data.production_enabled === true && routeQ.data?.enabled === true) {
+      fallbackChannelId = String(routeQ.data.channel_id || "");
     }
 
     let updated = 0;
     let skipped = 0;
     const failures: Array<{ event_id: string; status: number | string; detail: string }> = [];
     for (const event of eventsQ.data || []) {
+      // Always update an existing Discord message in the channel where it was
+      // originally created. The fallback is only for legacy rows without it.
+      const channelId = String(event.discord_channel_id || fallbackChannelId || "");
+      if (!/^\\d{17,20}$/.test(channelId)) {
+        failures.push({ event_id: event.id, status: "NO_ROUTE", detail: "No valid channel is stored for this signup message" });
+        continue;
+      }
       const deadline = new Date(event.signup_closes_at).getTime();
       const shouldBeClosed = event.status === "cancelled" || !Number.isFinite(deadline) || Date.now() >= deadline;
       if (event.discord_signup_is_closed === shouldBeClosed) {
