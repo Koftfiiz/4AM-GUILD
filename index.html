@@ -1152,7 +1152,7 @@
 
       <section id="page-system-management" class="page page-padded hidden">
         <div class="page-intro">
-          <span class="section-kicker">DEVELOPER CONTROL CENTER</span>
+          <span class="section-kicker">MANAGEMENT CONTROL CENTER</span>
           <h1>System Management</h1>
           <p>จัดการ System Role ของสมาชิกและบัญชีที่สมัครเข้ามาใน 4AM GUILD</p>
         </div>
@@ -1267,19 +1267,19 @@
       </section>
 
 
-      <!-- ============ DISCORD INTEGRATION SETTINGS (DEVELOPER ONLY) ============ -->
+      <!-- ============ DISCORD INTEGRATION SETTINGS (MANAGEMENT TEAM) ============ -->
       <section id="page-discord-integration" class="page page-padded hidden">
         <div class="page-intro">
           <span class="section-kicker">DEVELOPER CONTROL CENTER</span>
           <h1>Discord Integration Settings</h1>
-          <p>กำหนดโหมดการทำงานและปลายทางการแจ้งเตือนของ 4AM GUILD Bot</p>
+          <p>จัดการชื่อ Event เปิด–ปิดการแจ้งเตือน และกำหนดห้อง Discord ของ 4AM GUILD Bot</p>
         </div>
 
         <section class="panel discord-integration-security">
           <div class="discord-integration-security-icon"><svg class="icon"><use href="#i-shield"/></svg></div>
           <div>
-            <strong>DEVELOPER ACCESS ONLY</strong>
-            <p>หน้านี้อนุญาตเฉพาะบัญชี Developer ที่ Active เท่านั้น ระบบตรวจสอบสิทธิ์ซ้ำที่ Supabase RLS และ Edge Function</p>
+            <strong>MANAGEMENT TEAM ACCESS</strong>
+            <p>หน้านี้อนุญาตเฉพาะ Developer, Leader และ Management ที่มีสถานะ Active ระบบตรวจสอบสิทธิ์ซ้ำที่ Supabase RLS และ Edge Function</p>
           </div>
         </section>
 
@@ -1311,9 +1311,9 @@
 
             <div class="discord-integration-routes-heading">
               <div><span class="panel-kicker">NOTIFICATION ROUTING</span><h3>กำหนดห้องแจ้งเตือนตามเหตุการณ์</h3></div>
-              <span class="discord-integration-future-label">เตรียมตั้งค่าหลังสร้างห้อง Discord</span>
+              <span class="discord-integration-future-label">ทั้งหมด 13 ประเภท · เปิดเฉพาะรายการที่ต้องการแจ้งเตือน</span>
             </div>
-            <p class="discord-integration-help">ขณะอยู่ใน TEST MODE ทุกเหตุการณ์จะไปห้องทดสอบก่อน ส่วน Channel ID ด้านล่างใช้เมื่อเปิด Production เท่านั้น ยังไม่จำเป็นต้องกรอกในขั้นตอนนี้</p>
+            <p class="discord-integration-help">TEST MODE: เฉพาะ Event ที่เปิดใช้จะส่งไปยัง Test Channel ID ส่วน PRODUCTION MODE: เฉพาะ Event ที่เปิดใช้จะส่งไปยัง Channel ID ของแต่ละรายการ รายการที่ปิดจะไม่ส่งแจ้งเตือน</p>
             <div id="discord-integration-routes" class="discord-integration-routes">
               <p class="muted">กำลังโหลดรายการเหตุการณ์...</p>
             </div>
