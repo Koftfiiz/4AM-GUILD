@@ -9623,27 +9623,27 @@ body.gallery-lightbox-open{overflow:hidden}
 }
 
 
-/* Tighten Discord notification card spacing without widening the cards. */
+/* Discord notification routing — 250px cards with 25px spacing. */
 #page-discord-integration .discord-route-section-grid{
-  grid-template-columns:repeat(auto-fill,minmax(min(100%,210px),210px));
+  grid-template-columns:repeat(auto-fill,minmax(min(100%,250px),250px));
   justify-content:start;
   justify-items:stretch;
-  column-gap:12px;
-  row-gap:12px;
+  column-gap:25px;
+  row-gap:25px;
 }
 #page-discord-integration .discord-route-section-grid .discord-route-row{
   width:100%;
-  max-width:210px;
+  max-width:250px;
 }
 @media(max-width:700px){
   #page-discord-integration .discord-route-section-grid{
     grid-template-columns:minmax(0,1fr);
     justify-content:stretch;
     justify-items:center;
-    gap:12px;
+    gap:25px;
   }
   #page-discord-integration .discord-route-section-grid .discord-route-row{
-    width:70%;
-    max-width:none;
+    width:250px;
+    max-width:calc(100% - 20px);
   }
 }
