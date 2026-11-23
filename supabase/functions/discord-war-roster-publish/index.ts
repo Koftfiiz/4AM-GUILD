@@ -86,6 +86,9 @@ Deno.serve(async (request: Request) => {
       return json({ success: false, message: "อ่านการตั้งค่า Discord ไม่สำเร็จ" }, 503);
     }
 
+    if (route?.enabled !== true) {
+      return json({ success: true, skipped: true, message: "ปิดการแจ้งเตือนประกาศตี้วอร์ไว้ใน Discord Integration Settings" });
+    }
     const mode = String(settings.mode || "");
     let channelId = "";
     if (mode === "test") {
