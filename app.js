@@ -9334,52 +9334,57 @@ function renderAccountDetails() {
 // ==========================================
 
 const DISCORD_EVENT_ROUTE_DEFINITIONS = [
-  ["guild_activity_published", "ประกาศข่าวสาร / กิจกรรมกิลด์"],
-  ["guild_activity_comment", "ความคิดเห็นในกิจกรรมกิลด์"],
-  ["feedback_submitted", "แจ้งปัญหา / Feedback"],
-  ["duck_race_results", "ผลการแข่งขัน Duck Race"],
-  ["member_joined", "สมาชิกใหม่ / เพิ่มสมาชิก"],
-  ["war_signup_opened", "เปิดรับสมัคร Guild War อัตโนมัติ"],
-  ["war_signup_submitted", "ลงชื่อเข้าร่วม Guild War"],
-  ["war_signup_closed", "ปิดรับสมัคร Guild War อัตโนมัติ"],
-  ["war_leave_submitted", "แจ้งลาวอร์"],
-  ["war_roster_published", "ประกาศรายชื่อและจัดตี้วอร์"],
-  ["war_checkin_opened", "เปิดเช็กชื่อ Guild War"],
-  ["war_attendance_finalized", "สรุปรายงานหลังวอร์"],
-  ["portfolio_published", "โพสต์แฟ้มผลงาน"]
+  ["guild_activity_published", "ประกาศกิจกรรมกิลด์"],
+  ["guild_activity_comment", "แจ้งเตือนคอมเมนท์กิจกรรมกิลด์"],
+  ["feedback_submitted", "แจ้งเตือน Feedback"],
+  ["duck_race_results", "ประกาศผล Duck Race"],
+  ["member_joined", "แจ้งเตือนสมาชิกใหม่"],
+  ["war_signup_opened", "ประกาศลงชื่อวอร์"],
+  ["war_signup_submitted", "แจ้งการสมัครลงชื่อวอร์"],
+  ["war_signup_closed", "ประกาศปิดรับสมัครวอร์"],
+  ["war_leave_submitted", "แจ้งการถอนตัวจากวอร์"],
+  ["war_roster_published", "ประกาศตี้วอร์"],
+  ["war_checkin_opened", "ยืนยันความพร้อมก่อนลงวอร์"],
+  ["war_attendance_finalized", "สรุปผลการเข้าร่วมวอร์"],
+  ["portfolio_published", "แจ้งเตือนการทำแฟ้มผลงาน"]
 ];
 
 function canManageDiscordIntegration() {
-  return isDeveloper() && !isRolePreviewActive() && currentMember?.active === true;
+  return isManagement() && !isRolePreviewActive() && currentMember?.active === true;
 }
 
 function renderDiscordIntegrationRoutes(routes = []) {
   const container = $("discord-integration-routes");
   if (!container) return;
   const routeMap = new Map((routes || []).map(route => [route.event_key, route]));
-  container.innerHTML = DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key, label]) => {
+  container.innerHTML = DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key, suggestedLabel]) => {
     const route = routeMap.get(key) || {};
+    const displayLabel = route.event_label || suggestedLabel;
     return `
       <div class="discord-route-row" data-discord-route="${escapeHTML(key)}">
         <div class="discord-route-copy">
-          <strong>${escapeHTML(label)}</strong>
           <small>${escapeHTML(key)}</small>
+          <label class="discord-route-label-field">
+            <span>ชื่อแสดงผล</span>
+            <input type="text" maxlength="80" required data-discord-route-label
+              aria-label="ชื่อแสดงผลสำหรับ ${escapeHTML(key)}"
+              value="${escapeHTML(displayLabel)}">
+          </label>
         </div>
         <label class="discord-route-enabled">
           <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
-          <span>เปิดใช้</span>
+          <span>เปิดแจ้งเตือน</span>
         </label>
         <input type="text" inputmode="numeric" autocomplete="off" maxlength="20"
           placeholder="Discord Channel ID"
-          aria-label="Discord Channel ID สำหรับ ${escapeHTML(label)}"
+          aria-label="Discord Channel ID สำหรับ ${escapeHTML(displayLabel)}"
           data-discord-route-channel value="${escapeHTML(route.channel_id || "")}">
       </div>`;
   }).join("");
 }
-
 async function loadDiscordIntegrationSettings() {
   if (!canManageDiscordIntegration()) {
-    alert("Discord Integration Settings อนุญาตเฉพาะ Developer เท่านั้น และไม่สามารถแก้ไขใน Role Preview ได้");
+    alert("Discord Integration Settings อนุญาตเฉพาะ Developer, Leader และ Management ที่ Active และไม่อยู่ใน Role Preview เท่านั้น");
     openGuildPage("dashboard");
     return;
   }
@@ -9425,6 +9430,8 @@ function updateDiscordIntegrationModeHelp() {
   const productionEnabled = $("discord-integration-production-enabled")?.checked === true;
   const help = $("discord-integration-mode-help");
   if (!help) return;
+  const testChannelField = $("discord-integration-test-channel-field");
+  if (testChannelField) testChannelField.hidden = mode !== "test";
   if (mode === "test") {
     help.textContent = "TEST MODE: การแจ้งเตือนทุกประเภทจะถูกส่งไปยังห้องทดสอบบอทเท่านั้น ไม่ใช้ Channel ID ของ Production";
   } else if (!productionEnabled) {
@@ -9454,10 +9461,15 @@ async function saveDiscordIntegrationSettings() {
   const routes = routeRows.map(row => ({
     event_key: row.dataset.discordRoute,
     enabled: row.querySelector("[data-discord-route-enabled]")?.checked === true,
+    event_label: String(row.querySelector("[data-discord-route-label]")?.value || "").trim(),
     channel_id: String(row.querySelector("[data-discord-route-channel]")?.value || "").trim() || null,
     updated_by: currentUser.id
   }));
   for (const route of routes) {
+    if (!route.event_label || route.event_label.length > 80) {
+      showMessage("discord-integration-message", "กรุณากรอกชื่อแสดงผลให้ครบทุก Event และไม่เกิน 80 ตัวอักษร");
+      return;
+    }
     if (route.channel_id && !channelPattern.test(route.channel_id)) {
       showMessage("discord-integration-message", "Channel ID ของ " + route.event_key + " ไม่ถูกต้อง ต้องเป็นตัวเลข 17–20 หลัก");
       return;
@@ -9496,7 +9508,7 @@ async function saveDiscordIntegrationSettings() {
 
     const { error: routesError } = await supabaseClient
       .from("guild_discord_event_routes")
-      .upsert(routes.map(route => ({ ...route, event_label: DISCORD_EVENT_ROUTE_DEFINITIONS.find(([key]) => key === route.event_key)?.[1] || route.event_key, updated_at: new Date().toISOString() })), { onConflict: "event_key" });
+      .upsert(routes.map(route => ({ ...route, updated_at: new Date().toISOString() })), { onConflict: "event_key" });
     if (routesError) throw routesError;
 
     showMessage("discord-integration-message", "บันทึกการตั้งค่า Discord Integration สำเร็จ", "success");
