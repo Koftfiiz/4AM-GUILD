@@ -9602,6 +9602,12 @@ function registerDiscordIntegrationEvents() {
     event.preventDefault();
     void saveDiscordIntegrationSettings();
   });
+  $("discord-integration-form")?.addEventListener("input", event => {
+    if (event.target.matches("#discord-integration-mode, #discord-integration-test-channel, #discord-integration-production-enabled")) markDiscordIntegrationDirty();
+  });
+  $("discord-integration-form")?.addEventListener("change", event => {
+    if (event.target.matches("#discord-integration-mode, #discord-integration-test-channel, #discord-integration-production-enabled")) markDiscordIntegrationDirty();
+  });
   $("discord-integration-mode")?.addEventListener("change", updateDiscordIntegrationModeHelp);
   $("discord-integration-production-enabled")?.addEventListener("change", updateDiscordIntegrationModeHelp);
   $("discord-integration-test")?.addEventListener("click", () => void sendDiscordIntegrationTest());
