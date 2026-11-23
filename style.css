@@ -8953,13 +8953,45 @@ body.gallery-lightbox-open{overflow:hidden}
 /* Discord Integration Settings — editable labels, black/red only. */
 #page-discord-integration .discord-integration-routes-heading h3{color:#ff6578}
 #page-discord-integration .discord-integration-future-label{display:none}
-#page-discord-integration .discord-route-row{grid-template-columns:minmax(250px,1.2fr) auto minmax(210px,.8fr);border-color:rgba(232,51,63,.24);background:rgba(255,255,255,.018)}
-#page-discord-integration .discord-route-copy{gap:7px}
+#page-discord-integration .discord-route-row{
+  grid-template-columns:minmax(280px,1.15fr) minmax(250px,.85fr);
+  grid-template-areas:"copy copy" "toggle channel";
+  align-items:center;gap:12px 20px;padding:15px 16px;
+  border-color:rgba(232,51,63,.25);background:linear-gradient(120deg,rgba(24,12,16,.92),rgba(13,10,12,.96));
+}
+#page-discord-integration .discord-route-copy{grid-area:copy;gap:8px}
 #page-discord-integration .discord-route-copy small{color:#ff7180;font-size:14px}
-#page-discord-integration .discord-route-label-field{display:grid;gap:5px;color:#ddd;font-size:15px;font-weight:650}
-#page-discord-integration .discord-route-label-field input{box-sizing:border-box;width:100%;min-width:0;min-height:40px;padding:8px 10px;border:1px solid rgba(232,51,63,.38);border-radius:7px;background:#10090c;color:#fff;font:inherit}
+#page-discord-integration .discord-route-label-field{display:grid;gap:6px;color:#ddd;font-size:15px;font-weight:650}
+#page-discord-integration .discord-route-label-field input{box-sizing:border-box;width:100%;min-width:0;min-height:42px;padding:9px 12px;border:1px solid rgba(232,51,63,.38);border-radius:7px;background:#10090c;color:#fff;font:inherit}
 #page-discord-integration .discord-route-label-field input:focus{outline:2px solid rgba(232,51,63,.45);border-color:#ed4058}
-#page-discord-integration .discord-route-enabled{color:#f1e8e9}
-#page-discord-integration .discord-route-row>input{border-color:rgba(232,51,63,.32);background:#10090c}
+#page-discord-integration .discord-route-enabled{
+  grid-area:toggle;display:inline-flex;align-items:center;justify-self:start;gap:11px;
+  min-height:42px;padding:7px 12px;border:1px solid rgba(232,51,63,.22);
+  border-radius:8px;background:rgba(232,51,63,.055);color:#f1e8e9;
+  font-size:15px;white-space:nowrap;cursor:pointer
+}
+#page-discord-integration .discord-route-enabled input{
+  appearance:none;-webkit-appearance:none;position:relative;display:inline-block;
+  width:46px;height:26px;flex:0 0 46px;margin:0;border:1px solid #68404a;
+  border-radius:999px;background:#302329;cursor:pointer;transition:background .18s ease,border-color .18s ease
+}
+#page-discord-integration .discord-route-enabled input::before{
+  content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;
+  border-radius:50%;background:#d7c5c8;transition:transform .18s ease,background .18s ease
+}
+#page-discord-integration .discord-route-enabled input:checked{background:#c92e43;border-color:#f04a60}
+#page-discord-integration .discord-route-enabled input:checked::before{transform:translateX(20px);background:#fff}
+#page-discord-integration .discord-route-enabled input:focus-visible{outline:2px solid #ff7180;outline-offset:3px}
+#page-discord-integration .discord-route-row>input{
+  grid-area:channel;box-sizing:border-box;width:100%;min-width:0;min-height:42px;
+  padding:9px 12px;border:1px solid rgba(232,51,63,.32);border-radius:7px;
+  background:#10090c;color:#fff;font:inherit
+}
 #page-discord-integration .discord-integration-field[hidden]{display:none!important}
-@media(max-width:760px){#page-discord-integration .discord-route-row{grid-template-columns:minmax(0,1fr) auto}#page-discord-integration .discord-route-row>input{grid-column:1/-1}}
+#page-discord-integration .discord-integration-routes-heading h3,
+#page-discord-integration .discord-integration-section-title{color:#ff6578}
+#page-discord-integration .discord-integration-mode-badge{border-color:rgba(232,51,63,.4);color:#ff7180}
+@media(max-width:760px){
+  #page-discord-integration .discord-route-row{grid-template-columns:minmax(0,1fr);grid-template-areas:"copy" "toggle" "channel"}
+  #page-discord-integration .discord-route-enabled{justify-self:start}
+}
