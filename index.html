@@ -240,7 +240,7 @@
           <svg class="icon"><use href="#i-gear"/></svg>
           <span>System Management</span>
         </button>
-        <button class="nav-item developer-only is-role-hidden" data-page="discord-integration" data-developer-only aria-hidden="true">
+        <button class="nav-item management-only is-role-hidden" data-page="discord-integration" data-management-only aria-hidden="true">
           <svg class="icon"><use href="#i-discord"/></svg>
           <span>Discord Integration Settings</span>
         </button>
@@ -1152,7 +1152,7 @@
 
       <section id="page-system-management" class="page page-padded hidden">
         <div class="page-intro">
-          <span class="section-kicker">DEVELOPER CONTROL CENTER</span>
+          <span class="section-kicker">MANAGEMENT CONTROL CENTER</span>
           <h1>System Management</h1>
           <p>จัดการ System Role ของสมาชิกและบัญชีที่สมัครเข้ามาใน 4AM GUILD</p>
         </div>
@@ -1267,7 +1267,7 @@
       </section>
 
 
-      <!-- ============ DISCORD INTEGRATION SETTINGS (DEVELOPER ONLY) ============ -->
+      <!-- ============ DISCORD INTEGRATION SETTINGS (MANAGEMENT TEAM) ============ -->
       <section id="page-discord-integration" class="page page-padded hidden">
         <div class="page-intro">
           <span class="section-kicker">DEVELOPER CONTROL CENTER</span>
@@ -1278,8 +1278,8 @@
         <section class="panel discord-integration-security">
           <div class="discord-integration-security-icon"><svg class="icon"><use href="#i-shield"/></svg></div>
           <div>
-            <strong>DEVELOPER ACCESS ONLY</strong>
-            <p>หน้านี้อนุญาตเฉพาะบัญชี Developer ที่ Active เท่านั้น ระบบตรวจสอบสิทธิ์ซ้ำที่ Supabase RLS และ Edge Function</p>
+            <strong>MANAGEMENT TEAM ACCESS</strong>
+            <p>หน้านี้อนุญาตเฉพาะ Developer, Leader และ Management ที่มีสถานะ Active ระบบตรวจสอบสิทธิ์ซ้ำผ่าน Supabase RLS</p>
           </div>
         </section>
 
@@ -1298,8 +1298,8 @@
                   <option value="production">PRODUCTION MODE — ห้องใช้งานจริง</option>
                 </select>
               </label>
-              <label class="discord-integration-field">
-                <span>Test Channel ID</span>
+              <label id="discord-integration-test-channel-field" class="discord-integration-field">
+                <span>Test Channel ID <small>(ใช้เฉพาะ TEST MODE)</small></span>
                 <input id="discord-integration-test-channel" type="text" inputmode="numeric" maxlength="20" placeholder="กรอก Discord Channel ID ของห้องทดสอบบอท">
               </label>
             </div>
