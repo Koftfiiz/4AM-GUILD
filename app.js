@@ -9501,7 +9501,7 @@ async function saveDiscordIntegrationSettings() {
   const testChannelId = String($("discord-integration-test-channel").value || "").trim();
   const productionEnabled = $("discord-integration-production-enabled").checked;
   const channelPattern = /^\d{17,20}$/;
-  if (testChannelId && !channelPattern.test(testChannelId)) {
+  if (mode === "test" && testChannelId && !channelPattern.test(testChannelId)) {
     showMessage("discord-integration-message", "Test Channel ID ต้องเป็นตัวเลข Discord ID ความยาว 17–20 หลัก");
     return;
   }
