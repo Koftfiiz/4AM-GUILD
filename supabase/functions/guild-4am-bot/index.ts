@@ -90,14 +90,18 @@ Deno.serve(async (request: Request) => {
       return jsonResponse({ success: false, error: "Unauthorized" }, 401);
     }
 
-    const [eventsQ, routeQ, settingsQ] = await Promise.all([
+    const [eventsQ, routeQ, closedRouteQ, settingsQ] = await Promise.all([
       admin.from("war_events")
-        .select("id,discord_message_id,discord_channel_id,signup_closes_at,status,discord_signup_is_closed")
+        .select("id,event_name,event_date,start_time,discord_message_id,discord_channel_id,signup_closes_at,status,discord_signup_is_closed,discord_signup_closed_notified_at")
         .not("discord_message_id", "is", null)
         .not("signup_closes_at", "is", null),
       admin.from("guild_discord_event_routes")
         .select("channel_id,enabled")
         .eq("event_key", "war_signup_submitted")
+        .maybeSingle(),
+      admin.from("guild_discord_event_routes")
+        .select("channel_id,enabled")
+        .eq("event_key", "war_signup_closed")
         .maybeSingle(),
       admin.from("guild_discord_integration_settings")
         .select("mode,test_channel_id,production_enabled")
@@ -168,6 +172,53 @@ Deno.serve(async (request: Request) => {
         continue;
       }
       updated++;
+
+      // Only announce the transition that this cron run actually closed.
+      // This avoids replaying closure notices for historical events.
+      if (shouldBeClosed && event.discord_signup_is_closed !== true && !event.discord_signup_closed_notified_at) {
+        let closedChannelId = "";
+        if (mode === "test") {
+          closedChannelId = String(settingsQ.data.test_channel_id || "");
+        } else if (mode === "production" && settingsQ.data.production_enabled === true && closedRouteQ.data?.enabled === true) {
+          closedChannelId = String(closedRouteQ.data.channel_id || "");
+        }
+        if (!/^\\d{17,20}$/.test(closedChannelId)) {
+          const detail = "No valid Production route configured for war_signup_closed";
+          failures.push({ event_id: event.id, status: "CLOSED_ROUTE_MISSING", detail });
+          await admin.from("war_events").update({ discord_signup_closed_error: detail }).eq("id", event.id);
+        } else {
+          const dateLabel = event.event_date ? String(event.event_date).split("-").reverse().join("/") : "-";
+          const timeLabel = String(event.start_time || "").slice(0, 5);
+          const noticeResponse = await fetch(
+            "https://discord.com/api/v10/channels/" + encodeURIComponent(closedChannelId) + "/messages",
+            {
+              method: "POST",
+              headers: { "Authorization": "Bot " + botToken, "Content-Type": "application/json" },
+              body: JSON.stringify({
+                embeds: [{
+                  title: "4AM GUILD · ปิดรับสมัคร Guild War",
+                  description: "**" + String(event.event_name || "Guild War").slice(0, 180) + "**\\n" + dateLabel + (timeLabel ? " · " + timeLabel : ""),
+                  color: 0xD92D45,
+                  fields: [{ name: "สถานะ", value: "🔒 ปิดรับสมัครแล้ว", inline: true }],
+                  footer: { text: "4AM GUILD · War Signup" },
+                  timestamp: new Date().toISOString(),
+                }],
+                allowed_mentions: { parse: [] },
+              }),
+            },
+          );
+          if (!noticeResponse.ok) {
+            const detail = (await noticeResponse.text()).slice(0, 400);
+            failures.push({ event_id: event.id, status: noticeResponse.status, detail });
+            await admin.from("war_events").update({ discord_signup_closed_error: detail }).eq("id", event.id);
+          } else {
+            await admin.from("war_events").update({
+              discord_signup_closed_notified_at: new Date().toISOString(),
+              discord_signup_closed_error: null,
+            }).eq("id", event.id);
+          }
+        }
+      }
     }
     return jsonResponse({ success: failures.length === 0, checked: (eventsQ.data || []).length, updated, skipped, failures });
   }
