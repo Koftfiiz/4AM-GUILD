@@ -2002,6 +2002,11 @@ $('sendResultsDiscord').onclick=async()=>{
       try{if(error.context&&typeof error.context.json==='function'){const body=await error.context.json();message=body.message||message;}}catch(_){}
       throw new Error(message);
     }
+    if(data?.skipped){
+      status.textContent=data.message||'ปิดการแจ้งเตือนผล Duck Race ไว้ใน Discord Integration Settings';
+      button.disabled=false;button.textContent='📨 SEND TO DISCORD';
+      return;
+    }
     if(!data?.success)throw new Error(data?.message||'ส่งผลการแข่งขันไม่สำเร็จ');
     status.textContent='ส่งผลการแข่งขันไปยัง Discord สำเร็จแล้ว'+(data.mode==='test'?' (TEST MODE · #ทดสอบบอท)':'');
     button.textContent='ส่งผลแล้ว ✓';
