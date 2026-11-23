@@ -63,6 +63,9 @@ Deno.serve(async (request) => {
     if (settingsError || !settings || routeError) {
       return json({ success: false, message: "อ่านการตั้งค่า Discord Integration ไม่สำเร็จ" }, 503);
     }
+    if (route?.enabled !== true) {
+      return json({ success: true, skipped: true, message: "ปิดการแจ้งเตือน Feedback ไว้ใน Discord Integration Settings" });
+    }
     let channelId = "";
     if (settings.mode === "test") {
       channelId = String(settings.test_channel_id || "");
