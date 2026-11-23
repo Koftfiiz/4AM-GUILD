@@ -9391,7 +9391,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
   ];
   const routeCards = new Map(DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key, label]) => {
     const route = routeMap.get(key) || {};
-    const displayLabel = route.event_label || suggestedLabel;
+    const displayLabel = route.event_label || label;
     return `
       <div class="discord-route-row" data-discord-route="${escapeHTML(key)}">
         <div class="discord-route-card-heading">
