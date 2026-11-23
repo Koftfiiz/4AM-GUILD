@@ -97,7 +97,7 @@ Deno.serve(async (request: Request) => {
         .not("signup_closes_at", "is", null),
       admin.from("guild_discord_event_routes")
         .select("channel_id,enabled")
-        .eq("event_key", "war_signup_submitted")
+        .eq("event_key", "war_signup_opened")
         .maybeSingle(),
       admin.from("guild_discord_event_routes")
         .select("channel_id,enabled")
@@ -114,7 +114,7 @@ Deno.serve(async (request: Request) => {
     }
     const mode = String(settingsQ.data.mode || "");
     let fallbackChannelId = "";
-    if (mode === "test") {
+    if (mode === "test" && routeQ.data?.enabled === true) {
       fallbackChannelId = String(settingsQ.data.test_channel_id || "");
     } else if (mode === "production" && settingsQ.data.production_enabled === true && routeQ.data?.enabled === true) {
       fallbackChannelId = String(routeQ.data.channel_id || "");
@@ -175,7 +175,7 @@ Deno.serve(async (request: Request) => {
 
       // Only announce the transition that this cron run actually closed.
       // This avoids replaying closure notices for historical events.
-      if (shouldBeClosed && event.discord_signup_is_closed !== true && !event.discord_signup_closed_notified_at) {
+      if (shouldBeClosed && event.discord_signup_is_closed !== true && !event.discord_signup_closed_notified_at && closedRouteQ.data?.enabled === true) {
         let closedChannelId = "";
         if (mode === "test") {
           closedChannelId = String(settingsQ.data.test_channel_id || "");
