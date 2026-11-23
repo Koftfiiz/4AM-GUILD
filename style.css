@@ -9029,3 +9029,128 @@ body.gallery-lightbox-open{overflow:hidden}
   }
   #page-discord-integration .discord-route-enabled{justify-self:start}
 }
+
+
+/* GTA VI / Vice City sunset theme — Discord Integration Settings only. */
+#page-discord-integration{
+  --vice-pink:#ff4fa3;
+  --vice-magenta:#d83ca8;
+  --vice-orange:#ff9868;
+  --vice-lavender:#c49aff;
+  --vice-purple:#7650b8;
+  --vice-cyan:#43d8dc;
+  --vice-ink:#100d20;
+  position:relative;
+  isolation:isolate;
+  background:
+    radial-gradient(ellipse at 12% 4%,rgba(255,79,163,.19),transparent 35%),
+    radial-gradient(ellipse at 88% 18%,rgba(67,216,220,.13),transparent 32%),
+    radial-gradient(ellipse at 65% 78%,rgba(118,80,184,.16),transparent 40%),
+    linear-gradient(145deg,#100d20 0%,#171027 48%,#0c1724 100%);
+  border-radius:18px;
+  padding:clamp(16px,2.2vw,30px);
+}
+#page-discord-integration::before{
+  content:"";position:absolute;z-index:-1;inset:0;pointer-events:none;border-radius:inherit;
+  background:linear-gradient(115deg,transparent 0 42%,rgba(255,152,104,.035) 58%,transparent 76%);
+}
+#page-discord-integration .page-intro{
+  padding:20px 22px;margin-bottom:18px;border:1px solid rgba(255,79,163,.25);
+  border-radius:14px;background:linear-gradient(110deg,rgba(216,60,168,.13),rgba(118,80,184,.10) 52%,rgba(67,216,220,.08));
+  box-shadow:0 12px 34px rgba(0,0,0,.2),inset 0 1px rgba(255,255,255,.045);
+}
+#page-discord-integration .page-intro .section-kicker,
+#page-discord-integration .panel-kicker{
+  color:var(--vice-cyan);letter-spacing:.14em;text-shadow:0 0 16px rgba(67,216,220,.25)
+}
+#page-discord-integration .page-intro h1{
+  color:#fff1fa;
+  background:linear-gradient(95deg,#fff 0%,var(--vice-pink) 36%,var(--vice-orange) 72%,var(--vice-cyan) 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 0 16px rgba(255,79,163,.16));
+}
+#page-discord-integration .page-intro p{color:#c9c0dc}
+#page-discord-integration .discord-integration-security,
+#page-discord-integration .discord-integration-panel{
+  border:1px solid rgba(196,154,255,.24);
+  background:linear-gradient(145deg,rgba(34,24,54,.94),rgba(17,20,39,.96) 58%,rgba(13,31,43,.94));
+  box-shadow:0 14px 38px rgba(0,0,0,.26),inset 0 1px rgba(255,255,255,.045);
+  backdrop-filter:blur(12px);
+}
+#page-discord-integration .discord-integration-security{border-left:3px solid var(--vice-cyan)}
+#page-discord-integration .discord-integration-security strong{color:#ff9bd0}
+#page-discord-integration .discord-integration-security p,
+#page-discord-integration .discord-integration-panel .muted{color:#bcb3cf}
+#page-discord-integration .discord-integration-security-icon{color:var(--vice-cyan)}
+#page-discord-integration .discord-integration-panel .panel-heading h3,
+#page-discord-integration .discord-integration-routes-heading h3{color:#ffe7f5}
+#page-discord-integration .discord-integration-mode-badge{
+  color:#ffd0e9;border-color:rgba(255,79,163,.5);
+  background:linear-gradient(100deg,rgba(216,60,168,.2),rgba(118,80,184,.18));
+  box-shadow:0 0 18px rgba(255,79,163,.13)
+}
+#page-discord-integration .discord-integration-field>span,
+#page-discord-integration .discord-production-approval{color:#eee5f7}
+#page-discord-integration .discord-integration-field input,
+#page-discord-integration .discord-integration-field select,
+#page-discord-integration .discord-route-label-field input,
+#page-discord-integration .discord-route-row>input{
+  color:#fff4fb;background:rgba(12,12,30,.82);
+  border-color:rgba(196,154,255,.34);
+}
+#page-discord-integration .discord-integration-field input:focus,
+#page-discord-integration .discord-integration-field select:focus,
+#page-discord-integration .discord-route-label-field input:focus,
+#page-discord-integration .discord-route-row>input:focus{
+  border-color:var(--vice-pink);outline:2px solid rgba(255,79,163,.22);
+  box-shadow:0 0 18px rgba(255,79,163,.10)
+}
+#page-discord-integration .discord-integration-help{
+  color:#bfb5d1;background:linear-gradient(100deg,rgba(216,60,168,.10),rgba(67,216,220,.055));
+  border-left:2px solid var(--vice-orange);
+}
+#page-discord-integration .discord-production-approval{
+  border-color:rgba(67,216,220,.25);background:rgba(67,216,220,.055)
+}
+#page-discord-integration .discord-production-approval small{color:#bdb5d0}
+#page-discord-integration .discord-integration-routes-heading{
+  border-bottom:1px solid rgba(255,79,163,.22)
+}
+#page-discord-integration .discord-route-row{
+  border-color:rgba(196,154,255,.24);
+  background:linear-gradient(112deg,rgba(39,24,57,.86),rgba(22,23,47,.9) 58%,rgba(14,37,49,.82));
+  box-shadow:0 7px 20px rgba(0,0,0,.16),inset 0 1px rgba(255,255,255,.035);
+  transition:border-color .18s ease,transform .18s ease,box-shadow .18s ease;
+}
+#page-discord-integration .discord-route-row:hover{
+  border-color:rgba(255,79,163,.48);transform:translateY(-1px);
+  box-shadow:0 10px 24px rgba(0,0,0,.22),0 0 20px rgba(216,60,168,.08)
+}
+#page-discord-integration .discord-route-label-field{color:#f4e8f4}
+#page-discord-integration .discord-route-enabled{
+  border-color:rgba(196,154,255,.2);background:rgba(10,10,28,.35);color:#f4eafa
+}
+#page-discord-integration .discord-route-enabled input{
+  background:#b52d55;border-color:#ff668d;
+  box-shadow:inset 0 0 8px rgba(0,0,0,.2)
+}
+#page-discord-integration .discord-route-enabled input:checked{
+  background:#16834b;border-color:#4de39a;
+  box-shadow:0 0 13px rgba(77,227,154,.2)
+}
+#page-discord-integration .discord-route-switch-state::after{color:#ff8ba8}
+#page-discord-integration .discord-route-enabled input:checked + .discord-route-switch-state::after{color:#62e9a5}
+#page-discord-integration .discord-integration-actions .btn-primary{
+  border:1px solid rgba(255,125,190,.7);
+  background:linear-gradient(100deg,#c52f91,#8045bd 58%,#286f91);
+  color:#fff;box-shadow:0 5px 18px rgba(216,60,168,.2)
+}
+#page-discord-integration .discord-integration-actions .btn-outline{
+  border-color:rgba(67,216,220,.5);color:#a8f5f2;background:rgba(67,216,220,.06)
+}
+#page-discord-integration .discord-integration-actions .btn:hover{filter:brightness(1.12)}
+#page-discord-integration .message{color:#f5d9ed}
+@media(max-width:700px){
+  #page-discord-integration{padding:12px;border-radius:12px}
+  #page-discord-integration .page-intro{padding:16px}
+}
