@@ -52,6 +52,9 @@ Deno.serve(async (request: Request) => {
       admin.from("guild_discord_event_routes").select("enabled,channel_id").eq("event_key", "war_leave_submitted").maybeSingle(),
     ]);
     if (settingsError || !settings || routeError) return json({ success: false, message: "อ่านการตั้งค่า Discord ไม่สำเร็จ" }, 503);
+    if (route?.enabled !== true) {
+      return json({ success: true, skipped: true, message: "ปิดการแจ้งเตือนการถอนตัวจากวอร์ไว้ใน Discord Integration Settings" });
+    }
     let channelId = "";
     if (settings.mode === "test") channelId = String(settings.test_channel_id || "");
     else if (settings.mode === "production" && settings.production_enabled === true && route?.enabled === true) {
