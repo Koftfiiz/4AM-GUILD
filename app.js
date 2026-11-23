@@ -9385,10 +9385,11 @@ function renderDiscordIntegrationRoutes(routes = []) {
   if (!container) return;
   const routeMap = new Map((routes || []).map(route => [route.event_key, route]));
   const routeGroups = [
-    { id: "general", title: "แจ้งเตือนทั่วไป", subtitle: "แจ้งเตือนสมาชิกใหม่ Feedback และผลกิจกรรมพิเศษ", keys: ["member_joined", "feedback_submitted", "duck_race_results"] },
-    { id: "guild", title: "กิจกรรมกิลด์", subtitle: "ประกาศกิจกรรมกิลด์และการแสดงความคิดเห็น", keys: ["guild_activity_published", "guild_activity_comment"] },
-    { id: "war", title: "Guild War", subtitle: "การลงชื่อ สมัคร ถอนตัว จัดตี้ และเช็กชื่อเข้าร่วมวอร์", keys: ["war_signup_opened", "war_signup_submitted", "war_signup_closed", "war_leave_submitted", "war_roster_published", "war_checkin_opened", "war_attendance_finalized"] },
-    { id: "portfolio", title: "Portfolio", subtitle: "การแจ้งเตือนแฟ้มผลงานสมาชิก", keys: ["portfolio_published"] }
+    { id: "general", title: "แจ้งเตือนทั่วไป", keys: ["member_joined"] },
+    { id: "feedback", title: "แจ้งปัญหา / Feedback", keys: ["feedback_submitted"] },
+    { id: "guild", title: "กิจกรรมกิลด์", keys: ["guild_activity_published", "guild_activity_comment", "duck_race_results"] },
+    { id: "war", title: "Guild War", keys: ["war_signup_opened", "war_signup_submitted", "war_signup_closed", "war_leave_submitted", "war_roster_published", "war_checkin_opened", "war_attendance_finalized"] },
+    { id: "portfolio", title: "Portfolio", keys: ["portfolio_published"] }
   ];
   const routeCards = new Map(DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key, label]) => {
     const route = routeMap.get(key) || {};
@@ -9426,7 +9427,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
     return `
       <section class="discord-route-section" data-discord-route-section="${group.id}">
         <header class="discord-route-section-heading">
-          <div><h3>${group.title}</h3><p>${group.subtitle}</p></div>
+          <div><h3>${group.title}</h3></div>
           <span>${group.keys.length} EVENTS</span>
         </header>
         <div class="discord-route-section-grid">${cards}</div>
