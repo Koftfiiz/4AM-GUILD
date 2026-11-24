@@ -7428,17 +7428,17 @@ body > #manual-member-link-screen {
 
 /* Guild War · Party Management skill icons: clean, larger, tighter black/red treatment */
 #page-war .war-member-skills{
-  gap:3px!important;
-  max-width:190px!important;
+  gap:4px!important;
+  max-width:205px!important;
   padding:0!important;
   border:0!important;
   background:transparent!important;
   box-shadow:none!important;
 }
 #page-war .war-member-skill-icon{
-  width:36px!important;
-  height:36px!important;
-  flex:0 0 36px!important;
+  width:46px!important;
+  height:46px!important;
+  flex:0 0 46px!important;
   padding:0!important;
   border:0!important;
   border-radius:0!important;
