@@ -5821,48 +5821,21 @@ function normalizeWarCaptureCloneColors(clonedDocument){
     }
   });
 
-  // GTA VI-inspired neon night treatment is applied only to the exported clone.
-  clonedDocument.querySelectorAll(".raid-section").forEach(section=>{
-    section.style.setProperty("box-sizing","border-box","important");
-    section.style.setProperty("padding","30px","important");
-    section.style.setProperty("background","linear-gradient(135deg,#090b25 0%,#21103d 48%,#071c36 100%)","important");
-    section.style.setProperty("border","2px solid rgba(83,220,255,.72)","important");
-    section.style.setProperty("border-radius","22px","important");
-    section.style.setProperty("box-shadow","0 0 28px rgba(40,190,255,.28),inset 0 0 42px rgba(236,65,190,.16)","important");
-  });
-  clonedDocument.querySelectorAll(".raid-title h2").forEach(title=>{
-    title.style.setProperty("color","#ff75d8","important");
-    title.style.setProperty("text-shadow","0 0 8px rgba(255,75,190,.95),0 0 22px rgba(255,75,190,.55)","important");
-    title.style.setProperty("letter-spacing","3px","important");
-  });
-  clonedDocument.querySelectorAll(".party-card").forEach(card=>{
-    card.style.setProperty("padding","14px","important");
-    card.style.setProperty("border","1px solid rgba(82,220,255,.5)","important");
-    card.style.setProperty("border-radius","16px","important");
-    card.style.setProperty("background","linear-gradient(160deg,rgba(20,22,58,.96),rgba(8,13,34,.96))","important");
-    card.style.setProperty("box-shadow","0 0 16px rgba(58,202,255,.18),inset 0 0 18px rgba(255,77,190,.12)","important");
-  });
-  clonedDocument.querySelectorAll(".party-header h3").forEach(title=>{
-    title.style.setProperty("color","#75eaff","important");
-    title.style.setProperty("font-size","22px","important");
-    title.style.setProperty("text-shadow","0 0 9px rgba(65,210,255,.9)","important");
-  });
-  clonedDocument.querySelectorAll(".party-slot.war-member-slot").forEach(slot=>{
-    slot.style.setProperty("border","1px solid rgba(255,105,210,.55)","important");
-    slot.style.setProperty("background","linear-gradient(110deg,rgba(41,29,78,.96),rgba(10,24,54,.96))","important");
-    slot.style.setProperty("box-shadow","0 0 10px rgba(255,76,195,.16),inset 0 0 12px rgba(70,210,255,.10)","important");
-  });
-  clonedDocument.querySelectorAll(".slot-member-name").forEach(name=>{
-    name.style.setProperty("color","#fff","important");
-    name.style.setProperty("text-shadow","0 0 7px rgba(95,215,255,.45)","important");
-  });
 }
-async function captureWarDomElement(element,filename){
+async function captureWarDomElement(element,filename,event=null){
   if(!element)throw new Error("ไม่พบตารางที่ต้องการบันทึกภาพ");
   const html2canvas=await loadWarHtml2Canvas();
   if(document.fonts?.ready)await document.fonts.ready;
   const raidGrid=element.querySelector(".raid-grid");
-  const captureWidth=Math.max(element.scrollWidth,element.clientWidth,raidGrid?.scrollWidth||0);
+  const liveCards=raidGrid?[...raidGrid.children]:[];
+  const cardWidth=Math.max(380,...liveCards.map(card=>Math.ceil(card.getBoundingClientRect().width||0)));
+  const gridGap=raidGrid?parseFloat(getComputedStyle(raidGrid).columnGap)||8:8;
+  const columns=Math.max(5,liveCards.length);
+  const fullGridWidth=raidGrid?Math.max(raidGrid.scrollWidth,cardWidth*columns+gridGap*(columns-1)):0;
+  const captureWidth=Math.max(element.clientWidth,fullGridWidth);
+  const eventType=event?.registration_type==="practice"?"ซ้อมวอร์":"Guild War";
+  const eventTime=event?.start_time?formatTime(event.start_time)+" น.":"ไม่ระบุเวลา";
+  const eventDate=event?.event_date?formatDate(event.event_date):"";
   const canvas=await html2canvas(element,{
     scale:2,
     useCORS:true,
@@ -5871,7 +5844,7 @@ async function captureWarDomElement(element,filename){
     logging:false,
     width:captureWidth,
     windowWidth:captureWidth,
-    height:Math.max(element.scrollHeight,element.clientHeight),
+    height:Math.max(element.scrollHeight,element.clientHeight)+100,
     scrollX:0,
     scrollY:-window.scrollY,
     onclone:clonedDocument=>{
@@ -5880,14 +5853,43 @@ async function captureWarDomElement(element,filename){
       const clonedSection=raid?clonedDocument.querySelector('[data-raid-section="'+raid+'"]'):null;
       const clonedGrid=clonedSection?.querySelector(".raid-grid");
       if(clonedSection&&clonedGrid){
-        const width=Math.max(captureWidth,clonedGrid.scrollWidth,clonedGrid.clientWidth);
+        const cards=[...clonedGrid.children];
+        const cardW=Math.max(380,...cards.map(card=>Math.ceil(card.getBoundingClientRect().width||0)));
+        const gap=8;
+        const count=Math.max(5,cards.length);
+        const width=cardW*count+gap*(count-1);
+        clonedSection.style.setProperty("display","block","important");
+        clonedSection.style.setProperty("box-sizing","border-box","important");
         clonedSection.style.setProperty("width",width+"px","important");
         clonedSection.style.setProperty("min-width",width+"px","important");
         clonedSection.style.setProperty("max-width","none","important");
         clonedSection.style.setProperty("overflow","visible","important");
+        clonedGrid.style.setProperty("display","grid","important");
+        clonedGrid.style.setProperty("grid-template-columns","repeat("+count+","+cardW+"px)","important");
+        clonedGrid.style.setProperty("column-gap",gap+"px","important");
         clonedGrid.style.setProperty("width",width+"px","important");
         clonedGrid.style.setProperty("min-width",width+"px","important");
+        clonedGrid.style.setProperty("max-width","none","important");
         clonedGrid.style.setProperty("overflow","visible","important");
+        clonedGrid.style.setProperty("padding-right","0","important");
+        clonedGrid.style.setProperty("scrollbar-width","none","important");
+        const header=clonedDocument.createElement("div");
+        header.className="war-export-image-heading";
+        header.style.cssText="box-sizing:border-box;width:100%;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 4px 22px;margin:0 0 20px;border-bottom:2px solid rgba(190,45,60,.55);";
+        const identity=clonedDocument.createElement("div");
+        identity.style.cssText="display:flex;flex-direction:column;gap:7px;min-width:0;";
+        const guild=clonedDocument.createElement("strong");
+        guild.textContent="◥◣④AM◥◣";
+        guild.style.cssText="font-size:34px;font-weight:900;letter-spacing:2px;color:#ff5365;text-shadow:0 0 12px rgba(220,40,65,.32);";
+        const label=clonedDocument.createElement("span");
+        label.textContent=eventType+" · "+(event?.event_name||"Guild War");
+        label.style.cssText="font-size:20px;font-weight:800;color:#f4e9eb;";
+        identity.append(guild,label);
+        const details=clonedDocument.createElement("div");
+        details.textContent=(eventDate?eventDate+"  ·  ":"")+"เวลา "+eventTime;
+        details.style.cssText="flex:0 0 auto;text-align:right;font-size:19px;font-weight:800;color:#f4e9eb;white-space:nowrap;";
+        header.append(identity,details);
+        clonedSection.insertBefore(header,clonedGrid);
       }
     },
     ignoreElements:node=>node?.classList?.contains("war-raid-image-button")||node?.classList?.contains("war-party-image-button")
@@ -5909,7 +5911,7 @@ async function exportWarImage(raidFilter=null,eventId=selectedWarEventId){
   try{
     for(const section of targets){
       const raid=section.dataset.raidSection;
-      await captureWarDomElement(section,`4AM-War-Raid-${raid}-${getWarExportDate(eventId)}.png`);
+      await captureWarDomElement(section,`4AM-War-Raid-${raid}-${getWarExportDate(eventId)}.png`,event);
     }
   }catch(error){
     console.error("War DOM image capture failed:",error);
