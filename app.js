@@ -9836,7 +9836,7 @@ async function openDiscordEmbedStudio(eventKey, eventLabel) {
   $("embed-studio-history-results").innerHTML = "";
   populateEmbedStudio(null);
   setEmbedStudioStatus("กำลังโหลดข้อมูลต้นทาง...", "muted");
-  try { await loadEmbedStudioRecords(eventKey); setEmbedStudioStatus("เลือกข้อมูลต้นทางเพื่อดึงข้อความ Discord เดิม", "muted"); }
+  try { await loadEmbedStudioRecords(eventKey); await loadDiscordEmbedStudioTemplates(); setEmbedStudioStatus("เลือกข้อมูลต้นทางเพื่อดึงข้อความ Discord เดิม", "muted"); }
   catch (error) { setEmbedStudioStatus(error.message || "โหลดข้อมูลไม่สำเร็จ", "error"); }
 }
 function closeDiscordEmbedStudio() {
@@ -9922,9 +9922,47 @@ async function sendNewDiscordEmbedStudioMessage() {
   setEmbedStudioStatus("ส่งข้อความครั้งแรกและบันทึก Message ID แล้ว", "success");
 }
 
+
+async function loadDiscordEmbedStudioTemplates() {
+  const select = $("embed-studio-template-select");
+  if (!select) return;
+  const data = await invokeEmbedStudio("list_templates", { event_key: discordEmbedStudioState.eventKey });
+  select.innerHTML = "";
+  (data.templates || []).forEach(template => {
+    const option = document.createElement("option");
+    option.value = template.id;
+    option.textContent = template.template_name + " · v" + template.version + (template.is_active ? " · Active" : "");
+    option.dataset.payload = JSON.stringify(template.payload || {});
+    select.appendChild(option);
+  });
+  if (!select.options.length) select.innerHTML = '<option value="">ยังไม่มี Template</option>';
+}
+async function loadSelectedDiscordEmbedTemplate() {
+  const select = $("embed-studio-template-select");
+  const option = select?.selectedOptions?.[0];
+  if (!option?.dataset.payload) { setEmbedStudioStatus("ยังไม่มี Template ให้โหลด", "warning"); return; }
+  const payload = JSON.parse(option.dataset.payload);
+  populateEmbedStudio({ embeds: payload.embeds || [], content: payload.content || "", components: payload.components || [] });
+  renderEmbedStudioPreview();
+  setEmbedStudioStatus("โหลด Template เข้าสู่ Editor แล้ว", "success");
+}
+async function showDiscordEmbedStudioHistory() {
+  const data = await invokeEmbedStudio("list_history", { event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId || undefined });
+  const host = $("embed-studio-audit-history");
+  host.innerHTML = "";
+  (data.history || []).forEach(item => {
+    const row = document.createElement("div");
+    row.className = "discord-embed-studio-status";
+    row.textContent = (item.action || "change") + " · " + new Date(item.created_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) + " · " + (item.message_id || "ไม่มี Message ID");
+    host.appendChild(row);
+  });
+  if (!data.history?.length) host.textContent = "ยังไม่มีประวัติการแก้ไข";
+}
+
 async function saveDiscordEmbedStudioTemplate() {
   const payload = getEmbedStudioPayload();
   const data = await invokeEmbedStudio("save_template", { event_key: discordEmbedStudioState.eventKey, payload: payload, template_name: "Default" });
+  await loadDiscordEmbedStudioTemplates();
   setEmbedStudioStatus("บันทึก Template เวอร์ชัน " + data.template.version + " สำเร็จ", "success");
 }
 function registerDiscordEmbedStudioEvents() {
@@ -9962,6 +10000,8 @@ function registerDiscordEmbedStudioEvents() {
   $("embed-studio-send-test")?.addEventListener("click", () => void sendDiscordEmbedStudioTest().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-send-new")?.addEventListener("click", () => void sendNewDiscordEmbedStudioMessage().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-save-template")?.addEventListener("click", () => void saveDiscordEmbedStudioTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-load-template")?.addEventListener("click", () => void loadSelectedDiscordEmbedTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-show-history")?.addEventListener("click", () => void showDiscordEmbedStudioHistory().catch(error => setEmbedStudioStatus(error.message, "error")));
   document.addEventListener("keydown", event => { if (event.key === "Escape" && !$("discord-embed-studio-modal")?.classList.contains("hidden")) closeDiscordEmbedStudio(); });
 }
 
