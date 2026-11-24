@@ -12,7 +12,7 @@ const json = (body: unknown, status = 200) =>
 
 const isId = (value: unknown) => /^\d{17,20}$/.test(String(value || ""));
 const eventTitleHints: Record<string, string[]> = {
-  member_joined: ["สมาชิกใหม่", "4AM GUILD"],
+  member_joined: ["สมาชิกใหม่"],
   war_signup_opened: ["4AM SIGN-UP"],
   war_signup_submitted: ["4AM SIGN-UP"],
   war_signup_closed: ["ปิดรับสมัคร Guild War", "ปิดรับสมัคร"],
