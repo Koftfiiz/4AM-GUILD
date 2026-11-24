@@ -6053,7 +6053,7 @@ function renderWarRecordEventOptions(selectedEventId="",includeRecorded=false){
  const available=events.filter(x=>!recorded.has(x.id)|| (includeRecorded&&x.id===selectedEventId));
  const editingRecorded=Boolean(includeRecorded&&selectedEventId&&recorded.has(selectedEventId));
  const past=available.filter(x=>!isWarRecordEventFuture(x)&&!(editingRecorded&&x.id===selectedEventId));
- const future=available.filter(isWarRecordEventFuture);
+ const future=available.filter(x=>isWarRecordEventFuture(x)&&!(editingRecorded&&x.id===selectedEventId));
  select.innerHTML='<option value="">เลือกกิจกรรมที่แข่งขันแล้ว</option>'+
   past.map(x=>'<option value="'+escapeHTML(x.id)+'">'+escapeHTML(x.event_name)+' · '+formatDate(x.event_date)+' '+formatTime(x.start_time)+'</option>').join("")+
   future.map(x=>'<option value="'+escapeHTML(x.id)+'" disabled>'+escapeHTML(x.event_name)+' · '+formatDate(x.event_date)+' '+formatTime(x.start_time)+' · ยังไม่ถึงวันแข่ง</option>').join("");
