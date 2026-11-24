@@ -9756,6 +9756,7 @@ function renderEmbedStudioPreview() {
   if (!preview) return;
   preview.style.borderLeftColor = "#" + Number(embed.color).toString(16).padStart(6, "0").slice(-6);
   let html = "";
+  if (embed.author?.name) html += "<p style=\"font-size:12px;color:#b9bbc5\">" + escapeHTML(embed.author.name) + "</p>";
   if (embed.title) html += "<h4>" + escapeHTML(embed.title) + "</h4>";
   if (embed.description) html += "<p>" + escapeHTML(embed.description) + "</p>";
   (embed.fields || []).forEach(field => { html += '<div class="embed-studio-preview-field"><strong>' + escapeHTML(field.name) + '</strong><span>' + escapeHTML(field.value) + '</span></div>'; });
@@ -9764,6 +9765,7 @@ function renderEmbedStudioPreview() {
   if (thumb && /^https:\/\/\S+$/i.test(thumb)) html += '<img src="' + escapeHTML(thumb) + '" alt="Embed thumbnail">';
   if (main && /^https:\/\/\S+$/i.test(main)) html += '<img src="' + escapeHTML(main) + '" alt="Embed image">';
   if (embed.footer?.text) html += '<p style="color:#9da0aa;font-size:12px">' + escapeHTML(embed.footer.text) + '</p>';
+  if (embed.timestamp) html += '<p style="color:#9da0aa;font-size:11px">' + escapeHTML(new Date(embed.timestamp).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })) + '</p>';
   preview.innerHTML = html || "<p>ยังไม่มีเนื้อหา Embed</p>";
   const errors = [];
   if ((embed.title || "").length > 256) errors.push("Title เกิน 256 ตัวอักษร");
