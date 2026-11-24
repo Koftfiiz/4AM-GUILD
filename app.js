@@ -9597,7 +9597,6 @@ const DISCORD_EVENT_ROUTE_DEFINITIONS = [
   ["duck_race_results", "ประกาศผล Duck Race"],
   ["member_joined", "แจ้งเตือนสมาชิกใหม่"],
   ["war_signup_opened", "ประกาศลงชื่อวอร์"],
-  ["war_signup_submitted", "แจ้งการสมัครลงชื่อวอร์"],
   ["war_signup_closed", "ประกาศปิดรับสมัครวอร์"],
   ["war_leave_discord_submitted", "แจ้งลาวอร์ผ่าน Discord Bot"],
   ["war_roster_published", "ประกาศตี้วอร์"],
@@ -9752,7 +9751,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
   const routeMap = new Map((routes || []).map(route => [route.event_key, route]));
   const routeGroups = [
     { id: "general", title: "แจ้งเตือนทั่วไป", keys: ["member_joined"] },
-    { id: "war", title: "Guild War", keys: ["war_signup_opened", "war_signup_submitted", "war_signup_closed", "war_leave_discord_submitted", "war_roster_published", "war_checkin_opened", "war_attendance_finalized"] },
+    { id: "war", title: "Guild War", keys: ["war_signup_opened", "war_signup_closed", "war_leave_discord_submitted", "war_roster_published", "war_checkin_opened", "war_attendance_finalized"] },
     { id: "portfolio", title: "แฟ้มผลงาน", keys: ["portfolio_published"] },
     { id: "guild", title: "Guild Community", keys: ["guild_activity_published", "guild_activity_comment", "duck_race_results"] },
     { id: "feedback", title: "แจ้งปัญหา / Feedback", keys: ["feedback_submitted"] }
@@ -10041,7 +10040,6 @@ function embedStudioRecordConfig(eventKey) {
   const map = {
     member_joined: ["guild_members", "character_name", "user_id"],
     war_signup_opened: ["war_events", "event_name"],
-    war_signup_submitted: ["war_signups", "id"],
     war_signup_closed: ["war_events", "event_name"],
     war_leave_submitted: ["war_leave_requests", "id"],
     war_roster_published: ["war_events", "event_name"],
