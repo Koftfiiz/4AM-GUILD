@@ -9773,3 +9773,74 @@ body.gallery-lightbox-open{overflow:hidden}
 #page-member-management .member-pending-approve-btn:disabled{
   opacity:.65;cursor:wait;transform:none;
 }
+
+
+/* War result form — consistent field alignment and readable controls */
+#page-war-stats .war-record-form-grid{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  align-items:start;
+  gap:16px;
+}
+#page-war-stats .war-record-form-grid > .form-group{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  min-width:0;
+  gap:8px;
+}
+#page-war-stats .war-record-form-grid > .form-group > label{
+  display:flex;
+  align-items:flex-end;
+  min-height:44px;
+  margin:0;
+  font-size:16px;
+  line-height:1.45;
+  font-weight:700;
+}
+#page-war-stats .war-record-form-grid > .form-group > input,
+#page-war-stats .war-record-form-grid > .form-group > select{
+  box-sizing:border-box;
+  display:block;
+  width:100%;
+  height:50px;
+  min-height:50px;
+  margin:0;
+  padding:10px 12px;
+  font-size:16px;
+  line-height:1.4;
+}
+#page-war-stats .war-record-form-grid > .form-group > small{
+  min-height:42px;
+  margin:0;
+  font-size:15px;
+  line-height:1.45;
+}
+#page-war-stats .war-record-form-grid > .form-group:not(:has(#war-record-event-hint))::after{
+  content:"";
+  display:block;
+  min-height:42px;
+}
+#page-war-stats #war-record-type:disabled{
+  opacity:1;
+  color:#ffb0ba;
+  -webkit-text-fill-color:#ffb0ba;
+  cursor:not-allowed;
+}
+#page-war-stats .war-record-form-grid > .form-group > label,
+#page-war-stats .war-record-form-grid > .form-group > input,
+#page-war-stats .war-record-form-grid > .form-group > select{
+  font-size:16px;
+}
+@media(max-width:1200px){
+  #page-war-stats .war-record-form-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  #page-war-stats .war-record-form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:520px){
+  #page-war-stats .war-record-form-grid{grid-template-columns:minmax(0,1fr)}
+  #page-war-stats .war-record-form-grid > .form-group > label{min-height:0}
+  #page-war-stats .war-record-form-grid > .form-group > small,
+  #page-war-stats .war-record-form-grid > .form-group:not(:has(#war-record-event-hint))::after{min-height:0}
+}
