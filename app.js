@@ -5734,143 +5734,63 @@ async function publishWarEvent(){
   }catch(error){console.error("Publish/update war roster failed:",error);alert("Publish / อัปเดตรายชื่อวอร์ไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));}
   finally{if(button){button.disabled=false;button.textContent="Publish อัปเดตรายชื่อ";}}
 }
-let thaiFontCssPromise = null;
-// SVG ที่แปลงเป็นรูปใช้ฟอนต์ของหน้าเว็บไม่ได้ จึงต้องฝัง Noto Sans Thai (ไทย+ละติน, ปกติ/หนา) ลงในไฟล์ SVG เอง
-function getThaiFontCss() {
-  if (!thaiFontCssPromise) {
-    thaiFontCssPromise = (async () => {
-      const css = await (await fetch("https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;700&display=swap")).text();
-      const faces = [...css.matchAll(/\/\*\s*(?:thai|latin)\s*\*\/\s*(@font-face\s*\{[^}]*\})/g)].map((match) => match[1]);
-      const toDataUrl = (blob) => new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-      const embedded = await Promise.all(faces.map(async (face) => {
-        const url = face.match(/url\(([^)]+)\)/)?.[1]?.replace(/['"]/g, "");
-        if (!url) return "";
-        const dataUrl = await toDataUrl(await (await fetch(url)).blob());
-        return face.replace(/url\([^)]+\)(\s*format\([^)]*\))?/, () => `url(${dataUrl}) format("woff2")`);
-      }));
-      return embedded.join("\n");
-    })().catch(() => {
-      thaiFontCssPromise = null;
-      return "";
-    });
-  }
-  return thaiFontCssPromise;
+async function loadWarHtml2Canvas(){
+  if(typeof window.html2canvas==="function")return window.html2canvas;
+  if(window.__warHtml2CanvasPromise)return window.__warHtml2CanvasPromise;
+  window.__warHtml2CanvasPromise=new Promise((resolve,reject)=>{
+    const script=document.createElement("script");
+    script.src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js";
+    script.async=true;
+    script.onload=()=>typeof window.html2canvas==="function"?resolve(window.html2canvas):reject(new Error("โหลดระบบจับภาพหน้าเว็บไม่สำเร็จ"));
+    script.onerror=()=>reject(new Error("โหลดระบบจับภาพหน้าเว็บไม่สำเร็จ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต"));
+    document.head.appendChild(script);
+  }).catch(error=>{window.__warHtml2CanvasPromise=null;throw error;});
+  return window.__warHtml2CanvasPromise;
 }
-function deliverWarPng(blob, filename) {
+function deliverWarPng(blob,filename){
   const url=URL.createObjectURL(blob);
   const link=document.createElement("a");
-  link.href=url;
-  link.download=filename;
-  link.style.display="none";
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  // Keep the Blob URL alive long enough for the browser download manager to read it.
+  link.href=url;link.download=filename;link.style.display="none";
+  document.body.appendChild(link);link.click();link.remove();
   window.setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
-
-async function exportWarImage(raidFilter = null,eventId = selectedWarEventId){
+async function captureWarDomElement(element,filename){
+  if(!element)throw new Error("ไม่พบตารางที่ต้องการบันทึกภาพ");
+  const html2canvas=await loadWarHtml2Canvas();
+  if(document.fonts?.ready)await document.fonts.ready;
+  const canvas=await html2canvas(element,{
+    scale:2,
+    useCORS:true,
+    allowTaint:false,
+    backgroundColor:null,
+    logging:false,
+    width:Math.max(element.scrollWidth,element.clientWidth),
+    height:Math.max(element.scrollHeight,element.clientHeight),
+    scrollX:0,
+    scrollY:-window.scrollY,
+    ignoreElements:node=>node?.classList?.contains("war-raid-image-button")||node?.classList?.contains("war-party-image-button")
+  });
+  const blob=await new Promise((resolve,reject)=>canvas.toBlob(result=>result?resolve(result):reject(new Error("สร้างไฟล์ PNG ไม่สำเร็จ")),"image/png"));
+  deliverWarPng(blob,filename);
+}
+function getWarExportDate(eventId){
+  const event=allWarEvents.find(item=>item.id===eventId)||warAttendanceEvents.find(item=>item.id===eventId);
+  return event?.event_date||new Date().toISOString().slice(0,10);
+}
+async function exportWarImage(raidFilter=null,eventId=selectedWarEventId){
   const event=allWarEvents.find(item=>item.id===eventId);
   if(!event){alert("ไม่พบกิจกรรมวอร์ที่ต้องการบันทึกภาพ กรุณาปิดหน้าต่างจัดตี้แล้วเปิดใหม่อีกครั้ง");return;}
   if(!event.is_draft_confirmed){alert("กรุณายืนยันการสร้างตี้วอร์ก่อน จึงจะสามารถบันทึกเป็นรูปภาพได้");return;}
-  const config=getWarEventConfig(event),width=1600,allRaidNames=["A","B","C","D"].slice(0,config.raidCount);
-  const raidNames=raidFilter?allRaidNames.filter(raid=>raid===raidFilter):allRaidNames;
-  if(raidFilter&&!raidNames.length)return;
-  const height=330+raidNames.length*510,esc=value=>escapeHTML(String(value??""));
-  const roundTimes=config.rounds?.length?config.rounds:[formatTime(event.start_time)];
-  const dateTimeLabel=config.mode==="official"
-    ? `${formatDate(event.event_date)} ${roundTimes.map((time,index)=>`รอบ ${index+1} เวลา ${time} น.`).join(" | ")}`
-    : `${formatDate(event.event_date)} เวลา ${formatTime(event.start_time)} น.`;
-  const toDataUrl=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});
+  const sections=[...document.querySelectorAll("#war-raid-boards [data-raid-section]")];
+  const targets=raidFilter?sections.filter(section=>section.dataset.raidSection===raidFilter):sections;
+  if(!targets.length){alert("ไม่พบตาราง Raid ที่ต้องการบันทึกภาพ");return;}
   try{
-    const [background,logo,fontCss]=await Promise.all([
-      fetch("/assets/4am-web-bg.jpg").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ assets/4am-web-bg.jpg");return response.blob();}).then(toDataUrl),
-      fetch("/assets/4am-guild-logo.png?v=20261111b").then(response=>{if(!response.ok)throw Error("ไม่พบไฟล์ /assets/4am-guild-logo.png?v=20261111b");return response.blob();}).then(toDataUrl),
-      getThaiFontCss()
-    ]);
-    const rosterClassNames=[...new Set(currentWarParties.flatMap(party=>(party.war_party_members||[]).map(assignment=>{
-      const member=allMembers.find(item=>item.user_id===assignment.member_id);
-      return member?getMemberClass(member):null;
-    }).filter(Boolean)))];
-    const classIconEntries=await Promise.all(rosterClassNames.map(async className=>{
-      const info=getClassInfo(className);
-      if(!info?.iconPath)return [className,""];
-      try{
-        const response=await fetch(info.iconPath);
-        if(!response.ok)return [className,""];
-        return [className,await toDataUrl(await response.blob())];
-      }catch{return [className,""]; }
-    }));
-    const classIconData=Object.fromEntries(classIconEntries);
-    const parts=[`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
-      <defs>
-        <linearGradient id="redLine" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff4655"/><stop offset=".5" stop-color="#a10f20"/><stop offset="1" stop-color="#4b0710"/></linearGradient>
-        <linearGradient id="cardFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0b0e" stop-opacity=".98"/><stop offset="1" stop-color="#050506" stop-opacity=".98"/></linearGradient>
-        <linearGradient id="redAccent" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3b080e"/><stop offset=".52" stop-color="#b51227"/><stop offset="1" stop-color="#430810"/></linearGradient>
-        <filter id="redGlow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="7" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-      </defs>
-      <image x="0" y="0" width="1600" height="${height}" preserveAspectRatio="xMidYMid slice" href="${background}" xlink:href="${background}"/>
-      <rect width="1600" height="${height}" fill="#030304" opacity=".82"/>
-      <rect x="24" y="24" width="1552" height="${height-48}" rx="20" fill="#080608" fill-opacity=".58" stroke="url(#redLine)" stroke-width="4"/>
-      <path d="M48 188 H1552" stroke="#e21b35" stroke-opacity=".8" stroke-width="3"/>
-      <path d="M48 180 H420" stroke="#ff394d" stroke-width="5" filter="url(#redGlow)"/>
-      <rect x="48" y="48" width="1504" height="122" rx="12" fill="#050506" fill-opacity=".84" stroke="#a70d22" stroke-width="2"/>
-      <image x="70" y="61" width="96" height="96" preserveAspectRatio="xMidYMid meet" href="${logo}" xlink:href="${logo}"/>
-      <text x="185" y="119" fill="#ffffff" font-size="48" font-family="Noto Sans Thai" font-weight="900" letter-spacing="3">4AM GUILD</text>
-      <path d="M185 133 H530" stroke="#e21b35" stroke-width="5"/>
-      <text x="1515" y="101" text-anchor="end" fill="#ff4054" font-size="21" font-family="Noto Sans Thai" font-weight="900" letter-spacing="3">GUILD WAR ROSTER</text>
-      <text x="1515" y="139" text-anchor="end" fill="#ffffff" font-size="22" font-family="Noto Sans Thai" font-weight="700">${esc(event.event_name)}</text>
-      <text x="1515" y="163" text-anchor="end" fill="#c9bfc2" font-size="16" font-family="Noto Sans Thai" font-weight="600">${esc(dateTimeLabel)}</text>`];
-    let y=220;
-    for(const [raidIndex,raid] of raidNames.entries()){
-      parts.push(`<rect x="48" y="${y}" width="1504" height="42" rx="6" fill="url(#redAccent)" stroke="#ef263f" stroke-opacity=".95" stroke-width="2"/>
-        <path d="M48 ${y+4} H1552" stroke="#ff6472" stroke-opacity=".55" stroke-width="2"/>
-        <text x="70" y="${y+29}" fill="#ffffff" font-size="25" font-family="Noto Sans Thai" font-weight="900" letter-spacing="3">RAID ${raid}</text>
-        <text x="1525" y="${y+28}" text-anchor="end" fill="#ffe8eb" font-size="16" font-family="Noto Sans Thai" font-weight="700">${raidIndex+1} / ${raidNames.length}</text>`);
-      const cardY=y+56;
-      for(let p=1;p<=5;p++){
-        const party=currentWarParties.find(item=>item.raid===raid&&Number(item.party_number)===p);
-        const assigned=party?.war_party_members||[],x=60+(p-1)*300;
-        parts.push(`<rect x="${x}" y="${cardY}" width="284" height="426" rx="10" fill="url(#cardFill)" stroke="#bd1b31" stroke-opacity=".95" stroke-width="2.5"/>
-          <path d="M${x+1} ${cardY+54} H${x+283}" stroke="#e21b35" stroke-width="4"/>
-          <path d="M${x+12} ${cardY+12} H${x+88}" stroke="#ff4054" stroke-width="3"/>
-          <text x="${x+16}" y="${cardY+35}" fill="#ffffff" font-size="23" font-family="Noto Sans Thai" font-weight="900">${raid}${p}</text>
-          <text x="${x+266}" y="${cardY+34}" text-anchor="end" fill="#ff5365" font-size="17" font-family="Noto Sans Thai" font-weight="900">${assigned.length}/6</text>`);
-        for(let slot=1;slot<=6;slot++){
-          const assignment=assigned.find(item=>Number(item.position)===slot);
-          const member=allMembers.find(item=>item.user_id===assignment?.member_id);
-          const rowY=cardY+91+(slot-1)*54;
-          if(slot>1)parts.push(`<path d="M${x+14} ${rowY-22} H${x+270}" stroke="#a11a2c" stroke-opacity=".45" stroke-width="1.5"/>`);
-          const classIcon=member?classIconData[getMemberClass(member)]:"";
-          parts.push(`<circle cx="${x+25}" cy="${rowY-5}" r="12" fill="${member?"#c31830":"#211619"}" stroke="${member?"#ff5264":"#6a3039"}" stroke-width="1.5"/>
-            <text x="${x+25}" y="${rowY}" text-anchor="middle" fill="#ffffff" font-size="13" font-family="Noto Sans Thai" font-weight="900">${slot}</text>
-            ${classIcon?`<image x="${x+45}" y="${rowY-19}" width="28" height="28" preserveAspectRatio="xMidYMid meet" href="${classIcon}" xlink:href="${classIcon}"/>`:""}
-            <text x="${x+(classIcon?82:47)}" y="${rowY+1}" fill="${member?"#ffffff":"#81777a"}" font-size="16" font-family="Noto Sans Thai" font-weight="700">${esc(member?getMemberName(member):"ว่าง")}</text>`);
-        }
-      }
-      y+=510;
+    for(const section of targets){
+      const raid=section.dataset.raidSection;
+      await captureWarDomElement(section,`4AM-War-Raid-${raid}-${getWarExportDate(eventId)}.png`);
     }
-    parts.push(`<text x="800" y="${height-42}" text-anchor="middle" fill="#ffffff" font-size="32" font-family="Noto Sans Thai" font-weight="900" letter-spacing="4">4AM vs ${esc(event.event_name.replace(/^4AM\s+vs\s+/i,""))}</text></svg>`);
-    const svg=parts.join("");
-    const svgWithFonts=fontCss?svg.replace(">",`><style>${fontCss}</style>`):svg;
-    const svgUrl=URL.createObjectURL(new Blob([svgWithFonts],{type:"image/svg+xml;charset=utf-8"}));
-    try{
-      const img=new Image();img.src=svgUrl;await img.decode();
-      const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
-      const context=canvas.getContext("2d");if(!context)throw Error("ไม่สามารถสร้าง Canvas ได้");
-      context.drawImage(img,0,0);
-      const png=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
-      if(!png)throw Error("PNG export failed");
-      const filename=raidFilter?`4AM-War-Raid-${raidFilter}-${event.event_date}.png`:`4AM-War-${event.event_date}.png`;
-      deliverWarPng(png,filename);
-    }finally{URL.revokeObjectURL(svgUrl);}
   }catch(error){
-    console.error("War image export failed:",error);
+    console.error("War DOM image capture failed:",error);
     alert("บันทึกรูปไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));
   }
 }
@@ -5882,54 +5802,26 @@ function addWarPartyExportButtons(container,parties){
     if(!party?.id||card.querySelector(".war-party-image-button"))return;
     const header=card.querySelector(".party-header");if(!header)return;
     const button=document.createElement("button");
-    button.type="button";
-    button.className="btn btn-outline btn-sm war-party-image-button";
+    button.type="button";button.className="btn btn-outline btn-sm war-party-image-button";
     button.textContent="บันทึกรูปตี้";
     button.addEventListener("click",()=>exportWarPartyImage(party.id));
     header.appendChild(button);
   });
 }
 async function exportWarPartyImage(partyId){
-  const downloadWindow=window.open("about:blank","_blank");
-  let party=currentWarParties.find(item=>item.id===partyId)||null;
-  if(!party){
-    const result=await supabaseClient.from("war_parties")
-      .select("id,event_id,raid,party_number,party_name,war_party_members(id,member_id,position)")
-      .eq("id",partyId).maybeSingle();
-    if(result.error||!result.data){alert("ไม่พบข้อมูลปาร์ตี้");return;}
-    party=result.data;
-  }
-  const event=allWarEvents.find(item=>item.id===party.event_id)||warAttendanceEvents.find(item=>item.id===party.event_id);
-  const esc=value=>escapeHTML(String(value??""));
-  const toDataUrl=blob=>new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(blob);});
+  const party=currentWarParties.find(item=>item.id===partyId)||null;
+  const publishedParty=party||null;
+  const candidates=[...document.querySelectorAll(".party-card")];
+  const card=candidates.find(item=>item.querySelector(".party-header h3")?.textContent?.trim()===(publishedParty?publishedParty.raid+publishedParty.party_number:""));
+  if(!card){alert("ไม่พบการ์ดตี้บนหน้าจอ กรุณาเปิดหน้ารายชื่อตี้ก่อนบันทึกภาพ");return;}
+  const eventId=publishedParty?.event_id||warAttendanceEventId||selectedWarEventId;
+  const label=publishedParty?publishedParty.raid+publishedParty.party_number:(card.querySelector(".party-header h3")?.textContent?.trim()||"Party");
   try{
-    const [bg,logo,fontCss]=await Promise.all([
-      fetch("/assets/4am-web-bg.jpg").then(r=>{if(!r.ok)throw Error("ไม่พบภาพพื้นหลัง");return r.blob();}).then(toDataUrl),
-      fetch("/assets/4am-guild-logo.png?v=20261111b").then(r=>{if(!r.ok)throw Error("ไม่พบโลโก้");return r.blob();}).then(toDataUrl),
-      getThaiFontCss()
-    ]);
-    const members=(party.war_party_members||[]).map(row=>({row,member:allMembers.find(item=>item.user_id===row.member_id)}));
-    const rows=[];
-    for(let n=1;n<=6;n++){
-      const entry=members.find(x=>Number(x.row.position)===n),member=entry?.member;
-      const info=member?getClassInfo(getMemberClass(member)):null,y=385+(n-1)*78;
-      rows.push(`<rect x="95" y="${y-43}" width="910" height="64" rx="9" fill="#100b10" fill-opacity=".92" stroke="${info?.color||"#85313d"}" stroke-width="2"/>`);
-      rows.push(`<circle cx="137" cy="${y-11}" r="18" fill="#a7192e"/><text x="137" y="${y-5}" text-anchor="middle" fill="#fff" font-size="17" font-weight="900">${n}</text><text x="205" y="${y-5}" fill="${member?"#fff":"#96888e"}" font-size="25" font-weight="700">${esc(member?getMemberName(member):"ว่าง")}</text><text x="980" y="${y-5}" text-anchor="end" fill="${info?.color||"#e7c5c8"}" font-size="17" font-weight="700">${esc(member?getMemberClass(member):"")}</text>`);
-    }
-    const label=party.raid+party.party_number,width=1100,height=900;
-    const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><image width="${width}" height="${height}" href="${bg}"/><rect width="100%" height="100%" fill="#050306" fill-opacity=".78"/><rect x="25" y="25" width="1050" height="850" rx="20" fill="#080608" fill-opacity=".72" stroke="#b51d34" stroke-width="4"/><image x="65" y="55" width="100" height="100" href="${logo}"/><text x="190" y="108" fill="#fff" font-size="43" font-weight="900">4AM GUILD</text><text x="190" y="145" fill="#f04a5c" font-size="18" font-weight="800">GUILD WAR ROSTER</text><text x="1015" y="100" text-anchor="end" fill="#fff" font-size="38" font-weight="900">${label}</text><text x="1015" y="140" text-anchor="end" fill="#d9c5c9" font-size="17">${esc(event?.event_name||"4AM GUILD WAR")} · ${event?formatDate(event.event_date):""}</text><rect x="75" y="215" width="950" height="82" rx="10" fill="#841526" stroke="#ef4358" stroke-width="2"/><text x="115" y="267" fill="#fff" font-size="31" font-weight="900">RAID ${esc(party.raid)} · PARTY ${label}</text><text x="985" y="267" text-anchor="end" fill="#ffe5e8" font-size="22" font-weight="800">${members.filter(x=>x.member).length}/6</text>${rows.join("")}<text x="550" y="845" text-anchor="middle" fill="#f1d8dc" font-size="19" font-weight="800">THE OUTRAGEOUS · 4AM GUILD</text></svg>`;
-    const svgWithFonts=fontCss?svg.replace(">",`><style>${fontCss}</style>`):svg;
-    const svgUrl=URL.createObjectURL(new Blob([svgWithFonts],{type:"image/svg+xml;charset=utf-8"}));
-    try{
-      const img=new Image();img.src=svgUrl;await img.decode();
-      const canvas=document.createElement("canvas");canvas.width=width;canvas.height=height;
-      const ctx=canvas.getContext("2d");if(!ctx)throw Error("ไม่สามารถสร้าง Canvas ได้");
-      ctx.drawImage(img,0,0);
-      const blob=await new Promise(resolve=>canvas.toBlob(resolve,"image/png"));
-      if(!blob)throw Error("สร้าง PNG ไม่สำเร็จ");
-      deliverWarPng(blob,`4AM-${label}-${event?.event_date||"War"}.png`,downloadWindow);
-    }finally{URL.revokeObjectURL(svgUrl);}
-  }catch(error){console.error("Party image export failed:",error);alert("บันทึกรูปตี้ไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));}
+    await captureWarDomElement(card,`4AM-War-Party-${label}-${getWarExportDate(eventId)}.png`);
+  }catch(error){
+    console.error("War party DOM image capture failed:",error);
+    alert("บันทึกรูปตี้ไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));
+  }
 }
 window.exportWarPartyImage=exportWarPartyImage;
 
