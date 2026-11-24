@@ -9884,3 +9884,28 @@ body.gallery-lightbox-open{overflow:hidden}
   font-size:14px;
   line-height:1.55;
 }
+
+
+/* Consistent refresh glyphs: do not depend on an icon-font CDN. */
+#page-discord-integration .discord-channel-refresh i { display: none !important; }
+#page-discord-integration .discord-channel-refresh::before {
+  content: "↻";
+  display: block;
+  font-family: "Noto Sans Thai", sans-serif;
+  font-size: 27px;
+  font-weight: 700;
+  line-height: 1;
+}
+#page-discord-integration .discord-channel-refresh.is-loading::before {
+  animation: discord-channel-spin .8s linear infinite;
+}
+#war-signup-refresh::before,
+#war-leave-refresh::before {
+  content: "↻";
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: -1px;
+}
