@@ -9864,53 +9864,53 @@ function renderDiscordIntegrationRoutes(routes = [], savedLayout = null) {
   const routeCards = new Map(DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key, label]) => {
     const route = routeMap.get(key) || {};
     const displayLabel = route.event_label || label;
-    return [key, \`
-      <div class="discord-route-row" data-discord-route="\${escapeHTML(key)}">
+    return [key, `
+      <div class="discord-route-row" data-discord-route="${escapeHTML(key)}">
         <div class="discord-route-card-heading">
-          <button type="button" class="discord-route-drag-handle" draggable="true" aria-label="ลากเพื่อย้ายการ์ด \${escapeHTML(displayLabel)}" title="ลากเพื่อจัดเรียงหรือย้ายโซน">⠿</button>
-          <h4>\${escapeHTML(displayLabel)}</h4>
-          <span class="discord-route-status \${route.enabled ? "is-on" : "is-off"}">\${route.enabled ? "ON" : "OFF"}</span>
+          <button type="button" class="discord-route-drag-handle" draggable="true" aria-label="ลากเพื่อย้ายการ์ด ${escapeHTML(displayLabel)}" title="ลากเพื่อจัดเรียงหรือย้ายโซน">⠿</button>
+          <h4>${escapeHTML(displayLabel)}</h4>
+          <span class="discord-route-status ${route.enabled ? "is-on" : "is-off"}">${route.enabled ? "ON" : "OFF"}</span>
         </div>
         <label class="discord-route-field">
           <span>ชื่อ Event</span>
           <input class="discord-route-label-input" type="text" maxlength="80" required data-discord-route-label
-            aria-label="ชื่อ Event สำหรับ \${escapeHTML(displayLabel)}" title="แก้ไขชื่อ Event"
-            value="\${escapeHTML(displayLabel)}">
+            aria-label="ชื่อ Event สำหรับ ${escapeHTML(displayLabel)}" title="แก้ไขชื่อ Event"
+            value="${escapeHTML(displayLabel)}">
         </label>
         <label class="discord-route-field">
           <span>ห้อง Discord สำหรับ Event นี้</span>
-          <input type="hidden" data-discord-route-channel value="\${escapeHTML(route.channel_id || "")}">
-          <div class="discord-channel-picker" data-discord-channel-picker="route" data-route-key="\${escapeHTML(key)}">
+          <input type="hidden" data-discord-route-channel value="${escapeHTML(route.channel_id || "")}">
+          <div class="discord-channel-picker" data-discord-channel-picker="route" data-route-key="${escapeHTML(key)}">
             <div class="discord-channel-select-row">
-              <select data-discord-channel-select data-channel-target="route" data-route-key="\${escapeHTML(key)}" aria-label="เลือกห้อง Discord สำหรับ \${escapeHTML(displayLabel)}">
-                <option value="">\${route.channel_id ? "ห้องที่เลือกไว้ · กำลังโหลดชื่อ..." : "เลือกห้อง Discord..."}</option>
+              <select data-discord-channel-select data-channel-target="route" data-route-key="${escapeHTML(key)}" aria-label="เลือกห้อง Discord สำหรับ ${escapeHTML(displayLabel)}">
+                <option value="">${route.channel_id ? "ห้องที่เลือกไว้ · กำลังโหลดชื่อ..." : "เลือกห้อง Discord..."}</option>
               </select>
               <button type="button" class="discord-channel-refresh" data-discord-refresh-channels aria-label="รีเฟรชรายชื่อห้อง Discord" title="รีเฟรชรายชื่อห้อง"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button>
             </div>
             <small data-discord-channel-status>เปิดรายการห้องเพื่อโหลดจาก Discord อัตโนมัติ</small>
           </div>
         </label>
-        \${key === "war_leave_discord_submitted" ? '<p class="discord-route-description">การ์ดแยกสำหรับกำหนดห้องรับแจ้งเตือนเมื่อสมาชิกส่งคำแจ้งลาผ่าน Discord Bot · ต้องเชื่อมการทำงานฝั่ง Bot ก่อนเปิดใช้งานจริง</p>' : ''}
+        ${key === "war_leave_discord_submitted" ? '<p class="discord-route-description">การ์ดแยกสำหรับกำหนดห้องรับแจ้งเตือนเมื่อสมาชิกส่งคำแจ้งลาผ่าน Discord Bot · ต้องเชื่อมการทำงานฝั่ง Bot ก่อนเปิดใช้งานจริง</p>' : ''}
         <div class="discord-route-card-footer">
-          <span class="discord-route-footer-state \${route.enabled ? "is-on" : "is-off"}">\${route.enabled ? "ON" : "OFF"}</span>
+          <span class="discord-route-footer-state ${route.enabled ? "is-on" : "is-off"}">${route.enabled ? "ON" : "OFF"}</span>
           <label class="discord-route-enabled" aria-label="เปิดหรือปิดการแจ้งเตือน">
-            <input type="checkbox" data-discord-route-enabled \${route.enabled ? "checked" : ""}>
+            <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
             <span class="discord-route-switch-state"></span>
           </label>
-          \${key === "war_leave_discord_submitted" ? "" : '<button type="button" class="discord-route-manage-embed" data-discord-embed-manage="' + escapeHTML(key) + '">จัดการ Embed</button>'}
+          ${key === "war_leave_discord_submitted" ? "" : '<button type="button" class="discord-route-manage-embed" data-discord-embed-manage="' + escapeHTML(key) + '">จัดการ Embed</button>'}
         </div>
-      </div>\`];
+      </div>`];
   }));
   container.innerHTML = discordRouteLayout.sections.map(group => {
     const cards = group.keys.map(key => routeCards.get(key)).filter(Boolean).join("");
-    return \`
-      <section class="discord-route-section" data-discord-route-section="\${group.id}">
+    return `
+      <section class="discord-route-section" data-discord-route-section="${group.id}">
         <header class="discord-route-section-heading">
-          <div><h3>\${group.title}</h3></div>
-          <span>\${group.keys.length} EVENTS</span>
+          <div><h3>${group.title}</h3></div>
+          <span>${group.keys.length} EVENTS</span>
         </header>
-        <div class="discord-route-section-grid" data-discord-route-section-grid="\${group.id}">\${cards}</div>
-      </section>\`;
+        <div class="discord-route-section-grid" data-discord-route-section-grid="${group.id}">${cards}</div>
+      </section>`;
   }).join("");
   updateDiscordRouteOverview();
   filterDiscordIntegrationRoutes();
