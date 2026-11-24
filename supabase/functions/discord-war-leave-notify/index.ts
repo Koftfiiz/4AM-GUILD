@@ -45,7 +45,10 @@ Deno.serve(async (request: Request) => {
       .eq("id", requestId).maybeSingle();
     if (leaveError || !leave) return json({ success: false, message: "ไม่พบรายการแจ้งลาวอร์" }, 404);
     if (leave.member_id !== authData.user.id && !isManager) return json({ success: false, message: "Not allowed" }, 403);
-    if (leave.discord_notified_at) return json({ success: true, already_notified: true });
+    const { data: existingDiscordMessage } = await admin.from("discord_embed_messages").select("channel_id,message_id")
+      .eq("event_key", "war_leave_submitted").eq("record_id", requestId).eq("message_type", "primary").maybeSingle();
+    if (leave.discord_notified_at && !existingDiscordMessage) return json({ success: true, already_notified: true, needs_legacy_link: true });
+    if (leave.discord_notified_at && existingDiscordMessage) return json({ success: true, already_notified: true });
 
     const [{ data: settings, error: settingsError }, { data: route, error: routeError }] = await Promise.all([
       admin.from("guild_discord_integration_settings").select("mode,test_channel_id,production_enabled").eq("id", 1).maybeSingle(),
@@ -56,7 +59,8 @@ Deno.serve(async (request: Request) => {
       return json({ success: true, skipped: true, message: "ปิดการแจ้งเตือนการถอนตัวจากวอร์ไว้ใน Discord Integration Settings" });
     }
     let channelId = "";
-    if (settings.mode === "test") channelId = String(settings.test_channel_id || "");
+    if (existingDiscordMessage?.channel_id) channelId = String(existingDiscordMessage.channel_id);
+    else if (settings.mode === "test") channelId = String(settings.test_channel_id || "");
     else if (settings.mode === "production" && settings.production_enabled === true && route?.enabled === true) {
       channelId = String(route.channel_id || "");
     }
@@ -73,10 +77,7 @@ Deno.serve(async (request: Request) => {
     const memberName = member?.character_name || member?.nickname || member?.discord_name || "สมาชิก 4AM";
     const date = event?.event_date ? String(event.event_date).split("-").reverse().join("/") : "-";
     const time = String(event?.start_time || "").slice(0, 5);
-    const response = await fetch("https://discord.com/api/v10/channels/" + channelId + "/messages", {
-      method: "POST",
-      headers: { Authorization: "Bot " + botToken, "Content-Type": "application/json" },
-      body: JSON.stringify({
+    const messagePayload = {
         embeds: [{
           title: "4AM GUILD · แจ้งลาวอร์",
           description: "**" + String(event?.event_name || "Guild War").slice(0, 180) + "**",
@@ -91,7 +92,18 @@ Deno.serve(async (request: Request) => {
           timestamp: leave.created_at,
         }],
         allowed_mentions: { parse: [] },
-      }),
+      };
+    const existingUrl = existingDiscordMessage?.message_id
+      ? "https://discord.com/api/v10/channels/" + channelId + "/messages/" + existingDiscordMessage.message_id
+      : "https://discord.com/api/v10/channels/" + channelId + "/messages";
+    if (existingDiscordMessage?.message_id) {
+      const existingCheck = await fetch(existingUrl, { headers: { Authorization: "Bot " + botToken } });
+      if (!existingCheck.ok) return json({ success: false, message: "ข้อความ Discord เดิมไม่พบ ระบบจะไม่สร้างข้อความทดแทน กรุณาตรวจสอบใน Embed Studio" }, 409);
+    }
+    const response = await fetch(existingUrl, {
+      method: existingDiscordMessage?.message_id ? "PATCH" : "POST",
+      headers: { Authorization: "Bot " + botToken, "Content-Type": "application/json" },
+      body: JSON.stringify(messagePayload),
     });
     if (!response.ok) {
       const details = (await response.text()).slice(0, 800);
