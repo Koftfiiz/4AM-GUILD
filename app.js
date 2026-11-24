@@ -5865,7 +5865,7 @@ async function captureWarDomElement(element,filename,event=null){
             const full=hex[1].length===3?hex[1].split("").map(char=>char+char).join(""):hex[1];
             parts=[parseInt(full.slice(0,2),16),parseInt(full.slice(2,4),16),parseInt(full.slice(4,6),16)];
           }else{
-            const rgb=raw.match(/rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)/i);
+            const rgb=raw.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
             if(rgb)parts=[Number(rgb[1]),Number(rgb[2]),Number(rgb[3])];
           }
           if(!parts)parts=[170,170,170];
