@@ -247,6 +247,11 @@ Deno.serve(async (request: Request) => {
       const testPayload = { content: payload.content || undefined, embeds: payload.embeds || [], allowed_mentions: { parse: [] } };
       const sent = await discord("/channels/" + channelId + "/messages", { method: "POST", body: JSON.stringify(testPayload) });
       if (!sent.response.ok) return json({ success: false, message: "ส่ง Test Message ไม่สำเร็จ", discord_status: sent.response.status, details: sent.data }, 502);
+      await admin.from("discord_embed_history").insert({
+        event_key: eventKey || "embed_studio_test", record_id: recordId || null, message_type: messageType,
+        channel_id: channelId, message_id: String(sent.data.id), action: "test_send",
+        after_payload: sent.data, actor_id: authData.user.id
+      });
       return json({ success: true, channel_id: channelId, message: sent.data });
     }
 
