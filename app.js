@@ -5803,31 +5803,93 @@ function normalizeWarCaptureCloneColors(clonedDocument){
       }
     });
   }
-  // Raid boards use horizontal scrolling on screen. Expand that strip in the
-  // cloned capture document so all five party columns (A1-A5) are rendered.
+  // Expand the complete Raid strip in the capture clone. The scroll width
+  // belongs to .raid-grid, not its .raid-section parent, so expand both.
   clonedDocument.querySelectorAll(".raid-section .raid-grid,.war-attendance-boards .raid-grid").forEach(grid=>{
-    const fullWidth=Math.max(grid.scrollWidth,grid.clientWidth);
+    const fullWidth=Math.max(grid.scrollWidth,grid.clientWidth,grid.getBoundingClientRect().width);
     grid.style.setProperty("overflow","visible","important");
     grid.style.setProperty("width",fullWidth+"px","important");
+    grid.style.setProperty("min-width",fullWidth+"px","important");
     grid.style.setProperty("max-width","none","important");
     grid.style.setProperty("grid-template-columns","repeat(5,minmax(380px,1fr))","important");
+    const section=grid.closest(".raid-section");
+    if(section){
+      section.style.setProperty("width",fullWidth+"px","important");
+      section.style.setProperty("min-width",fullWidth+"px","important");
+      section.style.setProperty("max-width","none","important");
+      section.style.setProperty("overflow","visible","important");
+    }
+  });
+
+  // GTA VI-inspired neon night treatment is applied only to the exported clone.
+  clonedDocument.querySelectorAll(".raid-section").forEach(section=>{
+    section.style.setProperty("box-sizing","border-box","important");
+    section.style.setProperty("padding","30px","important");
+    section.style.setProperty("background","linear-gradient(135deg,#090b25 0%,#21103d 48%,#071c36 100%)","important");
+    section.style.setProperty("border","2px solid rgba(83,220,255,.72)","important");
+    section.style.setProperty("border-radius","22px","important");
+    section.style.setProperty("box-shadow","0 0 28px rgba(40,190,255,.28),inset 0 0 42px rgba(236,65,190,.16)","important");
+  });
+  clonedDocument.querySelectorAll(".raid-title h2").forEach(title=>{
+    title.style.setProperty("color","#ff75d8","important");
+    title.style.setProperty("text-shadow","0 0 8px rgba(255,75,190,.95),0 0 22px rgba(255,75,190,.55)","important");
+    title.style.setProperty("letter-spacing","3px","important");
+  });
+  clonedDocument.querySelectorAll(".party-card").forEach(card=>{
+    card.style.setProperty("padding","14px","important");
+    card.style.setProperty("border","1px solid rgba(82,220,255,.5)","important");
+    card.style.setProperty("border-radius","16px","important");
+    card.style.setProperty("background","linear-gradient(160deg,rgba(20,22,58,.96),rgba(8,13,34,.96))","important");
+    card.style.setProperty("box-shadow","0 0 16px rgba(58,202,255,.18),inset 0 0 18px rgba(255,77,190,.12)","important");
+  });
+  clonedDocument.querySelectorAll(".party-header h3").forEach(title=>{
+    title.style.setProperty("color","#75eaff","important");
+    title.style.setProperty("font-size","22px","important");
+    title.style.setProperty("text-shadow","0 0 9px rgba(65,210,255,.9)","important");
+  });
+  clonedDocument.querySelectorAll(".party-slot.war-member-slot").forEach(slot=>{
+    slot.style.setProperty("border","1px solid rgba(255,105,210,.55)","important");
+    slot.style.setProperty("background","linear-gradient(110deg,rgba(41,29,78,.96),rgba(10,24,54,.96))","important");
+    slot.style.setProperty("box-shadow","0 0 10px rgba(255,76,195,.16),inset 0 0 12px rgba(70,210,255,.10)","important");
+  });
+  clonedDocument.querySelectorAll(".slot-member-name").forEach(name=>{
+    name.style.setProperty("color","#fff","important");
+    name.style.setProperty("text-shadow","0 0 7px rgba(95,215,255,.45)","important");
   });
 }
 async function captureWarDomElement(element,filename){
   if(!element)throw new Error("ไม่พบตารางที่ต้องการบันทึกภาพ");
   const html2canvas=await loadWarHtml2Canvas();
   if(document.fonts?.ready)await document.fonts.ready;
+  const raidGrid=element.querySelector(".raid-grid");
+  const captureWidth=Math.max(element.scrollWidth,element.clientWidth,raidGrid?.scrollWidth||0);
   const canvas=await html2canvas(element,{
     scale:2,
     useCORS:true,
     allowTaint:false,
     backgroundColor:null,
     logging:false,
-    width:Math.max(element.scrollWidth,element.clientWidth),
+    width:captureWidth,
+    windowWidth:captureWidth,
     height:Math.max(element.scrollHeight,element.clientHeight),
     scrollX:0,
     scrollY:-window.scrollY,
-    onclone:clonedDocument=>normalizeWarCaptureCloneColors(clonedDocument),
+    onclone:clonedDocument=>{
+      normalizeWarCaptureCloneColors(clonedDocument);
+      const raid=element.dataset?.raidSection;
+      const clonedSection=raid?clonedDocument.querySelector('[data-raid-section="'+raid+'"]'):null;
+      const clonedGrid=clonedSection?.querySelector(".raid-grid");
+      if(clonedSection&&clonedGrid){
+        const width=Math.max(captureWidth,clonedGrid.scrollWidth,clonedGrid.clientWidth);
+        clonedSection.style.setProperty("width",width+"px","important");
+        clonedSection.style.setProperty("min-width",width+"px","important");
+        clonedSection.style.setProperty("max-width","none","important");
+        clonedSection.style.setProperty("overflow","visible","important");
+        clonedGrid.style.setProperty("width",width+"px","important");
+        clonedGrid.style.setProperty("min-width",width+"px","important");
+        clonedGrid.style.setProperty("overflow","visible","important");
+      }
+    },
     ignoreElements:node=>node?.classList?.contains("war-raid-image-button")||node?.classList?.contains("war-party-image-button")
   });
   const blob=await new Promise((resolve,reject)=>canvas.toBlob(result=>result?resolve(result):reject(new Error("สร้างไฟล์ PNG ไม่สำเร็จ")),"image/png"));
