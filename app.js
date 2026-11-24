@@ -5854,6 +5854,51 @@ async function captureWarDomElement(element,filename,event=null){
       const clonedGrid=clonedSection?.querySelector(".raid-grid");
       if(clonedSection&&clonedGrid){
         const cards=[...clonedGrid.children];
+        // Recreate the live War page's class-colored member-card treatment in
+        // the export clone. The published attendance page is outside #page-war,
+        // so its scoped live-page CSS would otherwise be missing in the PNG.
+        const toClassRgba=(value,alpha)=>{
+          const raw=String(value||"").trim();
+          let parts=null;
+          const hex=raw.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+          if(hex){
+            const full=hex[1].length===3?hex[1].split("").map(char=>char+char).join(""):hex[1];
+            parts=[parseInt(full.slice(0,2),16),parseInt(full.slice(2,4),16),parseInt(full.slice(4,6),16)];
+          }else{
+            const rgb=raw.match(/rgba?\\(\\s*(\\d+)\\s*,\\s*(\\d+)\\s*,\\s*(\\d+)/i);
+            if(rgb)parts=[Number(rgb[1]),Number(rgb[2]),Number(rgb[3])];
+          }
+          if(!parts)parts=[170,170,170];
+          return "rgba("+parts[0]+","+parts[1]+","+parts[2]+","+alpha+")";
+        };
+        clonedSection.classList.add("war-export-capture");
+        clonedGrid.querySelectorAll(".war-member-slot").forEach(memberCard=>{
+          const color=clonedDocument.defaultView.getComputedStyle(memberCard).getPropertyValue("--class-color").trim()||memberCard.style.getPropertyValue("--class-color").trim();
+          const glow=toClassRgba(color,.42);
+          memberCard.style.setProperty("display","flex","important");
+          memberCard.style.setProperty("box-sizing","border-box","important");
+          memberCard.style.setProperty("align-items","center","important");
+          memberCard.style.setProperty("gap","13px","important");
+          memberCard.style.setProperty("min-width","0","important");
+          memberCard.style.setProperty("min-height","108px","important");
+          memberCard.style.setProperty("height","108px","important");
+          memberCard.style.setProperty("padding","12px 10px","important");
+          memberCard.style.setProperty("border","1px solid "+toClassRgba(color,.96),"important");
+          memberCard.style.setProperty("border-radius","11px","important");
+          memberCard.style.setProperty("background","linear-gradient(112deg,"+toClassRgba(color,.24)+",rgba(18,17,30,.42))","important");
+          memberCard.style.setProperty("box-shadow","0 0 16px "+glow+",inset 0 0 18px "+toClassRgba(color,.12)+",inset 0 1px 0 rgba(255,255,255,.08)","important");
+          const classIcon=memberCard.querySelector(".war-slot-class-icon");
+          if(classIcon){classIcon.style.setProperty("display","block","important");classIcon.style.setProperty("width","58px","important");classIcon.style.setProperty("height","58px","important");classIcon.style.setProperty("flex","0 0 58px","important");classIcon.style.setProperty("object-fit","contain","important");}
+          const identity=memberCard.querySelector(".war-member-identity");
+          if(identity){identity.style.setProperty("display","flex","important");identity.style.setProperty("flex","1 1 auto","important");identity.style.setProperty("min-width","0","important");identity.style.setProperty("flex-direction","column","important");identity.style.setProperty("align-items","flex-start","important");identity.style.setProperty("justify-content","center","important");identity.style.setProperty("gap","4px","important");}
+          const memberName=memberCard.querySelector(".slot-member-name");
+          if(memberName){memberName.style.setProperty("display","block","important");memberName.style.setProperty("max-width","100%","important");memberName.style.setProperty("overflow","hidden","important");memberName.style.setProperty("color","#fff","important");memberName.style.setProperty("font-size","15px","important");memberName.style.setProperty("line-height","1.25","important");memberName.style.setProperty("font-weight","850","important");memberName.style.setProperty("text-overflow","ellipsis","important");memberName.style.setProperty("white-space","nowrap","important");}
+          const memberClass=memberCard.querySelector(".war-member-class");
+          if(memberClass){memberClass.style.setProperty("color",color||"#aaa","important");memberClass.style.setProperty("font-size","15px","important");memberClass.style.setProperty("line-height","1.15","important");memberClass.style.setProperty("font-weight","950","important");memberClass.style.setProperty("letter-spacing","1px","important");}
+          const skills=memberCard.querySelector(".war-member-skills");
+          if(skills){skills.style.setProperty("display","flex","important");skills.style.setProperty("flex","0 0 auto","important");skills.style.setProperty("align-items","center","important");skills.style.setProperty("gap","4px","important");skills.style.setProperty("max-width","205px","important");}
+          memberCard.querySelectorAll(".war-member-skill-icon").forEach(skillIcon=>{skillIcon.style.setProperty("width","46px","important");skillIcon.style.setProperty("height","46px","important");skillIcon.style.setProperty("flex","0 0 46px","important");skillIcon.style.setProperty("object-fit","contain","important");skillIcon.style.setProperty("filter","drop-shadow(0 2px 4px rgba(0,0,0,.5))","important");});
+        });
         const cardW=Math.max(380,...cards.map(card=>Math.ceil(card.getBoundingClientRect().width||0)));
         const gap=8;
         const count=Math.max(5,cards.length);
