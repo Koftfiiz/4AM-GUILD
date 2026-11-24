@@ -9921,3 +9921,18 @@ body.gallery-lightbox-open{overflow:hidden}
 .discord-route-section-grid{min-height:54px}
 .discord-route-section-grid:has(.discord-route-row.is-dragging){background:rgba(217,45,69,.035);border-radius:9px}
 @media(max-width:760px){.discord-route-drag-handle{width:36px;height:36px;flex-basis:36px}}
+
+
+/* Guild activity unified date-time controls and flexible end condition */
+.activity-datetime-grid-single{grid-template-columns:repeat(2,minmax(0,1fr))}
+.activity-datetime-grid-single .form-group{display:grid;gap:8px;min-width:0}
+.activity-datetime-grid-single .activity-datetime-picker-input,
+.activity-datetime-grid-single .activity-end-mode-select,
+.activity-datetime-grid-single textarea{width:100%;min-height:46px;padding:10px 12px;color:var(--text);background:rgba(0,0,0,.38);border:1px solid var(--line);border-radius:7px;font:inherit;font-size:15px}
+.activity-datetime-grid-single .activity-datetime-picker-input{cursor:pointer}
+.activity-datetime-grid-single .activity-datetime-picker-input:focus,
+.activity-datetime-grid-single .activity-end-mode-select:focus,
+.activity-datetime-grid-single textarea:focus{outline:none;border-color:#d92d45;box-shadow:0 0 0 2px rgba(217,45,69,.14)}
+.activity-datetime-grid-single textarea{min-height:92px;resize:vertical}
+.activity-datetime-grid-single small{color:var(--muted);font-size:14px;line-height:1.5}
+@media(max-width:700px){.activity-datetime-grid-single{grid-template-columns:1fr}}
