@@ -9647,7 +9647,7 @@ async function sendDiscordIntegrationTest() {
 }
 
 
-let discordEmbedStudioState = { eventKey: "", eventLabel: "", recordId: "", messageType: "primary", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, baseEmbed: {}, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false };
+let discordEmbedStudioState = { eventKey: "", eventLabel: "", recordId: "", messageType: "primary", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, baseEmbed: {}, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false, historyCursor: null };
 
 function setEmbedStudioStatus(message, tone) {
   const node = $("embed-studio-message-status");
@@ -9811,6 +9811,7 @@ async function inspectEmbedStudioRecord() {
   discordEmbedStudioState.historySearched = false;
   discordEmbedStudioState.historyComplete = false;
   discordEmbedStudioState.historyHasCandidates = false;
+  discordEmbedStudioState.historyCursor = null;
   const firstSend = $("embed-studio-send-new");
   if (firstSend) firstSend.disabled = true;
   const update = $("embed-studio-update-existing");
@@ -9838,7 +9839,7 @@ async function inspectEmbedStudioRecord() {
 }
 async function openDiscordEmbedStudio(eventKey, eventLabel) {
   if (!canManageDiscordIntegration()) { alert("เฉพาะ Developer, Leader และ Management ที่ Active เท่านั้น"); return; }
-  discordEmbedStudioState = { eventKey: eventKey, eventLabel: eventLabel || eventKey, recordId: "", messageType: "primary", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false };
+  discordEmbedStudioState = { eventKey: eventKey, eventLabel: eventLabel || eventKey, recordId: "", messageType: "primary", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false, historyCursor: null };
   $("discord-embed-studio-title").textContent = "จัดการ Embed";
   $("discord-embed-studio-event-label").textContent = (eventLabel || eventKey) + " · " + eventKey;
   const typeWrap = $("embed-studio-message-type-wrap");
@@ -9857,20 +9858,25 @@ function closeDiscordEmbedStudio() {
 }
 async function searchEmbedStudioHistory() {
   if (!discordEmbedStudioState.recordId) { setEmbedStudioStatus("กรุณาเลือกข้อมูลต้นทางก่อนค้นหาประวัติ", "warning"); return; }
-  setEmbedStudioStatus("กำลังค้นหาข้อความเก่าใน Discord Channel...", "muted");
-  const data = await invokeEmbedStudio("search_history", { event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId, message_type: discordEmbedStudioState.messageType, query: discordEmbedStudioState.messageType === "raid_a" ? "raid a" : discordEmbedStudioState.messageType === "raid_b" ? "raid b" : undefined, channel_id: discordEmbedStudioState.channelId || undefined });
+  setEmbedStudioStatus(discordEmbedStudioState.historyCursor ? "กำลังค้นหาข้อความที่เก่ากว่า..." : "กำลังค้นหาข้อความเก่าใน Discord Channel...", "muted");
+  const data = await invokeEmbedStudio("search_history", {
+    event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId,
+    message_type: discordEmbedStudioState.messageType,
+    query: discordEmbedStudioState.messageType === "raid_a" ? "raid a" : discordEmbedStudioState.messageType === "raid_b" ? "raid b" : undefined,
+    channel_id: discordEmbedStudioState.channelId || undefined,
+    before: discordEmbedStudioState.historyCursor || undefined
+  });
   discordEmbedStudioState.historySearched = true;
   discordEmbedStudioState.historyComplete = data.search_complete === true;
-  discordEmbedStudioState.historyHasCandidates = Boolean(data.candidates?.length);
+  discordEmbedStudioState.historyHasCandidates = discordEmbedStudioState.historyHasCandidates || Boolean(data.candidates?.length);
+  discordEmbedStudioState.historyCursor = data.next_before || null;
+  const searchButton = $("embed-studio-search-history");
+  if (searchButton) searchButton.textContent = discordEmbedStudioState.historyComplete ? "ค้นหาประวัติอีกครั้ง" : "ค้นหาข้อความเก่ากว่า";
   const sendNewButton = $("embed-studio-send-new");
   if (sendNewButton) sendNewButton.disabled = !discordEmbedStudioState.historyComplete || discordEmbedStudioState.historyHasCandidates || discordEmbedStudioState.linked;
   const host = $("embed-studio-history-results");
-  host.innerHTML = "";
-  if (!data.candidates?.length) {
-    setEmbedStudioStatus(data.search_complete ? "ค้นหาประวัติครบทั้ง Channel แล้ว ไม่พบ Embed ที่ตรงกับ Event สามารถพิจารณาส่งครั้งแรกได้" : "ค้นหาแล้ว " + (data.scanned_count || 0) + " ข้อความ แต่ยังไม่ครบประวัติ Channel จึงยังไม่อนุญาตให้ส่งข้อความใหม่เพื่อป้องกันข้อความซ้ำ", "warning");
-    return;
-  }
-  data.candidates.forEach(candidate => {
+  if (!data.before && !discordEmbedStudioState.historyCursor && !discordEmbedStudioState.historyHasCandidates) host.innerHTML = "";
+  (data.candidates || []).forEach(candidate => {
     const button = document.createElement("button");
     const title = candidate.embeds?.[0]?.title || candidate.content || "Discord Message";
     const description = String(candidate.embeds?.[0]?.description || "").replace(/\s+/g, " ").slice(0, 150);
@@ -9878,7 +9884,14 @@ async function searchEmbedStudioHistory() {
     button.addEventListener("click", () => void linkEmbedStudioHistoryMessage(candidate));
     host.appendChild(button);
   });
-  setEmbedStudioStatus("พบ " + data.candidates.length + " ข้อความที่อาจเกี่ยวข้อง โปรดตรวจสอบชื่อและเนื้อหาก่อนผูก", "success");
+  const foundCount = host.querySelectorAll("button").length;
+  if (foundCount) {
+    setEmbedStudioStatus("พบ " + foundCount + " ข้อความที่อาจเกี่ยวข้อง" + (discordEmbedStudioState.historyComplete ? " · ค้นหาครบแล้ว" : " · ยังมีข้อความเก่ากว่าให้ค้นต่อ") + " โปรดตรวจสอบก่อนผูก", "success");
+  } else if (discordEmbedStudioState.historyComplete) {
+    setEmbedStudioStatus("ค้นหาประวัติ Channel ครบแล้ว ไม่พบ Embed ที่ตรงกับ Event สามารถพิจารณาส่งครั้งแรกได้", "warning");
+  } else {
+    setEmbedStudioStatus("ค้นหาแล้ว " + (data.scanned_count || 0) + " ข้อความ แต่ยังมีประวัติที่เก่ากว่า กดค้นหาข้อความเก่าอีกครั้งเพื่อให้ครบก่อนส่ง", "warning");
+  }
 }
 async function linkEmbedStudioHistoryMessage(candidate) {
   if (!window.confirm("ยืนยันผูกข้อความ Discord นี้กับ Event ที่เลือกใช่หรือไม่?\nระบบจะบันทึก Message ID เดิม และจะไม่สร้างข้อความใหม่")) return;
