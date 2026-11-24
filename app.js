@@ -9418,7 +9418,8 @@ const DISCORD_EVENT_ROUTE_DEFINITIONS = [
 ];
 
 function canManageDiscordIntegration() {
-  return isManagement() && !isRolePreviewActive() && currentMember?.active === true;
+  return !isRolePreviewActive() && currentMember?.active === true
+    && String(currentMember?.role || "").toLowerCase() === "developer";
 }
 
 function updateDiscordRouteOverview() {
@@ -9623,7 +9624,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
 }
 async function loadDiscordIntegrationSettings() {
   if (!canManageDiscordIntegration()) {
-    alert("Discord Integration Settings อนุญาตเฉพาะ Developer, Leader และ Management ที่ Active และไม่อยู่ใน Role Preview เท่านั้น");
+    alert("Discord Integration Settings อนุญาตเฉพาะ Developer ที่ Active และไม่อยู่ใน Role Preview เท่านั้น");
     openGuildPage("dashboard");
     return;
   }
@@ -9776,7 +9777,7 @@ async function saveDiscordIntegrationSettings() {
 
 async function sendDiscordIntegrationTest() {
   if (!canManageDiscordIntegration()) {
-    alert("เฉพาะ Developer, Leader และ Management ที่ Active เท่านั้นที่ทดสอบบอทได้");
+    alert("เฉพาะ Developer ที่ Active เท่านั้นที่ทดสอบบอทได้");
     return;
   }
   const channelId = String($("discord-integration-test-channel")?.value || "").trim();
@@ -10008,7 +10009,7 @@ async function inspectEmbedStudioRecord() {
   }
 }
 async function openDiscordEmbedStudio(eventKey, eventLabel) {
-  if (!canManageDiscordIntegration()) { alert("เฉพาะ Developer, Leader และ Management ที่ Active เท่านั้น"); return; }
+  if (!canManageDiscordIntegration()) { alert("เฉพาะ Developer ที่ Active เท่านั้น"); return; }
   discordEmbedStudioState = { eventKey: eventKey, eventLabel: eventLabel || eventKey, recordId: "", messageType: "primary", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, baseEmbed: {}, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false, historyCursor: null, historySessionId: null };
   $("discord-embed-studio-title").textContent = "จัดการ Embed";
   $("discord-embed-studio-event-label").textContent = (eventLabel || eventKey) + " · " + eventKey;
