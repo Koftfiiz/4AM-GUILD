@@ -185,10 +185,10 @@ Deno.serve(async (request: Request) => {
         .eq("record_id", eventId).eq("message_type", messageType).maybeSingle();
       if (registryReadError) return json({ success: false, message: "อ่านทะเบียน Embed เดิมไม่สำเร็จ: " + registryReadError.message }, 500);
 
+      const messageChannelId = existingMessage?.channel_id || channelId;
       let method = existingMessage?.message_id ? "PATCH" : "POST";
-      let messageUrl = "https://discord.com/api/v10/channels/" + channelId + "/messages";
+      let messageUrl = "https://discord.com/api/v10/channels/" + messageChannelId + "/messages";
       if (existingMessage?.message_id) {
-        if (String(existingMessage.channel_id) !== channelId) return json({ success: false, message: "Channel ของ Embed เดิมไม่ตรงกับปลายทาง กรุณาตรวจสอบใน Embed Studio" }, 409);
         const check = await fetch(messageUrl + "/" + existingMessage.message_id, { headers: { Authorization: "Bot " + botToken } });
         if (!check.ok) return json({ success: false, message: "ไม่พบข้อความ Raid " + raid + " เดิม ระบบจะไม่สร้างข้อความทดแทน กรุณาค้นหาและผูกข้อความที่ถูกต้องใน Embed Studio" }, 409);
         messageUrl += "/" + existingMessage.message_id;
@@ -233,7 +233,7 @@ Deno.serve(async (request: Request) => {
       const message = await response.json();
       const { error: registryWriteError } = await admin.from("discord_embed_messages").upsert({
         event_key: "war_roster_published", record_id: eventId, message_type: messageType,
-        channel_id: channelId, message_id: String(message.id), source: "automation",
+        channel_id: messageChannelId, message_id: String(message.id), source: "automation",
         last_payload: message, linked_by: authData.user.id, linked_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }, { onConflict: "event_key,record_id,message_type" });
