@@ -5940,7 +5940,8 @@ async function captureWarDomElement(element,filename,event=null){
         details.textContent=(eventDate?eventDate+"  ·  ":"")+"เวลา "+eventTime;
         details.style.cssText="flex:0 0 auto;text-align:right;font-size:19px;font-weight:800;color:#f4e9eb;white-space:nowrap;";
         header.append(identity,details);
-        clonedSection.insertBefore(header,clonedGrid);
+        const raidTitle=clonedSection.querySelector(".raid-title");
+        clonedSection.insertBefore(header,raidTitle||clonedGrid);
       }
     },
     ignoreElements:node=>node?.classList?.contains("war-raid-image-button")||node?.classList?.contains("war-party-image-button")
