@@ -6032,9 +6032,72 @@ async function renderWarAttendance(){
   $("war-attendance-select")?.addEventListener("change",async event=>{warAttendanceEventId=event.target.value;await renderWarAttendance();});
 }
 
-const WAR_RECORD_BUCKET="war-record-images";let warMatchRecords=[];let warAttendanceEditEventId=null;let warMatchRecordViewType="official";
+const WAR_RECORD_BUCKET="war-record-images";
+let warMatchRecords=[];
+let warRecordEvents=[];
+let warAttendanceEditEventId=null;
+let warMatchRecordViewType="official";
 function showWarRecordMessage(m,bad=false){const e=$("war-record-message");if(!e)return;e.textContent=m;e.classList.remove("hidden","error","success");e.classList.add(bad?"error":"success");}
-async function loadWarMatchRecords(){if(!isManagement())return;const box=$("war-record-history");if(box)box.innerHTML='<p class="muted">กำลังโหลดประวัติผลวอร์...</p>';const q=await supabaseClient.from("war_match_records").select("id,opponent_guild,war_date,result,image_paths,registration_type").eq("is_confirmed",true).order("war_date",{ascending:false}).order("created_at",{ascending:false});if(q.error){if(box)box.innerHTML='<div class="system-role-error">'+escapeHTML(q.error.message)+'<br>กรุณาติดตั้ง SQL ระบบบันทึกผลวอร์</div>';return;}warMatchRecords=q.data||[];await renderWarMatchRecords();}
+function isWarRecordEventCancelled(event){return ["cancelled","canceled","deleted"].includes(String(event?.status||"").toLowerCase());}
+function isWarRecordEventFuture(event){
+ const date=String(event?.event_date||"");
+ if(!date)return false;
+ const time=String(event?.start_time||"23:59:59").slice(0,8);
+ const scheduled=new Date(date+"T"+time+"+07:00");
+ return !Number.isNaN(scheduled.getTime())&&scheduled.getTime()>Date.now();
+}
+function renderWarRecordEventOptions(selectedEventId="",includeRecorded=false){
+ const select=$("war-record-event");if(!select)return;
+ const recorded=new Set((warMatchRecords||[]).map(x=>x.event_id).filter(Boolean));
+ const events=(warRecordEvents||[]).filter(x=>x.registration_type===warMatchRecordViewType&&!isWarRecordEventCancelled(x));
+ const available=events.filter(x=>!recorded.has(x.id)|| (includeRecorded&&x.id===selectedEventId));
+ const past=available.filter(x=>!isWarRecordEventFuture(x));
+ const future=available.filter(isWarRecordEventFuture);
+ select.innerHTML='<option value="">เลือกกิจกรรมที่แข่งขันแล้ว</option>'+
+  past.map(x=>'<option value="'+escapeHTML(x.id)+'">'+escapeHTML(x.event_name)+' · '+formatDate(x.event_date)+' '+formatTime(x.start_time)+'</option>').join("")+
+  future.map(x=>'<option value="'+escapeHTML(x.id)+'" disabled>'+escapeHTML(x.event_name)+' · '+formatDate(x.event_date)+' '+formatTime(x.start_time)+' · ยังไม่ถึงวันแข่ง</option>').join("");
+ if(selectedEventId&&available.some(x=>x.id===selectedEventId)){
+  if(recorded.has(selectedEventId)&&includeRecorded){
+   const event=available.find(x=>x.id===selectedEventId);
+   select.insertAdjacentHTML("beforeend",'<option value="'+escapeHTML(event.id)+'" disabled>'+escapeHTML(event.event_name)+' · บันทึกผลแล้ว (กำลังแก้ไข)</option>');
+  }
+  select.value=selectedEventId;
+ }else select.value="";
+ const hint=$("war-record-event-hint");
+ if(hint){
+  const done=events.filter(x=>recorded.has(x.id)).length;
+  hint.textContent=(past.length?"เลือกกิจกรรมที่แข่งขันแล้วและยังไม่มีผลได้":"ยังไม่มีกิจกรรมที่ผ่านมาและรอบันทึกผล")+
+   (future.length?" · มีกิจกรรมในอนาคต "+future.length+" รายการที่ล็อกไว้":"")+
+   (done?" · บันทึกผลแล้ว "+done+" รายการ":"");
+ }
+}
+async function loadWarRecordEvents(){
+ const q=await supabaseClient.from("war_events").select("id,event_name,event_date,start_time,status,registration_type").order("event_date",{ascending:false}).order("start_time",{ascending:false});
+ if(q.error){showWarRecordMessage("โหลดกิจกรรมวอร์ไม่สำเร็จ: "+q.error.message,true);return;}
+ warRecordEvents=q.data||[];
+ renderWarRecordEventOptions();
+}
+function syncWarRecordEventFields(){
+ const event=warRecordEvents.find(x=>x.id===$("war-record-event")?.value);
+ const date=$("war-record-date");
+ if(date){date.value=event?.event_date||"";date.readOnly=true;}
+ const type=$("war-record-type");
+ if(type){type.value=warMatchRecordViewType;type.disabled=true;}
+ const opponent=$("war-record-opponent");
+ if(opponent&&event&&!opponent.value){
+  const match=String(event.event_name||"").match(/^4AM\s+vs\s+(.+)$/i);
+  if(match)opponent.value=match[1].trim();
+ }
+}
+async function loadWarMatchRecords(){
+ if(!isManagement())return;
+ const box=$("war-record-history");if(box)box.innerHTML='<p class="muted">กำลังโหลดประวัติผลวอร์...</p>';
+ const q=await supabaseClient.from("war_match_records").select("id,event_id,opponent_guild,war_date,result,image_paths,registration_type").eq("is_confirmed",true).order("war_date",{ascending:false}).order("created_at",{ascending:false});
+ if(q.error){if(box)box.innerHTML='<div class="system-role-error">'+escapeHTML(q.error.message)+'<br>กรุณาตรวจสอบโครงสร้างตารางผลวอร์</div>';return;}
+ warMatchRecords=q.data||[];
+ await loadWarRecordEvents();
+ await renderWarMatchRecords();
+}
 async function renderWarMatchRecords(){
  const r=(warMatchRecords||[]).filter(x=>(x.registration_type||"official")===warMatchRecordViewType),w=r.filter(x=>x.result==="win").length,l=r.filter(x=>x.result==="loss").length,n=w+l,p=x=>n?(x/n*100).toFixed(1):"0.0";
  const modeLabel=warMatchRecordViewType==="practice"?"ซ้อมวอร์ (SCRIM)":"วอร์จริง (GUILD WAR)";const modeLabelEl=$("war-record-current-mode");if(modeLabelEl)modeLabelEl.textContent=modeLabel;
@@ -6045,29 +6108,78 @@ async function renderWarMatchRecords(){
  const urls=await Promise.all(r.map(async x=>Promise.all((x.image_paths||[]).map(async path=>{const z=await supabaseClient.storage.from(WAR_RECORD_BUCKET).createSignedUrl(path,3600);return z.error?"":z.data.signedUrl;}))));
  const warLightboxImages=[];
  const imageButtons=urls.map((list,i)=>list.filter(Boolean).map((url,j)=>{
-   const index=warLightboxImages.push({url,label:"ผลวอร์ · "+(r[i].opponent_guild||"คู่แข่ง")+" · "+formatWarRecordDate(r[i].war_date)+" · หลักฐาน "+(j+1)})-1;
-   return '<button type="button" class="war-record-image-open" data-war-record-lightbox-index="'+index+'" aria-label="ดูภาพหลักฐานผลวอร์แบบเต็มหน้าจอ"><img src="'+escapeHTML(url)+'" alt="หลักฐานผลวอร์ '+(j+1)+'" loading="lazy"></button>';
+  const index=warLightboxImages.push({url,label:"ผลวอร์ · "+(r[i].opponent_guild||"คู่แข่ง")+" · "+formatWarRecordDate(r[i].war_date)+" · หลักฐาน "+(j+1)})-1;
+  return '<button type="button" class="war-record-image-open" data-war-record-lightbox-index="'+index+'" aria-label="ดูภาพหลักฐานผลวอร์แบบเต็มหน้าจอ"><img src="'+escapeHTML(url)+'" alt="หลักฐานผลวอร์ '+(j+1)+'" loading="lazy"></button>';
  }));
- window.portfolioLightboxImages=warLightboxImages;
- window.portfolioLightboxIndex=0;
- box.innerHTML='<div class="war-record-table-wrap"><table class="war-record-table"><thead><tr><th>วันที่</th><th>คู่แข่ง</th><th>ผล</th><th>รูป</th><th>จัดการ</th></tr></thead><tbody>'+r.map((x,i)=>'<tr><td>'+formatWarRecordDate(x.war_date)+'</td><td>'+escapeHTML(x.opponent_guild)+'</td><td><span class="war-record-result '+x.result+'">'+(x.result==="win"?"4AM ชนะ":"4AM แพ้")+'</span></td><td><div class="war-record-images">'+imageButtons[i].join("")+'</div></td><td><div class="war-record-row-actions"><button class="btn btn-outline btn-sm" type="button" data-war-record-edit="'+escapeHTML(x.id)+'">แก้ไข</button><button class="btn btn-danger btn-sm" type="button" data-war-record-delete="'+escapeHTML(x.id)+'">ลบ</button></div></td></tr>').join("")+'</tbody></table></div>';
+ window.portfolioLightboxImages=warLightboxImages;window.portfolioLightboxIndex=0;
+ box.innerHTML='<div class="war-record-table-wrap"><table class="war-record-table"><thead><tr><th>วันที่</th><th>กิจกรรม</th><th>คู่แข่ง</th><th>ผล</th><th>รูป</th><th>จัดการ</th></tr></thead><tbody>'+r.map((x,i)=>{
+  const event=warRecordEvents.find(item=>item.id===x.event_id);
+  return '<tr><td>'+formatWarRecordDate(x.war_date)+'</td><td>'+escapeHTML(event?.event_name||"กิจกรรมวอร์")+'</td><td>'+escapeHTML(x.opponent_guild)+'</td><td><span class="war-record-result '+x.result+'">'+(x.result==="win"?"4AM ชนะ":"4AM แพ้")+'</span></td><td><div class="war-record-images">'+imageButtons[i].join("")+'</div></td><td><div class="war-record-row-actions"><button class="btn btn-outline btn-sm" type="button" data-war-record-edit="'+escapeHTML(x.id)+'">แก้ไข</button><button class="btn btn-danger btn-sm" type="button" data-war-record-delete="'+escapeHTML(x.id)+'">ลบ</button></div></td></tr>';
+ }).join("")+'</tbody></table></div>';
  box.querySelectorAll("[data-war-record-lightbox-index]").forEach(button=>button.addEventListener("click",()=>openPortfolioLightbox(Number(button.dataset.warRecordLightboxIndex))));
 }
-function resetWarRecordEditor(){ $("war-record-form")?.reset();$("war-record-type").value=warMatchRecordViewType;$("war-record-edit-id").value="";$("war-record-existing-images").innerHTML="";$("war-record-images").required=true;$("war-record-submit").textContent="ยืนยันและบันทึกผลวอร์";$("war-record-cancel-edit")?.classList.add("hidden");$("war-record-message")?.classList.add("hidden");}
-async function startEditWarMatchRecord(id){if(!isManagement())return;const x=warMatchRecords.find(r=>r.id===id);if(!x)return;$("war-record-edit-id").value=x.id;$("war-record-opponent").value=x.opponent_guild||"";$("war-record-date").value=x.war_date||"";$("war-record-type").value=x.registration_type||"official";$("war-record-result").value=x.result||"";$("war-record-images").value="";$("war-record-images").required=false;$("war-record-submit").textContent="บันทึกการแก้ไขผลวอร์";$("war-record-cancel-edit").classList.remove("hidden");const links=await Promise.all((x.image_paths||[]).map(async path=>{const q=await supabaseClient.storage.from(WAR_RECORD_BUCKET).createSignedUrl(path,3600);return q.error?"":'<a href="'+escapeHTML(q.data.signedUrl)+'" target="_blank" rel="noopener">ดูรูปเดิม</a>';}));$("war-record-existing-images").innerHTML=links.filter(Boolean).join(" · ")||"ไม่มีรูปเดิม";$("war-record-form").scrollIntoView({behavior:"smooth",block:"center"});}
-async function deleteWarMatchRecord(id,button){if(!isManagement())return;const x=warMatchRecords.find(r=>r.id===id);if(!x||!confirm("ยืนยันลบผลวอร์และรูปหลักฐานทั้งหมดใช่หรือไม่?"))return;button.disabled=true;button.textContent="กำลังลบ...";const q=await supabaseClient.from("war_match_records").delete().eq("id",id).select("id").single();if(q.error){alert("ลบไม่สำเร็จ: "+q.error.message);button.disabled=false;button.textContent="ลบ";return;}if(x.image_paths?.length){const rm=await supabaseClient.storage.from(WAR_RECORD_BUCKET).remove(x.image_paths);if(rm.error)console.warn(rm.error);}await loadWarMatchRecords();}
-
-async function saveWarMatchRecord(form){
- if(!isManagement())return;const editId=$("war-record-edit-id").value,old=editId?warMatchRecords.find(x=>x.id===editId):null,registrationType=$("war-record-type").value,opponent=$("war-record-opponent").value.trim(),date=$("war-record-date").value,result=$("war-record-result").value,files=Array.from($("war-record-images").files||[]),btn=$("war-record-submit");
- if(!["practice","official"].includes(registrationType)||!opponent||!date||!["win","loss"].includes(result)||(!editId&&!files.length)){showWarRecordMessage("กรุณากรอกข้อมูลและแนบรูปภาพให้ครบ",true);return;}if(files.length>10||files.some(f=>!f.type.startsWith("image/")||f.size>10485760)){showWarRecordMessage("แนบรูปได้สูงสุด 10 รูป และไม่เกิน 10 MB ต่อรูป",true);return;}if(editId&&!old){showWarRecordMessage("ไม่พบรายการที่ต้องการแก้ไข กรุณาโหลดหน้าใหม่",true);return;}
- btn.disabled=true;const newPaths=[];btn.textContent=editId?"กำลังบันทึกการแก้ไข...":"กำลังอัปโหลดและยืนยัน...";
-  try{for(const file of files){const uploadFile=file.type==="image/gif"?file:await prepareStorageImageForUpload(file,{maxDimension:2400,quality:0.9,forceWebP:true});const id=crypto.randomUUID?.()||String(Date.now())+Math.random().toString(16).slice(2),path=currentUser.id+"/"+id+"-"+uploadFile.name.replace(/[^a-zA-Z0-9._-]/g,"_"),up=await supabaseClient.storage.from(WAR_RECORD_BUCKET).upload(path,uploadFile,{upsert:false,contentType:uploadFile.type});if(up.error)throw up.error;newPaths.push(path);}
- const payload={registration_type:registrationType,opponent_guild:opponent,war_date:date,result,image_paths:editId?[...(old.image_paths||[]),...newPaths]:newPaths};
- const q=editId?await supabaseClient.from("war_match_records").update(payload).eq("id",editId).select("id").single():await supabaseClient.from("war_match_records").insert({...payload,is_confirmed:true,confirmed_by:currentUser.id,confirmed_at:new Date().toISOString(),created_by:currentUser.id});
- if(q.error)throw q.error;resetWarRecordEditor();showWarRecordMessage(editId?"แก้ไขผลวอร์เรียบร้อยแล้ว":"บันทึกผลวอร์เรียบร้อยแล้ว");await loadWarMatchRecords();
- }catch(e){if(newPaths.length)await supabaseClient.storage.from(WAR_RECORD_BUCKET).remove(newPaths);showWarRecordMessage("บันทึกไม่สำเร็จ: "+e.message,true);}finally{btn.disabled=false;btn.textContent=editId?"บันทึกการแก้ไขผลวอร์":"ยืนยันและบันทึกผลวอร์";}
+function resetWarRecordEditor(){
+ $("war-record-form")?.reset();
+ const type=$("war-record-type");if(type){type.value=warMatchRecordViewType;type.disabled=true;}
+ const eventSelect=$("war-record-event");if(eventSelect){eventSelect.disabled=false;renderWarRecordEventOptions();}
+ const date=$("war-record-date");if(date){date.value="";date.readOnly=true;}
+ $("war-record-edit-id").value="";$("war-record-existing-images").innerHTML="";$("war-record-images").required=true;$("war-record-submit").textContent="ยืนยันและบันทึกผลวอร์";$("war-record-cancel-edit")?.classList.add("hidden");$("war-record-message")?.classList.add("hidden");
 }
-
+async function startEditWarMatchRecord(id){
+ if(!isManagement())return;
+ const x=warMatchRecords.find(r=>r.id===id);if(!x)return;
+ $("war-record-edit-id").value=x.id;
+ renderWarRecordEventOptions(x.event_id,true);
+ $("war-record-event").disabled=true;
+ $("war-record-opponent").value=x.opponent_guild||"";
+ $("war-record-date").value=x.war_date||"";$("war-record-date").readOnly=true;
+ $("war-record-type").value=x.registration_type||"official";$("war-record-type").disabled=true;
+ $("war-record-result").value=x.result||"";$("war-record-images").value="";$("war-record-images").required=false;
+ $("war-record-submit").textContent="บันทึกการแก้ไขผลวอร์";$("war-record-cancel-edit").classList.remove("hidden");
+ const links=await Promise.all((x.image_paths||[]).map(async path=>{const q=await supabaseClient.storage.from(WAR_RECORD_BUCKET).createSignedUrl(path,3600);return q.error?"":'<a href="'+escapeHTML(q.data.signedUrl)+'" target="_blank" rel="noopener">ดูรูปเดิม</a>';}));
+ $("war-record-existing-images").innerHTML=links.filter(Boolean).join(" · ")||"ไม่มีรูปเดิม";
+ $("war-record-form").scrollIntoView({behavior:"smooth",block:"center"});
+}
+async function deleteWarMatchRecord(id,button){
+ if(!isManagement())return;
+ const x=warMatchRecords.find(r=>r.id===id);if(!x||!confirm("ยืนยันลบผลวอร์และรูปหลักฐานทั้งหมดใช่หรือไม่?"))return;
+ button.disabled=true;button.textContent="กำลังลบ...";
+ const q=await supabaseClient.from("war_match_records").delete().eq("id",id).select("id").single();
+ if(q.error){alert("ลบไม่สำเร็จ: "+q.error.message);button.disabled=false;button.textContent="ลบ";return;}
+ if(x.image_paths?.length){const rm=await supabaseClient.storage.from(WAR_RECORD_BUCKET).remove(x.image_paths);if(rm.error)console.warn(rm.error);}
+ await loadWarMatchRecords();
+}
+async function saveWarMatchRecord(form){
+ if(!isManagement())return;
+ const editId=$("war-record-edit-id").value,old=editId?warMatchRecords.find(x=>x.id===editId):null;
+ const eventId=editId?old?.event_id:$("war-record-event").value;
+ const selectedEvent=warRecordEvents.find(x=>x.id===eventId);
+ const registrationType=selectedEvent?.registration_type;
+ const opponent=$("war-record-opponent").value.trim(),date=selectedEvent?.event_date||"",result=$("war-record-result").value;
+ const files=Array.from($("war-record-images").files||[]),btn=$("war-record-submit");
+ if(!selectedEvent||isWarRecordEventCancelled(selectedEvent)){showWarRecordMessage("กรุณาเลือกกิจกรรมวอร์ที่ยังเปิดให้บันทึกผล",true);return;}
+ if(registrationType!==warMatchRecordViewType){showWarRecordMessage("ประเภทกิจกรรมไม่ตรงกับแท็บที่เลือก กรุณาเลือกใหม่",true);return;}
+ if(!editId&&isWarRecordEventFuture(selectedEvent)){showWarRecordMessage("กิจกรรมนี้ยังไม่ถึงเวลาแข่งขัน จึงยังบันทึกผลไม่ได้",true);return;}
+ if((warMatchRecords||[]).some(x=>x.event_id===eventId&&x.id!==editId)){showWarRecordMessage("กิจกรรมนี้มีการบันทึกผลแล้ว ไม่สามารถบันทึกซ้ำได้",true);return;}
+ if(!opponent||!date||!["win","loss"].includes(result)||(!editId&&!files.length)){showWarRecordMessage("กรุณากรอกชื่อกิลด์คู่แข่ง เลือกผลการแข่งขัน และแนบรูปภาพให้ครบ",true);return;}
+ if(files.length>10||files.some(f=>!f.type.startsWith("image/")||f.size>10485760)){showWarRecordMessage("แนบรูปได้สูงสุด 10 รูป และไม่เกิน 10 MB ต่อรูป",true);return;}
+ if(editId&&!old){showWarRecordMessage("ไม่พบรายการที่ต้องการแก้ไข กรุณาโหลดหน้าใหม่",true);return;}
+ btn.disabled=true;const newPaths=[];btn.textContent=editId?"กำลังบันทึกการแก้ไข...":"กำลังอัปโหลดและยืนยัน...";
+ try{
+  for(const file of files){
+   const uploadFile=file.type==="image/gif"?file:await prepareStorageImageForUpload(file,{maxDimension:2400,quality:0.9,forceWebP:true});
+   const id=crypto.randomUUID?.()||String(Date.now())+Math.random().toString(16).slice(2),path=currentUser.id+"/"+id+"-"+uploadFile.name.replace(/[^a-zA-Z0-9._-]/g,"_"),up=await supabaseClient.storage.from(WAR_RECORD_BUCKET).upload(path,uploadFile,{upsert:false,contentType:uploadFile.type});
+   if(up.error)throw up.error;newPaths.push(path);
+  }
+  const payload={event_id:eventId,registration_type:registrationType,opponent_guild:opponent,war_date:date,result,image_paths:editId?[...(old.image_paths||[]),...newPaths]:newPaths};
+  const q=editId?await supabaseClient.from("war_match_records").update(payload).eq("id",editId).select("id").single():await supabaseClient.from("war_match_records").insert({...payload,is_confirmed:true,confirmed_by:currentUser.id,confirmed_at:new Date().toISOString(),created_by:currentUser.id});
+  if(q.error)throw q.error;
+  resetWarRecordEditor();showWarRecordMessage(editId?"แก้ไขผลวอร์เรียบร้อยแล้ว":"บันทึกผลวอร์เรียบร้อยแล้ว");await loadWarMatchRecords();
+ }catch(e){
+  if(newPaths.length)await supabaseClient.storage.from(WAR_RECORD_BUCKET).remove(newPaths);
+  showWarRecordMessage("บันทึกไม่สำเร็จ: "+e.message,true);
+ }finally{btn.disabled=false;btn.textContent=editId?"บันทึกการแก้ไขผลวอร์":"ยืนยันและบันทึกผลวอร์";}
+}
 
 async function loadWarAttendanceStatistics(){
   if(!isManagement()||isRolePreviewActive())return;
@@ -6915,9 +7027,9 @@ function registerWarRecordAndAttendanceEvents(){
     if(cancel)cancelWarSignupEvent(cancel.dataset.warSignupCancel);
   });
   $("war-record-cancel-edit")?.addEventListener("click",resetWarRecordEditor);
-  $("war-record-mode-switch")?.addEventListener("click",e=>{const button=e.target.closest("[data-war-record-view-type]");if(!button)return;const next=button.dataset.warRecordViewType;if(!["practice","official"].includes(next)||next===warMatchRecordViewType)return;warMatchRecordViewType=next;$("war-record-mode-switch").querySelectorAll("[data-war-record-view-type]").forEach(item=>{const active=item.dataset.warRecordViewType===next;item.classList.toggle("is-active",active);item.setAttribute("aria-pressed",String(active));});resetWarRecordEditor();renderWarMatchRecords();});
+  $("war-record-mode-switch")?.addEventListener("click",async e=>{const button=e.target.closest("[data-war-record-view-type]");if(!button)return;const next=button.dataset.warRecordViewType;if(!["practice","official"].includes(next)||next===warMatchRecordViewType)return;warMatchRecordViewType=next;$("war-record-mode-switch").querySelectorAll("[data-war-record-view-type]").forEach(item=>{const active=item.dataset.warRecordViewType===next;item.classList.toggle("is-active",active);item.setAttribute("aria-pressed",String(active));});resetWarRecordEditor();await loadWarRecordEvents();await renderWarMatchRecords();});
   $("war-record-history")?.addEventListener("click",e=>{const ed=e.target.closest("[data-war-record-edit]"),del=e.target.closest("[data-war-record-delete]");if(ed)startEditWarMatchRecord(ed.dataset.warRecordEdit);if(del)deleteWarMatchRecord(del.dataset.warRecordDelete,del);});
-  $("war-record-form")?.addEventListener("submit",async e=>{e.preventDefault();await saveWarMatchRecord(e.currentTarget);});
+  $("war-record-form")?.addEventListener("submit",async e=>{e.preventDefault();await saveWarMatchRecord(e.currentTarget);});$("war-record-event")?.addEventListener("change",syncWarRecordEventFields);
   $("war-attendance-stats-load")?.addEventListener("click",loadWarAttendanceEditor);$("war-attendance-stats-event")?.addEventListener("change",loadWarAttendanceEditor);$("war-attendance-stats-save")?.addEventListener("click",saveWarAttendanceStatistics);$("war-attendance-stats-finalize")?.addEventListener("click",finalizeWarAttendanceStatistics);
 }
 function isWarRealtimePageActive() {
