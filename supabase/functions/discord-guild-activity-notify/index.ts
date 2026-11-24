@@ -253,15 +253,19 @@ Deno.serve(async (request) => {
     const eventDateLine = hasOfficialRoundLabel
       ? "**" + String(record.event_name || "Guild War") + " · " + formatDate(record.event_date) + "** · " + roundLabel
       : "**" + String(record.event_name || "4AM SIGN-UP") + "**";
+    const leaveDeadlineLine = record.registration_type === "practice"
+      ? "🚨 สมาชิกสามารถแจ้งลา **ซ้อมวอร์** ได้จนถึงวัน/เวลาปิดรับสมัครที่กำหนดไว้"
+      : "🚨 สมาชิกสามารถแจ้งลา **วอร์จริง** ได้ถึงวันเสาร์ 14:00 น. ของสัปดาห์นั้นๆ";
     const embed = kind === "war_signup" ? {
       title: "4AM SIGN-UP",
       description: "**◥◣④AM◥◣ " + kindLabel + "**" +
         "\n\n" + eventDateLine +
         (hasOfficialRoundLabel ? "" : "\n\n📅 **" + formatDate(record.event_date) + "**　🕒 **" + startTimeLabel + " น.**") +
         "\n\n⏳ **ปิดรับสมัคร:** " + closeLabel + " น." +
+        "\n\n" + leaveDeadlineLine +
         (isSignupClosed ? "" : "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง") +
         "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/guildwar/signup)",
-      color: 0xD92D45,
+      color: record.registration_type === "practice" ? 0x3488D8 : 0xD92D45,
       fields: signupFields,
       image: { url: "https://raw.githubusercontent.com/Koftfiiz/4AM-GUILD/main/assets/animated-4am-logo.gif" },
       footer: { text: "4AM GUILD · รายชื่อซิงก์กับเว็บไซต์" },

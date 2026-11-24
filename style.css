@@ -7374,6 +7374,32 @@ body > #manual-member-link-screen {
 #page-war-leave .war-leave-deadline-banner.is-closed strong{color:#ddd}
 #page-war-leave .war-leave-own-status{display:flex;flex-direction:column;gap:5px}
 #page-war-leave .war-leave-own-status :where(strong,span){font-size:15px}
+#page-war-leave .war-leave-deadline-banner{
+  border-color:rgba(217,45,69,.58);
+  border-left-color:#D92D45;
+  background:linear-gradient(105deg,rgba(120,20,37,.30),rgba(20,12,15,.94));
+}
+#page-war-leave .war-leave-deadline-banner.is-practice{
+  border-color:rgba(52,136,216,.62);
+  border-left-color:#3488D8;
+  background:linear-gradient(105deg,rgba(20,73,122,.34),rgba(12,17,25,.95));
+}
+#page-war-leave .war-leave-deadline-banner > span{
+  color:#f4e8ea;
+  font-size:18px;
+  line-height:1.6;
+  font-weight:500;
+}
+#page-war-leave .war-leave-deadline-banner > span strong{
+  color:#ff8796;
+  font-size:18px;
+  font-weight:850;
+}
+#page-war-leave .war-leave-deadline-banner.is-practice > span strong{color:#91caff}
+#page-war-leave .war-leave-deadline-banner.is-closed{opacity:.78}
+#page-war-leave .war-leave-deadline-banner.is-closed strong{color:inherit}
+#page-war-leave .war-leave-deadline-banner.is-closed.is-practice > span strong{color:#91caff}
+#page-war-leave .war-leave-deadline-banner.is-closed.is-official > span strong{color:#ff8796}
 .war-assignment-modal-panel-reference .war-member-skill-icon-grid{
   grid-template-columns:repeat(auto-fill,minmax(62px,1fr));
   gap:7px;padding:13px;

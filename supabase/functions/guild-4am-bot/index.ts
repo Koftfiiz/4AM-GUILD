@@ -494,10 +494,14 @@ Deno.serve(async (request: Request) => {
       ? "**" + eventLabel + " · " + formatThaiDate(event.event_date) + "** · " + roundLabel
       : "**" + eventLabel + "**";
     const closeLabel = formatDateTime(event.signup_closes_at);
+    const leaveDeadlineLine = event.registration_type === "practice"
+      ? "🚨 สมาชิกสามารถแจ้งลา **ซ้อมวอร์** ได้จนถึงวัน/เวลาปิดรับสมัครที่กำหนดไว้"
+      : "🚨 สมาชิกสามารถแจ้งลา **วอร์จริง** ได้ถึงวันเสาร์ 14:00 น. ของสัปดาห์นั้นๆ";
     const description = "**◥◣④AM◥◣ " + kindLabel + "**" +
       "\n\n" + eventDateLine +
       (hasOfficialRoundLabel ? "" : "\n\n" + startDateTime) +
       "\n\n⏳ **ปิดรับสมัคร:** " + closeLabel + " น." +
+      "\n\n" + leaveDeadlineLine +
       (closed ? "" : "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง") +
       "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/guildwar/signup)";
     if (closed) {
@@ -509,7 +513,7 @@ Deno.serve(async (request: Request) => {
     }
     return {
       embeds: [{
-        color: 0xD92D45,
+        color: event.registration_type === "practice" ? 0x3488D8 : 0xD92D45,
         title: "4AM SIGN-UP",
         description,
         fields,

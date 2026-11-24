@@ -71,21 +71,26 @@ Deno.serve(async (request: Request) => {
     }
 
     const [{ data: event }, { data: member }] = await Promise.all([
-      admin.from("war_events").select("event_name,event_date,start_time").eq("id", leave.event_id).maybeSingle(),
+      admin.from("war_events").select("event_name,event_date,start_time,registration_type,signup_closes_at").eq("id", leave.event_id).maybeSingle(),
       admin.from("guild_members").select("character_name,nickname,discord_name").eq("user_id", leave.member_id).maybeSingle(),
     ]);
     const memberName = member?.character_name || member?.nickname || member?.discord_name || "สมาชิก 4AM";
     const date = event?.event_date ? String(event.event_date).split("-").reverse().join("/") : "-";
     const time = String(event?.start_time || "").slice(0, 5);
+    const isPractice = event?.registration_type === "practice";
+    const leaveDeadlineLine = isPractice
+      ? "🚨 สมาชิกสามารถแจ้งลา **ซ้อมวอร์** ได้จนถึงวัน/เวลาปิดรับสมัครที่กำหนดไว้"
+      : "🚨 สมาชิกสามารถแจ้งลา **วอร์จริง** ได้ถึงวันเสาร์ 14:00 น. ของสัปดาห์นั้นๆ";
     const messagePayload = {
         embeds: [{
           title: "4AM GUILD · แจ้งลาวอร์",
           description: "**" + String(event?.event_name || "Guild War").slice(0, 180) + "**",
-          color: 0xD92D45,
+          color: isPractice ? 0x3488D8 : 0xD92D45,
           fields: [
             { name: "สมาชิก", value: String(memberName).slice(0, 200), inline: true },
             { name: "วันที่ / เวลา", value: date + (time ? " · " + time : ""), inline: true },
             { name: "สถานะ", value: leave.status === "approved" ? "รับทราบแล้ว" : String(leave.status), inline: true },
+            { name: "กำหนดเวลาการแจ้งลา", value: leaveDeadlineLine, inline: false },
             { name: "เหตุผล", value: String(leave.reason || "ไม่ได้ระบุ").slice(0, 1000), inline: false },
           ],
           footer: { text: "4AM GUILD · War Leave" },
