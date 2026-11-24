@@ -9647,7 +9647,7 @@ async function sendDiscordIntegrationTest() {
 }
 
 
-let discordEmbedStudioState = { eventKey: "", eventLabel: "", recordId: "", messageType: "primary", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, baseEmbed: {}, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false, historyCursor: null };
+let discordEmbedStudioState = { eventKey: "", eventLabel: "", recordId: "", messageType: "primary", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, baseEmbed: {}, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false, historyCursor: null, historySessionId: null };
 
 function setEmbedStudioStatus(message, tone) {
   const node = $("embed-studio-message-status");
@@ -9812,6 +9812,7 @@ async function inspectEmbedStudioRecord() {
   discordEmbedStudioState.historyComplete = false;
   discordEmbedStudioState.historyHasCandidates = false;
   discordEmbedStudioState.historyCursor = null;
+  discordEmbedStudioState.historySessionId = null;
   const firstSend = $("embed-studio-send-new");
   if (firstSend) firstSend.disabled = true;
   const update = $("embed-studio-update-existing");
@@ -9864,8 +9865,10 @@ async function searchEmbedStudioHistory() {
     message_type: discordEmbedStudioState.messageType,
     query: discordEmbedStudioState.messageType === "raid_a" ? "raid a" : discordEmbedStudioState.messageType === "raid_b" ? "raid b" : undefined,
     channel_id: discordEmbedStudioState.channelId || undefined,
-    before: discordEmbedStudioState.historyCursor || undefined
+    before: discordEmbedStudioState.historyCursor || undefined,
+    search_session_id: discordEmbedStudioState.historySessionId || undefined
   });
+  discordEmbedStudioState.historySessionId = data.search_session_id || discordEmbedStudioState.historySessionId;
   discordEmbedStudioState.historySearched = true;
   discordEmbedStudioState.historyComplete = data.search_complete === true;
   discordEmbedStudioState.historyHasCandidates = discordEmbedStudioState.historyHasCandidates || Boolean(data.candidates?.length);
@@ -9935,6 +9938,7 @@ async function sendNewDiscordEmbedStudioMessage() {
   setEmbedStudioStatus("กำลังส่งข้อความครั้งแรก...", "muted");
   const data = await invokeEmbedStudio("send_new", {
     event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId, message_type: discordEmbedStudioState.messageType,
+    search_session_id: discordEmbedStudioState.historySessionId,
     payload: getEmbedStudioPayload()
   });
   discordEmbedStudioState.linked = true;
