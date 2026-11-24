@@ -1,5 +1,5 @@
 // Supabase Edge Function: discord-feedback-notify
-// Uses Developer-managed Discord integration settings; TEST MODE is the safe default.
+// Secrets required: DISCORD_BOT_TOKEN. Destination is resolved from guild Discord settings.
 // Supabase provides SUPABASE_URL, SUPABASE_ANON_KEY and SUPABASE_SERVICE_ROLE_KEY.
 // Set Verify JWT (legacy) to OFF; this function validates the user's access token itself.
 
@@ -46,28 +46,39 @@ Deno.serve(async (request) => {
     if (feedbackError || !feedback) return json({ success: false, message: "Feedback not found" }, 404);
 
     const { data: requester, error: requesterError } = await admin.from("guild_members")
-      .select("user_id,character_name,nickname,discord_name,role,active")
+      .select("user_id,character_name,nickname,discord_name,role,active,membership_status")
       .eq("user_id", authData.user.id).maybeSingle();
     if (requesterError || !requester || requester.active !== true) return json({ success: false, message: "Active guild member required" }, 403);
 
     const isManager = ["developer", "leader", "management"].includes(String(requester.role || "").toLowerCase());
-    const { data: integrationSettings, error: integrationError } = await admin.from("guild_discord_integration_settings")
-      .select("mode,test_channel_id,production_enabled").eq("id", 1).maybeSingle();
-    if (integrationError || !integrationSettings) return json({ success: false, message: "Discord integration settings are not configured" }, 503);
-    let channelId = "";
-    if (existingDiscordMessage?.channel_id) channelId = String(existingDiscordMessage.channel_id);
-    else if (integrationSettings.mode === "test") {
-      channelId = String(integrationSettings.test_channel_id || "");
-    } else if (integrationSettings.mode === "production" && integrationSettings.production_enabled === true) {
-      const { data: route } = await admin.from("guild_discord_event_routes")
-        .select("enabled,channel_id").eq("event_key", "feedback_submitted").maybeSingle();
-      if (route?.enabled === true) channelId = String(route.channel_id || "");
-    }
-    if (!channelId) return json({ success: false, message: "No destination configured for this Discord event; notification was not sent" }, 503);
     if (feedback.user_id !== authData.user.id && !isManager) return json({ success: false, message: "Not allowed" }, 403);
     const { data: existingDiscordMessage } = await admin.from("discord_embed_messages").select("channel_id,message_id")
       .eq("event_key", "feedback_submitted").eq("record_id", feedbackId).eq("message_type", "primary").maybeSingle();
     if (feedback.discord_notified_at) return json({ success: true, already_notified: true, needs_legacy_link: !existingDiscordMessage });
+
+    const [{ data: settings, error: settingsError }, { data: route, error: routeError }] = await Promise.all([
+      admin.from("guild_discord_integration_settings")
+        .select("mode,test_channel_id,production_enabled").eq("id", 1).maybeSingle(),
+      admin.from("guild_discord_event_routes")
+        .select("enabled,channel_id").eq("event_key", "feedback_submitted").maybeSingle(),
+    ]);
+    if (settingsError || !settings || routeError) {
+      return json({ success: false, message: "อ่านการตั้งค่า Discord Integration ไม่สำเร็จ" }, 503);
+    }
+    if (route?.enabled !== true) {
+      return json({ success: true, skipped: true, message: "ปิดการแจ้งเตือน Feedback ไว้ใน Discord Integration Settings" });
+    }
+    let channelId = "";
+    if (settings.mode === "test") {
+      channelId = String(settings.test_channel_id || "");
+    } else if (settings.mode === "production" && settings.production_enabled === true && route?.enabled === true) {
+      channelId = String(route.channel_id || "");
+    }
+    if (!/^\\d{17,20}$/.test(channelId)) {
+      const message = "ยังไม่ได้กำหนด Channel ID ที่ถูกต้องสำหรับ Feedback ในโหมดปัจจุบัน";
+      await admin.from("guild_feedback").update({ discord_notification_error: message }).eq("id", feedbackId);
+      return json({ success: false, message }, 503);
+    }
 
     const { data: author } = await admin.from("guild_members")
       .select("character_name,nickname,discord_name")
@@ -80,7 +91,7 @@ Deno.serve(async (request) => {
 
     const embed = {
       title: feedback.type === "problem" ? "มีการแจ้งปัญหาใหม่" : "มี Feedback ใหม่",
-      color: feedback.type === "problem" ? 0xC52B3B : 0xC49A54,
+      color: 0xD92D45,
       fields: [
         { name: "ประเภท", value: feedback.type === "problem" ? "แจ้งปัญหา" : "Feedback", inline: true },
         { name: "ผู้แจ้ง", value: memberName.slice(0, 200), inline: true },
