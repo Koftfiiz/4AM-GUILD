@@ -1300,7 +1300,14 @@
               </label>
               <label id="discord-integration-test-channel-field" class="discord-integration-field">
                 <span>Test Channel ID <small>(ใช้เฉพาะ TEST MODE)</small></span>
-                <input id="discord-integration-test-channel" type="text" inputmode="numeric" maxlength="20" placeholder="กรอก Discord Channel ID ของห้องทดสอบบอท">
+                <input id="discord-integration-test-channel" type="hidden" value="">
+                <div class="discord-channel-picker" data-discord-channel-picker="test">
+                  <button type="button" class="btn btn-outline" data-discord-load-channels>โหลดห้องจาก Discord</button>
+                  <select id="discord-integration-test-channel-select" data-discord-channel-select data-channel-target="test" aria-label="เลือกห้องทดสอบ Discord">
+                    <option value="">กดโหลดรายชื่อห้องก่อน</option>
+                  </select>
+                  <small data-discord-channel-status>ยังไม่ได้โหลดรายชื่อห้อง</small>
+                </div>
               </label>
             </div>
             <p id="discord-integration-mode-help" class="discord-integration-help">TEST MODE: การแจ้งเตือนทุกประเภทจะถูกส่งไปยังห้องทดสอบบอทเท่านั้น</p>
@@ -1313,11 +1320,7 @@
               <div><span class="panel-kicker">DISCORD NOTIFICATION ROUTING</span><h3>กำหนดห้องแจ้งเตือนให้บอทกิลด์</h3></div>
               <span class="discord-integration-future-label">เตรียมตั้งค่าหลังสร้างห้อง Discord</span>
             </div>
-            <aside class="discord-channel-id-tip" role="note">
-              <span class="discord-channel-id-tip-icon" aria-hidden="true">🚨</span>
-              <div><strong>วิธีดู Discord Channel ID</strong><p>คลิกขวาที่ห้องดิสนั้นๆ แล้วเลือก <b>Copy Channel ID</b> ที่อยู่ล่างสุด</p></div>
-            </aside>
-            <p class="discord-integration-help">ขณะอยู่ใน TEST MODE ทุกเหตุการณ์จะไปห้องทดสอบก่อน ส่วน Channel ID ด้านล่างใช้เมื่อเปิด Production เท่านั้น ยังไม่จำเป็นต้องกรอกในขั้นตอนนี้</p>
+            <p class="discord-integration-help">กดโหลดรายชื่อห้องจาก Discord แล้วเลือกห้องที่ต้องการ ระบบจะบันทึก Channel ID ให้ทันที โดยไม่เปลี่ยนสถานะเปิด/ปิดของ Event</p>
             <div class="discord-route-toolbar">
               <label class="discord-route-search"><span>ค้นหา Event</span><input id="discord-route-search" type="search" placeholder="ค้นหาชื่อการแจ้งเตือน..."></label>
               <label class="discord-route-filter"><span>แสดงรายการ</span><select id="discord-route-filter"><option value="all">ทั้งหมด</option><option value="on">เปิดใช้งาน</option><option value="off">ปิดใช้งาน</option><option value="missing">ยังไม่กำหนด Channel</option></select></label>
