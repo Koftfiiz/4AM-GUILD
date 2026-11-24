@@ -9512,7 +9512,7 @@ function updateDiscordIntegrationModeHelp() {
   } else if (!productionEnabled) {
     help.textContent = "PRODUCTION ยังไม่เปิดใช้งาน ต้องเปิดสวิตช์อนุมัติ Production ก่อน ระบบจะยังไม่ส่งข้อความไปห้องจริง";
   } else {
-    help.textContent = "PRODUCTION MODE: แต่ละเหตุการณ์จะส่งไปยัง Channel ID ที่กำหนดไว้ด้านล่าง เฉพาะรายการที่เปิดใช้งานเท่านั้น";
+    help.textContent = "PRODUCTION MODE: ระบบอัตโนมัติจะส่งเฉพาะ Route ที่เปิดใช้งาน ส่วนปุ่ม SEND TO DISCORD ของ Guild War ใช้ Channel ID บนการ์ดประกาศลงชื่อวอร์ได้โดยไม่ต้องเปิด Route อัตโนมัติ";
   }
 }
 
@@ -9570,8 +9570,9 @@ async function saveDiscordIntegrationSettings() {
       showMessage("discord-integration-message", "กรุณากำหนด Channel ID ให้ครบทุกเหตุการณ์ที่เปิดใช้ ก่อนเปิด Production");
       return;
     }
-    if (!routes.some(route => route.enabled)) {
-      showMessage("discord-integration-message", "กรุณาเปิดใช้งานอย่างน้อยหนึ่งประเภทการแจ้งเตือน");
+    const hasManualWarDestination = routes.some(route => route.event_key === "war_signup_opened" && Boolean(route.channel_id));
+    if (!routes.some(route => route.enabled) && !hasManualWarDestination) {
+      showMessage("discord-integration-message", "กรุณาเปิดใช้งานอย่างน้อยหนึ่งประเภทการแจ้งเตือน หรือกำหนด Channel ID ของประกาศลงชื่อวอร์เพื่อใช้ปุ่ม SEND TO DISCORD แบบ Manual");
       return;
     }
   }
