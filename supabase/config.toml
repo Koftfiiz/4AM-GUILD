@@ -21,3 +21,9 @@ verify_jwt = false
 
 [functions.discord-embed-studio]
 verify_jwt = false
+
+[functions.discord-war-roster-publish]
+verify_jwt = false
+
+[functions.discord-war-leave-notify]
+verify_jwt = false
