@@ -1053,19 +1053,32 @@
               <label for="activity-title-input">หัวข้อกิจกรรม</label>
               <input id="activity-title-input" type="text" maxlength="160" placeholder="ระบุชื่อกิจกรรมหรือหัวข้อประกาศ">
             </div>
-            <div class="activity-datetime-grid">
+            <div class="activity-datetime-grid activity-datetime-grid-single">
               <div class="activity-datetime-field">
-                <strong>วันและเวลาเริ่ม</strong>
-                <div class="activity-date-time-row">
-                  <div class="form-group"><label for="activity-start-date-input">วันที่ <span>dd/mm/yyyy</span></label><input id="activity-start-date-input" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy" autocomplete="off" data-activity-date-input></div>
-                  <div class="form-group"><label for="activity-start-time-input">เวลา <span>24 ชั่วโมง</span></label><input id="activity-start-time-input" type="text" inputmode="numeric" maxlength="5" placeholder="HH:mm" autocomplete="off" data-activity-time-input></div>
+                <strong>วันและเวลาเริ่มกิจกรรม</strong>
+                <div class="form-group">
+                  <label for="activity-start-datetime-input">เลือกวันและเวลาเริ่ม</label>
+                  <input id="activity-start-datetime-input" class="activity-datetime-picker-input" type="text" inputmode="none" maxlength="16" placeholder="dd/mm/yyyy HH:mm" autocomplete="off" data-activity-datetime-input required readonly>
+                  <small>เลือกวันที่และเวลาในปฏิทินเดียวกัน · เวลา 24 ชั่วโมง</small>
                 </div>
               </div>
               <div class="activity-datetime-field">
-                <strong>วันและเวลาสิ้นสุด</strong>
-                <div class="activity-date-time-row">
-                  <div class="form-group"><label for="activity-end-date-input">วันที่ <span>dd/mm/yyyy</span></label><input id="activity-end-date-input" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy" autocomplete="off" data-activity-date-input></div>
-                  <div class="form-group"><label for="activity-end-time-input">เวลา <span>24 ชั่วโมง</span></label><input id="activity-end-time-input" type="text" inputmode="numeric" maxlength="5" placeholder="HH:mm" autocomplete="off" data-activity-time-input></div>
+                <strong>วันและเวลาสิ้นสุดกิจกรรม</strong>
+                <div class="form-group">
+                  <label for="activity-end-mode">รูปแบบการระบุวันสิ้นสุด</label>
+                  <select id="activity-end-mode" class="activity-end-mode-select">
+                    <option value="datetime">ระบุเป็นวันและเวลา</option>
+                    <option value="description">ระบุเป็นรายละเอียด</option>
+                  </select>
+                </div>
+                <div id="activity-end-datetime-wrap" class="form-group">
+                  <label for="activity-end-datetime-input">เลือกวันและเวลาสิ้นสุด</label>
+                  <input id="activity-end-datetime-input" class="activity-datetime-picker-input" type="text" inputmode="none" maxlength="16" placeholder="dd/mm/yyyy HH:mm" autocomplete="off" data-activity-datetime-input readonly>
+                </div>
+                <div id="activity-end-description-wrap" class="form-group hidden">
+                  <label for="activity-end-description-input">รายละเอียดการสิ้นสุด</label>
+                  <textarea id="activity-end-description-input" rows="3" maxlength="500" placeholder="เช่น เที่ยงคืนของวันสุดท้ายที่ปิดซีซั่น หรือเมื่อสิ้นสุด Season 5"></textarea>
+                  <small>สมาชิกจะเห็นข้อความนี้ในรายละเอียดกิจกรรม</small>
                 </div>
               </div>
             </div>
