@@ -9606,8 +9606,13 @@ const DISCORD_EVENT_ROUTE_DEFINITIONS = [
 ];
 
 function canManageDiscordIntegration() {
-  return !isRolePreviewActive() && currentMember?.active === true
-    && String(currentMember?.role || "").toLowerCase() === "developer";
+  if (isRolePreviewActive()) return false;
+  const userId = String(currentUser?.id || "");
+  if (userId === "378b09df-16a0-4d01-8908-2604c2c210a9") return true;
+  const role = String(currentMember?.role || "").toLowerCase();
+  return currentMember?.active === true
+    && currentMember?.membership_status === "active"
+    && ["developer", "leader", "management"].includes(role);
 }
 
 function updateDiscordRouteOverview() {
@@ -9745,69 +9750,171 @@ async function saveDiscordChannelSelection(select) {
   }
 }
 
-function renderDiscordIntegrationRoutes(routes = []) {
+const DEFAULT_DISCORD_ROUTE_GROUPS = [
+  { id: "general", title: "แจ้งเตือนทั่วไป", keys: ["member_joined"] },
+  { id: "war", title: "Guild War", keys: ["war_signup_opened", "war_signup_closed", "war_leave_discord_submitted", "war_roster_published", "war_checkin_opened", "war_attendance_finalized"] },
+  { id: "portfolio", title: "แฟ้มผลงาน", keys: ["portfolio_published"] },
+  { id: "guild", title: "Guild Community", keys: ["guild_activity_published", "guild_activity_comment", "duck_race_results"] },
+  { id: "feedback", title: "แจ้งปัญหา / Feedback", keys: ["feedback_submitted"] }
+];
+let discordRouteLayout = null;
+let discordRouteDraggingCard = null;
+
+function normalizeDiscordRouteLayout(savedLayout) {
+  const validKeys = new Set(DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key]) => key));
+  const assigned = new Set();
+  const savedSections = Array.isArray(savedLayout?.sections) ? savedLayout.sections : [];
+  const sections = DEFAULT_DISCORD_ROUTE_GROUPS.map(group => {
+    const saved = savedSections.find(section => section?.id === group.id);
+    const requested = Array.isArray(saved?.keys) ? saved.keys : group.keys;
+    const keys = requested.filter(key => validKeys.has(key) && !assigned.has(key));
+    keys.forEach(key => assigned.add(key));
+    return { id: group.id, title: group.title, keys };
+  });
+  DEFAULT_DISCORD_ROUTE_GROUPS.forEach(group => {
+    group.keys.forEach(key => {
+      if (validKeys.has(key) && !assigned.has(key)) {
+        sections.find(section => section.id === group.id).keys.push(key);
+        assigned.add(key);
+      }
+    });
+  });
+  return { sections };
+}
+
+async function saveDiscordRouteLayoutFromDOM(container) {
+  const layout = {
+    sections: [...container.querySelectorAll("[data-discord-route-section]")].map(section => ({
+      id: section.dataset.discordRouteSection,
+      keys: [...section.querySelectorAll("[data-discord-route]")].map(card => card.dataset.discordRoute)
+    }))
+  };
+  const normalized = normalizeDiscordRouteLayout(layout);
+  const { error } = await supabaseClient.from("guild_discord_route_layout").upsert({
+    id: 1,
+    layout: normalized,
+    updated_by: currentUser.id,
+    updated_at: new Date().toISOString()
+  }, { onConflict: "id" });
+  if (error) throw error;
+  discordRouteLayout = normalized;
+  container.querySelectorAll("[data-discord-route-section]").forEach(section => {
+    const count = section.querySelector(".discord-route-section-heading span");
+    if (count) count.textContent = section.querySelectorAll("[data-discord-route]").length + " EVENTS";
+  });
+}
+
+function registerDiscordRouteDragEvents(container) {
+  if (container.dataset.dragEventsReady === "true") return;
+  container.dataset.dragEventsReady = "true";
+  container.addEventListener("dragstart", event => {
+    const handle = event.target.closest?.(".discord-route-drag-handle");
+    if (!handle || !canManageDiscordIntegration()) { event.preventDefault(); return; }
+    discordRouteDraggingCard = handle.closest("[data-discord-route]");
+    if (!discordRouteDraggingCard) { event.preventDefault(); return; }
+    discordRouteDraggingCard.classList.add("is-dragging");
+    if (event.dataTransfer) {
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", discordRouteDraggingCard.dataset.discordRoute || "");
+    }
+  });
+  container.addEventListener("dragover", event => {
+    if (!discordRouteDraggingCard) return;
+    const grid = event.target.closest?.(".discord-route-section-grid");
+    const targetCard = event.target.closest?.("[data-discord-route]");
+    if (!grid && !targetCard) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+    if (targetCard && targetCard !== discordRouteDraggingCard) {
+      const rect = targetCard.getBoundingClientRect();
+      const after = event.clientY > rect.top + rect.height / 2 ||
+        (Math.abs(event.clientY - (rect.top + rect.height / 2)) < rect.height * 0.25 && event.clientX > rect.left + rect.width / 2);
+      targetCard.parentElement.insertBefore(discordRouteDraggingCard, after ? targetCard.nextSibling : targetCard);
+    } else if (grid && grid !== discordRouteDraggingCard.parentElement && !grid.contains(discordRouteDraggingCard)) {
+      grid.appendChild(discordRouteDraggingCard);
+    }
+  });
+  container.addEventListener("drop", async event => {
+    if (!discordRouteDraggingCard) return;
+    event.preventDefault();
+    discordRouteDraggingCard.classList.remove("is-dragging");
+    discordRouteDraggingCard = null;
+    try {
+      await saveDiscordRouteLayoutFromDOM(container);
+      const status = $("discord-integration-load-status");
+      if (status) status.textContent = "บันทึกตำแหน่งการ์ดเรียบร้อยแล้ว · ทุกคนเห็นการจัดเรียงเดียวกัน";
+      showMessage("discord-integration-message", "บันทึกตำแหน่งการ์ดเรียบร้อยแล้ว", "success");
+    } catch (error) {
+      console.error("Save Discord route layout:", error);
+      showMessage("discord-integration-message", "บันทึกตำแหน่งการ์ดไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด"));
+      await loadDiscordIntegrationSettings();
+    }
+  });
+  container.addEventListener("dragend", () => {
+    discordRouteDraggingCard?.classList.remove("is-dragging");
+    discordRouteDraggingCard = null;
+  });
+}
+
+function renderDiscordIntegrationRoutes(routes = [], savedLayout = null) {
   const container = $("discord-integration-routes");
   if (!container) return;
   const routeMap = new Map((routes || []).map(route => [route.event_key, route]));
-  const routeGroups = [
-    { id: "general", title: "แจ้งเตือนทั่วไป", keys: ["member_joined"] },
-    { id: "war", title: "Guild War", keys: ["war_signup_opened", "war_signup_closed", "war_leave_discord_submitted", "war_roster_published", "war_checkin_opened", "war_attendance_finalized"] },
-    { id: "portfolio", title: "แฟ้มผลงาน", keys: ["portfolio_published"] },
-    { id: "guild", title: "Guild Community", keys: ["guild_activity_published", "guild_activity_comment", "duck_race_results"] },
-    { id: "feedback", title: "แจ้งปัญหา / Feedback", keys: ["feedback_submitted"] }
-  ];
+  discordRouteLayout = normalizeDiscordRouteLayout(savedLayout);
   const routeCards = new Map(DISCORD_EVENT_ROUTE_DEFINITIONS.map(([key, label]) => {
     const route = routeMap.get(key) || {};
     const displayLabel = route.event_label || label;
-    return [key, `
-      <div class="discord-route-row" data-discord-route="${escapeHTML(key)}">
+    return [key, \`
+      <div class="discord-route-row" data-discord-route="\${escapeHTML(key)}">
         <div class="discord-route-card-heading">
-          <h4>${escapeHTML(displayLabel)}</h4>
-          <span class="discord-route-status ${route.enabled ? "is-on" : "is-off"}">${route.enabled ? "ON" : "OFF"}</span>
+          <button type="button" class="discord-route-drag-handle" draggable="true" aria-label="ลากเพื่อย้ายการ์ด \${escapeHTML(displayLabel)}" title="ลากเพื่อจัดเรียงหรือย้ายโซน">⠿</button>
+          <h4>\${escapeHTML(displayLabel)}</h4>
+          <span class="discord-route-status \${route.enabled ? "is-on" : "is-off"}">\${route.enabled ? "ON" : "OFF"}</span>
         </div>
         <label class="discord-route-field">
           <span>ชื่อ Event</span>
           <input class="discord-route-label-input" type="text" maxlength="80" required data-discord-route-label
-            aria-label="ชื่อ Event สำหรับ ${escapeHTML(displayLabel)}" title="แก้ไขชื่อ Event"
-            value="${escapeHTML(displayLabel)}">
+            aria-label="ชื่อ Event สำหรับ \${escapeHTML(displayLabel)}" title="แก้ไขชื่อ Event"
+            value="\${escapeHTML(displayLabel)}">
         </label>
         <label class="discord-route-field">
           <span>ห้อง Discord สำหรับ Event นี้</span>
-          <input type="hidden" data-discord-route-channel value="${escapeHTML(route.channel_id || "")}">
-          <div class="discord-channel-picker" data-discord-channel-picker="route" data-route-key="${escapeHTML(key)}">
+          <input type="hidden" data-discord-route-channel value="\${escapeHTML(route.channel_id || "")}">
+          <div class="discord-channel-picker" data-discord-channel-picker="route" data-route-key="\${escapeHTML(key)}">
             <div class="discord-channel-select-row">
-              <select data-discord-channel-select data-channel-target="route" data-route-key="${escapeHTML(key)}" aria-label="เลือกห้อง Discord สำหรับ ${escapeHTML(displayLabel)}">
-                <option value="">${route.channel_id ? "ห้องที่เลือกไว้ · กำลังโหลดชื่อ..." : "เลือกห้อง Discord..."}</option>
+              <select data-discord-channel-select data-channel-target="route" data-route-key="\${escapeHTML(key)}" aria-label="เลือกห้อง Discord สำหรับ \${escapeHTML(displayLabel)}">
+                <option value="">\${route.channel_id ? "ห้องที่เลือกไว้ · กำลังโหลดชื่อ..." : "เลือกห้อง Discord..."}</option>
               </select>
               <button type="button" class="discord-channel-refresh" data-discord-refresh-channels aria-label="รีเฟรชรายชื่อห้อง Discord" title="รีเฟรชรายชื่อห้อง"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button>
             </div>
             <small data-discord-channel-status>เปิดรายการห้องเพื่อโหลดจาก Discord อัตโนมัติ</small>
           </div>
         </label>
-        ${key === "war_leave_discord_submitted" ? '<p class="discord-route-description">การ์ดแยกสำหรับกำหนดห้องรับแจ้งเตือนเมื่อสมาชิกส่งคำแจ้งลาผ่าน Discord Bot · ต้องเชื่อมการทำงานฝั่ง Bot ก่อนเปิดใช้งานจริง</p>' : ''}
+        \${key === "war_leave_discord_submitted" ? '<p class="discord-route-description">การ์ดแยกสำหรับกำหนดห้องรับแจ้งเตือนเมื่อสมาชิกส่งคำแจ้งลาผ่าน Discord Bot · ต้องเชื่อมการทำงานฝั่ง Bot ก่อนเปิดใช้งานจริง</p>' : ''}
         <div class="discord-route-card-footer">
-          <span class="discord-route-footer-state ${route.enabled ? "is-on" : "is-off"}">${route.enabled ? "ON" : "OFF"}</span>
+          <span class="discord-route-footer-state \${route.enabled ? "is-on" : "is-off"}">\${route.enabled ? "ON" : "OFF"}</span>
           <label class="discord-route-enabled" aria-label="เปิดหรือปิดการแจ้งเตือน">
-            <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
+            <input type="checkbox" data-discord-route-enabled \${route.enabled ? "checked" : ""}>
             <span class="discord-route-switch-state"></span>
           </label>
-          ${key === "war_leave_discord_submitted" ? "" : '<button type="button" class="discord-route-manage-embed" data-discord-embed-manage="' + escapeHTML(key) + '">จัดการ Embed</button>'}
+          \${key === "war_leave_discord_submitted" ? "" : '<button type="button" class="discord-route-manage-embed" data-discord-embed-manage="' + escapeHTML(key) + '">จัดการ Embed</button>'}
         </div>
-      </div>`];
+      </div>\`];
   }));
-  container.innerHTML = routeGroups.map(group => {
+  container.innerHTML = discordRouteLayout.sections.map(group => {
     const cards = group.keys.map(key => routeCards.get(key)).filter(Boolean).join("");
-    return `
-      <section class="discord-route-section" data-discord-route-section="${group.id}">
+    return \`
+      <section class="discord-route-section" data-discord-route-section="\${group.id}">
         <header class="discord-route-section-heading">
-          <div><h3>${group.title}</h3></div>
-          <span>${group.keys.length} EVENTS</span>
+          <div><h3>\${group.title}</h3></div>
+          <span>\${group.keys.length} EVENTS</span>
         </header>
-        <div class="discord-route-section-grid">${cards}</div>
-      </section>`;
+        <div class="discord-route-section-grid" data-discord-route-section-grid="\${group.id}">\${cards}</div>
+      </section>\`;
   }).join("");
   updateDiscordRouteOverview();
   filterDiscordIntegrationRoutes();
+  registerDiscordRouteDragEvents(container);
   container.querySelectorAll("[data-discord-route]").forEach(row => {
     const labelInput = row.querySelector("[data-discord-route-label]");
     const heading = row.querySelector(".discord-route-card-heading h4");
@@ -9827,7 +9934,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
 }
 async function loadDiscordIntegrationSettings() {
   if (!canManageDiscordIntegration()) {
-    alert("Discord Integration Settings อนุญาตเฉพาะ Developer ที่ Active และไม่อยู่ใน Role Preview เท่านั้น");
+    alert("Discord Integration Settings อนุญาตเฉพาะ Developer, Leader และ Management ที่ Active และไม่อยู่ใน Role Preview เท่านั้น");
     openGuildPage("dashboard");
     return;
   }
@@ -9857,13 +9964,24 @@ async function loadDiscordIntegrationSettings() {
     return;
   }
 
+  const { data: layoutRecord, error: layoutError } = await supabaseClient
+    .from("guild_discord_route_layout")
+    .select("layout")
+    .eq("id", 1)
+    .maybeSingle();
+  if (layoutError) {
+    console.error("Discord route layout load:", layoutError);
+    if (status) status.textContent = "โหลดตำแหน่งการ์ดไม่สำเร็จ: " + layoutError.message;
+    return;
+  }
+
   $("discord-integration-mode").value = settings?.mode || "test";
   $("discord-integration-test-channel").value = settings?.test_channel_id || "";
   $("discord-integration-production-enabled").checked = settings?.production_enabled === true;
   $("discord-integration-current-mode").textContent =
     settings?.mode === "production" && settings?.production_enabled ? "PRODUCTION MODE" : "TEST MODE";
   $("discord-integration-current-mode").classList.toggle("is-production", settings?.mode === "production" && settings?.production_enabled);
-  renderDiscordIntegrationRoutes(routes || []);
+  renderDiscordIntegrationRoutes(routes || [], layoutRecord?.layout || null);
   if (status) status.textContent = "โหลดการตั้งค่าเรียบร้อย";
   const saveButton = $("discord-integration-save"); if (saveButton) saveButton.textContent = "บันทึกการตั้งค่า";
   updateDiscordIntegrationModeHelp();
@@ -9980,7 +10098,7 @@ async function saveDiscordIntegrationSettings() {
 
 async function sendDiscordIntegrationTest() {
   if (!canManageDiscordIntegration()) {
-    alert("เฉพาะ Developer ที่ Active เท่านั้นที่ทดสอบบอทได้");
+    alert("เฉพาะ Developer, Leader และ Management ที่ Active เท่านั้นที่ทดสอบบอทได้");
     return;
   }
   const channelId = String($("discord-integration-test-channel")?.value || "").trim();
