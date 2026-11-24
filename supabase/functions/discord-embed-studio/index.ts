@@ -143,7 +143,7 @@ Deno.serve(async (request: Request) => {
       const query = String(body.query || "").trim().toLocaleLowerCase();
       const hints = eventTitleHints[eventKey] || [];
       const candidates: any[] = [];
-      let before = "";
+      let before = isId(body.before) ? String(body.before) : "";
       let scannedCount = 0;
       let searchComplete = false;
       for (let page = 0; page < 5; page++) {
@@ -167,7 +167,7 @@ Deno.serve(async (request: Request) => {
         if (messages.length < 100 || candidates.length >= 50) break;
       }
       await admin.from("discord_embed_history").insert({ event_key: eventKey, record_id: recordId || null, action: "history_scan", actor_id: authData.user.id, details: { channel_id: channelId, scanned_count: scannedCount, candidate_count: candidates.length, search_complete: searchComplete } });
-      return json({ success: true, channel_id: channelId, candidates: candidates.slice(0, 50), scanned_count: scannedCount, search_complete: searchComplete });
+      return json({ success: true, channel_id: channelId, candidates: candidates.slice(0, 50), scanned_count: scannedCount, search_complete: searchComplete, next_before: searchComplete ? null : before });
     }
 
     if (action === "link_existing") {
