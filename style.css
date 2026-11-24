@@ -9936,3 +9936,18 @@ body.gallery-lightbox-open{overflow:hidden}
 .activity-datetime-grid-single textarea{min-height:92px;resize:vertical}
 .activity-datetime-grid-single small{color:var(--muted);font-size:14px;line-height:1.5}
 @media(max-width:700px){.activity-datetime-grid-single{grid-template-columns:1fr}}
+
+/* Guild Activities: Discord-style rich content and image lightbox */
+.activity-card-content p{margin:0 0 13px;white-space:normal}
+.activity-card-content a{color:#ff7b89;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+.activity-card-content a:hover{color:#ffc0c6}
+.activity-card-content img.guild-activity-image{cursor:zoom-in;transition:transform .18s ease,border-color .18s ease}
+.activity-card-content img.guild-activity-image:hover{border-color:rgba(235,65,85,.8);transform:scale(1.01)}
+.activity-card-content img.guild-activity-emoji{display:inline-block;width:24px;height:24px;max-width:24px;max-height:24px;object-fit:contain;vertical-align:middle;margin:0 2px;border:0;background:transparent}
+.activity-card-content ul{list-style:disc}
+.guild-activity-lightbox{position:fixed;inset:0;z-index:10050;display:flex;align-items:center;justify-content:center;padding:56px 22px 22px;background:rgba(0,0,0,.92);backdrop-filter:blur(8px);cursor:zoom-out}
+.guild-activity-lightbox.hidden{display:none}
+.guild-activity-lightbox-image{display:block;max-width:min(96vw,1500px);max-height:calc(100vh - 90px);width:auto;height:auto;object-fit:contain;border-radius:8px;box-shadow:0 18px 70px rgba(0,0,0,.65);cursor:default}
+.guild-activity-lightbox-close{position:absolute;top:16px;right:18px;width:44px;height:44px;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:rgba(25,12,16,.92);color:#fff;font-size:30px;line-height:1;cursor:pointer}
+body.activity-lightbox-open{overflow:hidden}
+@media(max-width:700px){.guild-activity-lightbox{padding:58px 10px 14px}.guild-activity-lightbox-image{max-width:100%;max-height:calc(100vh - 78px)}}
