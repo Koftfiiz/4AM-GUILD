@@ -9723,3 +9723,35 @@ body.gallery-lightbox-open{overflow:hidden}
 #page-discord-integration .discord-route-field{min-width:0;height:auto;box-sizing:border-box;overflow:hidden}
 #page-discord-integration .discord-route-card-footer{display:flex;flex-wrap:wrap;gap:10px;width:100%;min-width:0;box-sizing:border-box}
 #page-discord-integration .discord-route-manage-embed{flex:1 1 100%;width:100%;min-width:0;margin:0}
+
+
+/* 4AM GUILD — compact, collapsible War Signup event cards */
+#page-war-signup .war-signup-display-controls{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+  margin:0 0 14px;padding:12px 14px;border:1px solid rgba(225,55,76,.28);
+  border-radius:10px;background:linear-gradient(110deg,rgba(120,20,37,.16),rgba(12,10,11,.9));
+  color:#f2e8e9;font-size:15px;font-weight:700;
+}
+#page-war-signup .war-signup-display-controls>div{display:flex;gap:8px;flex-wrap:wrap}
+#page-war-signup .war-signup-card{display:flex;flex-direction:column;align-items:stretch;gap:0;overflow:hidden}
+#page-war-signup .war-signup-card-summary{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;min-width:0;
+}
+#page-war-signup .war-signup-card-heading{flex:1 1 auto;min-width:0}
+#page-war-signup .war-signup-card-heading h3{margin:0 0 5px;line-height:1.45}
+#page-war-signup .war-signup-card-heading p{margin:0;color:#c9bfc2;font-size:15px}
+#page-war-signup .war-signup-collapse-btn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;border-color:rgba(225,65,86,.5);color:#ff9aa7;white-space:nowrap}
+#page-war-signup .war-signup-collapse-btn span{font-size:19px;line-height:1}
+#page-war-signup .war-signup-card-details{display:grid;gap:12px;width:100%;min-width:0;padding-top:14px;margin-top:14px;border-top:1px solid rgba(225,55,76,.2)}
+#page-war-signup .war-signup-card-details[hidden]{display:none!important}
+#page-war-signup .war-signup-card-details .war-signup-card-top{margin:0}
+#page-war-signup .war-signup-card.is-collapsed{gap:0;padding-top:15px;padding-bottom:15px;border-color:rgba(225,55,76,.38)}
+#page-war-signup .war-signup-card.is-collapsed .war-signup-card-summary{min-height:52px}
+#page-war-signup .war-signup-card:not(.is-collapsed) .war-signup-card-summary{align-items:center}
+@media(max-width:700px){
+  #page-war-signup .war-signup-card-summary{align-items:flex-start;flex-direction:column;gap:10px}
+  #page-war-signup .war-signup-collapse-btn{width:100%}
+  #page-war-signup .war-signup-display-controls{align-items:stretch;flex-direction:column}
+  #page-war-signup .war-signup-display-controls>div{width:100%}
+  #page-war-signup .war-signup-display-controls .btn{flex:1}
+}
