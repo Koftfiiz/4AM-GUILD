@@ -7852,6 +7852,18 @@ function openGuildActivityLightbox(src,alt="ภาพกิจกรรม"){
  if(!src)return;
  let modal=$("guild-activity-lightbox");
  if(!modal){modal=document.createElement("div");modal.id="guild-activity-lightbox";modal.className="guild-activity-lightbox hidden";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","ดูภาพกิจกรรมขนาดใหญ่");modal.innerHTML='<button type="button" class="guild-activity-lightbox-close" data-activity-lightbox-close aria-label="ปิดภาพ">×</button><img class="guild-activity-lightbox-image" alt="">';document.body.appendChild(modal);}
+ // The lightbox is appended to body (outside the activities page), so its
+ // close controls must be handled on the modal itself, not by the page delegate.
+ if(!modal.dataset.closeHandlersBound){
+  modal.addEventListener("click",event=>{
+   if(event.target===modal||event.target.closest("[data-activity-lightbox-close]"))closeGuildActivityLightbox();
+  });
+  guildActivityLightboxKeyHandler=event=>{
+   if(event.key==="Escape"&&!modal.classList.contains("hidden"))closeGuildActivityLightbox();
+  };
+  document.addEventListener("keydown",guildActivityLightboxKeyHandler);
+  modal.dataset.closeHandlersBound="true";
+ }
  const image=modal.querySelector("img");image.src=src;image.alt=alt||"ภาพกิจกรรม";modal.classList.remove("hidden");document.body.classList.add("activity-lightbox-open");
 }
 function closeGuildActivityLightbox(){
