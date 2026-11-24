@@ -9506,7 +9506,7 @@ async function loadDiscordChannelsForPicker(button, select) {
 
 async function saveDiscordChannelSelection(select) {
   const channelId = String(select?.value || "").trim();
-  if (!select || !/^\\d{17,20}$/.test(channelId)) return;
+  if (!select || !/^\d{17,20}$/.test(channelId)) return;
   const picker = select.closest("[data-discord-channel-picker]");
   const status = picker?.querySelector("[data-discord-channel-status]");
   const button = picker?.querySelector("[data-discord-load-channels]");
@@ -10287,6 +10287,7 @@ function registerDiscordIntegrationEvents() {
     markDiscordIntegrationDirty();
   });
   $("discord-integration-routes")?.addEventListener("change", event => {
+    if (event.target.matches("[data-discord-channel-select]")) return;
     if (event.target.matches("[data-discord-route-enabled]")) { updateDiscordRouteOverview(); filterDiscordIntegrationRoutes(); }
     markDiscordIntegrationDirty();
   });
