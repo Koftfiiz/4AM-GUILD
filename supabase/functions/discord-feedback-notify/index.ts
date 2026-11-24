@@ -55,7 +55,8 @@ Deno.serve(async (request) => {
       .select("mode,test_channel_id,production_enabled").eq("id", 1).maybeSingle();
     if (integrationError || !integrationSettings) return json({ success: false, message: "Discord integration settings are not configured" }, 503);
     let channelId = "";
-    if (integrationSettings.mode === "test") {
+    if (existingDiscordMessage?.channel_id) channelId = String(existingDiscordMessage.channel_id);
+    else if (integrationSettings.mode === "test") {
       channelId = String(integrationSettings.test_channel_id || "");
     } else if (integrationSettings.mode === "production" && integrationSettings.production_enabled === true) {
       const { data: route } = await admin.from("guild_discord_event_routes")
@@ -64,7 +65,9 @@ Deno.serve(async (request) => {
     }
     if (!channelId) return json({ success: false, message: "No destination configured for this Discord event; notification was not sent" }, 503);
     if (feedback.user_id !== authData.user.id && !isManager) return json({ success: false, message: "Not allowed" }, 403);
-    if (feedback.discord_notified_at) return json({ success: true, already_notified: true });
+    const { data: existingDiscordMessage } = await admin.from("discord_embed_messages").select("channel_id,message_id")
+      .eq("event_key", "feedback_submitted").eq("record_id", feedbackId).eq("message_type", "primary").maybeSingle();
+    if (feedback.discord_notified_at) return json({ success: true, already_notified: true, needs_legacy_link: !existingDiscordMessage });
 
     const { data: author } = await admin.from("guild_members")
       .select("character_name,nickname,discord_name")
@@ -89,8 +92,14 @@ Deno.serve(async (request) => {
       timestamp: feedback.created_at
     };
 
-    const discordResponse = await fetch("https://discord.com/api/v10/channels/" + channelId + "/messages", {
-      method: "POST",
+    const messageUrl = "https://discord.com/api/v10/channels/" + channelId + "/messages" +
+      (existingDiscordMessage?.message_id ? "/" + existingDiscordMessage.message_id : "");
+    if (existingDiscordMessage?.message_id) {
+      const existingCheck = await fetch(messageUrl, { headers: { Authorization: "Bot " + botToken } });
+      if (!existingCheck.ok) return json({ success: false, message: "ข้อความ Feedback เดิมไม่พบ ระบบจะไม่สร้างข้อความทดแทน กรุณาตรวจสอบใน Embed Studio" }, 409);
+    }
+    const discordResponse = await fetch(messageUrl, {
+      method: existingDiscordMessage?.message_id ? "PATCH" : "POST",
       headers: { "Authorization": "Bot " + botToken, "Content-Type": "application/json" },
       body: JSON.stringify({ embeds: [embed], allowed_mentions: { parse: [] } })
     });
