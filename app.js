@@ -5789,18 +5789,28 @@ function normalizeWarCaptureCloneColors(clonedDocument){
   const canvas=clonedDocument.createElement("canvas");
   canvas.width=canvas.height=1;
   const context=canvas.getContext("2d",{willReadFrequently:true});
-  if(!context)return;
-  const cache=new Map();
-  const nodes=[clonedDocument.documentElement,...clonedDocument.querySelectorAll("body *")];
-  nodes.forEach(node=>{
-    if(!node||node.nodeType!==1)return;
-    const computed=clonedDocument.defaultView.getComputedStyle(node);
-    for(let index=0;index<computed.length;index++){
-      const property=computed[index],value=computed.getPropertyValue(property);
-      if(!/color\(/i.test(value))continue;
-      const normalized=normalizeWarCaptureColorFunctions(value,context,cache);
-      if(normalized!==value)node.style.setProperty(property,normalized,"important");
-    }
+  if(context){
+    const cache=new Map();
+    const nodes=[clonedDocument.documentElement,...clonedDocument.querySelectorAll("body *")];
+    nodes.forEach(node=>{
+      if(!node||node.nodeType!==1)return;
+      const computed=clonedDocument.defaultView.getComputedStyle(node);
+      for(let index=0;index<computed.length;index++){
+        const property=computed[index],value=computed.getPropertyValue(property);
+        if(!/color\(/i.test(value))continue;
+        const normalized=normalizeWarCaptureColorFunctions(value,context,cache);
+        if(normalized!==value)node.style.setProperty(property,normalized,"important");
+      }
+    });
+  }
+  // Raid boards use horizontal scrolling on screen. Expand that strip in the
+  // cloned capture document so all five party columns (A1-A5) are rendered.
+  clonedDocument.querySelectorAll(".raid-section .raid-grid,.war-attendance-boards .raid-grid").forEach(grid=>{
+    const fullWidth=Math.max(grid.scrollWidth,grid.clientWidth);
+    grid.style.setProperty("overflow","visible","important");
+    grid.style.setProperty("width",fullWidth+"px","important");
+    grid.style.setProperty("max-width","none","important");
+    grid.style.setProperty("grid-template-columns","repeat(5,minmax(380px,1fr))","important");
   });
 }
 async function captureWarDomElement(element,filename){
