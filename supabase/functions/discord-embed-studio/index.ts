@@ -355,6 +355,30 @@ Deno.serve(async (request: Request) => {
       return json({ success: true, template: saved });
     }
 
+    if (action === "rename_template") {
+      const templateId = String(body.template_id || "");
+      const templateName = String(body.template_name || "").trim();
+      if (!templateId || !eventKey || !templateName || templateName.length > 80) {
+        return json({ success: false, message: "กรุณาระบุ Template และชื่อใหม่ไม่เกิน 80 ตัวอักษร" }, 400);
+      }
+      const { data: updated, error } = await admin.from("discord_embed_templates")
+        .update({ template_name: templateName, updated_by: authData.user.id, updated_at: new Date().toISOString() })
+        .eq("id", templateId).eq("event_key", eventKey).select("*").maybeSingle();
+      if (error) return json({ success: false, message: "เปลี่ยนชื่อ Template ไม่สำเร็จ", details: error.message }, 500);
+      if (!updated) return json({ success: false, message: "ไม่พบ Template ที่ต้องการแก้ไข" }, 404);
+      return json({ success: true, template: updated });
+    }
+
+    if (action === "delete_template") {
+      const templateId = String(body.template_id || "");
+      if (!templateId || !eventKey) return json({ success: false, message: "กรุณาระบุ Template ที่ต้องการลบ" }, 400);
+      const { data: removed, error } = await admin.from("discord_embed_templates")
+        .delete().eq("id", templateId).eq("event_key", eventKey).select("id").maybeSingle();
+      if (error) return json({ success: false, message: "ลบ Template ไม่สำเร็จ", details: error.message }, 500);
+      if (!removed) return json({ success: false, message: "ไม่พบ Template ที่ต้องการลบ" }, 404);
+      return json({ success: true, deleted_id: removed.id });
+    }
+
     if (action === "list_templates") {
       if (!eventKey) return json({ success: false, message: "กรุณาระบุ Event Key" }, 400);
       const { data, error } = await admin.from("discord_embed_templates").select("*").eq("event_key", eventKey).order("version", { ascending: false }).limit(30);
