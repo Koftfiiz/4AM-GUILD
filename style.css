@@ -9707,3 +9707,12 @@ body.gallery-lightbox-open{overflow:hidden}
 .discord-embed-studio-field{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto auto auto}
 .discord-embed-studio-field button:disabled{opacity:.3;cursor:not-allowed}
 @media(max-width:520px){.discord-embed-studio-field{grid-template-columns:1fr 1fr 1fr}.discord-embed-studio-field input{grid-column:1/-1}}
+
+/* Discord channel picker — loaded from the connected guild and saved on selection. */
+.discord-channel-picker{display:grid;grid-template-columns:minmax(150px,auto) minmax(180px,1fr);gap:8px;align-items:center;width:100%;margin-top:8px}
+.discord-channel-picker button{white-space:nowrap;min-height:40px}
+.discord-channel-picker select{width:100%;min-width:0;min-height:40px;background:#111116;color:#f4f4f5;border:1px solid rgba(255,255,255,.14);border-radius:9px;padding:8px 10px}
+.discord-channel-picker select:disabled,.discord-channel-picker button:disabled{opacity:.6;cursor:wait}
+.discord-channel-picker small{grid-column:1/-1;color:#a1a1aa;font-size:13px;line-height:1.5}
+.discord-route-field [data-discord-route-channel]{display:none}
+@media(max-width:640px){.discord-channel-picker{grid-template-columns:1fr}.discord-channel-picker small{grid-column:1}}
