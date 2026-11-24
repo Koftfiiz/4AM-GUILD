@@ -233,9 +233,45 @@ Deno.serve(async (request: Request) => {
       const { data: settings } = await admin.from("guild_discord_integration_settings").select("test_channel_id").eq("id", 1).maybeSingle();
       const channelId = String(settings?.test_channel_id || "");
       if (!isId(channelId)) return json({ success: false, message: "ยังไม่ได้กำหนด Test Channel ID" }, 400);
-      const sent = await discord(`/channels/${channelId}/messages`, { method: "POST", body: JSON.stringify({ ...payload, allowed_mentions: { parse: [] } }) });
+      const testPayload = { content: payload.content || undefined, embeds: payload.embeds || [], allowed_mentions: { parse: [] } };
+      const sent = await discord("/channels/" + channelId + "/messages", { method: "POST", body: JSON.stringify(testPayload) });
       if (!sent.response.ok) return json({ success: false, message: "ส่ง Test Message ไม่สำเร็จ", discord_status: sent.response.status, details: sent.data }, 502);
       return json({ success: true, channel_id: channelId, message: sent.data });
+    }
+
+    if (action === "send_new") {
+      requireKeys();
+      const { data: existing } = await admin.from("discord_embed_messages").select("message_id,channel_id")
+        .eq("event_key", eventKey).eq("record_id", recordId).eq("message_type", messageType).maybeSingle();
+      if (existing?.message_id) return json({ success: false, conflict: true, message: "รายการนี้มีข้อความ Discord ผูกอยู่แล้ว ห้ามสร้างข้อความซ้ำ" }, 409);
+      if (eventKey === "war_signup_opened") {
+        const { data: warEvent } = await admin.from("war_events").select("discord_message_id").eq("id", recordId).maybeSingle();
+        if (warEvent?.discord_message_id) return json({ success: false, conflict: true, message: "War Event นี้มี Message ID เดิมอยู่แล้ว ต้องใช้ PATCH กับข้อความเดิมเท่านั้น" }, 409);
+      }
+      const payload = body.payload || {};
+      const errors = validatePayload(payload);
+      if (errors.length) return json({ success: false, message: "Embed ไม่ผ่านการตรวจสอบ", errors }, 422);
+      const destination = await resolveDestination();
+      const channelId = destination.channelId;
+      if (!isId(channelId)) return json({ success: false, message: "ยังไม่ได้กำหนด Channel ปลายทางของ Event นี้" }, 400);
+      const sent = await discord("/channels/" + channelId + "/messages", { method: "POST", body: JSON.stringify({ ...payload, allowed_mentions: { parse: [] } }) });
+      if (!sent.response.ok) return json({ success: false, message: "ส่งข้อความใหม่ไม่สำเร็จ", discord_status: sent.response.status, details: sent.data }, 502);
+      const { error: registryError } = await admin.from("discord_embed_messages").insert({
+        event_key: eventKey, record_id: recordId, message_type: messageType, channel_id: channelId,
+        message_id: sent.data.id, source: "manual_send", last_payload: sent.data,
+        linked_by: authData.user.id, linked_at: new Date().toISOString()
+      });
+      if (registryError) {
+        return json({ success: false, message: "ส่ง Discord สำเร็จแล้ว แต่บันทึก Message ID ลงทะเบียนไม่สำเร็จ ห้ามกดส่งซ้ำ", message_id: sent.data.id, channel_id: channelId, details: registryError.message }, 500);
+      }
+      if (eventKey === "war_signup_opened") {
+        await admin.from("war_events").update({ discord_message_id: sent.data.id, discord_channel_id: channelId, discord_sent_at: new Date().toISOString() }).eq("id", recordId);
+      }
+      await admin.from("discord_embed_history").insert({
+        event_key: eventKey, record_id: recordId, message_type: messageType, channel_id: channelId,
+        message_id: sent.data.id, action: "manual_send", after_payload: sent.data, actor_id: authData.user.id
+      });
+      return json({ success: true, message: sent.data, channel_id: channelId });
     }
 
     if (action === "save_template") {
