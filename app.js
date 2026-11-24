@@ -9709,6 +9709,8 @@ function renderEmbedStudioFields() {
     '<div class="discord-embed-studio-field" data-embed-field="' + index + '">' +
       '<input type="text" maxlength="256" data-embed-field-name placeholder="Field name" value="' + escapeHTML(field.name || "") + '">' +
       '<input type="text" maxlength="1024" data-embed-field-value placeholder="Field value" value="' + escapeHTML(field.value || "") + '">' +
+      '<button type="button" data-embed-field-up="' + index + '" aria-label="เลื่อนขึ้น" ' + (index === 0 ? "disabled" : "") + '>↑</button>' +
+      '<button type="button" data-embed-field-down="' + index + '" aria-label="เลื่อนลง" ' + (index === discordEmbedStudioState.fields.length - 1 ? "disabled" : "") + '>↓</button>' +
       '<button type="button" data-embed-field-remove="' + index + '" aria-label="ลบ Field">ลบ</button>' +
     '</div>'
   ).join("");
@@ -9997,9 +9999,20 @@ function registerDiscordEmbedStudioEvents() {
     renderEmbedStudioPreview();
   });
   $("embed-studio-fields")?.addEventListener("click", event => {
-    const button = event.target.closest("[data-embed-field-remove]");
-    if (!button) return;
-    discordEmbedStudioState.fields.splice(Number(button.dataset.embedFieldRemove), 1); renderEmbedStudioFields(); renderEmbedStudioPreview();
+    const remove = event.target.closest("[data-embed-field-remove]");
+    const moveUp = event.target.closest("[data-embed-field-up]");
+    const moveDown = event.target.closest("[data-embed-field-down]");
+    if (remove) { discordEmbedStudioState.fields.splice(Number(remove.dataset.embedFieldRemove), 1); renderEmbedStudioFields(); renderEmbedStudioPreview(); return; }
+    if (moveUp) {
+      const index = Number(moveUp.dataset.embedFieldUp);
+      if (index > 0) [discordEmbedStudioState.fields[index - 1], discordEmbedStudioState.fields[index]] = [discordEmbedStudioState.fields[index], discordEmbedStudioState.fields[index - 1]];
+      renderEmbedStudioFields(); renderEmbedStudioPreview(); return;
+    }
+    if (moveDown) {
+      const index = Number(moveDown.dataset.embedFieldDown);
+      if (index < discordEmbedStudioState.fields.length - 1) [discordEmbedStudioState.fields[index + 1], discordEmbedStudioState.fields[index]] = [discordEmbedStudioState.fields[index], discordEmbedStudioState.fields[index + 1]];
+      renderEmbedStudioFields(); renderEmbedStudioPreview();
+    }
   });
   ["author","author-icon","author-url","title","description","color","footer","thumbnail","image","timestamp"].forEach(key => $("embed-studio-" + key)?.addEventListener("input", renderEmbedStudioPreview));
   $("embed-studio-update-existing")?.addEventListener("click", () => void updateDiscordEmbedStudioExisting().catch(error => setEmbedStudioStatus(error.message, "error")));
