@@ -6521,7 +6521,7 @@ async function joinWarSignup(eventId,button){
     let choice="1";
     if(roundCount>1){
       const selected=window.prompt(
-        "กรณีที่เป็นวันเสาร์ที่มีวอร์สองรอบ หากคุณได้เป็นตัวสำรอง\nคุณสามารถเข้าร่วมวอร์รอบใดได้บ้าง?\n\nพิมพ์ 12 = ได้ทั้ง รอบแรก และ รอบสอง\nพิมพ์ 1 = ได้เฉพาะ รอบแรก\nพิมพ์ 2 = ได้เฉพาะ รอบสอง\n\nข้อมูลนี้จะใช้เมื่อคุณอยู่ในรายชื่อตัวสำรองเท่านั้น",
+        "กรณีวันเสาร์ที่มีวอร์สองรอบ หากคิวของคุณอยู่ลำดับ 61–80\nคุณสามารถเข้าร่วมวอร์รอบใดได้บ้าง?\n\nพิมพ์ 12 = ได้ทั้ง รอบแรก และ รอบสอง\nพิมพ์ 1 = ได้เฉพาะ รอบแรก\nพิมพ์ 2 = ได้เฉพาะ รอบสอง\n\nข้อมูลนี้ใช้ประกอบการจัดรายชื่อเมื่อคิวของคุณอยู่ลำดับ 61–80",
         "12"
       );
       if(selected===null)return;
@@ -6543,7 +6543,6 @@ async function joinWarSignup(eventId,button){
     const discordSync=await syncWarSignupDiscord(eventId);
     await loadWarSignups();
     alert("ลงชื่อวอร์เรียบร้อยแล้ว · คิวที่ "+(result?.queue_position??"—")+
-      (result?.signup_status==="standby"?" (ตัวสำรอง)":" (ตัวจริง)")+
       "\nความพร้อมที่บันทึก: "+availabilityLabel+
       (discordSync.ok?(discordSync.skipped?"":"\nอัปเดตประกาศ Discord แล้ว"):"\n⚠️ บันทึกบนเว็บไซต์แล้ว แต่ซิงก์ Discord ไม่สำเร็จ: "+discordSync.message));
   }catch(error){
