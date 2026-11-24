@@ -12,13 +12,18 @@ const json = (body: unknown, status = 200) =>
 
 const isId = (value: unknown) => /^\d{17,20}$/.test(String(value || ""));
 const eventTitleHints: Record<string, string[]> = {
+  member_joined: ["สมาชิกใหม่", "4AM GUILD"],
   war_signup_opened: ["4AM SIGN-UP"],
+  war_signup_submitted: ["4AM SIGN-UP"],
+  war_signup_closed: ["ปิดรับสมัคร Guild War", "ปิดรับสมัคร"],
   war_roster_published: ["4AM GUILD", "RAID A", "RAID B", "ตี้วอร์"],
-  guild_activity_published: ["กิจกรรมกิลด์"],
+  war_checkin_opened: ["CHECK-IN", "ยืนยันความพร้อม"],
+  war_attendance_finalized: ["สรุปผลการเข้าร่วม", "ATTENDANCE"],
+  guild_activity_published: ["กิจกรรมกิลด์", "กิจกรรมใหม่"],
   guild_activity_comment: ["คอมเมนท์กิจกรรม"],
   feedback_submitted: ["FEEDBACK", "แจ้งปัญหา"],
   duck_race_results: ["DUCK RACE"],
-  war_leave_submitted: ["ถอนตัวจากวอร์"],
+  war_leave_submitted: ["แจ้งลาวอร์", "ถอนตัวจากวอร์"],
   portfolio_published: ["PORTFOLIO", "แฟ้มผลงาน"],
 };
 
