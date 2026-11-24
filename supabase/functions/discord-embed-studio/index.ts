@@ -138,12 +138,16 @@ Deno.serve(async (request: Request) => {
       const hints = eventTitleHints[eventKey] || [];
       const candidates: any[] = [];
       let before = "";
+      let scannedCount = 0;
+      let searchComplete = false;
       for (let page = 0; page < 5; page++) {
         const path = `/channels/${channelId}/messages?limit=100${before ? "&before=" + before : ""}`;
         const result = await discord(path);
         if (!result.response.ok) return json({ success: false, message: "อ่านประวัติ Channel ไม่สำเร็จ", discord_status: result.response.status }, 502);
         const messages = Array.isArray(result.data) ? result.data : [];
-        if (!messages.length) break;
+        if (!messages.length) { searchComplete = true; break; }
+        scannedCount += messages.length;
+        searchComplete = messages.length < 100;
         for (const message of messages) {
           const embeds = Array.isArray(message.embeds) ? message.embeds : [];
           const textBlob = embeds.map((e: any) => [e.title,e.description,e.footer?.text,e.author?.name].filter(Boolean).join(" ")).join(" ").toLocaleLowerCase();
@@ -156,7 +160,7 @@ Deno.serve(async (request: Request) => {
         before = messages[messages.length - 1]?.id || "";
         if (messages.length < 100 || candidates.length >= 50) break;
       }
-      return json({ success: true, channel_id: channelId, candidates: candidates.slice(0, 50) });
+      return json({ success: true, channel_id: channelId, candidates: candidates.slice(0, 50), scanned_count: scannedCount, search_complete: searchComplete });
     }
 
     if (action === "link_existing") {
