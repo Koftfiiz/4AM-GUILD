@@ -77,12 +77,20 @@ Deno.serve(async (request) => {
       return json({ success: false, message: "Active guild member required" }, 403);
     }
     const role = String(requester.role || "").toLowerCase();
-    const eventKey = kind === "activity" ? "guild_activity_published" : kind === "comment" ? "guild_activity_comment" : "war_signup_submitted";
+    let existingWarMessage: any = null;
+    if (kind === "war_signup") {
+      const { data, error } = await admin.from("war_events").select("discord_message_id,discord_channel_id").eq("id", recordId).maybeSingle();
+      if (error) return json({ success: false, message: "Unable to read existing War signup announcement" }, 500);
+      existingWarMessage = data;
+    }
+    const eventKey = kind === "activity" ? "guild_activity_published" : kind === "comment" ? "guild_activity_comment" : "war_signup_opened";
     const { data: integrationSettings, error: integrationError } = await admin.from("guild_discord_integration_settings")
       .select("mode,test_channel_id,production_enabled").eq("id", 1).maybeSingle();
     if (integrationError || !integrationSettings) return json({ success: false, message: "Discord integration settings are not configured" }, 503);
     let channelId = "";
-    if (integrationSettings.mode === "test") {
+    if (kind === "war_signup" && existingWarMessage?.discord_message_id && existingWarMessage?.discord_channel_id) {
+      channelId = String(existingWarMessage.discord_channel_id);
+    } else if (integrationSettings.mode === "test") {
       channelId = String(integrationSettings.test_channel_id || "");
     } else if (integrationSettings.mode === "production" && integrationSettings.production_enabled === true) {
       const { data: route } = await admin.from("guild_discord_event_routes")
@@ -100,7 +108,7 @@ Deno.serve(async (request) => {
     if (kind === "war_signup") {
       table = "war_events";
       const { data, error } = await admin.from(table)
-        .select("id,event_name,event_date,start_time,registration_type,signup_opens_at,signup_closes_at,description,status,discord_message_id,discord_sent_at")
+        .select("id,event_name,event_date,start_time,registration_type,signup_opens_at,signup_closes_at,description,status,discord_message_id,discord_channel_id,discord_sent_at")
         .eq("id", recordId).maybeSingle();
       if (error || !data) return json({ success: false, message: "War Signup Event not found" }, 404);
       record = data;
@@ -332,7 +340,7 @@ Deno.serve(async (request) => {
 
     const discordMessage = await discordResponse.json();
     const updatePayload = kind === "war_signup"
-      ? { discord_message_id: String(discordMessage.id), discord_sent_at: new Date().toISOString(), discord_send_error: null }
+      ? { discord_message_id: String(discordMessage.id), discord_channel_id: channelId, discord_sent_at: new Date().toISOString(), discord_send_error: null }
       : { discord_notified_at: new Date().toISOString(), discord_notification_error: null };
     const { error: updateError } = await admin.from(table).update(updatePayload).eq("id", recordId);
     if (updateError) return json({ success: false, message: "Discord sent, but notification state could not be saved", message_id: String(discordMessage.id) }, 500);
