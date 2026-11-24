@@ -316,31 +316,12 @@ Deno.serve(async (request) => {
         body: JSON.stringify(messagePayload)
       }
     );
-    let recreatedDeletedWarMessage = false;
 
-    // If a manager manually deleted the bot's old Discord announcement,
-    // Discord returns 404 / code 10008 (Unknown Message). Re-create it instead
-    // of leaving the database pointing at a message that no longer exists.
+    // Never create a replacement when a previously linked signup message is missing.
     if (!discordResponse.ok && hasPreviousWarMessage && discordResponse.status === 404) {
       const previousDetails = await discordResponse.text();
-      let discordErrorCode = 0;
-      try {
-        discordErrorCode = Number(JSON.parse(previousDetails).code || 0);
-      } catch {
-        // Keep the original response as the failure detail below.
-      }
-
-      if (discordErrorCode === 10008) {
-        discordResponse = await fetch(discordMessagesUrl, {
-          method: "POST",
-          headers: { "Authorization": "Bot " + botToken, "Content-Type": "application/json" },
-          body: JSON.stringify(messagePayload)
-        });
-        recreatedDeletedWarMessage = true;
-      } else {
-        await admin.from(table).update({ discord_send_error: previousDetails.slice(0, 1000) }).eq("id", recordId);
-        return json({ success: false, message: "Discord API rejected the message", details: previousDetails.slice(0, 500) }, 502);
-      }
+      await admin.from(table).update({ discord_send_error: previousDetails.slice(0, 1000) }).eq("id", recordId);
+      return json({ success: false, message: "ข้อความ Discord เดิมไม่พบหรือถูกลบ ระบบจะไม่สร้างข้อความใหม่อัตโนมัติ กรุณาตรวจสอบใน Embed Studio", details: previousDetails.slice(0, 500) }, 409);
     }
 
     if (!discordResponse.ok) {
@@ -354,12 +335,14 @@ Deno.serve(async (request) => {
       ? { discord_message_id: String(discordMessage.id), discord_sent_at: new Date().toISOString(), discord_send_error: null }
       : { discord_notified_at: new Date().toISOString(), discord_notification_error: null };
     const { error: updateError } = await admin.from(table).update(updatePayload).eq("id", recordId);
-    if (updateError) return json({ success: false, message: "Discord sent, but notification state could not be saved" }, 500);
-    return json({
-      success: true,
-      updated: hasPreviousWarMessage && !recreatedDeletedWarMessage,
-      recreated: recreatedDeletedWarMessage
-    });
+    if (updateError) return json({ success: false, message: "Discord sent, but notification state could not be saved", message_id: String(discordMessage.id) }, 500);
+    const { error: registryError } = await admin.from("discord_embed_messages").upsert({
+      event_key: eventKey, record_id: recordId, message_type: "primary", channel_id: channelId,
+      message_id: String(discordMessage.id), source: "automation", last_payload: discordMessage,
+      linked_by: authData.user.id, linked_at: new Date().toISOString(), updated_at: new Date().toISOString()
+    }, { onConflict: "event_key,record_id,message_type" });
+    if (registryError) return json({ success: false, message: "Discord sent, but Message ID registration failed; do not resend", message_id: String(discordMessage.id) }, 500);
+    return json({ success: true, updated: hasPreviousWarMessage, message_id: String(discordMessage.id) });
   } catch (error) {
     console.error("discord-guild-activity-notify:", error);
     return json({ success: false, message: error instanceof Error ? error.message : "Unexpected error" }, 500);
