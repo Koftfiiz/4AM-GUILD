@@ -27,3 +27,6 @@ verify_jwt = false
 
 [functions.discord-war-leave-notify]
 verify_jwt = false
+
+[functions.guild-4am-bot]
+verify_jwt = false
