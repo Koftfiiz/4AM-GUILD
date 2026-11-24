@@ -2538,7 +2538,9 @@ function renderManualMemberManagement() {
     pendingPanel = document.createElement("section");
     pendingPanel.id = "member-pending-review-panel";
     pendingPanel.className = "member-pending-review-panel";
-    list.parentElement?.insertBefore(pendingPanel, list);
+    const memberListPanel = list.closest(".manual-member-list-panel");
+    if (memberListPanel?.parentElement) memberListPanel.parentElement.insertBefore(pendingPanel, memberListPanel);
+    else list.parentElement?.insertBefore(pendingPanel, list);
   }
   const pendingMembers = allMembers.filter(member => member.membership_status === "pending_review");
   pendingPanel.innerHTML = pendingMembers.length ? `
@@ -2549,7 +2551,7 @@ function renderManualMemberManagement() {
     <div class="member-pending-review-list">${pendingMembers.map(member => `
       <article class="member-pending-review-item">
         <div class="member-pending-review-main"><strong>${escapeHTML(member.character_name || "ไม่ระบุชื่อตัวละคร")}</strong><span>${escapeHTML(member.game_class || "-")} · ${escapeHTML(member.nickname || "-")}</span><small>Discord: ${escapeHTML(member.discord_name || "-")} · UID: ${escapeHTML(member.game_uid || "-")}</small></div>
-        <div class="member-pending-review-actions"><button type="button" class="btn btn-primary btn-sm" data-review-member="${escapeHTML(member.user_id)}" data-review-decision="approve">อนุมัติ</button><button type="button" class="btn btn-outline btn-sm" data-review-member="${escapeHTML(member.user_id)}" data-review-decision="reject">ไม่อนุมัติ</button></div>
+        <div class="member-pending-review-actions"><button type="button" class="btn btn-sm member-pending-approve-btn" data-review-member="${escapeHTML(member.user_id)}" data-review-decision="approve">✓ อนุมัติ</button><button type="button" class="btn btn-outline btn-sm" data-review-member="${escapeHTML(member.user_id)}" data-review-decision="reject">ไม่อนุมัติ</button></div>
       </article>`).join("")}</div>` : "";
   pendingPanel.classList.toggle("hidden", pendingMembers.length === 0);
   pendingPanel.querySelectorAll("[data-review-member]").forEach(button => {
@@ -2563,7 +2565,10 @@ function renderManualMemberManagement() {
     });
   });
 
-  const linkedCount = allMembers.length;
+  // Pending applications are reviewed in their own panel and must never
+  // appear in the active/inactive member directory or suspended-member area.
+  const approvedAccountRows = allMembers.filter(member => member.membership_status !== "pending_review");
+  const linkedCount = approvedAccountRows.length;
   // A linked Manual row is represented by its real guild_members account row.
   // Keep the source record for administration, but do not render/count it twice.
   const unlinkedManualMembers = manualGuildMembers.filter(member => !member.linked_user_id);
@@ -2577,7 +2582,7 @@ function renderManualMemberManagement() {
   if (classSummary) {
     const classCounts = new Map();
     const countableMembers = [
-      ...allMembers,
+      ...approvedAccountRows,
       ...unlinkedManualMembers
     ];
     countableMembers.forEach(member => {
@@ -2625,7 +2630,7 @@ function renderManualMemberManagement() {
     };
   });
   const allVisibleMembers = [
-    ...accountRowsWithDiscord,
+    ...accountRowsWithDiscord.filter(member => member.membership_status !== "pending_review"),
     ...unlinkedManualMembers.map(member => ({ ...member, _recordType: "manual" }))
   ].sort((a, b) => {
     const rankA = guildPositionOrder.has(a.guild_position)
