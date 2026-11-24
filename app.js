@@ -5804,18 +5804,17 @@ function addWarPartyExportButtons(container,parties){
     const button=document.createElement("button");
     button.type="button";button.className="btn btn-outline btn-sm war-party-image-button";
     button.textContent="บันทึกรูปตี้";
-    button.addEventListener("click",()=>exportWarPartyImage(party.id));
+    button.addEventListener("click",()=>exportWarPartyImage(party.id,party.raid+String(party.party_number),party.event_id));
     header.appendChild(button);
   });
 }
-async function exportWarPartyImage(partyId){
+async function exportWarPartyImage(partyId,partyLabel="",eventIdHint=null){
   const party=currentWarParties.find(item=>item.id===partyId)||null;
-  const publishedParty=party||null;
   const candidates=[...document.querySelectorAll(".party-card")];
-  const card=candidates.find(item=>item.querySelector(".party-header h3")?.textContent?.trim()===(publishedParty?publishedParty.raid+publishedParty.party_number:""));
+  const label=partyLabel||(party?party.raid+String(party.party_number):"");
+  const card=candidates.find(item=>item.querySelector(".party-header h3")?.textContent?.trim()===label);
   if(!card){alert("ไม่พบการ์ดตี้บนหน้าจอ กรุณาเปิดหน้ารายชื่อตี้ก่อนบันทึกภาพ");return;}
-  const eventId=publishedParty?.event_id||warAttendanceEventId||selectedWarEventId;
-  const label=publishedParty?publishedParty.raid+publishedParty.party_number:(card.querySelector(".party-header h3")?.textContent?.trim()||"Party");
+  const eventId=eventIdHint||party?.event_id||warAttendanceEventId||selectedWarEventId;
   try{
     await captureWarDomElement(card,`4AM-War-Party-${label}-${getWarExportDate(eventId)}.png`);
   }catch(error){
