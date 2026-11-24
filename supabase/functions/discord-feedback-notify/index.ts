@@ -100,6 +100,14 @@ Deno.serve(async (request) => {
       return json({ success: false, message: "Discord API rejected the message", details: details.slice(0, 500) }, 502);
     }
 
+    const discordMessage = await discordResponse.json();
+    const { error: registryError } = await admin.from("discord_embed_messages").upsert({
+      event_key: "feedback_submitted", record_id: feedbackId, message_type: "primary", channel_id: channelId,
+      message_id: String(discordMessage.id), source: "automation", last_payload: discordMessage,
+      linked_by: authData.user.id, linked_at: new Date().toISOString(), updated_at: new Date().toISOString()
+    }, { onConflict: "event_key,record_id,message_type" });
+    if (registryError) return json({ success: false, message: "Discord sent, but Message ID registration failed; do not resend", message_id: String(discordMessage.id) }, 500);
+
     const { error: updateError } = await admin.from("guild_feedback")
       .update({ discord_notified_at: new Date().toISOString(), discord_notification_error: null }).eq("id", feedbackId);
     if (updateError) return json({ success: false, message: "Discord sent, but notification state could not be saved" }, 500);
