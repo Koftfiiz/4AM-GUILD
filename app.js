@@ -9840,7 +9840,7 @@ async function inspectEmbedStudioRecord() {
 }
 async function openDiscordEmbedStudio(eventKey, eventLabel) {
   if (!canManageDiscordIntegration()) { alert("เฉพาะ Developer, Leader และ Management ที่ Active เท่านั้น"); return; }
-  discordEmbedStudioState = { eventKey: eventKey, eventLabel: eventLabel || eventKey, recordId: "", messageType: "primary", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false, historyCursor: null };
+  discordEmbedStudioState = { eventKey: eventKey, eventLabel: eventLabel || eventKey, recordId: "", messageType: "primary", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, baseEmbed: {}, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false, historyCursor: null, historySessionId: null };
   $("discord-embed-studio-title").textContent = "จัดการ Embed";
   $("discord-embed-studio-event-label").textContent = (eventLabel || eventKey) + " · " + eventKey;
   const typeWrap = $("embed-studio-message-type-wrap");
