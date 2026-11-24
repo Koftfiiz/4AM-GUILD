@@ -5758,7 +5758,7 @@ function deliverWarPng(blob,filename){
 // Normalize those values only in the cloned capture DOM; the live page is untouched.
 function normalizeWarCaptureColorFunctions(value,context,cache){
   const input=String(value||"");
-  if(!/color\\(/i.test(input))return input;
+  if(!/color\(/i.test(input))return input;
   let output="",cursor=0;
   while(cursor<input.length){
     const start=input.toLowerCase().indexOf("color(",cursor);
@@ -5797,7 +5797,7 @@ function normalizeWarCaptureCloneColors(clonedDocument){
     const computed=clonedDocument.defaultView.getComputedStyle(node);
     for(let index=0;index<computed.length;index++){
       const property=computed[index],value=computed.getPropertyValue(property);
-      if(!/color\\(/i.test(value))continue;
+      if(!/color\(/i.test(value))continue;
       const normalized=normalizeWarCaptureColorFunctions(value,context,cache);
       if(normalized!==value)node.style.setProperty(property,normalized,"important");
     }
