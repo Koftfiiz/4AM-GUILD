@@ -9803,6 +9803,11 @@ async function inspectEmbedStudioRecord() {
   discordEmbedStudioState.recordId = recordId;
   discordEmbedStudioState.linked = false;
   discordEmbedStudioState.messageId = "";
+  discordEmbedStudioState.historySearched = false;
+  discordEmbedStudioState.historyComplete = false;
+  discordEmbedStudioState.historyHasCandidates = false;
+  const firstSend = $("embed-studio-send-new");
+  if (firstSend) firstSend.disabled = true;
   const update = $("embed-studio-update-existing");
   if (update) update.disabled = true;
   $("embed-studio-history-results").innerHTML = "";
@@ -9845,7 +9850,7 @@ function closeDiscordEmbedStudio() {
 async function searchEmbedStudioHistory() {
   if (!discordEmbedStudioState.recordId) { setEmbedStudioStatus("กรุณาเลือกข้อมูลต้นทางก่อนค้นหาประวัติ", "warning"); return; }
   setEmbedStudioStatus("กำลังค้นหาข้อความเก่าใน Discord Channel...", "muted");
-  const data = await invokeEmbedStudio("search_history", { event_key: discordEmbedStudioState.eventKey, channel_id: discordEmbedStudioState.channelId || undefined });
+  const data = await invokeEmbedStudio("search_history", { event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId, channel_id: discordEmbedStudioState.channelId || undefined });
   discordEmbedStudioState.historySearched = true;
   discordEmbedStudioState.historyComplete = data.search_complete === true;
   discordEmbedStudioState.historyHasCandidates = Boolean(data.candidates?.length);
@@ -9860,7 +9865,8 @@ async function searchEmbedStudioHistory() {
   data.candidates.forEach(candidate => {
     const button = document.createElement("button");
     const title = candidate.embeds?.[0]?.title || candidate.content || "Discord Message";
-    button.innerHTML = "<span>" + escapeHTML(title) + "</span><small>" + escapeHTML(candidate.timestamp || "") + " · " + escapeHTML(candidate.id) + "</small>";
+    const description = String(candidate.embeds?.[0]?.description || "").replace(/\s+/g, " ").slice(0, 150);
+    button.innerHTML = "<span><strong>" + escapeHTML(title) + "</strong><small>" + escapeHTML(description) + "</small></span><small>" + escapeHTML(candidate.timestamp || "") + " · " + escapeHTML(candidate.id) + "</small>";
     button.addEventListener("click", () => void linkEmbedStudioHistoryMessage(candidate));
     host.appendChild(button);
   });
