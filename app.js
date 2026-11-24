@@ -7847,11 +7847,38 @@ function initializeGlobalDateTimePickers(){
 }
 
 // GUILD ACTIVITIES
+let guildActivityLightboxKeyHandler=null;
+function openGuildActivityLightbox(src,alt="ภาพกิจกรรม"){
+ if(!src)return;
+ let modal=$("guild-activity-lightbox");
+ if(!modal){modal=document.createElement("div");modal.id="guild-activity-lightbox";modal.className="guild-activity-lightbox hidden";modal.setAttribute("role","dialog");modal.setAttribute("aria-modal","true");modal.setAttribute("aria-label","ดูภาพกิจกรรมขนาดใหญ่");modal.innerHTML='<button type="button" class="guild-activity-lightbox-close" data-activity-lightbox-close aria-label="ปิดภาพ">×</button><img class="guild-activity-lightbox-image" alt="">';document.body.appendChild(modal);}
+ const image=modal.querySelector("img");image.src=src;image.alt=alt||"ภาพกิจกรรม";modal.classList.remove("hidden");document.body.classList.add("activity-lightbox-open");
+}
+function closeGuildActivityLightbox(){
+ const modal=$("guild-activity-lightbox");if(!modal)return;
+ modal.classList.add("hidden");document.body.classList.remove("activity-lightbox-open");
+ const image=modal.querySelector("img");if(image)image.removeAttribute("src");
+}
 const GUILD_ACTIVITY_BUCKET="guild-activity-images";
 let guildActivitiesCache=[];
+function guildActivityMarkdownToHTML(source){
+ let text=String(source||"").replace(/\\r\\n/g,"\n").replace(/\\n/g,"\n").replace(/\r\n?/g,"\n");
+ const escape=value=>String(value).replace(/[&<>"]/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+ const tokens=[];
+ const hold=value=>{const key="GUILDMDTOKEN"+tokens.length+"X";tokens.push(value);return key;};
+ text=escape(text);
+ text=text.replace(/\[:([a-zA-Z0-9_]+):\]\((https:\/\/(?:cdn\.discordapp\.com|media\.discordapp\.net)\/emojis\/[^\s)]+)\)/g,(_,name,url)=>hold('<img class="guild-activity-emoji" src="'+url.replace(/&amp;/g,"&")+'" alt=":'+name+':" loading="lazy">'));
+ text=text.replace(/\[([^\]]+)\]\((https:\/\/[^\s)]+)\)/g,(_,label,url)=>hold('<a href="'+url.replace(/&amp;/g,"&")+'" target="_blank" rel="noopener noreferrer">'+label+'</a>'));
+ text=text.replace(/\*\*([^*\n]+)\*\*/g,"<strong>$1</strong>").replace(/__([^_\n]+)__/g,"<u>$1</u>").replace(/~~([^~\n]+)~~/g,"<s>$1</s>").replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g,"$1<em>$2</em>").replace(/(^|[^_])_([^_\n]+)_(?!_)/g,"$1<em>$2</em>");
+ text=text.split("\n").map(line=>line.trim()?(/^\s*[-*]\s+/.test(line)?"<li>"+line.replace(/^\s*[-*]\s+/,"")+"</li>":"<p>"+line+"</p>"):"<br>").join("");
+ text=text.replace(/(?:<li>[\s\S]*?<\/li>)(?:<br>?<li>[\s\S]*?<\/li>)*/g,block=>"<ul>"+block.replace(/<br>/g,"")+"</ul>");
+ return text.replace(/GUILDMDTOKEN(\d+)X/g,(_,index)=>tokens[Number(index)]||"");
+}
 function sanitizeGuildActivityHTML(html){
- const parsed=new DOMParser().parseFromString(String(html||""),"text/html");
- const allowed=new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","H2","H3","H4","BLOCKQUOTE","SPAN","IMG","S","STRIKE","TABLE","TBODY","TR","TD","TH","HR"]);
+ const raw=String(html||"");
+ const source=/<[a-z][^>]*>/i.test(raw)?raw:guildActivityMarkdownToHTML(raw);
+ const parsed=new DOMParser().parseFromString(source,"text/html");
+ const allowed=new Set(["P","DIV","BR","STRONG","B","EM","I","U","UL","OL","LI","H2","H3","H4","BLOCKQUOTE","SPAN","IMG","S","STRIKE","TABLE","TBODY","TR","TD","TH","HR","A"]);
  const prefix=SUPABASE_URL+"/storage/v1/object/public/"+GUILD_ACTIVITY_BUCKET+"/";
  const clean=node=>{
   if(node.nodeType===Node.TEXT_NODE)return document.createTextNode(node.textContent||"");
@@ -7859,8 +7886,15 @@ function sanitizeGuildActivityHTML(html){
   const tag=node.tagName;
   if(!allowed.has(tag)){const f=document.createDocumentFragment();[...node.childNodes].forEach(n=>f.appendChild(clean(n)));return f;}
   const el=parsed.createElement(tag.toLowerCase());
-  if(tag==="IMG"){const src=node.getAttribute("src")||"";if(!src.startsWith(prefix))return document.createTextNode("");el.src=src;el.alt=(node.alt||"Guild activity image").slice(0,120);el.loading="lazy";el.className="guild-activity-image";return el;}
-  if(["DIV","P","SPAN","TD","TH"].includes(tag)){const st=node.style||{};if(["left","center","right","justify"].includes(st.textAlign))el.style.textAlign=st.textAlign;if(/^\\d{1,2}px$/.test(st.fontSize||"")&&parseInt(st.fontSize)<=72)el.style.fontSize=Math.max(14,parseInt(st.fontSize,10))+"px";if(/^(Arial|Tahoma|Georgia|Verdana|monospace)$/i.test(st.fontFamily||""))el.style.fontFamily=st.fontFamily;if(/^#[0-9a-f]{6}$/i.test(st.color||""))el.style.color=st.color;if(/^#[0-9a-f]{6}$/i.test(st.backgroundColor||""))el.style.backgroundColor=st.backgroundColor;}if(tag==="TABLE")el.className="guild-rich-table";
+  if(tag==="IMG"){
+   const src=node.getAttribute("src")||"";let ownImage=src.startsWith(prefix),emojiURL=false;
+   try{const url=new URL(src);emojiURL=["cdn.discordapp.com","media.discordapp.net"].includes(url.hostname)&&/^\/emojis\/[0-9]+\.(webp|png|gif|avif)$/i.test(url.pathname);}catch(_){}
+   if(!ownImage&&!emojiURL)return document.createTextNode("");
+   el.src=src;el.alt=(node.alt||"Guild activity image").slice(0,120);el.loading="lazy";el.className=ownImage?"guild-activity-image":"guild-activity-emoji";return el;
+  }
+  if(tag==="A"){const href=node.getAttribute("href")||"";try{const url=new URL(href);if(url.protocol!=="https:")throw new Error("unsafe");el.href=url.href;el.target="_blank";el.rel="noopener noreferrer";}catch(_){[...node.childNodes].forEach(n=>el.appendChild(clean(n)));return el;}}
+  if(["DIV","P","SPAN","TD","TH"].includes(tag)){const st=node.style||{};if(["left","center","right","justify"].includes(st.textAlign))el.style.textAlign=st.textAlign;if(/^\d{1,2}px$/.test(st.fontSize||"")&&parseInt(st.fontSize)<=72)el.style.fontSize=Math.max(14,parseInt(st.fontSize,10))+"px";if(/^(Arial|Tahoma|Georgia|Verdana|monospace)$/i.test(st.fontFamily||""))el.style.fontFamily=st.fontFamily;if(/^#[0-9a-f]{6}$/i.test(st.color||""))el.style.color=st.color;if(/^#[0-9a-f]{6}$/i.test(st.backgroundColor||""))el.style.backgroundColor=st.backgroundColor;}
+  if(tag==="TABLE")el.className="guild-rich-table";
   [...node.childNodes].forEach(n=>el.appendChild(clean(n)));return el;
  };
  const out=parsed.createElement("div");[...parsed.body.childNodes].forEach(n=>out.appendChild(clean(n)));return out.innerHTML;
@@ -8064,6 +8098,17 @@ function closeGuildActivityEditor(){
 function registerGuildActivityEvents(){
  const page=$("page-community");if(!page||page.dataset.eventsReady==="true")return;page.dataset.eventsReady="true";
  renderActivityEmojiPicker();
+ page.addEventListener("paste",event=>{
+  const editor=event.target.closest("#activity-editor-body");if(!editor||!isManagement())return;
+  const clipboard=event.clipboardData;if(!clipboard)return;
+  const plain=clipboard.getData("text/plain")||"",rich=clipboard.getData("text/html")||"";
+  if(rich&&/<(?:p|div|strong|b|img|ul|ol|a)\b/i.test(rich))return;
+  if(!plain)return;
+  event.preventDefault();editor.focus();
+  document.execCommand("insertHTML",false,sanitizeGuildActivityHTML(guildActivityMarkdownToHTML(plain)));
+ });
+ page.addEventListener("keydown",event=>{if(event.key==="Escape")closeGuildActivityLightbox();});
+
  page.addEventListener("input",event=>{
   if(event.target.matches("[data-activity-date-input]"))event.target.value=formatActivityDateInput(event.target.value);
   if(event.target.matches("[data-activity-time-input]"))event.target.value=formatActivityTimeInput(event.target.value);
@@ -8073,6 +8118,10 @@ function registerGuildActivityEvents(){
  });
  page.addEventListener("mousedown",event=>{if(event.target.closest("#activity-editor-body"))rememberActivityEmojiSelection();});
  page.addEventListener("click",async event=>{
+  const activityImage=event.target.closest(".activity-card-content img.guild-activity-image");
+  if(activityImage){openGuildActivityLightbox(activityImage.currentSrc||activityImage.src,activityImage.alt);return;}
+  if(event.target.closest("[data-activity-lightbox-close]")||event.target.id==="guild-activity-lightbox"){closeGuildActivityLightbox();return;}
+
   const add=event.target.closest("#activity-add-button"),edit=event.target.closest("[data-activity-edit]"),del=event.target.closest("[data-activity-delete]"),cmd=event.target.closest("[data-activity-command]"),emoji=event.target.closest("[data-activity-emoji]"),emojiValue=event.target.closest("[data-activity-emoji-value]"),image=event.target.closest("[data-activity-image]");
   if(add){openGuildActivityEditor();return;}
   if(edit){if(!isManagement())return;openGuildActivityEditor(edit.dataset.activityEdit);return;}
