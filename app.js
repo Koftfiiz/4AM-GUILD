@@ -7970,6 +7970,62 @@ let guildActivityCommentsCache={};
 let guildActivityMembersCache={};
 let guildActivityRealtimeChannel=null;
 let guildActivityCommentsRealtimeChannel=null;
+let guildActivityReactionsCache={};
+let guildActivityReactionsRealtimeChannel=null;
+let guildReactionLongPressTimer=null;
+let guildReactionLongPressTriggered=false;
+const GUILD_ACTIVITY_REACTIONS=[{type:"like",emoji:"👍",label:"ถูกใจ"},{type:"love",emoji:"❤️",label:"รักเลย"},{type:"wow",emoji:"😮",label:"ว้าว"},{type:"haha",emoji:"😂",label:"ฮ่าๆ"}];
+function getGuildActivityCardStates(){try{return JSON.parse(localStorage.getItem("4am-guild-activity-card-states")||"{}")||{};}catch(_){return {};}}
+function saveGuildActivityCardStates(states){try{localStorage.setItem("4am-guild-activity-card-states",JSON.stringify(states));}catch(_){}}
+function setGuildActivityCardExpanded(card,expanded){if(!card)return;const details=card.querySelector(".activity-card-details"),button=card.querySelector("[data-activity-collapse]");card.classList.toggle("is-collapsed",!expanded);if(details)details.hidden=!expanded;if(button){button.setAttribute("aria-expanded",expanded?"true":"false");button.innerHTML=expanded?'<span aria-hidden="true">⌃</span> ย่อรายละเอียด':'<span aria-hidden="true">⌄</span> ขยายรายละเอียด';}}
+function renderGuildActivityReactionBar(item){
+ const rows=guildActivityReactionsCache[item.id]||[];
+ const counts=GUILD_ACTIVITY_REACTIONS.map(reaction=>({...reaction,count:rows.filter(row=>row.reaction_type===reaction.type).length,selected:rows.some(row=>row.reaction_type===reaction.type&&row.user_id===currentUser?.id)})).filter(reaction=>reaction.count>0);
+ const mine=counts.find(reaction=>reaction.selected),total=rows.length;
+ const summary=counts.map(reaction=>'<button type="button" class="activity-reaction-count" data-activity-reaction-people="'+reaction.type+'" data-activity-id="'+escapeHTML(item.id)+'" aria-label="'+reaction.label+' '+reaction.count+' คน"><span>'+reaction.emoji+'</span><b>'+reaction.count+'</b></button>').join("");
+ const picker=GUILD_ACTIVITY_REACTIONS.map(reaction=>'<button type="button" class="activity-reaction-option" data-activity-reaction="'+reaction.type+'" data-activity-id="'+escapeHTML(item.id)+'" aria-label="'+reaction.label+'" title="'+reaction.label+'"><span>'+reaction.emoji+'</span></button>').join("");
+ return '<div class="activity-reactions" data-activity-reactions="'+escapeHTML(item.id)+'"><div class="activity-reaction-summary">'+summary+'</div><div class="activity-reaction-picker" role="group" aria-label="เลือก Reaction">'+picker+'</div><button type="button" class="activity-reaction-main'+(mine?' is-selected':'')+'" data-activity-reaction-main="'+escapeHTML(item.id)+'" aria-label="'+(mine?mine.label:"ถูกใจ")+'"><span>'+(mine?mine.emoji:"👍")+'</span><b>'+(mine?mine.label:"ถูกใจ")+'</b></button><span class="activity-reaction-total" aria-live="polite">'+(total?total+" reactions":"")+'</span></div>';
+}
+async function loadGuildActivityReactions(){
+ const {data,error}=await supabaseClient.from("guild_activity_reactions").select("id,activity_id,user_id,reaction_type,created_at").order("created_at",{ascending:true});
+ if(error){console.warn("Load activity reactions:",error);return;}
+ guildActivityReactionsCache={};(data||[]).forEach(row=>(guildActivityReactionsCache[row.activity_id] ||= []).push(row));renderGuildActivities();
+}
+async function setGuildActivityReaction(activityId,reactionType){
+ if(!currentUser||!GUILD_ACTIVITY_REACTIONS.some(row=>row.type===reactionType))return;
+ const existing=(guildActivityReactionsCache[activityId]||[]).find(row=>row.user_id===currentUser.id);
+ const result=existing?.reaction_type===reactionType
+  ?await supabaseClient.from("guild_activity_reactions").delete().eq("activity_id",activityId).eq("user_id",currentUser.id)
+  :await supabaseClient.from("guild_activity_reactions").upsert({activity_id:activityId,user_id:currentUser.id,reaction_type:reactionType,updated_at:new Date().toISOString()},{onConflict:"activity_id,user_id"});
+ if(result.error){console.error("Save activity reaction:",result.error);alert("บันทึก Reaction ไม่สำเร็จ: "+result.error.message);return;}
+ document.querySelectorAll(".activity-reactions.is-picker-open").forEach(node=>node.classList.remove("is-picker-open"));await loadGuildActivityReactions();
+}
+async function showGuildActivityReactionPeople(activityId,reactionType){
+ const rows=(guildActivityReactionsCache[activityId]||[]).filter(row=>row.reaction_type===reactionType);if(!rows.length)return;
+ const {data,error}=await supabaseClient.from("guild_members").select("user_id,character_name,nickname").in("user_id",rows.map(row=>row.user_id));
+ if(error){alert("โหลดรายชื่อผู้ Reaction ไม่สำเร็จ: "+error.message);return;}
+ const names=(data||[]).map(row=>row.character_name||row.nickname||"สมาชิกกิลด์"),reaction=GUILD_ACTIVITY_REACTIONS.find(row=>row.type===reactionType);alert(reaction.label+" · "+names.length+" คน\n\n"+names.join("\n"));
+}
+function subscribeToGuildActivityReactionsRealtime(){
+ if(guildActivityReactionsRealtimeChannel){supabaseClient.removeChannel(guildActivityReactionsRealtimeChannel);guildActivityReactionsRealtimeChannel=null;}if(!currentUser)return;
+ guildActivityReactionsRealtimeChannel=supabaseClient.channel("guild-activity-reactions-live-"+currentUser.id).on("postgres_changes",{event:"*",schema:"public",table:"guild_activity_reactions"},()=>{if(!$("page-community")?.classList.contains("hidden"))loadGuildActivityReactions();}).subscribe();
+}
+function bindGuildActivityCardControls(list){
+ if(!list||list.dataset.activityCardControlsBound==="true")return;list.dataset.activityCardControlsBound="true";
+ list.addEventListener("click",async event=>{
+  const collapse=event.target.closest("[data-activity-collapse]");
+  if(collapse){event.preventDefault();event.stopPropagation();const card=collapse.closest("[data-activity-card]");if(!card)return;const expanded=card.classList.contains("is-collapsed");setGuildActivityCardExpanded(card,expanded);const states=getGuildActivityCardStates();states[card.dataset.activityCard]=expanded;saveGuildActivityCardStates(states);return;}
+  const main=event.target.closest("[data-activity-reaction-main]"),option=event.target.closest("[data-activity-reaction]"),people=event.target.closest("[data-activity-reaction-people]");
+  if(main){if(guildReactionLongPressTriggered){guildReactionLongPressTriggered=false;return;}await setGuildActivityReaction(main.dataset.activityReactionMain,"like");return;}
+  if(option){await setGuildActivityReaction(option.dataset.activityId,option.dataset.activityReaction);return;}
+  if(people){await showGuildActivityReactionPeople(people.dataset.activityId,people.dataset.activityReactionPeople);return;}
+ });
+ list.addEventListener("pointerdown",event=>{const trigger=event.target.closest("[data-activity-reaction-main]");if(!trigger||event.pointerType==="mouse")return;guildReactionLongPressTriggered=false;clearTimeout(guildReactionLongPressTimer);guildReactionLongPressTimer=setTimeout(()=>{guildReactionLongPressTriggered=true;trigger.closest(".activity-reactions")?.classList.add("is-picker-open");},480);});
+ ["pointerup","pointercancel","pointerleave"].forEach(type=>list.addEventListener(type,()=>clearTimeout(guildReactionLongPressTimer)));
+ list.addEventListener("pointermove",event=>{const wrap=event.target.closest(".activity-reactions");if(!wrap||event.pointerType==="mouse"||!guildReactionLongPressTriggered)return;const hit=document.elementFromPoint(event.clientX,event.clientY)?.closest("[data-activity-reaction]");wrap.querySelectorAll(".activity-reaction-option").forEach(button=>button.classList.toggle("is-highlighted",button===hit));});
+ list.addEventListener("contextmenu",event=>{if(event.target.closest(".activity-reactions"))event.preventDefault();});
+}
+
 let guildActivityEmojiRange=null;
 const GUILD_ACTIVITY_EMOJIS=["😀","😃","😄","😁","😆","🥹","😂","🤣","😊","😍","🥰","😘","😎","🤔","😴","😭","😡","🤯","🥳","🤩","👍","👎","👏","🙌","🙏","💪","❤️","🧡","💛","💚","💙","💜","🖤","🤍","🔥","✨","⭐","🌟","🎉","🎊","🎁","🏆","🥇","⚔️","🛡️","🐉","🌸","🍀","🎮","📢","📌","📅","⏰","✅","❌","❗","💬"];
 function rememberActivityEmojiSelection(){
@@ -7999,30 +8055,19 @@ async function notifyGuildActivityDiscord(kind,id){
  }catch(error){console.warn("Guild activity Discord notification failed:",error);return false;}
 }
 function renderGuildActivities(){
- const list=$("guild-activities-list");if(!list)return;
+ const list=$("guild-activities-list");if(!list)return;bindGuildActivityCardControls(list);
  const view=window.activeGuildCommunityView||"community-board";
- const visibleItems=guildActivitiesCache.filter(item=>{
-  if(view==="guild-news")return !item.starts_at&&!item.ends_at;
-  if(view==="guild-activities")return Boolean(item.starts_at||item.ends_at);
-  return true;
- });
- if(!visibleItems.length){
-  const emptyCopy=view==="guild-news"?"ยังไม่มีข่าวสารที่เผยแพร่":view==="guild-activities"?"ยังไม่มีกิจกรรมที่มีกำหนดการ":"ยังไม่มีโพสต์ใน Community Board";
-  list.innerHTML='<div class="empty-state"><span>◷</span><h3>'+emptyCopy+'</h3><p>'+(isManagement()?'กด “เพิ่มกิจกรรม” เพื่อเผยแพร่เนื้อหาใหม่':'ขณะนี้ยังไม่มีเนื้อหาที่เผยแพร่')+'</p></div>';
-  return;
- }
+ const visibleItems=guildActivitiesCache.filter(item=>view==="guild-news"?!item.starts_at&&!item.ends_at:view==="guild-activities"?Boolean(item.starts_at||item.ends_at):true);
+ if(!visibleItems.length){const emptyCopy=view==="guild-news"?"ยังไม่มีข่าวสารที่เผยแพร่":view==="guild-activities"?"ยังไม่มีกิจกรรมที่มีกำหนดการ":"ยังไม่มีโพสต์ใน Community Board";list.innerHTML='<div class="empty-state"><span>◷</span><h3>'+emptyCopy+'</h3><p>'+(isManagement()?'กด “เพิ่มกิจกรรม” เพื่อเผยแพร่เนื้อหาใหม่':'ขณะนี้ยังไม่มีเนื้อหาที่เผยแพร่')+'</p></div>';return;}
+ const savedStates=getGuildActivityCardStates();
  list.innerHTML=visibleItems.map(item=>{
-  const id=escapeHTML(item.id),title=escapeHTML(item.title||"กิจกรรมกิลด์");
+  const id=escapeHTML(item.id),title=escapeHTML(item.title||"กิจกรรมกิลด์"),expanded=Object.prototype.hasOwnProperty.call(savedStates,item.id)?Boolean(savedStates[item.id]):true;
   const actions=isManagement()?'<div class="activity-card-actions"><button type="button" class="btn btn-outline btn-sm" data-activity-edit="'+id+'">แก้ไข</button><button type="button" class="btn btn-danger btn-sm" data-activity-delete="'+id+'">ลบ</button></div>':"";
-  const comments=(guildActivityCommentsCache[item.id]||[]).map(comment=>{
-   const cid=escapeHTML(comment.id),name=escapeHTML(comment.character_name||comment.nickname||"สมาชิกกิลด์"),when=escapeHTML(activityDateLabel(comment.created_at)),content=escapeHTML(comment.content||"");
-   const mine=comment.user_id===currentUser?.id;
-   const controls=(mine||isManagement())?'<div class="activity-comment-actions">'+(mine?'<button type="button" data-activity-comment-edit="'+cid+'">แก้ไข</button>':"")+'<button type="button" data-activity-comment-delete="'+cid+'">ลบ</button></div>':"";
-   return '<article class="activity-comment" data-activity-comment-card="'+cid+'"><div class="activity-comment-heading"><strong>'+name+'</strong><time>'+when+'</time></div><p data-activity-comment-text>'+content+'</p>'+controls+'</article>';
-  }).join("");
-  return '<article class="activity-card" data-activity-card="'+id+'"><header class="activity-card-header"><div class="activity-card-title-wrap"><span class="panel-kicker">4AM GUILD · COMMUNITY</span><h3>'+title+'</h3><time>กำหนดการ: '+escapeHTML(activityDateRange(item))+'</time><small>เผยแพร่เมื่อ '+escapeHTML(activityDateLabel(item.created_at))+'</small></div>'+actions+'</header><div class="activity-card-content">'+sanitizeGuildActivityHTML(item.content_html||"")+'</div><section class="activity-comments"><h4>ความคิดเห็น <span>('+((guildActivityCommentsCache[item.id]||[]).length)+')</span></h4><div class="activity-comments-list">'+(comments||'<p class="activity-comments-empty">ยังไม่มีความคิดเห็น</p>')+'</div><form class="activity-comment-form" data-activity-comment-form="'+id+'"><textarea name="comment" rows="2" maxlength="2000" placeholder="เขียนความคิดเห็น..." required></textarea><button type="submit" class="btn btn-primary btn-sm">ส่งความคิดเห็น</button></form></section></article>';
+  const comments=(guildActivityCommentsCache[item.id]||[]).map(comment=>{const cid=escapeHTML(comment.id),name=escapeHTML(comment.character_name||comment.nickname||"สมาชิกกิลด์"),when=escapeHTML(activityDateLabel(comment.created_at)),content=escapeHTML(comment.content||""),mine=comment.user_id===currentUser?.id;const controls=(mine||isManagement())?'<div class="activity-comment-actions">'+(mine?'<button type="button" data-activity-comment-edit="'+cid+'">แก้ไข</button>':"")+'<button type="button" data-activity-comment-delete="'+cid+'">ลบ</button></div>':"";return '<article class="activity-comment" data-activity-comment-card="'+cid+'"><div class="activity-comment-heading"><strong>'+name+'</strong><time>'+when+'</time></div><p data-activity-comment-text>'+content+'</p>'+controls+'</article>';}).join("");
+  return '<article class="activity-card'+(expanded?'':' is-collapsed')+'" data-activity-card="'+id+'"><header class="activity-card-header"><div class="activity-card-title-wrap"><span class="panel-kicker">4AM GUILD · COMMUNITY</span><h3>'+title+'</h3><time>กำหนดการ: '+escapeHTML(activityDateRange(item))+'</time><small>เผยแพร่เมื่อ '+escapeHTML(activityDateLabel(item.created_at))+'</small></div><div class="activity-card-header-actions"><button type="button" class="btn btn-outline btn-sm activity-collapse-button" data-activity-collapse aria-expanded="'+(expanded?'true':'false')+'">'+(expanded?'<span aria-hidden="true">⌃</span> ย่อรายละเอียด':'<span aria-hidden="true">⌄</span> ขยายรายละเอียด')+'</button>'+actions+'</div></header><div class="activity-card-details"'+(expanded?'':' hidden')+'><div class="activity-card-content">'+sanitizeGuildActivityHTML(item.content_html||"")+'</div><section class="activity-comments"><h4>ความคิดเห็น <span>('+((guildActivityCommentsCache[item.id]||[]).length)+')</span></h4><div class="activity-comments-list">'+(comments||'<p class="activity-comments-empty">ยังไม่มีความคิดเห็น</p>')+'</div><form class="activity-comment-form" data-activity-comment-form="'+id+'"><textarea name="comment" rows="2" maxlength="2000" placeholder="เขียนความคิดเห็น..." required></textarea><button type="submit" class="btn btn-primary btn-sm">ส่งความคิดเห็น</button></form></section></div>'+renderGuildActivityReactionBar(item)+'</article>';
  }).join("");
 }
+
 async function loadGuildActivityComments(){
  const {data,error}=await supabaseClient.from("guild_activity_comments").select("id,activity_id,user_id,content,created_at,updated_at").order("created_at",{ascending:true});
  if(error){console.error("Load activity comments:",error);return;}
@@ -8048,6 +8093,7 @@ async function loadGuildActivities(){
  if(error){console.error("Load guild activities:",error);if(list)list.innerHTML='<div class="empty-state"><span>!</span><h3>โหลดกิจกรรมไม่สำเร็จ</h3><p>'+escapeHTML(error.message)+'</p></div>';return;}
  guildActivitiesCache=data||[];
  await loadGuildActivityComments();
+ await loadGuildActivityReactions();
  renderGuildActivities();
 }
 function subscribeToGuildActivityRealtime(){
@@ -8061,6 +8107,7 @@ function subscribeToGuildActivityRealtime(){
   .subscribe();
 }
 function subscribeToGuildActivityCommentsRealtime(){
+ subscribeToGuildActivityReactionsRealtime();
  if(guildActivityCommentsRealtimeChannel){supabaseClient.removeChannel(guildActivityCommentsRealtimeChannel);guildActivityCommentsRealtimeChannel=null;}
  if(!currentUser)return;
  guildActivityCommentsRealtimeChannel=supabaseClient.channel("guild-activity-comments-live-"+currentUser.id)
@@ -8114,10 +8161,9 @@ function registerGuildActivityEvents(){
   const editor=event.target.closest("#activity-editor-body");if(!editor||!isManagement())return;
   const clipboard=event.clipboardData;if(!clipboard)return;
   const plain=clipboard.getData("text/plain")||"",rich=clipboard.getData("text/html")||"";
-  if(rich&&/<(?:p|div|strong|b|img|ul|ol|a)\b/i.test(rich))return;
-  if(!plain)return;
+  if(!rich&&!plain)return;
   event.preventDefault();editor.focus();
-  document.execCommand("insertHTML",false,sanitizeGuildActivityHTML(guildActivityMarkdownToHTML(plain)));
+  document.execCommand("insertHTML",false,sanitizeGuildActivityHTML(rich||guildActivityMarkdownToHTML(plain)));
  });
  page.addEventListener("keydown",event=>{if(event.key==="Escape")closeGuildActivityLightbox();});
 

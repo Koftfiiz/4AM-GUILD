@@ -9951,3 +9951,26 @@ body.gallery-lightbox-open{overflow:hidden}
 .guild-activity-lightbox-close{position:absolute;top:16px;right:18px;width:44px;height:44px;border:1px solid rgba(255,255,255,.35);border-radius:50%;background:rgba(25,12,16,.92);color:#fff;font-size:30px;line-height:1;cursor:pointer}
 body.activity-lightbox-open{overflow:hidden}
 @media(max-width:700px){.guild-activity-lightbox{padding:58px 10px 14px}.guild-activity-lightbox-image{max-width:100%;max-height:calc(100vh - 78px)}}
+
+
+/* Guild News & Activities: compact cards, rich Discord paste and animated reactions */
+.activity-card-header-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;flex:0 0 auto}
+.activity-card-details[hidden]{display:none!important}.activity-card.is-collapsed{padding-bottom:14px}.activity-card.is-collapsed .activity-card-header{padding-bottom:0;border-bottom:0}.activity-collapse-button{white-space:nowrap}
+.activity-card-content p,.activity-card-content div{white-space:pre-wrap;overflow-wrap:anywhere}.activity-card-content p{margin:0 0 12px}
+.activity-card-content img.guild-activity-emoji{display:inline-block!important;vertical-align:middle!important;width:24px!important;height:24px!important;max-width:24px!important;max-height:24px!important;object-fit:contain!important;margin:0 2px!important;border:0!important;background:transparent!important}
+.activity-card-content img.guild-activity-image{display:block}
+.activity-reactions{display:flex;align-items:center;gap:10px;position:relative;min-height:42px;margin-top:14px;padding-top:10px;border-top:1px solid rgba(205,160,120,.14);flex-wrap:wrap}
+.activity-reaction-summary{display:flex;align-items:center;gap:3px;min-width:0}
+.activity-reaction-count{display:inline-flex;align-items:center;gap:4px;padding:3px 6px;border:0;border-radius:18px;background:rgba(255,255,255,.055);color:var(--text);font:inherit;font-size:13px;cursor:pointer}
+.activity-reaction-count span{font-size:18px;line-height:1;transition:transform .18s ease}.activity-reaction-count:hover span{transform:translateY(-3px) scale(1.16)}
+.activity-reaction-main{display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border:1px solid rgba(205,160,120,.2);border-radius:18px;background:rgba(255,255,255,.045);color:var(--text);font:inherit;font-size:14px;cursor:pointer;transition:background .18s ease,border-color .18s ease,transform .18s ease}
+.activity-reaction-main:hover,.activity-reaction-main.is-selected{border-color:rgba(220,55,75,.7);background:rgba(190,25,48,.16);color:#ff9aa4}.activity-reaction-main:active{transform:scale(.94)}
+.activity-reaction-main span{display:inline-block;font-size:20px;line-height:1;transform-origin:center;animation:activityReactionPop .38s cubic-bezier(.2,.8,.3,1) both}
+@keyframes activityReactionPop{0%{transform:scale(.55) rotate(-18deg)}55%{transform:scale(1.35) rotate(8deg)}100%{transform:scale(1) rotate(0)}}
+.activity-reaction-total{color:var(--muted);font-size:13px}
+.activity-reaction-picker{position:absolute;z-index:25;left:0;bottom:calc(100% - 3px);display:flex;align-items:center;gap:7px;padding:8px 10px;border:1px solid rgba(230,70,90,.35);border-radius:28px;background:rgba(17,10,13,.97);box-shadow:0 12px 34px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(8px) scale(.94);transform-origin:left bottom;transition:opacity .16s ease,transform .16s ease,visibility .16s ease}
+.activity-reactions:hover .activity-reaction-picker,.activity-reactions:focus-within .activity-reaction-picker,.activity-reactions.is-picker-open .activity-reaction-picker{opacity:1;visibility:visible;transform:translateY(0) scale(1)}
+.activity-reaction-option{display:grid;place-items:center;width:38px;height:38px;padding:0;border:0;border-radius:50%;background:transparent;cursor:pointer;transition:transform .16s cubic-bezier(.2,.8,.3,1),background .16s ease}
+.activity-reaction-option span{font-size:27px;line-height:1}.activity-reaction-option:hover,.activity-reaction-option.is-highlighted{z-index:1;transform:translateY(-8px) scale(1.28);background:rgba(255,255,255,.08)}.activity-reaction-option:active{transform:scale(.92)}
+@media(max-width:700px){.activity-card-header-actions{width:100%;justify-content:space-between}.activity-card-header-actions .activity-card-actions{width:auto;flex:1}.activity-collapse-button{flex:0 0 auto}.activity-reactions{gap:7px}.activity-reaction-picker{gap:5px;padding:7px}.activity-reaction-option{width:36px;height:36px}.activity-reaction-option span{font-size:25px}}
+@media(prefers-reduced-motion:reduce){.activity-reaction-main span,.activity-reaction-option,.activity-reaction-picker{animation:none!important;transition:none!important}}
