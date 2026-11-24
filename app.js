@@ -6159,21 +6159,19 @@ function warSignupClassSummary(rows,members=allMembers){
     const member=(members||[]).find(item=>item.user_id===row.member_id);
     const name=getMemberClass(member||{});
     const key=name||"ไม่ระบุอาชีพ";
-    if(!classes.has(key))classes.set(key,{name:key,total:0,primary:0,reserve:0});
-    const item=classes.get(key);item.total++;
-    if(Number(row.queue_position)<=60)item.primary++;else item.reserve++;
+    if(!classes.has(key))classes.set(key,{name:key,total:0});
+    classes.get(key).total++;
   });
   return [...classes.values()].sort((a,b)=>a.name.localeCompare(b.name,"th"));
 }
 function renderWarSignupSummary(rows,members=allMembers){
   const primary=(rows||[]).filter(row=>Number(row.queue_position)>=1&&Number(row.queue_position)<=60);
-  const reserve=(rows||[]).filter(row=>Number(row.queue_position)>=61&&Number(row.queue_position)<=80);
   const summary=warSignupClassSummary(rows,members);
   return '<div class="war-signup-summary"><div class="war-signup-summary-head"><strong>REGISTRATION SUMMARY</strong><span>สรุปจำนวนสมาชิกแยกตามอาชีพ</span></div>'+
-    '<div class="war-signup-summary-stats"><div><strong>'+rows.length+'</strong><span>ผู้ลงชื่อทั้งหมด</span></div><div><strong>'+primary.length+'</strong><span>ตัวจริง</span></div><div><strong>'+reserve.length+'</strong><span>ตัวสำรอง</span></div></div>'+
+    '<div class="war-signup-summary-stats"><div><strong>'+rows.length+'</strong><span>ผู้ลงชื่อทั้งหมด</span></div><div><strong>'+primary.length+'</strong><span>คนลงชื่อวอร์</span></div></div>'+
     '<div class="war-signup-class-summary">'+(summary.length?summary.map(item=>{
       const info=getClassInfo(item.name),icon=info?.iconPath?'<img src="'+escapeHTML(info.iconPath)+'" alt="">':"";
-      return '<div class="war-signup-class-row">'+icon+'<strong>'+escapeHTML(item.name)+'</strong><span>'+item.total+' คน</span><small>ตัวจริง '+item.primary+' · สำรอง '+item.reserve+'</small></div>';
+      return '<div class="war-signup-class-row">'+icon+'<strong>'+escapeHTML(item.name)+'</strong><span>'+item.total+' คน</span></div>';
     }).join(""):'<p class="muted">ยังไม่มีผู้ลงชื่อ</p>')+'</div></div>';
 }
 async function loadWarSignups(){
@@ -6237,7 +6235,7 @@ async function loadWarSignups(){
     let action="";
     const ownRounds=Array.isArray(own?.available_rounds)?own.available_rounds.map(Number):[1,2];
     const ownAvailability=ownRounds.length===2?"พร้อมทั้งสองรอบ":ownRounds.includes(1)?"พร้อมเฉพาะ Round 1":"พร้อมเฉพาะ Round 2";
-    const ownStatus=own?'<div class="war-signup-own-status"><strong>คุณลงชื่อแล้ว · คิวที่ '+(own.queue_position||"—")+'</strong><span>'+(Number(own.queue_position)<=60?"ตัวจริง":"ตัวสำรอง")+'</span>'+(Number(own.queue_position)>60?'<small>'+ownAvailability+'</small>':"")+'</div>':"";
+    const ownStatus=own?'<div class="war-signup-own-status"><strong>คุณลงชื่อแล้ว · คิวที่ '+(own.queue_position||"—")+'</strong><span>คนลงชื่อวอร์</span>'+(Number(own.queue_position)>60?'<small>'+ownAvailability+'</small>':"")+'</div>':"";
     if(state==="cancelled"){
       action='<span class="war-signup-status">กิจกรรมนี้ถูกยกเลิกแล้ว</span>';
     }else if(state==="closed"){
@@ -6355,17 +6353,16 @@ async function exportWarSignupEvidence(eventId,button){
 function renderWarSignupRoster(signups,members,leaveRows,attendanceRows){
   const memberMap=new Map((members||[]).map(member=>[member.user_id,member]));
   const leaveMap=new Map((leaveRows||[]).map(row=>[row.member_id,row.status]));
-  const primary=(signups||[]).filter(row=>Number(row.queue_position)>=1&&Number(row.queue_position)<=60).sort((a,b)=>Number(a.queue_position)-Number(b.queue_position));
-  const reserve=(signups||[]).filter(row=>Number(row.queue_position)>=61&&Number(row.queue_position)<=80).sort((a,b)=>Number(a.queue_position)-Number(b.queue_position));
-  const renderSignupList=(items,kind)=>{
+  const signupRows=(signups||[]).slice().sort((a,b)=>Number(a.queue_position)-Number(b.queue_position));
+  const renderSignupList=items=>{
     if(!items.length)return '<div class="war-roster-empty">ยังไม่มีรายชื่อ</div>';
     return '<div class="war-roster-list">'+items.map(row=>{
       const member=memberMap.get(row.member_id)||{};
       const className=getMemberClass(member),info=getClassInfo(className);
       const icon=info?.iconPath?'<img class="war-roster-class-icon" src="'+escapeHTML(info.iconPath)+'" alt="'+escapeHTML(className)+'" loading="lazy">':'<span class="war-roster-class-fallback">✦</span>';
       const rounds=Array.isArray(row.available_rounds)?row.available_rounds.map(Number):[1,2];
-      const availability=kind==="ตัวสำรอง"?(rounds.length===2?" · ทั้งสองรอบ":rounds.includes(1)?" · R1 เท่านั้น":" · R2 เท่านั้น"):"";
-      return '<div class="war-roster-row"><span class="war-roster-number">#'+Number(row.queue_position||0)+'</span>'+icon+'<strong>'+escapeHTML(getMemberName(member))+'</strong><span class="war-roster-row-note">'+kind+availability+'</span></div>';
+      const availability=Number(row.queue_position)>60?(rounds.length===2?" · ทั้งสองรอบ":rounds.includes(1)?" · R1 เท่านั้น":" · R2 เท่านั้น"):"";
+      return '<div class="war-roster-row"><span class="war-roster-number">#'+Number(row.queue_position||0)+'</span>'+icon+'<strong>'+escapeHTML(getMemberName(member))+'</strong><span class="war-roster-row-note">คนลงชื่อวอร์'+availability+'</span></div>';
     }).join("")+'</div>';
   };
   const leaveList=(leaveRows||[]).map(row=>({row,member:memberMap.get(row.member_id)})).filter(x=>x.member);
@@ -6378,8 +6375,7 @@ function renderWarSignupRoster(signups,members,leaveRows,attendanceRows){
   const hasAttendanceRecords=(attendanceRows||[]).length>0;
   const absentHtml=absent.length?'<div class="war-roster-name-list">'+absent.map(member=>'<div class="war-roster-name-row"><span class="war-roster-bullet">◆</span><strong>'+escapeHTML(getMemberName(member))+'</strong></div>').join("")+'</div>':
     (hasAttendanceRecords?'<div class="war-roster-empty">ไม่มีสมาชิกถูกบันทึกว่าขาดวอร์</div>':'<div class="war-roster-empty">รอฝ่ายจัดการบันทึกผลเช็กชื่อหลังวอร์</div>');
-  return '<section class="war-signup-roster-board"><div class="war-roster-section"><div class="war-roster-section-head"><h4>ตัวจริง</h4><span>'+primary.length+'/60</span></div>'+renderSignupList(primary,"ตัวจริง")+'</div>'+
-    '<div class="war-roster-section is-reserve"><div class="war-roster-section-head"><h4>สำรอง</h4><span>'+reserve.length+'/20</span></div>'+renderSignupList(reserve,"ตัวสำรอง")+'</div>'+
+  return '<section class="war-signup-roster-board"><div class="war-roster-section"><div class="war-roster-section-head"><h4>คนลงชื่อวอร์</h4><span>'+signupRows.length+' คน</span></div>'+renderSignupList(signupRows)+'</div>'+
     '<div class="war-roster-section is-leave"><div class="war-roster-section-head"><h4>ลาวอร์</h4><span>'+leaveList.length+' คน</span></div>'+leaveHtml+'</div>'+
     '<div class="war-roster-section is-absent"><div class="war-roster-section-head"><h4>ขาดวอร์</h4><span>'+absent.length+' คน</span></div>'+absentHtml+'</div></section>';
 }
