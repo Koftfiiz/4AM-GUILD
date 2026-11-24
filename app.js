@@ -9647,7 +9647,7 @@ async function sendDiscordIntegrationTest() {
 }
 
 
-let discordEmbedStudioState = { eventKey: "", eventLabel: "", recordId: "", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, fields: [] };
+let discordEmbedStudioState = { eventKey: "", eventLabel: "", recordId: "", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false };
 
 function setEmbedStudioStatus(message, tone) {
   const node = $("embed-studio-message-status");
@@ -9810,7 +9810,7 @@ async function inspectEmbedStudioRecord() {
 }
 async function openDiscordEmbedStudio(eventKey, eventLabel) {
   if (!canManageDiscordIntegration()) { alert("เฉพาะ Developer, Leader และ Management ที่ Active เท่านั้น"); return; }
-  discordEmbedStudioState = { eventKey: eventKey, eventLabel: eventLabel || eventKey, recordId: "", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, fields: [] };
+  discordEmbedStudioState = { eventKey: eventKey, eventLabel: eventLabel || eventKey, recordId: "", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false };
   $("discord-embed-studio-title").textContent = "จัดการ Embed";
   $("discord-embed-studio-event-label").textContent = (eventLabel || eventKey) + " · " + eventKey;
   $("discord-embed-studio-modal").classList.remove("hidden");
@@ -9828,9 +9828,17 @@ async function searchEmbedStudioHistory() {
   if (!discordEmbedStudioState.recordId) { setEmbedStudioStatus("กรุณาเลือกข้อมูลต้นทางก่อนค้นหาประวัติ", "warning"); return; }
   setEmbedStudioStatus("กำลังค้นหาข้อความเก่าใน Discord Channel...", "muted");
   const data = await invokeEmbedStudio("search_history", { event_key: discordEmbedStudioState.eventKey, channel_id: discordEmbedStudioState.channelId || undefined });
+  discordEmbedStudioState.historySearched = true;
+  discordEmbedStudioState.historyComplete = data.search_complete === true;
+  discordEmbedStudioState.historyHasCandidates = Boolean(data.candidates?.length);
+  const sendNewButton = $("embed-studio-send-new");
+  if (sendNewButton) sendNewButton.disabled = !discordEmbedStudioState.historyComplete || discordEmbedStudioState.historyHasCandidates || discordEmbedStudioState.linked;
   const host = $("embed-studio-history-results");
   host.innerHTML = "";
-  if (!data.candidates?.length) { setEmbedStudioStatus("ไม่พบข้อความที่ตรงกับ Event ในประวัติ Channel ที่บอทเข้าถึงได้", "warning"); return; }
+  if (!data.candidates?.length) {
+    setEmbedStudioStatus(data.search_complete ? "ค้นหาประวัติครบทั้ง Channel แล้ว ไม่พบ Embed ที่ตรงกับ Event สามารถพิจารณาส่งครั้งแรกได้" : "ค้นหาแล้ว " + (data.scanned_count || 0) + " ข้อความ แต่ยังไม่ครบประวัติ Channel จึงยังไม่อนุญาตให้ส่งข้อความใหม่เพื่อป้องกันข้อความซ้ำ", "warning");
+    return;
+  }
   data.candidates.forEach(candidate => {
     const button = document.createElement("button");
     const title = candidate.embeds?.[0]?.title || candidate.content || "Discord Message";
@@ -9873,6 +9881,29 @@ async function sendDiscordEmbedStudioTest() {
   const data = await invokeEmbedStudio("send_test", { payload: payload });
   setEmbedStudioStatus("ส่ง Test Message สำเร็จ · Message ID " + data.message.id, "success");
 }
+
+async function sendNewDiscordEmbedStudioMessage() {
+  if (!discordEmbedStudioState.recordId || !discordEmbedStudioState.historySearched || !discordEmbedStudioState.historyComplete || discordEmbedStudioState.historyHasCandidates || discordEmbedStudioState.linked) {
+    throw new Error("ต้องค้นหาประวัติ Channel จนครบและไม่พบข้อความเดิมก่อน จึงจะส่งข้อความครั้งแรกได้");
+  }
+  if (!window.confirm("ยืนยันส่ง Embed ใหม่สำหรับ Record นี้ใช่หรือไม่?\nระบบค้นหาประวัติ Channel ครบแล้วและไม่พบข้อความที่ตรงกัน")) return;
+  setEmbedStudioStatus("กำลังส่งข้อความครั้งแรก...", "muted");
+  const data = await invokeEmbedStudio("send_new", {
+    event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId,
+    payload: getEmbedStudioPayload()
+  });
+  discordEmbedStudioState.linked = true;
+  discordEmbedStudioState.messageId = data.message.id;
+  discordEmbedStudioState.channelId = data.channel_id;
+  discordEmbedStudioState.originalComponents = data.message.components || [];
+  const update = $("embed-studio-update-existing");
+  if (update) update.disabled = false;
+  const sendNewButton = $("embed-studio-send-new");
+  if (sendNewButton) sendNewButton.disabled = true;
+  $("embed-studio-meta").textContent = "สร้างข้อความครั้งแรกแล้ว · Channel " + data.channel_id + " · Message " + data.message.id;
+  setEmbedStudioStatus("ส่งข้อความครั้งแรกและบันทึก Message ID แล้ว", "success");
+}
+
 async function saveDiscordEmbedStudioTemplate() {
   const payload = getEmbedStudioPayload();
   const data = await invokeEmbedStudio("save_template", { event_key: discordEmbedStudioState.eventKey, payload: payload, template_name: "Default" });
@@ -9911,6 +9942,7 @@ function registerDiscordEmbedStudioEvents() {
   ["title","description","color","footer","thumbnail","image"].forEach(key => $("embed-studio-" + key)?.addEventListener("input", renderEmbedStudioPreview));
   $("embed-studio-update-existing")?.addEventListener("click", () => void updateDiscordEmbedStudioExisting().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-send-test")?.addEventListener("click", () => void sendDiscordEmbedStudioTest().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-send-new")?.addEventListener("click", () => void sendNewDiscordEmbedStudioMessage().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-save-template")?.addEventListener("click", () => void saveDiscordEmbedStudioTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
   document.addEventListener("keydown", event => { if (event.key === "Escape" && !$("discord-embed-studio-modal")?.classList.contains("hidden")) closeDiscordEmbedStudio(); });
 }
