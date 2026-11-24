@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="/style.css?v=member-affiliation-badges-20261120-r2">
+  <link rel="stylesheet" href="/style.css?v=discord-embed-studio-20261124-r1">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.2/cropper.min.js"></script>
 
@@ -40,7 +40,7 @@
           }
 
           const app = document.createElement("script");
-          app.src = "/app.js?v=war-leave-readonly-20261124-r1";
+          app.src = "/app.js?v=discord-embed-studio-20261124-r1";
           app.onload = () => {
             const loadMemberManagementModule = () => {
               const directory = document.createElement("script");
@@ -1335,6 +1335,61 @@
           </form>
         </section>
       </section>
+
+      <div id="discord-embed-studio-modal" class="discord-embed-studio-modal hidden" role="dialog" aria-modal="true" aria-labelledby="discord-embed-studio-title">
+        <div class="discord-embed-studio-backdrop" data-embed-studio-close></div>
+        <section class="discord-embed-studio-dialog">
+          <header class="discord-embed-studio-header">
+            <div><span class="panel-kicker">DISCORD EMBED STUDIO</span><h2 id="discord-embed-studio-title">จัดการ Embed</h2><p id="discord-embed-studio-event-label">กำลังโหลด Event...</p></div>
+            <button type="button" class="discord-embed-studio-close" data-embed-studio-close aria-label="ปิด">×</button>
+          </header>
+          <div class="discord-embed-studio-body">
+            <section class="discord-embed-studio-record">
+              <label>เลือกข้อมูลต้นทางจริงของเว็บไซต์<select id="embed-studio-record-select"><option value="">กำลังโหลดรายการ...</option></select></label>
+              <label id="embed-studio-message-type-wrap">ประเภทข้อความ<select id="embed-studio-message-type"><option value="primary">ข้อความหลัก</option><option value="raid_a">Raid A</option><option value="raid_b">Raid B</option></select></label>
+              <div id="embed-studio-message-status" class="discord-embed-studio-status" aria-live="polite">เลือก Event เพื่อเริ่มตรวจสอบข้อความเดิม</div>
+              <div class="discord-embed-studio-legacy"><label>Template / Version<select id="embed-studio-template-select"><option value="">ยังไม่มี Template</option></select></label><button type="button" class="btn btn-outline" id="embed-studio-load-template">โหลด Template</button><button type="button" class="btn btn-outline" id="embed-studio-show-history">ประวัติการแก้ไข</button></div>
+              <div id="embed-studio-audit-history" class="discord-embed-studio-history"></div>
+              <div class="discord-embed-studio-legacy">
+                <button type="button" class="btn btn-outline" id="embed-studio-search-history">ค้นหาข้อความเก่าใน Channel</button>
+                <span>ค้นหาและเลือกข้อความที่บอทเคยส่ง เพื่อผูก Message ID เดิมเข้ากับ Event</span>
+              </div>
+              <div id="embed-studio-history-results" class="discord-embed-studio-history"></div>
+            </section>
+            <div class="discord-embed-studio-grid">
+              <section class="discord-embed-studio-editor">
+                <h3>Embed Editor</h3>
+                <label>Author Name<input id="embed-studio-author" maxlength="256" type="text"></label>
+                <label>Author Icon URL<input id="embed-studio-author-icon" type="url" placeholder="https://..."></label>
+                <label>Author URL<input id="embed-studio-author-url" type="url" placeholder="https://..."></label>
+                <label>Title<input id="embed-studio-title" maxlength="256" type="text"></label>
+                <label>Description<textarea id="embed-studio-description" maxlength="4096" rows="5"></textarea></label>
+                <div class="discord-embed-studio-two">
+                  <label>สี Embed<input id="embed-studio-color" type="color" value="#D92D45"></label>
+                  <label>Footer<input id="embed-studio-footer" maxlength="2048" type="text"></label>
+                </div>
+                <label>Thumbnail URL<input id="embed-studio-thumbnail" type="url" placeholder="https://..."></label>
+                <label>Main Image URL<input id="embed-studio-image" type="url" placeholder="https://..."></label>
+                <label>Timestamp<input id="embed-studio-timestamp" type="datetime-local"></label>
+                <div class="discord-embed-studio-fields-head"><h4>Fields</h4><button type="button" class="btn btn-outline" id="embed-studio-add-field">+ เพิ่ม Field</button></div>
+                <div id="embed-studio-fields"></div>
+                <div id="embed-studio-validation" class="discord-embed-studio-validation" aria-live="polite"></div>
+              </section>
+              <section class="discord-embed-studio-preview-panel">
+                <h3>Live Preview</h3>
+                <div id="embed-studio-preview" class="discord-embed-studio-preview"><p>เลือก Event และข้อความที่ต้องการตรวจสอบ</p></div>
+                <div class="discord-embed-studio-meta" id="embed-studio-meta"></div>
+              </section>
+            </div>
+          </div>
+          <footer class="discord-embed-studio-actions">
+            <button type="button" class="btn btn-outline" id="embed-studio-save-template">บันทึก Template</button>
+            <button type="button" class="btn btn-outline" id="embed-studio-send-test">ส่ง Test Message</button>
+            <button type="button" class="btn btn-outline" id="embed-studio-send-new" disabled>ส่งครั้งแรก (หลังตรวจประวัติ)</button>
+            <button type="button" class="btn btn-primary" id="embed-studio-update-existing" disabled>อัปเดต Embed เดิม</button>
+          </footer>
+        </section>
+      </div>
 
       <!-- ============ SETTINGS ============ -->
       <section id="page-settings" class="page page-padded hidden">

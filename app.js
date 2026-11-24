@@ -9419,6 +9419,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
             <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
             <span class="discord-route-switch-state"></span>
           </label>
+          <button type="button" class="discord-route-manage-embed" data-discord-embed-manage="${escapeHTML(key)}">จัดการ Embed</button>
         </div>
       </div>`];
   }));
@@ -9645,7 +9646,410 @@ async function sendDiscordIntegrationTest() {
   }
 }
 
+
+let discordEmbedStudioState = { eventKey: "", eventLabel: "", recordId: "", messageType: "primary", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, baseEmbed: {}, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false, historyCursor: null, historySessionId: null };
+
+function setEmbedStudioStatus(message, tone) {
+  const node = $("embed-studio-message-status");
+  if (node) { node.textContent = message || ""; node.dataset.tone = tone || "muted"; }
+}
+async function invokeEmbedStudio(action, extra) {
+  const result = await supabaseClient.functions.invoke("discord-embed-studio", { body: Object.assign({ action: action }, extra || {}) });
+  if (result.error) {
+    let detail = result.error.message || "เรียก Embed Studio ไม่สำเร็จ";
+    try { if (result.error.context && typeof result.error.context.json === "function") { const body = await result.error.context.json(); detail = body.message || detail; } } catch (_) {}
+    throw new Error(detail);
+  }
+  if (result.data && result.data.success === false) throw new Error(result.data.message || "Embed Studio request failed");
+  return result.data || {};
+}
+function embedStudioRecordConfig(eventKey) {
+  const map = {
+    member_joined: ["guild_members", "character_name", "user_id"],
+    war_signup_opened: ["war_events", "event_name"],
+    war_signup_submitted: ["war_signups", "id"],
+    war_signup_closed: ["war_events", "event_name"],
+    war_leave_submitted: ["war_leave_requests", "id"],
+    war_roster_published: ["war_events", "event_name"],
+    war_checkin_opened: ["war_events", "event_name"],
+    war_attendance_finalized: ["war_attendance_reports", "event_id"],
+    portfolio_published: ["portfolios", "title"],
+    guild_activity_published: ["guild_activities", "title"],
+    guild_activity_comment: ["guild_activity_comments", "content"],
+    feedback_submitted: ["guild_feedback", "title"],
+    duck_race_results: null
+  };
+  return map[eventKey] || null;
+}
+async function loadEmbedStudioRecords(eventKey) {
+  const select = $("embed-studio-record-select");
+  if (!select) return;
+  select.innerHTML = '<option value="">กำลังโหลดรายการ...</option>';
+  const config = embedStudioRecordConfig(eventKey);
+  if (!config) { select.innerHTML = '<option value="">Event นี้ยังไม่มีแหล่งข้อมูลที่เชื่อมไว้</option>'; return; }
+  let query = supabaseClient.from(config[0]).select("*").order("created_at", { ascending: false }).limit(60);
+  if (eventKey === "feedback_submitted") query = query.is("deleted_at", null);
+  const { data, error } = await query;
+  if (error) throw new Error("โหลดข้อมูลต้นทางไม่สำเร็จ: " + error.message);
+  const rows = data || [];
+  select.innerHTML = '<option value="">เลือกข้อมูลต้นทาง...</option>';
+  rows.forEach(row => {
+    const option = document.createElement("option");
+    option.value = String(row[config[2] || "id"] || row.id || "");
+    const label = row.event_name || row.title || row.character_name || row.content || row.id || "Record";
+    option.textContent = String(label).replace(/\s+/g, " ").slice(0, 100) + " · " + String(row.id || "").slice(0, 8);
+    select.appendChild(option);
+  });
+  if (!rows.length) select.innerHTML = '<option value="">ไม่พบข้อมูลใน Event นี้</option>';
+}
+function renderEmbedStudioFields() {
+  const host = $("embed-studio-fields");
+  if (!host) return;
+  host.innerHTML = discordEmbedStudioState.fields.map((field, index) =>
+    '<div class="discord-embed-studio-field" data-embed-field="' + index + '">' +
+      '<input type="text" maxlength="256" data-embed-field-name placeholder="Field name" value="' + escapeHTML(field.name || "") + '">' +
+      '<input type="text" maxlength="1024" data-embed-field-value placeholder="Field value" value="' + escapeHTML(field.value || "") + '">' +
+      '<button type="button" data-embed-field-up="' + index + '" aria-label="เลื่อนขึ้น" ' + (index === 0 ? "disabled" : "") + '>↑</button>' +
+      '<button type="button" data-embed-field-down="' + index + '" aria-label="เลื่อนลง" ' + (index === discordEmbedStudioState.fields.length - 1 ? "disabled" : "") + '>↓</button>' +
+      '<button type="button" data-embed-field-remove="' + index + '" aria-label="ลบ Field">ลบ</button>' +
+    '</div>'
+  ).join("");
+}
+function getEmbedStudioPayload() {
+  const colorText = String($("embed-studio-color")?.value || "#D92D45").replace("#", "");
+  const fields = discordEmbedStudioState.fields.filter(field => String(field.name || "").trim() || String(field.value || "").trim())
+    .map(field => ({ name: String(field.name || "").trim(), value: String(field.value || "").trim(), inline: field.inline === true }));
+  const embed = Object.assign({}, discordEmbedStudioState.baseEmbed || {}, {
+    title: String($("embed-studio-title")?.value || ""),
+    description: String($("embed-studio-description")?.value || ""),
+    color: parseInt(colorText, 16) || 0xD92D45,
+    fields: fields
+  });
+  const authorName = String($("embed-studio-author")?.value || "").trim();
+  const authorIcon = String($("embed-studio-author-icon")?.value || "").trim();
+  const authorUrl = String($("embed-studio-author-url")?.value || "").trim();
+  if (authorName) embed.author = Object.assign({}, embed.author || {}, { name: authorName });
+  else delete embed.author;
+  if (embed.author && authorIcon) embed.author.icon_url = authorIcon;
+  if (embed.author && authorUrl) embed.author.url = authorUrl;
+  const footer = String($("embed-studio-footer")?.value || "");
+  const thumbnail = String($("embed-studio-thumbnail")?.value || "").trim();
+  const image = String($("embed-studio-image")?.value || "").trim();
+  if (footer) embed.footer = Object.assign({}, embed.footer || {}, { text: footer });
+  else delete embed.footer;
+  if (thumbnail) embed.thumbnail = Object.assign({}, embed.thumbnail || {}, { url: thumbnail });
+  else delete embed.thumbnail;
+  if (image) embed.image = Object.assign({}, embed.image || {}, { url: image });
+  else delete embed.image;
+  const timestampValue = String($("embed-studio-timestamp")?.value || "");
+  if (timestampValue) embed.timestamp = new Date(timestampValue).toISOString();
+  else delete embed.timestamp;
+  const payload = { embeds: [embed] };
+  if (discordEmbedStudioState.originalContent) payload.content = discordEmbedStudioState.originalContent;
+  if (Array.isArray(discordEmbedStudioState.originalComponents) && discordEmbedStudioState.originalComponents.length) payload.components = discordEmbedStudioState.originalComponents;
+  return payload;
+}
+function renderEmbedStudioPreview() {
+  const payload = getEmbedStudioPayload();
+  const embed = payload.embeds[0];
+  const preview = $("embed-studio-preview");
+  if (!preview) return;
+  preview.style.borderLeftColor = "#" + Number(embed.color).toString(16).padStart(6, "0").slice(-6);
+  let html = "";
+  if (embed.author?.name) html += "<p style=\"font-size:12px;color:#b9bbc5\">" + escapeHTML(embed.author.name) + "</p>";
+  if (embed.title) html += "<h4>" + escapeHTML(embed.title) + "</h4>";
+  if (embed.description) html += "<p>" + escapeHTML(embed.description) + "</p>";
+  (embed.fields || []).forEach(field => { html += '<div class="embed-studio-preview-field"><strong>' + escapeHTML(field.name) + '</strong><span>' + escapeHTML(field.value) + '</span></div>'; });
+  const thumb = embed.thumbnail?.url || "";
+  const main = embed.image?.url || "";
+  if (thumb && /^https:\/\/\S+$/i.test(thumb)) html += '<img src="' + escapeHTML(thumb) + '" alt="Embed thumbnail">';
+  if (main && /^https:\/\/\S+$/i.test(main)) html += '<img src="' + escapeHTML(main) + '" alt="Embed image">';
+  if (embed.footer?.text) html += '<p style="color:#9da0aa;font-size:12px">' + escapeHTML(embed.footer.text) + '</p>';
+  if (embed.timestamp) html += '<p style="color:#9da0aa;font-size:11px">' + escapeHTML(new Date(embed.timestamp).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" })) + '</p>';
+  preview.innerHTML = html || "<p>ยังไม่มีเนื้อหา Embed</p>";
+  const errors = [];
+  if ((embed.title || "").length > 256) errors.push("Title เกิน 256 ตัวอักษร");
+  if ((embed.description || "").length > 4096) errors.push("Description เกิน 4,096 ตัวอักษร");
+  if (embed.fields.length > 25) errors.push("Fields เกิน 25 รายการ");
+  embed.fields.forEach((field, i) => {
+    if (field.name.length > 256) errors.push("Field " + (i + 1) + " Name เกิน 256 ตัวอักษร");
+    if (field.value.length > 1024) errors.push("Field " + (i + 1) + " Value เกิน 1,024 ตัวอักษร");
+  });
+  const total = (embed.title || "").length + (embed.description || "").length + embed.fields.reduce((sum, f) => sum + f.name.length + f.value.length, 0) + (embed.footer?.text || "").length;
+  if (total > 6000) errors.push("ข้อความรวมเกิน 6,000 ตัวอักษร");
+  const validation = $("embed-studio-validation");
+  if (validation) validation.textContent = errors.join("\n");
+  const update = $("embed-studio-update-existing");
+  if (update) update.disabled = !discordEmbedStudioState.linked || errors.length > 0;
+}
+function populateEmbedStudio(message) {
+  const embed = message?.embeds?.[0] || {};
+  discordEmbedStudioState.baseEmbed = JSON.parse(JSON.stringify(embed));
+  $("embed-studio-author").value = embed.author?.name || "";
+  $("embed-studio-author-icon").value = embed.author?.icon_url || "";
+  $("embed-studio-author-url").value = embed.author?.url || "";
+  $("embed-studio-title").value = embed.title || "";
+  $("embed-studio-description").value = embed.description || "";
+  $("embed-studio-color").value = "#" + Number(embed.color || 0xD92D45).toString(16).padStart(6, "0").slice(-6);
+  $("embed-studio-footer").value = embed.footer?.text || "";
+  $("embed-studio-thumbnail").value = embed.thumbnail?.url || "";
+  $("embed-studio-image").value = embed.image?.url || "";
+  $("embed-studio-timestamp").value = embed.timestamp ? new Date(embed.timestamp).toISOString().slice(0,16) : "";
+  discordEmbedStudioState.fields = (embed.fields || []).map(field => ({ name: field.name || "", value: field.value || "", inline: field.inline === true }));
+  discordEmbedStudioState.originalComponents = message?.components || [];
+  discordEmbedStudioState.originalContent = message?.content || "";
+  discordEmbedStudioState.currentMessage = message || null;
+  renderEmbedStudioFields();
+  renderEmbedStudioPreview();
+}
+async function inspectEmbedStudioRecord() {
+  const recordId = String($("embed-studio-record-select")?.value || "");
+  discordEmbedStudioState.recordId = recordId;
+  discordEmbedStudioState.messageType = String($("embed-studio-message-type")?.value || "primary");
+  discordEmbedStudioState.linked = false;
+  discordEmbedStudioState.messageId = "";
+  discordEmbedStudioState.historySearched = false;
+  discordEmbedStudioState.historyComplete = false;
+  discordEmbedStudioState.historyHasCandidates = false;
+  discordEmbedStudioState.historyCursor = null;
+  discordEmbedStudioState.historySessionId = null;
+  const firstSend = $("embed-studio-send-new");
+  if (firstSend) firstSend.disabled = true;
+  const update = $("embed-studio-update-existing");
+  if (update) update.disabled = true;
+  $("embed-studio-history-results").innerHTML = "";
+  if (!recordId) { setEmbedStudioStatus("เลือกข้อมูลต้นทางเพื่อค้นหา Embed เดิม", "muted"); return; }
+  setEmbedStudioStatus("กำลังค้นหาและดึง Embed เดิมจาก Discord...", "muted");
+  const data = await invokeEmbedStudio("inspect", { event_key: discordEmbedStudioState.eventKey, record_id: recordId, message_type: discordEmbedStudioState.messageType });
+  discordEmbedStudioState.channelId = data.channel_id || "";
+  if (data.linked && data.found && data.message) {
+    discordEmbedStudioState.linked = true;
+    discordEmbedStudioState.messageId = data.message_id;
+    populateEmbedStudio(data.message);
+    $("embed-studio-meta").textContent = "ข้อความเดิม · Channel " + data.channel_id + " · Message " + data.message_id;
+    setEmbedStudioStatus("พบข้อความเดิมแล้ว — กำลังแสดง Embed ที่บอทส่งไว้จริง สามารถแก้ไขโดยอัปเดตข้อความเดิมได้", "success");
+  } else if (data.linked && data.found === false) {
+    populateEmbedStudio(data.message || null);
+    $("embed-studio-meta").textContent = "Message ID ที่บันทึกไว้: " + (data.message_id || "");
+    setEmbedStudioStatus("มี Message ID เดิม แต่ Discord ไม่พบข้อความนั้นแล้ว ระบบจะไม่สร้างข้อความทดแทน กรุณาค้นหาประวัติและเลือกข้อความที่ถูกต้อง", "warning");
+  } else {
+    populateEmbedStudio(null);
+    $("embed-studio-meta").textContent = data.channel_id ? "Channel สำหรับค้นหา: " + data.channel_id : "ยังไม่พบ Channel ID";
+    setEmbedStudioStatus("ยังไม่มี Message ID ที่ผูกไว้ สามารถค้นหาประวัติข้อความเก่าจาก Channel เพื่อเลือกผูกได้", "warning");
+  }
+}
+async function openDiscordEmbedStudio(eventKey, eventLabel) {
+  if (!canManageDiscordIntegration()) { alert("เฉพาะ Developer, Leader และ Management ที่ Active เท่านั้น"); return; }
+  discordEmbedStudioState = { eventKey: eventKey, eventLabel: eventLabel || eventKey, recordId: "", messageType: "primary", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, baseEmbed: {}, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false, historyCursor: null, historySessionId: null };
+  $("discord-embed-studio-title").textContent = "จัดการ Embed";
+  $("discord-embed-studio-event-label").textContent = (eventLabel || eventKey) + " · " + eventKey;
+  const typeWrap = $("embed-studio-message-type-wrap");
+  if (typeWrap) typeWrap.hidden = eventKey !== "war_roster_published";
+  if ($("embed-studio-message-type")) $("embed-studio-message-type").value = eventKey === "war_roster_published" ? "raid_a" : "primary";
+  $("discord-embed-studio-modal").classList.remove("hidden");
+  $("embed-studio-meta").textContent = "";
+  $("embed-studio-history-results").innerHTML = "";
+  populateEmbedStudio(null);
+  setEmbedStudioStatus("กำลังโหลดข้อมูลต้นทาง...", "muted");
+  try { await loadEmbedStudioRecords(eventKey); await loadDiscordEmbedStudioTemplates(); setEmbedStudioStatus("เลือกข้อมูลต้นทางเพื่อดึงข้อความ Discord เดิม", "muted"); }
+  catch (error) { setEmbedStudioStatus(error.message || "โหลดข้อมูลไม่สำเร็จ", "error"); }
+}
+function closeDiscordEmbedStudio() {
+  $("discord-embed-studio-modal")?.classList.add("hidden");
+}
+async function searchEmbedStudioHistory() {
+  if (!discordEmbedStudioState.recordId) { setEmbedStudioStatus("กรุณาเลือกข้อมูลต้นทางก่อนค้นหาประวัติ", "warning"); return; }
+  setEmbedStudioStatus(discordEmbedStudioState.historyCursor ? "กำลังค้นหาข้อความที่เก่ากว่า..." : "กำลังค้นหาข้อความเก่าใน Discord Channel...", "muted");
+  const data = await invokeEmbedStudio("search_history", {
+    event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId,
+    message_type: discordEmbedStudioState.messageType,
+    query: discordEmbedStudioState.messageType === "raid_a" ? "raid a" : discordEmbedStudioState.messageType === "raid_b" ? "raid b" : undefined,
+    channel_id: discordEmbedStudioState.channelId || undefined,
+    before: discordEmbedStudioState.historyCursor || undefined,
+    search_session_id: discordEmbedStudioState.historySessionId || undefined
+  });
+  discordEmbedStudioState.historySessionId = data.search_session_id || discordEmbedStudioState.historySessionId;
+  discordEmbedStudioState.historySearched = true;
+  discordEmbedStudioState.historyComplete = data.search_complete === true;
+  discordEmbedStudioState.historyHasCandidates = discordEmbedStudioState.historyHasCandidates || Boolean(data.candidates?.length);
+  discordEmbedStudioState.historyCursor = data.next_before || null;
+  const searchButton = $("embed-studio-search-history");
+  if (searchButton) searchButton.textContent = discordEmbedStudioState.historyComplete ? "ค้นหาประวัติอีกครั้ง" : "ค้นหาข้อความเก่ากว่า";
+  const sendNewButton = $("embed-studio-send-new");
+  if (sendNewButton) sendNewButton.disabled = !discordEmbedStudioState.historyComplete || discordEmbedStudioState.historyHasCandidates || discordEmbedStudioState.linked;
+  const host = $("embed-studio-history-results");
+  if (!data.before && !discordEmbedStudioState.historyCursor && !discordEmbedStudioState.historyHasCandidates) host.innerHTML = "";
+  (data.candidates || []).forEach(candidate => {
+    const button = document.createElement("button");
+    const title = candidate.embeds?.[0]?.title || candidate.content || "Discord Message";
+    const description = String(candidate.embeds?.[0]?.description || "").replace(/\s+/g, " ").slice(0, 150);
+    button.innerHTML = "<span><strong>" + escapeHTML(title) + "</strong><small>" + escapeHTML(description) + "</small></span><small>" + escapeHTML(candidate.timestamp || "") + " · " + escapeHTML(candidate.id) + "</small>";
+    button.addEventListener("click", () => void linkEmbedStudioHistoryMessage(candidate));
+    host.appendChild(button);
+  });
+  const foundCount = host.querySelectorAll("button").length;
+  if (foundCount) {
+    setEmbedStudioStatus("พบ " + foundCount + " ข้อความที่อาจเกี่ยวข้อง" + (discordEmbedStudioState.historyComplete ? " · ค้นหาครบแล้ว" : " · ยังมีข้อความเก่ากว่าให้ค้นต่อ") + " โปรดตรวจสอบก่อนผูก", "success");
+  } else if (discordEmbedStudioState.historyComplete) {
+    setEmbedStudioStatus("ค้นหาประวัติ Channel ครบแล้ว ไม่พบ Embed ที่ตรงกับ Event สามารถพิจารณาส่งครั้งแรกได้", "warning");
+  } else {
+    setEmbedStudioStatus("ค้นหาแล้ว " + (data.scanned_count || 0) + " ข้อความ แต่ยังมีประวัติที่เก่ากว่า กดค้นหาข้อความเก่าอีกครั้งเพื่อให้ครบก่อนส่ง", "warning");
+  }
+}
+async function linkEmbedStudioHistoryMessage(candidate) {
+  if (!window.confirm("ยืนยันผูกข้อความ Discord นี้กับ Event ที่เลือกใช่หรือไม่?\nระบบจะบันทึก Message ID เดิม และจะไม่สร้างข้อความใหม่")) return;
+  const data = await invokeEmbedStudio("link_existing", {
+    event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId, message_type: discordEmbedStudioState.messageType,
+    channel_id: candidate.channel_id, message_id: candidate.id
+  });
+  discordEmbedStudioState.channelId = candidate.channel_id;
+  discordEmbedStudioState.messageId = candidate.id;
+  discordEmbedStudioState.linked = true;
+  populateEmbedStudio(data.message);
+  $("embed-studio-meta").textContent = "ผูกข้อความเดิมแล้ว · Channel " + candidate.channel_id + " · Message " + candidate.id;
+  $("embed-studio-history-results").innerHTML = "";
+  setEmbedStudioStatus("ผูก Embed เก่าเข้ากับ Event สำเร็จแล้ว", "success");
+}
+async function updateDiscordEmbedStudioExisting() {
+  if (!discordEmbedStudioState.linked || !discordEmbedStudioState.recordId) throw new Error("ยังไม่มีข้อความเดิมที่ยืนยันแล้ว จึงไม่สามารถอัปเดตได้");
+  if (!window.confirm("ยืนยันอัปเดตข้อความ Discord เดิมใช่หรือไม่?\nระบบจะใช้ PATCH กับ Message ID เดิมเท่านั้น และจะไม่สร้างข้อความใหม่")) return;
+  setEmbedStudioStatus("กำลังอัปเดต Embed เดิม...", "muted");
+  const data = await invokeEmbedStudio("update_existing", {
+    event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId, message_type: discordEmbedStudioState.messageType,
+    channel_id: discordEmbedStudioState.channelId, message_id: discordEmbedStudioState.messageId,
+    payload: getEmbedStudioPayload()
+  });
+  populateEmbedStudio(data.message);
+  setEmbedStudioStatus("อัปเดตข้อความเดิมสำเร็จแล้ว", "success");
+}
+async function sendDiscordEmbedStudioTest() {
+  const payload = getEmbedStudioPayload();
+  if (!payload.embeds?.[0]?.title && !payload.embeds?.[0]?.description) throw new Error("กรุณากรอก Title หรือ Description ก่อนส่งทดสอบ");
+  if (!window.confirm("ส่ง Test Message ไปยัง Test Channel ที่ตั้งค่าไว้ใช่หรือไม่?")) return;
+  const data = await invokeEmbedStudio("send_test", { payload: payload });
+  setEmbedStudioStatus("ส่ง Test Message สำเร็จ · Message ID " + data.message.id, "success");
+}
+
+async function sendNewDiscordEmbedStudioMessage() {
+  if (!discordEmbedStudioState.recordId || !discordEmbedStudioState.historySearched || !discordEmbedStudioState.historyComplete || discordEmbedStudioState.historyHasCandidates || discordEmbedStudioState.linked) {
+    throw new Error("ต้องค้นหาประวัติ Channel จนครบและไม่พบข้อความเดิมก่อน จึงจะส่งข้อความครั้งแรกได้");
+  }
+  if (!window.confirm("ยืนยันส่ง Embed ใหม่สำหรับ Record นี้ใช่หรือไม่?\nระบบค้นหาประวัติ Channel ครบแล้วและไม่พบข้อความที่ตรงกัน")) return;
+  setEmbedStudioStatus("กำลังส่งข้อความครั้งแรก...", "muted");
+  const data = await invokeEmbedStudio("send_new", {
+    event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId, message_type: discordEmbedStudioState.messageType,
+    search_session_id: discordEmbedStudioState.historySessionId,
+    payload: getEmbedStudioPayload()
+  });
+  discordEmbedStudioState.linked = true;
+  discordEmbedStudioState.messageId = data.message.id;
+  discordEmbedStudioState.channelId = data.channel_id;
+  discordEmbedStudioState.originalComponents = data.message.components || [];
+  const update = $("embed-studio-update-existing");
+  if (update) update.disabled = false;
+  const sendNewButton = $("embed-studio-send-new");
+  if (sendNewButton) sendNewButton.disabled = true;
+  $("embed-studio-meta").textContent = "สร้างข้อความครั้งแรกแล้ว · Channel " + data.channel_id + " · Message " + data.message.id;
+  setEmbedStudioStatus("ส่งข้อความครั้งแรกและบันทึก Message ID แล้ว", "success");
+}
+
+
+async function loadDiscordEmbedStudioTemplates() {
+  const select = $("embed-studio-template-select");
+  if (!select) return;
+  const data = await invokeEmbedStudio("list_templates", { event_key: discordEmbedStudioState.eventKey });
+  select.innerHTML = "";
+  (data.templates || []).forEach(template => {
+    const option = document.createElement("option");
+    option.value = template.id;
+    option.textContent = template.template_name + " · v" + template.version + (template.is_active ? " · Active" : "");
+    option.dataset.payload = JSON.stringify(template.payload || {});
+    select.appendChild(option);
+  });
+  if (!select.options.length) select.innerHTML = '<option value="">ยังไม่มี Template</option>';
+}
+async function loadSelectedDiscordEmbedTemplate() {
+  const select = $("embed-studio-template-select");
+  const option = select?.selectedOptions?.[0];
+  if (!option?.dataset.payload) { setEmbedStudioStatus("ยังไม่มี Template ให้โหลด", "warning"); return; }
+  const payload = JSON.parse(option.dataset.payload);
+  populateEmbedStudio({ embeds: payload.embeds || [], content: payload.content || "", components: payload.components || [] });
+  renderEmbedStudioPreview();
+  setEmbedStudioStatus("โหลด Template เข้าสู่ Editor แล้ว", "success");
+}
+async function showDiscordEmbedStudioHistory() {
+  const data = await invokeEmbedStudio("list_history", { event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId || undefined });
+  const host = $("embed-studio-audit-history");
+  host.innerHTML = "";
+  (data.history || []).forEach(item => {
+    const row = document.createElement("div");
+    row.className = "discord-embed-studio-status";
+    row.textContent = (item.action || "change") + " · " + new Date(item.created_at).toLocaleString("th-TH", { timeZone: "Asia/Bangkok" }) + " · " + (item.message_id || "ไม่มี Message ID");
+    host.appendChild(row);
+  });
+  if (!data.history?.length) host.textContent = "ยังไม่มีประวัติการแก้ไข";
+}
+
+async function saveDiscordEmbedStudioTemplate() {
+  const payload = getEmbedStudioPayload();
+  const data = await invokeEmbedStudio("save_template", { event_key: discordEmbedStudioState.eventKey, payload: payload, template_name: "Default" });
+  await loadDiscordEmbedStudioTemplates();
+  setEmbedStudioStatus("บันทึก Template เวอร์ชัน " + data.template.version + " สำเร็จ", "success");
+}
+function registerDiscordEmbedStudioEvents() {
+  $("discord-integration-routes")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-discord-embed-manage]");
+    if (!button) return;
+    const row = button.closest("[data-discord-route]");
+    const label = row?.querySelector("[data-discord-route-label]")?.value || button.dataset.discordEmbedManage;
+    void openDiscordEmbedStudio(button.dataset.discordEmbedManage, label);
+  });
+  $("discord-embed-studio-modal")?.addEventListener("click", event => {
+    if (event.target.closest("[data-embed-studio-close]")) closeDiscordEmbedStudio();
+  });
+  $("embed-studio-record-select")?.addEventListener("change", () => void inspectEmbedStudioRecord().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-message-type")?.addEventListener("change", () => void inspectEmbedStudioRecord().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-search-history")?.addEventListener("click", () => void searchEmbedStudioHistory().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-add-field")?.addEventListener("click", () => {
+    if (discordEmbedStudioState.fields.length >= 25) { setEmbedStudioStatus("Discord อนุญาตไม่เกิน 25 Fields", "warning"); return; }
+    discordEmbedStudioState.fields.push({ name: "", value: "", inline: false }); renderEmbedStudioFields(); renderEmbedStudioPreview();
+  });
+  $("embed-studio-fields")?.addEventListener("input", event => {
+    const row = event.target.closest("[data-embed-field]");
+    if (!row) return;
+    const index = Number(row.dataset.embedField);
+    if (event.target.matches("[data-embed-field-name]")) discordEmbedStudioState.fields[index].name = event.target.value;
+    if (event.target.matches("[data-embed-field-value]")) discordEmbedStudioState.fields[index].value = event.target.value;
+    renderEmbedStudioPreview();
+  });
+  $("embed-studio-fields")?.addEventListener("click", event => {
+    const remove = event.target.closest("[data-embed-field-remove]");
+    const moveUp = event.target.closest("[data-embed-field-up]");
+    const moveDown = event.target.closest("[data-embed-field-down]");
+    if (remove) { discordEmbedStudioState.fields.splice(Number(remove.dataset.embedFieldRemove), 1); renderEmbedStudioFields(); renderEmbedStudioPreview(); return; }
+    if (moveUp) {
+      const index = Number(moveUp.dataset.embedFieldUp);
+      if (index > 0) [discordEmbedStudioState.fields[index - 1], discordEmbedStudioState.fields[index]] = [discordEmbedStudioState.fields[index], discordEmbedStudioState.fields[index - 1]];
+      renderEmbedStudioFields(); renderEmbedStudioPreview(); return;
+    }
+    if (moveDown) {
+      const index = Number(moveDown.dataset.embedFieldDown);
+      if (index < discordEmbedStudioState.fields.length - 1) [discordEmbedStudioState.fields[index + 1], discordEmbedStudioState.fields[index]] = [discordEmbedStudioState.fields[index], discordEmbedStudioState.fields[index + 1]];
+      renderEmbedStudioFields(); renderEmbedStudioPreview();
+    }
+  });
+  ["author","author-icon","author-url","title","description","color","footer","thumbnail","image","timestamp"].forEach(key => $("embed-studio-" + key)?.addEventListener("input", renderEmbedStudioPreview));
+  $("embed-studio-update-existing")?.addEventListener("click", () => void updateDiscordEmbedStudioExisting().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-send-test")?.addEventListener("click", () => void sendDiscordEmbedStudioTest().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-send-new")?.addEventListener("click", () => void sendNewDiscordEmbedStudioMessage().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-save-template")?.addEventListener("click", () => void saveDiscordEmbedStudioTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-load-template")?.addEventListener("click", () => void loadSelectedDiscordEmbedTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-show-history")?.addEventListener("click", () => void showDiscordEmbedStudioHistory().catch(error => setEmbedStudioStatus(error.message, "error")));
+  document.addEventListener("keydown", event => { if (event.key === "Escape" && !$("discord-embed-studio-modal")?.classList.contains("hidden")) closeDiscordEmbedStudio(); });
+}
+
 function registerDiscordIntegrationEvents() {
+  registerDiscordEmbedStudioEvents();
   $("discord-integration-form")?.addEventListener("submit", event => {
     event.preventDefault();
     void saveDiscordIntegrationSettings();
