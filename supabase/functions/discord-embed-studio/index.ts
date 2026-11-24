@@ -25,6 +25,7 @@ const eventTitleHints: Record<string, string[]> = {
 function validatePayload(payload: any) {
   const errors: string[] = [];
   const embeds = Array.isArray(payload?.embeds) ? payload.embeds : [];
+  if (!embeds.length && !String(payload?.content || "")) errors.push("ต้องมี Embed หรือ Message Content อย่างน้อยหนึ่งอย่าง");
   if (embeds.length > 10) errors.push("ข้อความหนึ่งรายการมี Embed ได้ไม่เกิน 10 รายการ");
   let total = 0;
   for (const [i, embed] of embeds.entries()) {
@@ -169,7 +170,7 @@ Deno.serve(async (request: Request) => {
       const channelId = String(body.channel_id || "");
       const messageId = String(body.message_id || "");
       if (!isId(channelId) || !isId(messageId)) return json({ success: false, message: "Channel ID หรือ Message ID ไม่ถูกต้อง" }, 400);
-      const { data: current } = await admin.from("discord_embed_messages").select("message_id,channel_id")
+      const { data: current } = await admin.from("discord_embed_messages").select("message_id,channel_id,source")
         .eq("event_key", eventKey).eq("record_id", recordId).eq("message_type", messageType).maybeSingle();
       if (current && current.source !== "manual_send_pending" && (current.message_id !== messageId || current.channel_id !== channelId)) {
         return json({ success: false, conflict: true, message: "รายการนี้ผูกกับข้อความ Discord อื่นอยู่แล้ว ต้องตรวจสอบก่อนเปลี่ยน" }, 409);
@@ -256,15 +257,17 @@ Deno.serve(async (request: Request) => {
       const payload = body.payload || {};
       const errors = validatePayload(payload);
       if (errors.length) return json({ success: false, message: "Embed ไม่ผ่านการตรวจสอบ", errors }, 422);
-      const { data: lastScan } = await admin.from("discord_embed_history").select("details,created_at")
-        .eq("event_key", eventKey).eq("record_id", recordId).eq("actor_id", authData.user.id).eq("action", "history_scan")
-        .order("created_at", { ascending: false }).limit(1).maybeSingle();
-      if (lastScan?.details?.search_complete !== true || Number(lastScan?.details?.candidate_count || 0) > 0) {
-        return json({ success: false, message: "ต้องค้นหาประวัติ Channel จนครบและไม่พบข้อความที่ตรงกันก่อน ระบบจึงจะอนุญาตให้ส่งครั้งแรก" }, 409);
-      }
       const destination = await resolveDestination();
       const channelId = destination.channelId;
       if (!isId(channelId)) return json({ success: false, message: "ยังไม่ได้กำหนด Channel ปลายทางของ Event นี้" }, 400);
+      const { data: lastScan } = await admin.from("discord_embed_history").select("details,created_at")
+        .eq("event_key", eventKey).eq("record_id", recordId).eq("actor_id", authData.user.id).eq("action", "history_scan")
+        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+      const scanIsFresh = lastScan?.created_at && Date.now() - new Date(lastScan.created_at).getTime() <= 5 * 60 * 1000;
+      if (lastScan?.details?.search_complete !== true || Number(lastScan?.details?.candidate_count || 0) > 0 ||
+          lastScan?.details?.channel_id !== channelId || !scanIsFresh) {
+        return json({ success: false, message: "ต้องค้นหาประวัติ Channel ปลายทางปัจจุบันจนครบและไม่พบข้อความที่ตรงกันภายใน 5 นาทีก่อน จึงจะส่งครั้งแรกได้" }, 409);
+      }
       const pendingId = "pending:" + crypto.randomUUID();
       const { data: pendingRow, error: pendingError } = await admin.from("discord_embed_messages").insert({
         event_key: eventKey, record_id: recordId, message_type: messageType, channel_id: channelId,
