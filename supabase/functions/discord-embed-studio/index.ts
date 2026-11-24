@@ -281,11 +281,16 @@ Deno.serve(async (request: Request) => {
       const destination = await resolveDestination();
       const channelId = destination.channelId;
       if (!isId(channelId)) return json({ success: false, message: "ยังไม่ได้กำหนด Channel ปลายทางของ Event นี้" }, 400);
-      const { data: lastScan } = await admin.from("discord_embed_history").select("details,created_at")
+      const { data: scans } = await admin.from("discord_embed_history").select("details,created_at")
         .eq("event_key", eventKey).eq("record_id", recordId).eq("actor_id", authData.user.id).eq("action", "history_scan")
-        .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        .order("created_at", { ascending: false }).limit(100);
+      const recentScans = (scans || []).filter((scan: any) =>
+        scan.details?.channel_id === channelId && Date.now() - new Date(scan.created_at).getTime() <= 5 * 60 * 1000
+      );
+      const lastScan = recentScans[0];
       const scanIsFresh = lastScan?.created_at && Date.now() - new Date(lastScan.created_at).getTime() <= 5 * 60 * 1000;
-      if (lastScan?.details?.search_complete !== true || Number(lastScan?.details?.candidate_count || 0) > 0 ||
+      const totalCandidates = recentScans.reduce((sum: number, scan: any) => sum + Number(scan.details?.candidate_count || 0), 0);
+      if (lastScan?.details?.search_complete !== true || totalCandidates > 0 ||
           lastScan?.details?.channel_id !== channelId || !scanIsFresh) {
         return json({ success: false, message: "ต้องค้นหาประวัติ Channel ปลายทางปัจจุบันจนครบและไม่พบข้อความที่ตรงกันภายใน 5 นาทีก่อน จึงจะส่งครั้งแรกได้" }, 409);
       }
