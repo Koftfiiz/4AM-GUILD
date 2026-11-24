@@ -194,8 +194,19 @@ Deno.serve(async (request: Request) => {
         linked_by: authData.user.id, linked_at: new Date().toISOString(), updated_at: new Date().toISOString()
       }, { onConflict: "event_key,record_id,message_type" }).select("*").single();
       if (saveError) return json({ success: false, message: "บันทึกการผูกข้อความไม่สำเร็จ", details: saveError.message }, 500);
+      const linkedAt = new Date().toISOString();
       if (eventKey === "war_signup_opened") {
         await admin.from("war_events").update({ discord_message_id: messageId, discord_channel_id: channelId }).eq("id", recordId);
+      } else if (eventKey === "war_signup_closed") {
+        await admin.from("war_events").update({ discord_signup_closed_notified_at: linkedAt, discord_signup_closed_error: null }).eq("id", recordId);
+      } else if (eventKey === "guild_activity_published") {
+        await admin.from("guild_activities").update({ discord_notified_at: linkedAt, discord_notification_error: null }).eq("id", recordId);
+      } else if (eventKey === "guild_activity_comment") {
+        await admin.from("guild_activity_comments").update({ discord_notified_at: linkedAt, discord_notification_error: null }).eq("id", recordId);
+      } else if (eventKey === "feedback_submitted") {
+        await admin.from("guild_feedback").update({ discord_notified_at: linkedAt, discord_notification_error: null }).eq("id", recordId);
+      } else if (eventKey === "war_leave_submitted") {
+        await admin.from("war_leave_requests").update({ discord_notified_at: linkedAt, discord_notification_error: null }).eq("id", recordId);
       }
       await admin.from("discord_embed_history").insert({
         event_key: eventKey, record_id: recordId, message_type: messageType, channel_id: channelId,
