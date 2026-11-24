@@ -5832,7 +5832,9 @@ async function captureWarDomElement(element,filename,event=null){
   const gridGap=raidGrid?parseFloat(getComputedStyle(raidGrid).columnGap)||8:8;
   const columns=Math.max(5,liveCards.length);
   const fullGridWidth=raidGrid?Math.max(raidGrid.scrollWidth,cardWidth*columns+gridGap*(columns-1)):0;
-  const captureWidth=Math.max(element.clientWidth,fullGridWidth);
+  // Leave a generous canvas margin around the complete Raid board.
+  const capturePadding=56;
+  const captureWidth=Math.max(element.clientWidth,fullGridWidth)+capturePadding*2;
   const eventType=event?.registration_type==="practice"?"ซ้อมวอร์":"Guild War";
   const eventTime=event?.start_time?formatTime(event.start_time)+" น.":"ไม่ระบุเวลา";
   const eventDate=event?.event_date?formatDate(event.event_date):"";
@@ -5844,7 +5846,7 @@ async function captureWarDomElement(element,filename,event=null){
     logging:false,
     width:captureWidth,
     windowWidth:captureWidth,
-    height:Math.max(element.scrollHeight,element.clientHeight)+100,
+    height:Math.max(element.scrollHeight,element.clientHeight)+100+capturePadding*2,
     scrollX:0,
     scrollY:-window.scrollY,
     onclone:clonedDocument=>{
@@ -5886,7 +5888,8 @@ async function captureWarDomElement(element,filename,event=null){
           memberCard.style.setProperty("border","1px solid "+toClassRgba(color,.96),"important");
           memberCard.style.setProperty("border-radius","11px","important");
           memberCard.style.setProperty("background","linear-gradient(112deg,"+toClassRgba(color,.24)+",rgba(18,17,30,.42))","important");
-          memberCard.style.setProperty("box-shadow","0 0 16px "+glow+",inset 0 0 18px "+toClassRgba(color,.12)+",inset 0 1px 0 rgba(255,255,255,.08)","important");
+          memberCard.style.setProperty("border-width","2px","important");
+          memberCard.style.setProperty("box-shadow","0 0 7px "+toClassRgba(color,.95)+",0 0 18px "+toClassRgba(color,.72)+",0 0 34px "+toClassRgba(color,.42)+",inset 0 0 20px "+toClassRgba(color,.2)+",inset 0 1px 0 rgba(255,255,255,.12)","important");
           const classIcon=memberCard.querySelector(".war-slot-class-icon");
           if(classIcon){classIcon.style.setProperty("display","block","important");classIcon.style.setProperty("width","58px","important");classIcon.style.setProperty("height","58px","important");classIcon.style.setProperty("flex","0 0 58px","important");classIcon.style.setProperty("object-fit","contain","important");}
           const identity=memberCard.querySelector(".war-member-identity");
@@ -5905,8 +5908,11 @@ async function captureWarDomElement(element,filename,event=null){
         const width=cardW*count+gap*(count-1);
         clonedSection.style.setProperty("display","block","important");
         clonedSection.style.setProperty("box-sizing","border-box","important");
-        clonedSection.style.setProperty("width",width+"px","important");
-        clonedSection.style.setProperty("min-width",width+"px","important");
+        clonedSection.style.setProperty("padding","56px","important");
+        clonedSection.style.setProperty("background","#09090d","important");
+        clonedSection.style.setProperty("border-radius","22px","important");
+        clonedSection.style.setProperty("width",(width+capturePadding*2)+"px","important");
+        clonedSection.style.setProperty("min-width",(width+capturePadding*2)+"px","important");
         clonedSection.style.setProperty("max-width","none","important");
         clonedSection.style.setProperty("overflow","visible","important");
         clonedGrid.style.setProperty("display","grid","important");
@@ -5920,7 +5926,7 @@ async function captureWarDomElement(element,filename,event=null){
         clonedGrid.style.setProperty("scrollbar-width","none","important");
         const header=clonedDocument.createElement("div");
         header.className="war-export-image-heading";
-        header.style.cssText="box-sizing:border-box;width:100%;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 4px 22px;margin:0 0 20px;border-bottom:2px solid rgba(190,45,60,.55);";
+        header.style.cssText="box-sizing:border-box;width:100%;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:0 4px 26px;margin:0 0 28px;border-bottom:2px solid rgba(190,45,60,.55);";
         const identity=clonedDocument.createElement("div");
         identity.style.cssText="display:flex;flex-direction:column;gap:7px;min-width:0;";
         const guild=clonedDocument.createElement("strong");
