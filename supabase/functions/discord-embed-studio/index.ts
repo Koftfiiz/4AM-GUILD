@@ -141,6 +141,7 @@ Deno.serve(async (request: Request) => {
       const channelId = requestedChannel || destination.channelId;
       if (!isId(channelId)) return json({ success: false, message: "ไม่พบ Channel ID ที่ถูกต้องสำหรับค้นหาประวัติ" }, 400);
       const query = String(body.query || "").trim().toLocaleLowerCase();
+      const searchSessionId = /^[0-9a-f-]{36}$/i.test(String(body.search_session_id || "")) ? String(body.search_session_id) : crypto.randomUUID();
       const hints = eventTitleHints[eventKey] || [];
       const candidates: any[] = [];
       let before = isId(body.before) ? String(body.before) : "";
@@ -166,8 +167,8 @@ Deno.serve(async (request: Request) => {
         before = messages[messages.length - 1]?.id || "";
         if (messages.length < 100 || candidates.length >= 50) break;
       }
-      await admin.from("discord_embed_history").insert({ event_key: eventKey, record_id: recordId || null, action: "history_scan", actor_id: authData.user.id, details: { channel_id: channelId, scanned_count: scannedCount, candidate_count: candidates.length, search_complete: searchComplete } });
-      return json({ success: true, channel_id: channelId, candidates: candidates.slice(0, 50), scanned_count: scannedCount, search_complete: searchComplete, next_before: searchComplete ? null : before });
+      await admin.from("discord_embed_history").insert({ event_key: eventKey, record_id: recordId || null, action: "history_scan", actor_id: authData.user.id, details: { channel_id: channelId, search_session_id: searchSessionId, scanned_count: scannedCount, candidate_count: candidates.length, search_complete: searchComplete } });
+      return json({ success: true, channel_id: channelId, search_session_id: searchSessionId, candidates: candidates.slice(0, 50), scanned_count: scannedCount, search_complete: searchComplete, next_before: searchComplete ? null : before });
     }
 
     if (action === "link_existing") {
@@ -281,15 +282,20 @@ Deno.serve(async (request: Request) => {
       const destination = await resolveDestination();
       const channelId = destination.channelId;
       if (!isId(channelId)) return json({ success: false, message: "ยังไม่ได้กำหนด Channel ปลายทางของ Event นี้" }, 400);
+      const searchSessionId = String(body.search_session_id || "");
+      if (!/^[0-9a-f-]{36}$/i.test(searchSessionId)) return json({ success: false, message: "กรุณาค้นหาประวัติ Channel ใหม่ก่อนส่งครั้งแรก" }, 409);
       const { data: scans } = await admin.from("discord_embed_history").select("details,created_at")
         .eq("event_key", eventKey).eq("record_id", recordId).eq("actor_id", authData.user.id).eq("action", "history_scan")
         .order("created_at", { ascending: false }).limit(100);
-      const recentScans = (scans || []).filter((scan: any) =>
-        scan.details?.channel_id === channelId && Date.now() - new Date(scan.created_at).getTime() <= 5 * 60 * 1000
+      const sessionScans = (scans || []).filter((scan: any) =>
+        scan.details?.search_session_id === searchSessionId && scan.details?.channel_id === channelId
       );
-      const lastScan = recentScans[0];
-      const scanIsFresh = lastScan?.created_at && Date.now() - new Date(lastScan.created_at).getTime() <= 5 * 60 * 1000;
-      const totalCandidates = recentScans.reduce((sum: number, scan: any) => sum + Number(scan.details?.candidate_count || 0), 0);
+      const lastScan = sessionScans[0];
+      const oldestScan = sessionScans[sessionScans.length - 1];
+      const scanIsFresh = lastScan?.created_at && oldestScan?.created_at &&
+        Date.now() - new Date(lastScan.created_at).getTime() <= 5 * 60 * 1000 &&
+        Date.now() - new Date(oldestScan.created_at).getTime() <= 5 * 60 * 1000;
+      const totalCandidates = sessionScans.reduce((sum: number, scan: any) => sum + Number(scan.details?.candidate_count || 0), 0);
       if (lastScan?.details?.search_complete !== true || totalCandidates > 0 ||
           lastScan?.details?.channel_id !== channelId || !scanIsFresh) {
         return json({ success: false, message: "ต้องค้นหาประวัติ Channel ปลายทางปัจจุบันจนครบและไม่พบข้อความที่ตรงกันภายใน 5 นาทีก่อน จึงจะส่งครั้งแรกได้" }, 409);
