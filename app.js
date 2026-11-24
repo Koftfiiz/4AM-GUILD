@@ -6214,6 +6214,7 @@ async function sendWarSignupEventToDiscord(eventId,button){
       try{if(error.context&&typeof error.context.json==="function"){const body=await error.context.json();message=body.details?String(body.message||message)+" ("+String(body.details)+")":body.message||message;}}catch(_){}
       throw new Error(message);
     }
+    if(data?.skipped)throw new Error(data?.message||"ระบบข้ามการส่งประกาศ Discord ตามการตั้งค่า Event Route");
     if(!data?.success)throw new Error(data?.message||"ดำเนินการกับ Discord ไม่สำเร็จ");
     alert(data.recreated?"ข้อความประกาศเดิมถูกลบจาก Discord แล้ว ระบบสร้างประกาศใหม่ให้เรียบร้อย":data.updated?"อัปเดตประกาศเดิมบน Discord สำเร็จ":data.already_notified?"Event นี้มีประกาศบน Discord แล้ว":"ส่งประกาศ War Signup Event ไป Discord สำเร็จ");
     await loadWarSignups();
