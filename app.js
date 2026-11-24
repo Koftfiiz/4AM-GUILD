@@ -6203,12 +6203,12 @@ async function sendWarSignupEventToDiscord(eventId,button){
   const isUpdate=String(button?.textContent||"").includes("UPDATE TO DISCORD");
   const confirmText=isUpdate
     ?"อัปเดตประกาศ War Signup Event ใน Discord โดยแก้ไขข้อความเดิมหรือไม่?"
-    :"ส่งประกาศ War Signup Event นี้ไปยัง Discord ตามโหมดที่ตั้งค่าไว้หรือไม่?";
+    :"ส่งประกาศ Guild War ไปยัง Channel ID ที่กำหนดบนการ์ดประกาศลงชื่อวอร์ใน Production Mode หรือไม่?";
   if(!confirm(confirmText))return;
   const original=button?.textContent||(isUpdate?"UPDATE TO DISCORD":"SEND TO DISCORD");
   if(button){button.disabled=true;button.textContent=isUpdate?"กำลังอัปเดต Discord...":"กำลังส่งไป Discord...";}
   try{
-    const {data,error}=await supabaseClient.functions.invoke("discord-guild-activity-notify",{body:{kind:"war_signup",event_id:eventId}});
+    const {data,error}=await supabaseClient.functions.invoke("discord-guild-activity-notify",{body:{kind:"war_signup",event_id:eventId,manual_send:true}});
     if(error){
       let message=error.message;
       try{if(error.context&&typeof error.context.json==="function"){const body=await error.context.json();message=body.details?String(body.message||message)+" ("+String(body.details)+")":body.message||message;}}catch(_){}
