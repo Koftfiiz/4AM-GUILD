@@ -6051,18 +6051,18 @@ function renderWarRecordEventOptions(selectedEventId="",includeRecorded=false){
  const recorded=new Set((warMatchRecords||[]).map(x=>x.event_id).filter(Boolean));
  const events=(warRecordEvents||[]).filter(x=>x.registration_type===warMatchRecordViewType&&!isWarRecordEventCancelled(x));
  const available=events.filter(x=>!recorded.has(x.id)|| (includeRecorded&&x.id===selectedEventId));
- const past=available.filter(x=>!isWarRecordEventFuture(x));
+ const editingRecorded=Boolean(includeRecorded&&selectedEventId&&recorded.has(selectedEventId));
+ const past=available.filter(x=>!isWarRecordEventFuture(x)&&!(editingRecorded&&x.id===selectedEventId));
  const future=available.filter(isWarRecordEventFuture);
  select.innerHTML='<option value="">เลือกกิจกรรมที่แข่งขันแล้ว</option>'+
   past.map(x=>'<option value="'+escapeHTML(x.id)+'">'+escapeHTML(x.event_name)+' · '+formatDate(x.event_date)+' '+formatTime(x.start_time)+'</option>').join("")+
   future.map(x=>'<option value="'+escapeHTML(x.id)+'" disabled>'+escapeHTML(x.event_name)+' · '+formatDate(x.event_date)+' '+formatTime(x.start_time)+' · ยังไม่ถึงวันแข่ง</option>').join("");
- if(selectedEventId&&available.some(x=>x.id===selectedEventId)){
-  if(recorded.has(selectedEventId)&&includeRecorded){
-   const event=available.find(x=>x.id===selectedEventId);
-   select.insertAdjacentHTML("beforeend",'<option value="'+escapeHTML(event.id)+'" disabled>'+escapeHTML(event.event_name)+' · บันทึกผลแล้ว (กำลังแก้ไข)</option>');
-  }
+ if(editingRecorded){
+  const event=available.find(x=>x.id===selectedEventId);
+  select.insertAdjacentHTML("beforeend",'<option value="'+escapeHTML(event.id)+'" disabled>'+escapeHTML(event.event_name)+' · บันทึกผลแล้ว (กำลังแก้ไข)</option>');
   select.value=selectedEventId;
- }else select.value="";
+ }else if(selectedEventId&&available.some(x=>x.id===selectedEventId))select.value=selectedEventId;
+ else select.value="";
  const hint=$("war-record-event-hint");
  if(hint){
   const done=events.filter(x=>recorded.has(x.id)).length;
