@@ -116,7 +116,13 @@ Deno.serve(async (request: Request) => {
       message_id: String(message.id), source: "automation", last_payload: message,
       linked_by: authData.user.id, linked_at: new Date().toISOString(), updated_at: new Date().toISOString()
     }, { onConflict: "event_key,record_id,message_type" });
-    if (registryError) return json({ success: false, message: "ส่ง Discord แล้ว แต่บันทึก Message ID ไม่สำเร็จ ห้ามส่งซ้ำ", message_id: String(message.id) }, 500);
+    if (registryError) {
+      await admin.from("war_leave_requests").update({
+        discord_notified_at: new Date().toISOString(),
+        discord_notification_error: "Message sent; registry insert failed. Do not resend. Message ID: " + String(message.id)
+      }).eq("id", requestId);
+      return json({ success: false, message: "ส่ง Discord แล้ว แต่บันทึก Message ID ไม่สำเร็จ ห้ามส่งซ้ำ", message_id: String(message.id) }, 500);
+    }
     const { error: updateError } = await admin.from("war_leave_requests")
       .update({ discord_notified_at: new Date().toISOString(), discord_notification_error: null })
       .eq("id", requestId);
