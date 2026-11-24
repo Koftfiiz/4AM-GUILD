@@ -1302,11 +1302,13 @@
                 <span>Test Channel ID <small>(ใช้เฉพาะ TEST MODE)</small></span>
                 <input id="discord-integration-test-channel" type="hidden" value="">
                 <div class="discord-channel-picker" data-discord-channel-picker="test">
-                  <button type="button" class="btn btn-outline" data-discord-load-channels>โหลดห้องจาก Discord</button>
-                  <select id="discord-integration-test-channel-select" data-discord-channel-select data-channel-target="test" aria-label="เลือกห้องทดสอบ Discord">
-                    <option value="">กดโหลดรายชื่อห้องก่อน</option>
-                  </select>
-                  <small data-discord-channel-status>ยังไม่ได้โหลดรายชื่อห้อง</small>
+                  <div class="discord-channel-select-row">
+                    <select id="discord-integration-test-channel-select" data-discord-channel-select data-channel-target="test" aria-label="เลือกห้องทดสอบ Discord">
+                      <option value="">เลือกห้อง Discord...</option>
+                    </select>
+                    <button type="button" class="discord-channel-refresh" data-discord-refresh-channels aria-label="รีเฟรชรายชื่อห้อง Discord" title="รีเฟรชรายชื่อห้อง"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button>
+                  </div>
+                  <small data-discord-channel-status>เปิดรายการห้องเพื่อโหลดจาก Discord อัตโนมัติ</small>
                 </div>
               </label>
             </div>
@@ -1320,7 +1322,7 @@
               <div><span class="panel-kicker">DISCORD NOTIFICATION ROUTING</span><h3>กำหนดห้องแจ้งเตือนให้บอทกิลด์</h3></div>
               <span class="discord-integration-future-label">เตรียมตั้งค่าหลังสร้างห้อง Discord</span>
             </div>
-            <p class="discord-integration-help">กดโหลดรายชื่อห้องจาก Discord แล้วเลือกห้องที่ต้องการ ระบบจะบันทึก Channel ID ให้ทันที โดยไม่เปลี่ยนสถานะเปิด/ปิดของ Event</p>
+            <p class="discord-integration-help">เลือกรายชื่อห้องได้โดยตรง ระบบจะดึงข้อมูลจาก Discord อัตโนมัติ และใช้ปุ่มรีเฟรชเพื่ออัปเดตรายชื่อห้อง</p>
             <div class="discord-route-toolbar">
               <label class="discord-route-search"><span>ค้นหา Event</span><input id="discord-route-search" type="search" placeholder="ค้นหาชื่อการแจ้งเตือน..."></label>
               <label class="discord-route-filter"><span>แสดงรายการ</span><select id="discord-route-filter"><option value="all">ทั้งหมด</option><option value="on">เปิดใช้งาน</option><option value="off">ปิดใช้งาน</option><option value="missing">ยังไม่กำหนด Channel</option></select></label>
