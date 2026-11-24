@@ -9899,7 +9899,12 @@ async function searchEmbedStudioHistory() {
   }
 }
 async function linkEmbedStudioHistoryMessage(candidate) {
-  if (!window.confirm("ยืนยันผูกข้อความ Discord นี้กับ Event ที่เลือกใช่หรือไม่?\nระบบจะบันทึก Message ID เดิม และจะไม่สร้างข้อความใหม่")) return;
+  // Display the selected history message in Live Preview immediately, before linking confirmation.
+  populateEmbedStudio(candidate);
+  renderEmbedStudioPreview();
+  $("embed-studio-meta").textContent = "ข้อความที่เลือกจากประวัติ · Channel " + candidate.channel_id + " · Message " + candidate.id;
+  setEmbedStudioStatus("กำลังแสดง Embed จากข้อความที่เลือกใน Live Preview", "success");
+  if (!window.confirm("ยืนยันผูกข้อความ Discord นี้กับ Event ที่เลือกใช่หรือไม่?\\nระบบจะบันทึก Message ID เดิม และจะไม่สร้างข้อความใหม่")) return;
   const data = await invokeEmbedStudio("link_existing", {
     event_key: discordEmbedStudioState.eventKey, record_id: discordEmbedStudioState.recordId, message_type: discordEmbedStudioState.messageType,
     channel_id: candidate.channel_id, message_id: candidate.id
@@ -9907,10 +9912,11 @@ async function linkEmbedStudioHistoryMessage(candidate) {
   discordEmbedStudioState.channelId = candidate.channel_id;
   discordEmbedStudioState.messageId = candidate.id;
   discordEmbedStudioState.linked = true;
-  populateEmbedStudio(data.message);
+  populateEmbedStudio(data.message || candidate);
+  renderEmbedStudioPreview();
   $("embed-studio-meta").textContent = "ผูกข้อความเดิมแล้ว · Channel " + candidate.channel_id + " · Message " + candidate.id;
   $("embed-studio-history-results").innerHTML = "";
-  setEmbedStudioStatus("ผูก Embed เก่าเข้ากับ Event สำเร็จแล้ว", "success");
+  setEmbedStudioStatus("ผูก Embed เก่าเข้ากับ Event สำเร็จแล้ว และแสดงใน Live Preview แล้ว", "success");
 }
 async function updateDiscordEmbedStudioExisting() {
   if (!discordEmbedStudioState.linked || !discordEmbedStudioState.recordId) throw new Error("ยังไม่มีข้อความเดิมที่ยืนยันแล้ว จึงไม่สามารถอัปเดตได้");
