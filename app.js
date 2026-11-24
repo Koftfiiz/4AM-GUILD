@@ -9843,7 +9843,7 @@ async function openDiscordEmbedStudio(eventKey, eventLabel) {
   $("discord-embed-studio-event-label").textContent = (eventLabel || eventKey) + " · " + eventKey;
   const typeWrap = $("embed-studio-message-type-wrap");
   if (typeWrap) typeWrap.hidden = eventKey !== "war_roster_published";
-  if ($("embed-studio-message-type")) $("embed-studio-message-type").value = "primary";
+  if ($("embed-studio-message-type")) $("embed-studio-message-type").value = eventKey === "war_roster_published" ? "raid_a" : "primary";
   $("discord-embed-studio-modal").classList.remove("hidden");
   $("embed-studio-meta").textContent = "";
   $("embed-studio-history-results").innerHTML = "";
