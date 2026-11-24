@@ -97,14 +97,14 @@ Deno.serve(async (request) => {
       return json({ success: true, skipped: true, message: "ปิดการแจ้งเตือน Event นี้ไว้ใน Discord Integration Settings" });
     }
     let channelId = "";
-    // Existing Discord messages must always be edited in their original channel,
-    // regardless of a later TEST/PRODUCTION mode switch.
-    if (kind === "war_signup" && existingWarMessage?.discord_message_id && existingWarMessage?.discord_channel_id) {
-      channelId = String(existingWarMessage.discord_channel_id);
-    } else if (integrationSettings.mode === "test") {
+    if (integrationSettings.mode === "test") {
       channelId = String(integrationSettings.test_channel_id || "");
     } else if (integrationSettings.mode === "production" && integrationSettings.production_enabled === true) {
-      channelId = String(route.channel_id || "");
+      if (kind === "war_signup" && existingWarMessage?.discord_message_id && existingWarMessage?.discord_channel_id) {
+        channelId = String(existingWarMessage.discord_channel_id);
+      } else {
+        channelId = String(route.channel_id || "");
+      }
     }
     if (!/^\d{17,20}$/.test(channelId)) return json({ success: false, message: "No valid destination configured for this Discord event; notification was not sent" }, 503);
     const isManager = ["developer", "leader", "management"].includes(role);
@@ -290,24 +290,6 @@ Deno.serve(async (request) => {
       timestamp: record.created_at
     };
 
-    if (kind === "war_signup") {
-      const fields = Array.isArray(embed.fields) ? embed.fields : [];
-      const embedCharacterCount = String(embed.title || "").length
-        + String(embed.description || "").length
-        + fields.reduce((total: number, field: any) => total + String(field.name || "").length + String(field.value || "").length, 0)
-        + String(embed.footer?.text || "").length;
-      const invalidField = fields.some((field: any) =>
-        String(field.name || "").length > 256 || String(field.value || "").length > 1024
-      );
-      if (fields.length > 25 || String(embed.title || "").length > 256
-        || String(embed.description || "").length > 4096 || embedCharacterCount > 6000 || invalidField) {
-        return json({
-          success: false,
-          message: "Guild War signup roster exceeds Discord's single-message limits. No Part 2 message was sent; shorten display names or reduce announcement text."
-        }, 413);
-      }
-    }
-
     const messagePayload: any = { embeds: [embed], allowed_mentions: { parse: [] } };
     if (kind === "war_signup") {
       const signupClosed = isSignupClosed || record.status === "cancelled";
@@ -329,6 +311,27 @@ Deno.serve(async (request) => {
         }];
       }
     }
+    if (kind === "war_signup") {
+      const fields = Array.isArray(embed.fields) ? embed.fields : [];
+      const authorName = String(embed.author?.name || "");
+      const footerText = String(embed.footer?.text || "");
+      const embedCharacterCount = String(embed.title || "").length
+        + String(embed.description || "").length
+        + authorName.length + footerText.length
+        + fields.reduce((total: number, field: any) => total + String(field.name || "").length + String(field.value || "").length, 0);
+      const invalidField = fields.some((field: any) =>
+        String(field.name || "").length > 256 || String(field.value || "").length > 1024
+      );
+      if (fields.length > 25 || String(embed.title || "").length > 256
+        || String(embed.description || "").length > 4096 || authorName.length > 256
+        || footerText.length > 2048 || embedCharacterCount > 6000 || invalidField) {
+        return json({
+          success: false,
+          message: "Guild War signup Embed exceeds Discord's single-message limits after all fields and closed status were composed. No message was sent; reduce the exact field(s) that exceed the limits."
+        }, 413);
+      }
+    }
+
     const discordMessagesUrl = "https://discord.com/api/v10/channels/" + channelId + "/messages";
     const hasPreviousWarMessage = kind === "war_signup" && Boolean(record.discord_message_id);
     let discordResponse = await fetch(
@@ -339,12 +342,31 @@ Deno.serve(async (request) => {
         body: JSON.stringify(messagePayload)
       }
     );
+    let recreatedDeletedWarMessage = false;
 
-    // Never create a replacement when a previously linked signup message is missing.
+    // If a manager manually deleted the bot's old Discord announcement,
+    // Discord returns 404 / code 10008 (Unknown Message). Re-create it instead
+    // of leaving the database pointing at a message that no longer exists.
     if (!discordResponse.ok && hasPreviousWarMessage && discordResponse.status === 404) {
       const previousDetails = await discordResponse.text();
-      await admin.from(table).update({ discord_send_error: previousDetails.slice(0, 1000) }).eq("id", recordId);
-      return json({ success: false, message: "ข้อความ Discord เดิมไม่พบหรือถูกลบ ระบบจะไม่สร้างข้อความใหม่อัตโนมัติ กรุณาตรวจสอบใน Embed Studio", details: previousDetails.slice(0, 500) }, 409);
+      let discordErrorCode = 0;
+      try {
+        discordErrorCode = Number(JSON.parse(previousDetails).code || 0);
+      } catch {
+        // Keep the original response as the failure detail below.
+      }
+
+      if (discordErrorCode === 10008) {
+        discordResponse = await fetch(discordMessagesUrl, {
+          method: "POST",
+          headers: { "Authorization": "Bot " + botToken, "Content-Type": "application/json" },
+          body: JSON.stringify(messagePayload)
+        });
+        recreatedDeletedWarMessage = true;
+      } else {
+        await admin.from(table).update({ discord_send_error: previousDetails.slice(0, 1000) }).eq("id", recordId);
+        return json({ success: false, message: "Discord API rejected the message", details: previousDetails.slice(0, 500) }, 502);
+      }
     }
 
     if (!discordResponse.ok) {
@@ -358,14 +380,12 @@ Deno.serve(async (request) => {
       ? { discord_message_id: String(discordMessage.id), discord_channel_id: channelId, discord_sent_at: new Date().toISOString(), discord_send_error: null }
       : { discord_notified_at: new Date().toISOString(), discord_notification_error: null };
     const { error: updateError } = await admin.from(table).update(updatePayload).eq("id", recordId);
-    if (updateError) return json({ success: false, message: "Discord sent, but notification state could not be saved", message_id: String(discordMessage.id) }, 500);
-    const { error: registryError } = await admin.from("discord_embed_messages").upsert({
-      event_key: eventKey, record_id: recordId, message_type: "primary", channel_id: channelId,
-      message_id: String(discordMessage.id), source: "automation", last_payload: discordMessage,
-      linked_by: authData.user.id, linked_at: new Date().toISOString(), updated_at: new Date().toISOString()
-    }, { onConflict: "event_key,record_id,message_type" });
-    if (registryError) return json({ success: false, message: "Discord sent, but Message ID registration failed; do not resend", message_id: String(discordMessage.id) }, 500);
-    return json({ success: true, updated: hasPreviousWarMessage, message_id: String(discordMessage.id) });
+    if (updateError) return json({ success: false, message: "Discord sent, but notification state could not be saved" }, 500);
+    return json({
+      success: true,
+      updated: hasPreviousWarMessage && !recreatedDeletedWarMessage,
+      recreated: recreatedDeletedWarMessage
+    });
   } catch (error) {
     console.error("discord-guild-activity-notify:", error);
     return json({ success: false, message: error instanceof Error ? error.message : "Unexpected error" }, 500);
