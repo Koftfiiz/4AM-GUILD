@@ -8180,26 +8180,29 @@ function registerGuildActivityEvents(){
    if(!title){msg.textContent="กรุณาระบุหัวข้อกิจกรรม";msg.className="message error";$("activity-title-input").focus();return;}
    const content=sanitizeGuildActivityHTML(body.innerHTML);
    if(!content.trim()){msg.textContent="กรุณากรอกรายละเอียดกิจกรรม";msg.className="message error";body.focus();return;}
-   let startsAt,endsAt=null,endDescription=null;
-   try{
-    const startValue=$("activity-start-datetime-input").value.trim();
-    if(!startValue)throw new Error("กรุณาระบุวันและเวลาเริ่มกิจกรรม");
-    const startParts=startValue.split(" ");
-    if(startParts.length!==2)throw new Error("กรุณาเลือกวันและเวลาเริ่มกิจกรรมจากปฏิทิน");
-    startsAt=parseActivityDateTime(startParts[0],startParts[1],"เริ่ม");
-    const endMode=$("activity-end-mode").value;
-    if(endMode==="datetime"){
-     const endValue=$("activity-end-datetime-input").value.trim();
-     if(!endValue)throw new Error("กรุณาระบุวันและเวลาสิ้นสุดกิจกรรม");
-     const endParts=endValue.split(" ");
-     if(endParts.length!==2)throw new Error("กรุณาเลือกวันและเวลาสิ้นสุดกิจกรรมจากปฏิทิน");
-     endsAt=parseActivityDateTime(endParts[0],endParts[1],"สิ้นสุด");
-     if(new Date(endsAt)<new Date(startsAt))throw new Error("เวลาสิ้นสุดต้องไม่ก่อนเวลาเริ่ม");
-    }else{
-     endDescription=$("activity-end-description-input").value.trim();
-     if(!endDescription)throw new Error("กรุณาระบุรายละเอียดการสิ้นสุดกิจกรรม");
-    }
-   }catch(validationError){msg.textContent=validationError.message;msg.className="message error";return;}
+   let startsAt=null,endsAt=null,endDescription=null;
+   const isGuildNews=window.activeGuildCommunityView==="guild-news";
+   if(!isGuildNews){
+    try{
+     const startValue=$("activity-start-datetime-input").value.trim();
+     if(!startValue)throw new Error("กรุณาระบุวันและเวลาเริ่มกิจกรรม");
+     const startParts=startValue.split(" ");
+     if(startParts.length!==2)throw new Error("กรุณาเลือกวันและเวลาเริ่มกิจกรรมจากปฏิทิน");
+     startsAt=parseActivityDateTime(startParts[0],startParts[1],"เริ่ม");
+     const endMode=$("activity-end-mode").value;
+     if(endMode==="datetime"){
+      const endValue=$("activity-end-datetime-input").value.trim();
+      if(!endValue)throw new Error("กรุณาระบุวันและเวลาสิ้นสุดกิจกรรม");
+      const endParts=endValue.split(" ");
+      if(endParts.length!==2)throw new Error("กรุณาเลือกวันและเวลาสิ้นสุดกิจกรรมจากปฏิทิน");
+      endsAt=parseActivityDateTime(endParts[0],endParts[1],"สิ้นสุด");
+      if(new Date(endsAt)<new Date(startsAt))throw new Error("เวลาสิ้นสุดต้องไม่ก่อนเวลาเริ่ม");
+     }else{
+      endDescription=$("activity-end-description-input").value.trim();
+      if(!endDescription)throw new Error("กรุณาระบุรายละเอียดการสิ้นสุดกิจกรรม");
+     }
+    }catch(validationError){msg.textContent=validationError.message;msg.className="message error";return;}
+   }
    save.disabled=true;save.textContent="กำลังบันทึก...";
    try{
     const payload={title,content_html:content,starts_at:startsAt,ends_at:endsAt,end_description:endDescription,updated_by:currentUser.id,updated_at:new Date().toISOString()};
@@ -8211,7 +8214,7 @@ function registerGuildActivityEvents(){
     if(index>=0)guildActivitiesCache[index]=saved;else guildActivitiesCache.unshift(saved);
     guildActivitiesCache.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
     closeGuildActivityEditor();renderGuildActivities();
-    if(!id){const notified=await notifyGuildActivityDiscord("activity",saved.id);if(!notified)alert("บันทึกกิจกรรมแล้ว แต่แจ้งเตือน Discord ไม่สำเร็จ กรุณาตรวจสอบ Edge Function");}
+    if(!id&&!isGuildNews){const notified=await notifyGuildActivityDiscord("activity",saved.id);if(!notified)alert("บันทึกแล้ว แต่แจ้งเตือน Discord ไม่สำเร็จ กรุณาตรวจสอบ Edge Function");}
    }catch(error){console.error("Save guild activity:",error);msg.textContent="บันทึกไม่สำเร็จ: "+error.message;msg.className="message error";}
    finally{save.disabled=false;save.textContent=id?"บันทึกการแก้ไข":"บันทึกกิจกรรม";}
   }
