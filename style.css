@@ -9703,3 +9703,7 @@ body.gallery-lightbox-open{overflow:hidden}
 #page-discord-integration .discord-route-section-grid .discord-route-row{height:auto;min-height:300px}
 #page-discord-integration .discord-route-card-footer{margin-top:auto;gap:9px}
 #page-discord-integration .discord-route-manage-embed{margin-top:2px}
+
+.discord-embed-studio-field{grid-template-columns:minmax(0,1fr) minmax(0,1.4fr) auto auto auto}
+.discord-embed-studio-field button:disabled{opacity:.3;cursor:not-allowed}
+@media(max-width:520px){.discord-embed-studio-field{grid-template-columns:1fr 1fr 1fr}.discord-embed-studio-field input{grid-column:1/-1}}
