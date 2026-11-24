@@ -9467,7 +9467,7 @@ async function loadDiscordChannelsForPicker(button, select) {
     select.innerHTML = "";
     const placeholder = document.createElement("option");
     placeholder.value = "";
-    placeholder.textContent = channels.length ? "เลือกห้อง Discord..." : "ไม่พบห้องที่ Bot ส่งข้อความได้";
+    placeholder.textContent = channels.length ? "เลือกห้อง Discord..." : "ไม่พบห้องใน Server";
     select.appendChild(placeholder);
     const grouped = new Map();
     channels.forEach(channel => {
@@ -9481,7 +9481,10 @@ async function loadDiscordChannelsForPicker(button, select) {
       items.forEach(channel => {
         const option = document.createElement("option");
         option.value = channel.id;
-        option.textContent = "#" + channel.name + (Number(channel.type) === 5 ? " · ประกาศ" : "");
+        const typeLabel = channel.type_label || (Number(channel.type) === 5 ? "ประกาศ" : "ข้อความ");
+        const permissionLabel = channel.can_send ? "ส่งได้" : (channel.can_view ? "ดูได้ · ส่งไม่ได้" : "Bot ไม่มีสิทธิ์ดู");
+        option.textContent = "#" + channel.name + " · " + typeLabel + " · " + permissionLabel;
+        option.disabled = !channel.can_send;
         group.appendChild(option);
       });
       select.appendChild(group);
@@ -9494,7 +9497,7 @@ async function loadDiscordChannelsForPicker(button, select) {
     }
     select.value = currentId || "";
     select.disabled = false;
-    if (status) status.textContent = "Server: " + (data.guild?.name || "Discord") + " · พบ " + channels.length + " ห้องที่ Bot มองเห็นและส่งข้อความได้";
+    if (status) status.textContent = "Server: " + (data.guild?.name || "Discord") + " · พบ " + channels.length + " ห้องทั้งหมด (เลือกได้เฉพาะห้องที่ Bot ส่งข้อความได้)";
   } catch (error) {
     if (status) status.textContent = error.message || "โหลดรายชื่อห้องไม่สำเร็จ";
     select.innerHTML = '<option value="">โหลดรายชื่อห้องไม่สำเร็จ</option>';
