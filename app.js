@@ -9647,7 +9647,7 @@ async function sendDiscordIntegrationTest() {
 }
 
 
-let discordEmbedStudioState = { eventKey: "", eventLabel: "", recordId: "", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false };
+let discordEmbedStudioState = { eventKey: "", eventLabel: "", recordId: "", channelId: "", messageId: "", linked: false, originalComponents: [], originalContent: "", currentMessage: null, baseEmbed: {}, fields: [], historySearched: false, historyComplete: false, historyHasCandidates: false };
 
 function setEmbedStudioStatus(message, tone) {
   const node = $("embed-studio-message-status");
@@ -9717,18 +9717,31 @@ function getEmbedStudioPayload() {
   const colorText = String($("embed-studio-color")?.value || "#D92D45").replace("#", "");
   const fields = discordEmbedStudioState.fields.filter(field => String(field.name || "").trim() || String(field.value || "").trim())
     .map(field => ({ name: String(field.name || "").trim(), value: String(field.value || "").trim(), inline: field.inline === true }));
-  const embed = {
+  const embed = Object.assign({}, discordEmbedStudioState.baseEmbed || {}, {
     title: String($("embed-studio-title")?.value || ""),
     description: String($("embed-studio-description")?.value || ""),
     color: parseInt(colorText, 16) || 0xD92D45,
     fields: fields
-  };
+  });
+  const authorName = String($("embed-studio-author")?.value || "").trim();
+  const authorIcon = String($("embed-studio-author-icon")?.value || "").trim();
+  const authorUrl = String($("embed-studio-author-url")?.value || "").trim();
+  if (authorName) embed.author = Object.assign({}, embed.author || {}, { name: authorName });
+  else delete embed.author;
+  if (embed.author && authorIcon) embed.author.icon_url = authorIcon;
+  if (embed.author && authorUrl) embed.author.url = authorUrl;
   const footer = String($("embed-studio-footer")?.value || "");
   const thumbnail = String($("embed-studio-thumbnail")?.value || "").trim();
   const image = String($("embed-studio-image")?.value || "").trim();
-  if (footer) embed.footer = { text: footer };
-  if (thumbnail) embed.thumbnail = { url: thumbnail };
-  if (image) embed.image = { url: image };
+  if (footer) embed.footer = Object.assign({}, embed.footer || {}, { text: footer });
+  else delete embed.footer;
+  if (thumbnail) embed.thumbnail = Object.assign({}, embed.thumbnail || {}, { url: thumbnail });
+  else delete embed.thumbnail;
+  if (image) embed.image = Object.assign({}, embed.image || {}, { url: image });
+  else delete embed.image;
+  const timestampValue = String($("embed-studio-timestamp")?.value || "");
+  if (timestampValue) embed.timestamp = new Date(timestampValue).toISOString();
+  else delete embed.timestamp;
   const payload = { embeds: [embed] };
   if (discordEmbedStudioState.originalContent) payload.content = discordEmbedStudioState.originalContent;
   if (Array.isArray(discordEmbedStudioState.originalComponents) && discordEmbedStudioState.originalComponents.length) payload.components = discordEmbedStudioState.originalComponents;
@@ -9767,12 +9780,17 @@ function renderEmbedStudioPreview() {
 }
 function populateEmbedStudio(message) {
   const embed = message?.embeds?.[0] || {};
+  discordEmbedStudioState.baseEmbed = JSON.parse(JSON.stringify(embed));
+  $("embed-studio-author").value = embed.author?.name || "";
+  $("embed-studio-author-icon").value = embed.author?.icon_url || "";
+  $("embed-studio-author-url").value = embed.author?.url || "";
   $("embed-studio-title").value = embed.title || "";
   $("embed-studio-description").value = embed.description || "";
   $("embed-studio-color").value = "#" + Number(embed.color || 0xD92D45).toString(16).padStart(6, "0").slice(-6);
   $("embed-studio-footer").value = embed.footer?.text || "";
   $("embed-studio-thumbnail").value = embed.thumbnail?.url || "";
   $("embed-studio-image").value = embed.image?.url || "";
+  $("embed-studio-timestamp").value = embed.timestamp ? new Date(embed.timestamp).toISOString().slice(0,16) : "";
   discordEmbedStudioState.fields = (embed.fields || []).map(field => ({ name: field.name || "", value: field.value || "", inline: field.inline === true }));
   discordEmbedStudioState.originalComponents = message?.components || [];
   discordEmbedStudioState.originalContent = message?.content || "";
@@ -9939,7 +9957,7 @@ function registerDiscordEmbedStudioEvents() {
     if (!button) return;
     discordEmbedStudioState.fields.splice(Number(button.dataset.embedFieldRemove), 1); renderEmbedStudioFields(); renderEmbedStudioPreview();
   });
-  ["title","description","color","footer","thumbnail","image"].forEach(key => $("embed-studio-" + key)?.addEventListener("input", renderEmbedStudioPreview));
+  ["author","author-icon","author-url","title","description","color","footer","thumbnail","image","timestamp"].forEach(key => $("embed-studio-" + key)?.addEventListener("input", renderEmbedStudioPreview));
   $("embed-studio-update-existing")?.addEventListener("click", () => void updateDiscordEmbedStudioExisting().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-send-test")?.addEventListener("click", () => void sendDiscordEmbedStudioTest().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-send-new")?.addEventListener("click", () => void sendNewDiscordEmbedStudioMessage().catch(error => setEmbedStudioStatus(error.message, "error")));
