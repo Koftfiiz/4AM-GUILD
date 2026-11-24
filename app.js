@@ -5754,6 +5754,55 @@ function deliverWarPng(blob,filename){
   document.body.appendChild(link);link.click();link.remove();
   window.setTimeout(()=>URL.revokeObjectURL(url),60000);
 }
+// html2canvas 1.4.1 cannot parse CSS Color 4 color() values.
+// Normalize those values only in the cloned capture DOM; the live page is untouched.
+function normalizeWarCaptureColorFunctions(value,context,cache){
+  const input=String(value||"");
+  if(!/color\\(/i.test(input))return input;
+  let output="",cursor=0;
+  while(cursor<input.length){
+    const start=input.toLowerCase().indexOf("color(",cursor);
+    if(start<0){output+=input.slice(cursor);break;}
+    output+=input.slice(cursor,start);
+    let depth=1,end=start+6;
+    while(end<input.length&&depth>0){
+      if(input[end]==="(")depth++;
+      else if(input[end]===")")depth--;
+      end++;
+    }
+    if(depth!==0){output+=input.slice(start);break;}
+    const token=input.slice(start,end);
+    if(!cache.has(token)){
+      context.clearRect(0,0,1,1);
+      context.fillStyle="#000";
+      context.fillStyle=token;
+      context.fillRect(0,0,1,1);
+      const pixel=context.getImageData(0,0,1,1).data;
+      cache.set(token,"rgba("+pixel[0]+", "+pixel[1]+", "+pixel[2]+", "+(pixel[3]/255)+")");
+    }
+    output+=cache.get(token);
+    cursor=end;
+  }
+  return output;
+}
+function normalizeWarCaptureCloneColors(clonedDocument){
+  const canvas=clonedDocument.createElement("canvas");
+  canvas.width=canvas.height=1;
+  const context=canvas.getContext("2d",{willReadFrequently:true});
+  if(!context)return;
+  const cache=new Map();
+  const nodes=[clonedDocument.documentElement,...clonedDocument.querySelectorAll("body *")];
+  nodes.forEach(node=>{
+    if(!node||node.nodeType!==1)return;
+    const computed=clonedDocument.defaultView.getComputedStyle(node);
+    for(let index=0;index<computed.length;index++){
+      const property=computed[index],value=computed.getPropertyValue(property);
+      if(!/color\\(/i.test(value))continue;
+      const normalized=normalizeWarCaptureColorFunctions(value,context,cache);
+      if(normalized!==value)node.style.setProperty(property,normalized,"important");
+    }
+  });
+}
 async function captureWarDomElement(element,filename){
   if(!element)throw new Error("ไม่พบตารางที่ต้องการบันทึกภาพ");
   const html2canvas=await loadWarHtml2Canvas();
@@ -5768,6 +5817,7 @@ async function captureWarDomElement(element,filename){
     height:Math.max(element.scrollHeight,element.clientHeight),
     scrollX:0,
     scrollY:-window.scrollY,
+    onclone:clonedDocument=>normalizeWarCaptureCloneColors(clonedDocument),
     ignoreElements:node=>node?.classList?.contains("war-raid-image-button")||node?.classList?.contains("war-party-image-button")
   });
   const blob=await new Promise((resolve,reject)=>canvas.toBlob(result=>result?resolve(result):reject(new Error("สร้างไฟล์ PNG ไม่สำเร็จ")),"image/png"));
