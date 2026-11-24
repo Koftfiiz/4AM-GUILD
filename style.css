@@ -9699,3 +9699,7 @@ body.gallery-lightbox-open{overflow:hidden}
 .discord-embed-studio-actions{display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap;padding:16px 24px;border-top:1px solid rgba(255,255,255,.09);background:#121319}
 @media(max-width:850px){.discord-embed-studio-modal{padding:8px}.discord-embed-studio-dialog{max-height:96vh}.discord-embed-studio-grid{grid-template-columns:1fr}.discord-embed-studio-body{padding:14px}.discord-embed-studio-header{padding:16px}.discord-embed-studio-actions{padding:12px}}
 @media(max-width:520px){.discord-embed-studio-field{grid-template-columns:1fr}.discord-embed-studio-two{grid-template-columns:1fr}.discord-embed-studio-actions button{width:100%}}
+
+#page-discord-integration .discord-route-section-grid .discord-route-row{height:auto;min-height:300px}
+#page-discord-integration .discord-route-card-footer{margin-top:auto;gap:9px}
+#page-discord-integration .discord-route-manage-embed{margin-top:2px}
