@@ -9599,7 +9599,8 @@ const DISCORD_EVENT_ROUTE_DEFINITIONS = [
   ["war_signup_opened", "ประกาศลงชื่อวอร์"],
   ["war_signup_submitted", "แจ้งการสมัครลงชื่อวอร์"],
   ["war_signup_closed", "ประกาศปิดรับสมัครวอร์"],
-  ["war_leave_submitted", "แจ้งเตือนสมาชิกแจ้งลาวอร์ (วอร์จริง / ซ้อมวอร์)"],
+  ["war_leave_submitted", "แจ้งการถอนตัวจากวอร์"],
+  ["war_leave_discord_submitted", "แจ้งลาวอร์ผ่าน Discord Bot"],
   ["war_roster_published", "ประกาศตี้วอร์"],
   ["war_checkin_opened", "ยืนยันความพร้อมก่อนลงวอร์"],
   ["war_attendance_finalized", "สรุปผลการเข้าร่วมวอร์"],
@@ -9752,7 +9753,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
   const routeMap = new Map((routes || []).map(route => [route.event_key, route]));
   const routeGroups = [
     { id: "general", title: "แจ้งเตือนทั่วไป", keys: ["member_joined"] },
-    { id: "war", title: "Guild War", keys: ["war_signup_opened", "war_signup_submitted", "war_signup_closed", "war_leave_submitted", "war_roster_published", "war_checkin_opened", "war_attendance_finalized"] },
+    { id: "war", title: "Guild War", keys: ["war_signup_opened", "war_signup_submitted", "war_signup_closed", "war_leave_submitted", "war_leave_discord_submitted", "war_roster_published", "war_checkin_opened", "war_attendance_finalized"] },
     { id: "portfolio", title: "แฟ้มผลงาน", keys: ["portfolio_published"] },
     { id: "guild", title: "Guild Community", keys: ["guild_activity_published", "guild_activity_comment", "duck_race_results"] },
     { id: "feedback", title: "แจ้งปัญหา / Feedback", keys: ["feedback_submitted"] }
@@ -9785,14 +9786,14 @@ function renderDiscordIntegrationRoutes(routes = []) {
             <small data-discord-channel-status>เปิดรายการห้องเพื่อโหลดจาก Discord อัตโนมัติ</small>
           </div>
         </label>
-        ${key === "war_leave_submitted" ? '<p class="discord-route-description">ส่งแจ้งเตือนเมื่อสมาชิกส่งคำแจ้งลาจากหน้าเว็บไซต์ โดยเลือกห้อง Discord และเปิดใช้งานได้จากการ์ดนี้ · รองรับทั้งวอร์จริงและซ้อมวอร์</p>' : ''}
+        ${key === "war_leave_discord_submitted" ? '<p class="discord-route-description">การ์ดแยกสำหรับกำหนดห้องรับแจ้งเตือนเมื่อสมาชิกส่งคำแจ้งลาผ่าน Discord Bot · ต้องเชื่อมการทำงานฝั่ง Bot ก่อนเปิดใช้งานจริง</p>' : ''}
         <div class="discord-route-card-footer">
           <span class="discord-route-footer-state ${route.enabled ? "is-on" : "is-off"}">${route.enabled ? "ON" : "OFF"}</span>
           <label class="discord-route-enabled" aria-label="เปิดหรือปิดการแจ้งเตือน">
             <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
             <span class="discord-route-switch-state"></span>
           </label>
-          <button type="button" class="discord-route-manage-embed" data-discord-embed-manage="${escapeHTML(key)}">จัดการ Embed</button>
+          ${key === "war_leave_discord_submitted" ? "" : '<button type="button" class="discord-route-manage-embed" data-discord-embed-manage="' + escapeHTML(key) + '">จัดการ Embed</button>'}
         </div>
       </div>`];
   }));
