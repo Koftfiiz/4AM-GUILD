@@ -104,6 +104,107 @@ Deno.serve(async (request: Request) => {
       if (!recordId || recordId.length > 100) throw new Error("Record ID ไม่ถูกต้อง");
     };
 
+    if (action === "list_channels") {
+      // Discord Integration Settings is developer-only. This read-only action never sends a message.
+      if (!member?.active || String(member.role || "").toLowerCase() !== "developer") {
+        return json({ success: false, message: "เฉพาะ Developer ที่ Active เท่านั้นที่โหลดรายชื่อห้อง Discord ได้" }, 403);
+      }
+
+      const [{ data: settings }, { data: warRoute }, { data: recentWarEvents }] = await Promise.all([
+        admin.from("guild_discord_integration_settings").select("test_channel_id").eq("id", 1).maybeSingle(),
+        admin.from("guild_discord_event_routes").select("channel_id").eq("event_key", "war_signup_opened").maybeSingle(),
+        admin.from("war_events").select("discord_channel_id").not("discord_channel_id", "is", null).order("created_at", { ascending: false }).limit(5)
+      ]);
+      const seedIds = [...new Set([
+        String(warRoute?.channel_id || ""),
+        String(settings?.test_channel_id || ""),
+        ...(recentWarEvents || []).map((row: any) => String(row.discord_channel_id || ""))
+      ].filter(isId))];
+      if (!seedIds.length) return json({ success: false, message: "ยังไม่มี Channel ID ที่ตั้งค่าไว้ให้ใช้ค้นหา Discord Server" }, 400);
+
+      let seedChannel: any = null;
+      let seedError: any = null;
+      for (const seedId of seedIds) {
+        const result = await discord("/channels/" + seedId);
+        if (result.response.ok && result.data?.guild_id) { seedChannel = result.data; break; }
+        seedError = result.data;
+      }
+      if (!seedChannel?.guild_id) {
+        return json({ success: false, message: "บอทไม่สามารถอ่านห้อง Discord ที่ตั้งค่าไว้เพื่อระบุ Server ได้", details: seedError }, 502);
+      }
+
+      const guildId = String(seedChannel.guild_id);
+      const [guildResult, botUserResult, channelsResult, rolesResult] = await Promise.all([
+        discord("/guilds/" + guildId),
+        discord("/users/@me"),
+        discord("/guilds/" + guildId + "/channels"),
+        discord("/guilds/" + guildId + "/roles")
+      ]);
+      if (!guildResult.response.ok || !botUserResult.response.ok || !channelsResult.response.ok || !rolesResult.response.ok) {
+        const failed = [guildResult, botUserResult, channelsResult, rolesResult].find((result: any) => !result.response.ok);
+        return json({ success: false, message: "ดึงรายชื่อห้องจาก Discord ไม่สำเร็จ กรุณาตรวจสอบสิทธิ์ Bot ใน Server", discord_status: failed?.response.status, details: failed?.data }, 502);
+      }
+
+      const botMemberResult = await discord("/guilds/" + guildId + "/members/" + String(botUserResult.data.id));
+      if (!botMemberResult.response.ok) {
+        return json({ success: false, message: "ไม่สามารถตรวจสอบ Role และสิทธิ์ของ Bot ใน Server นี้ได้", discord_status: botMemberResult.response.status, details: botMemberResult.data }, 502);
+      }
+
+      const botRoleIds = new Set([guildId, ...(botMemberResult.data.roles || []).map((id: string) => String(id))]);
+      const rolePermissions = new Map((rolesResult.data || []).map((role: any) => [String(role.id), BigInt(String(role.permissions || "0"))]));
+      let basePermissions = 0n;
+      for (const roleId of botRoleIds) basePermissions |= rolePermissions.get(roleId) || 0n;
+      const ADMINISTRATOR = 8n;
+      const VIEW_CHANNEL = 1024n;
+      const SEND_MESSAGES = 2048n;
+      const hasAdministrator = (basePermissions & ADMINISTRATOR) === ADMINISTRATOR;
+
+      const canSendInChannel = (channel: any) => {
+        if (hasAdministrator) return true;
+        let permissions = basePermissions;
+        const overwrites = Array.isArray(channel.permission_overwrites) ? channel.permission_overwrites : [];
+        const everyoneOverwrite = overwrites.find((item: any) => item.type === 0 && String(item.id) === guildId);
+        if (everyoneOverwrite) {
+          permissions &= ~BigInt(String(everyoneOverwrite.deny || "0"));
+          permissions |= BigInt(String(everyoneOverwrite.allow || "0"));
+        }
+        let roleAllow = 0n, roleDeny = 0n;
+        for (const overwrite of overwrites) {
+          if (overwrite.type !== 0 || String(overwrite.id) === guildId || !botRoleIds.has(String(overwrite.id))) continue;
+          roleAllow |= BigInt(String(overwrite.allow || "0"));
+          roleDeny |= BigInt(String(overwrite.deny || "0"));
+        }
+        permissions &= ~roleDeny;
+        permissions |= roleAllow;
+        const memberOverwrite = overwrites.find((item: any) => item.type === 1 && String(item.id) === String(botUserResult.data.id));
+        if (memberOverwrite) {
+          permissions &= ~BigInt(String(memberOverwrite.deny || "0"));
+          permissions |= BigInt(String(memberOverwrite.allow || "0"));
+        }
+        return (permissions & VIEW_CHANNEL) === VIEW_CHANNEL && (permissions & SEND_MESSAGES) === SEND_MESSAGES;
+      };
+
+      const rawChannels = Array.isArray(channelsResult.data) ? channelsResult.data : [];
+      const categories = new Map(rawChannels.filter((channel: any) => channel.type === 4).map((channel: any) => [String(channel.id), String(channel.name || "หมวดหมู่")]));
+      const channels = rawChannels
+        .filter((channel: any) => [0, 5].includes(Number(channel.type)) && canSendInChannel(channel))
+        .map((channel: any) => ({
+          id: String(channel.id),
+          name: String(channel.name || "unnamed"),
+          parent_id: channel.parent_id ? String(channel.parent_id) : null,
+          category_name: channel.parent_id ? (categories.get(String(channel.parent_id)) || "ไม่มีหมวดหมู่") : "ไม่มีหมวดหมู่",
+          type: Number(channel.type),
+          position: Number(channel.position || 0)
+        }))
+        .sort((a: any, b: any) => a.category_name.localeCompare(b.category_name, "th") || a.position - b.position || a.name.localeCompare(b.name, "th"));
+
+      return json({
+        success: true,
+        guild: { id: guildId, name: String(guildResult.data.name || "Discord Server") },
+        channels
+      });
+    }
+
     if (action === "inspect") {
       requireKeys();
       const { data: registry } = await admin.from("discord_embed_messages").select("*")
