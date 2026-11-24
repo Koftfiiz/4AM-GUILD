@@ -9994,9 +9994,39 @@ async function showDiscordEmbedStudioHistory() {
 
 async function saveDiscordEmbedStudioTemplate() {
   const payload = getEmbedStudioPayload();
-  const data = await invokeEmbedStudio("save_template", { event_key: discordEmbedStudioState.eventKey, payload: payload, template_name: "Default" });
+  const templateName = window.prompt("ตั้งชื่อ Template", "Default");
+  if (templateName === null) return;
+  const cleanName = templateName.trim();
+  if (!cleanName || cleanName.length > 80) throw new Error("ชื่อ Template ต้องมี 1–80 ตัวอักษร");
+  const data = await invokeEmbedStudio("save_template", { event_key: discordEmbedStudioState.eventKey, payload, template_name: cleanName });
   await loadDiscordEmbedStudioTemplates();
-  setEmbedStudioStatus("บันทึก Template เวอร์ชัน " + data.template.version + " สำเร็จ", "success");
+  setEmbedStudioStatus("บันทึก Template “" + cleanName + "” เวอร์ชัน " + data.template.version + " สำเร็จ", "success");
+}
+async function renameSelectedDiscordEmbedTemplate() {
+  const select = $("embed-studio-template-select");
+  const templateId = select?.value;
+  const option = select?.selectedOptions?.[0];
+  if (!templateId || !option) throw new Error("กรุณาเลือก Template ที่ต้องการเปลี่ยนชื่อ");
+  const currentName = option.textContent.replace(/\\s· v\\d+.*$/, "");
+  const templateName = window.prompt("แก้ไขชื่อ Template", currentName);
+  if (templateName === null) return;
+  const cleanName = templateName.trim();
+  if (!cleanName || cleanName.length > 80) throw new Error("ชื่อ Template ต้องมี 1–80 ตัวอักษร");
+  await invokeEmbedStudio("rename_template", { event_key: discordEmbedStudioState.eventKey, template_id: templateId, template_name: cleanName });
+  await loadDiscordEmbedStudioTemplates();
+  select.value = templateId;
+  setEmbedStudioStatus("เปลี่ยนชื่อ Template สำเร็จ", "success");
+}
+async function deleteSelectedDiscordEmbedTemplate() {
+  const select = $("embed-studio-template-select");
+  const templateId = select?.value;
+  const option = select?.selectedOptions?.[0];
+  if (!templateId || !option) throw new Error("กรุณาเลือก Template ที่ต้องการลบ");
+  const templateName = option.textContent.replace(/\\s· v\\d+.*$/, "");
+  if (!window.confirm("ยืนยันลบ Template “" + templateName + "” ใช่หรือไม่?\\nการลบนี้จะลบเฉพาะ Template ที่บันทึกไว้ ไม่ลบข้อความที่ส่งไป Discord")) return;
+  await invokeEmbedStudio("delete_template", { event_key: discordEmbedStudioState.eventKey, template_id: templateId });
+  await loadDiscordEmbedStudioTemplates();
+  setEmbedStudioStatus("ลบ Template สำเร็จ", "success");
 }
 function registerDiscordEmbedStudioEvents() {
   $("discord-integration-routes")?.addEventListener("click", event => {
@@ -10046,6 +10076,8 @@ function registerDiscordEmbedStudioEvents() {
   $("embed-studio-send-new")?.addEventListener("click", () => void sendNewDiscordEmbedStudioMessage().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-save-template")?.addEventListener("click", () => void saveDiscordEmbedStudioTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-load-template")?.addEventListener("click", () => void loadSelectedDiscordEmbedTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-rename-template")?.addEventListener("click", () => void renameSelectedDiscordEmbedTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-delete-template")?.addEventListener("click", () => void deleteSelectedDiscordEmbedTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-show-history")?.addEventListener("click", () => void showDiscordEmbedStudioHistory().catch(error => setEmbedStudioStatus(error.message, "error")));
   document.addEventListener("keydown", event => { if (event.key === "Escape" && !$("discord-embed-studio-modal")?.classList.contains("hidden")) closeDiscordEmbedStudio(); });
 }
