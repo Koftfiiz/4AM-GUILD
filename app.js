@@ -8013,6 +8013,7 @@ function subscribeToGuildActivityReactionsRealtime(){
 function bindGuildActivityCardControls(list){
  if(!list||list.dataset.activityCardControlsBound==="true")return;list.dataset.activityCardControlsBound="true";
  list.addEventListener("click",async event=>{
+  if(guildReactionLongPressTriggered){guildReactionLongPressTriggered=false;event.preventDefault();return;}
   const collapse=event.target.closest("[data-activity-collapse]");
   if(collapse){event.preventDefault();event.stopPropagation();const card=collapse.closest("[data-activity-card]");if(!card)return;const expanded=card.classList.contains("is-collapsed");setGuildActivityCardExpanded(card,expanded);const states=getGuildActivityCardStates();states[card.dataset.activityCard]=expanded;saveGuildActivityCardStates(states);return;}
   const main=event.target.closest("[data-activity-reaction-main]"),option=event.target.closest("[data-activity-reaction]"),people=event.target.closest("[data-activity-reaction-people]");
@@ -8021,7 +8022,15 @@ function bindGuildActivityCardControls(list){
   if(people){await showGuildActivityReactionPeople(people.dataset.activityId,people.dataset.activityReactionPeople);return;}
  });
  list.addEventListener("pointerdown",event=>{const trigger=event.target.closest("[data-activity-reaction-main]");if(!trigger||event.pointerType==="mouse")return;guildReactionLongPressTriggered=false;clearTimeout(guildReactionLongPressTimer);guildReactionLongPressTimer=setTimeout(()=>{guildReactionLongPressTriggered=true;trigger.closest(".activity-reactions")?.classList.add("is-picker-open");},480);});
- ["pointerup","pointercancel","pointerleave"].forEach(type=>list.addEventListener(type,()=>clearTimeout(guildReactionLongPressTimer)));
+ list.addEventListener("pointerup",event=>{
+  clearTimeout(guildReactionLongPressTimer);
+  if(!guildReactionLongPressTriggered)return;
+  const hit=document.elementFromPoint(event.clientX,event.clientY)?.closest("[data-activity-reaction]");
+  if(hit){event.preventDefault();event.stopPropagation();setGuildActivityReaction(hit.dataset.activityId,hit.dataset.activityReaction);}
+  document.querySelectorAll(".activity-reactions.is-picker-open").forEach(node=>node.classList.remove("is-picker-open"));
+  window.setTimeout(()=>{guildReactionLongPressTriggered=false;},500);
+ });
+ ["pointercancel","pointerleave"].forEach(type=>list.addEventListener(type,()=>clearTimeout(guildReactionLongPressTimer)));
  list.addEventListener("pointermove",event=>{const wrap=event.target.closest(".activity-reactions");if(!wrap||event.pointerType==="mouse"||!guildReactionLongPressTriggered)return;const hit=document.elementFromPoint(event.clientX,event.clientY)?.closest("[data-activity-reaction]");wrap.querySelectorAll(".activity-reaction-option").forEach(button=>button.classList.toggle("is-highlighted",button===hit));});
  list.addEventListener("contextmenu",event=>{if(event.target.closest(".activity-reactions"))event.preventDefault();});
 }
