@@ -296,8 +296,19 @@ Deno.serve(async (request: Request) => {
       if (registryError) {
         return json({ success: false, message: "ส่ง Discord สำเร็จแล้ว แต่การยืนยัน Message ID ในทะเบียนยังไม่สำเร็จ ห้ามส่งซ้ำ", message_id: sent.data.id, channel_id: channelId, details: registryError.message }, 500);
       }
+      const notifiedAt = new Date().toISOString();
       if (eventKey === "war_signup_opened") {
-        await admin.from("war_events").update({ discord_message_id: sent.data.id, discord_channel_id: channelId, discord_sent_at: new Date().toISOString() }).eq("id", recordId);
+        await admin.from("war_events").update({ discord_message_id: sent.data.id, discord_channel_id: channelId, discord_sent_at: notifiedAt, discord_send_error: null }).eq("id", recordId);
+      } else if (eventKey === "war_signup_closed") {
+        await admin.from("war_events").update({ discord_signup_closed_notified_at: notifiedAt, discord_signup_closed_error: null }).eq("id", recordId);
+      } else if (eventKey === "guild_activity_published") {
+        await admin.from("guild_activities").update({ discord_notified_at: notifiedAt, discord_notification_error: null }).eq("id", recordId);
+      } else if (eventKey === "guild_activity_comment") {
+        await admin.from("guild_activity_comments").update({ discord_notified_at: notifiedAt, discord_notification_error: null }).eq("id", recordId);
+      } else if (eventKey === "feedback_submitted") {
+        await admin.from("guild_feedback").update({ discord_notified_at: notifiedAt, discord_notification_error: null }).eq("id", recordId);
+      } else if (eventKey === "war_leave_submitted") {
+        await admin.from("war_leave_requests").update({ discord_notified_at: notifiedAt, discord_notification_error: null }).eq("id", recordId);
       }
       await admin.from("discord_embed_history").insert({
         event_key: eventKey, record_id: recordId, message_type: messageType, channel_id: channelId,
