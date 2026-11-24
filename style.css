@@ -9909,3 +9909,15 @@ body.gallery-lightbox-open{overflow:hidden}
   line-height: 1;
   vertical-align: -1px;
 }
+
+
+/* Shared Discord route card drag-and-drop layout */
+.discord-route-card-heading{display:flex;align-items:center;gap:10px;min-width:0}
+.discord-route-card-heading h4{flex:1;min-width:0}
+.discord-route-drag-handle{display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;width:32px;height:32px;padding:0;border:1px solid rgba(217,45,69,.34);border-radius:7px;background:rgba(217,45,69,.09);color:#f07889;font-size:23px;line-height:1;cursor:grab;touch-action:none;user-select:none}
+.discord-route-drag-handle:hover{background:rgba(217,45,69,.18);border-color:rgba(217,45,69,.7)}
+.discord-route-drag-handle:active{cursor:grabbing}
+.discord-route-row.is-dragging{opacity:.42;border:1px dashed #e34b61;box-shadow:0 0 0 2px rgba(217,45,69,.12)}
+.discord-route-section-grid{min-height:54px}
+.discord-route-section-grid:has(.discord-route-row.is-dragging){background:rgba(217,45,69,.035);border-radius:9px}
+@media(max-width:760px){.discord-route-drag-handle{width:36px;height:36px;flex-basis:36px}}
