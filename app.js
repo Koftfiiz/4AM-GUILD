@@ -5833,7 +5833,7 @@ async function captureWarDomElement(element,filename,event=null){
   const columns=Math.max(5,liveCards.length);
   const fullGridWidth=raidGrid?Math.max(raidGrid.scrollWidth,cardWidth*columns+gridGap*(columns-1)):0;
   // Leave a generous canvas margin around the complete Raid board.
-  const capturePadding=56;
+  const capturePadding=104;
   const captureWidth=Math.max(element.clientWidth,fullGridWidth)+capturePadding*2;
   const eventType=event?.registration_type==="practice"?"ซ้อมวอร์":"Guild War";
   const eventTime=event?.start_time?formatTime(event.start_time)+" น.":"ไม่ระบุเวลา";
