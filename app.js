@@ -1402,7 +1402,7 @@ async function loadDashboardActivities() {
     const excerpt = (preview.textContent || "").replace(/\s+/g, " ").trim();
     const shortText = excerpt.length > 105 ? excerpt.slice(0, 105).trimEnd() + "…" : excerpt;
     const schedule = activityDateRange(item);
-    return `<article class="dashboard-activity-item">
+    return `<article class="dashboard-activity-item" data-dashboard-activity-link role="link" tabindex="0" aria-label="เปิดกิจกรรม ${escapeHTML(item.title || "กิจกรรมกิลด์")}">
       <div class="dashboard-activity-date"><span>◷</span><strong>${escapeHTML(schedule)}</strong></div>
       <div class="dashboard-activity-copy"><h4>${escapeHTML(item.title || "กิจกรรมกิลด์")}</h4>
       ${shortText ? `<p>${escapeHTML(shortText)}</p>` : ""}</div>
@@ -10940,13 +10940,31 @@ function registerAppEventListeners() {
       renderDashboardAnnouncementCarousel();
       return;
     }
-    openGuildPage("guild-news");
+    openGuildPage("guild-news", { routePath: getGuildTabRoutePath("guild-news") });
   });
   $("dashboard-announcement")?.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" && event.key !== " ") return;
     if(event.target.closest("button"))return;
     event.preventDefault();
-    openGuildPage("guild-news");
+    openGuildPage("guild-news", { routePath: getGuildTabRoutePath("guild-news") });
+  });
+
+  const dashboardActivities = $("dashboard-activities-content");
+  dashboardActivities?.addEventListener("click", (event) => {
+    const activityCard = event.target instanceof Element
+      ? event.target.closest("[data-dashboard-activity-link]")
+      : null;
+    if (!activityCard) return;
+    openGuildPage("guild-activities", { routePath: getGuildTabRoutePath("guild-activities") });
+  });
+  dashboardActivities?.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    const activityCard = event.target instanceof Element
+      ? event.target.closest("[data-dashboard-activity-link]")
+      : null;
+    if (!activityCard) return;
+    event.preventDefault();
+    openGuildPage("guild-activities", { routePath: getGuildTabRoutePath("guild-activities") });
   });
 
   $("developer-tools-optimize-gallery-trigger")?.addEventListener("click",()=>{void optimizeLegacyDashboardGalleryImages();});
