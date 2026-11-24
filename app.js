@@ -1378,7 +1378,7 @@ async function loadDashboardActivities() {
 
   const { data, error } = await supabaseClient
     .from("guild_activities")
-    .select("id,title,content_html,starts_at,ends_at,created_at")
+    .select("id,title,content_html,starts_at,ends_at,end_description,created_at")
     .or("starts_at.not.is.null,ends_at.not.is.null")
     .order("starts_at", { ascending: true, nullsFirst: false })
     .order("created_at", { ascending: false })
@@ -8067,6 +8067,9 @@ function registerGuildActivityEvents(){
  page.addEventListener("input",event=>{
   if(event.target.matches("[data-activity-date-input]"))event.target.value=formatActivityDateInput(event.target.value);
   if(event.target.matches("[data-activity-time-input]"))event.target.value=formatActivityTimeInput(event.target.value);
+ });
+ page.addEventListener("change",event=>{
+  if(event.target?.id==="activity-end-mode")updateActivityEndMode();
  });
  page.addEventListener("mousedown",event=>{if(event.target.closest("#activity-editor-body"))rememberActivityEmojiSelection();});
  page.addEventListener("click",async event=>{
