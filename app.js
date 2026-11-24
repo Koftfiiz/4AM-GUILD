@@ -9448,6 +9448,102 @@ function filterDiscordIntegrationRoutes() {
     section.hidden = !section.querySelector("[data-discord-route]:not([hidden])");
   });
 }
+async function loadDiscordChannelsForPicker(button, select) {
+  if (!button || !select) return;
+  const picker = select.closest("[data-discord-channel-picker]");
+  const status = picker?.querySelector("[data-discord-channel-status]");
+  const currentId = select.dataset.channelTarget === "test"
+    ? String($("discord-integration-test-channel")?.value || "")
+    : String(picker?.closest("[data-discord-route]")?.querySelector("[data-discord-route-channel]")?.value || "");
+  button.disabled = true;
+  const originalLabel = button.textContent;
+  button.textContent = "กำลังโหลด...";
+  select.disabled = true;
+  if (status) status.textContent = "กำลังเชื่อมต่อ Discord และตรวจสอบสิทธิ์ Bot...";
+  try {
+    const data = await invokeEmbedStudio("list_channels", {});
+    const channels = Array.isArray(data.channels) ? data.channels : [];
+    select.innerHTML = "";
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = channels.length ? "เลือกห้อง Discord..." : "ไม่พบห้องที่ Bot ส่งข้อความได้";
+    select.appendChild(placeholder);
+    const grouped = new Map();
+    channels.forEach(channel => {
+      const category = channel.category_name || "ไม่มีหมวดหมู่";
+      if (!grouped.has(category)) grouped.set(category, []);
+      grouped.get(category).push(channel);
+    });
+    grouped.forEach((items, category) => {
+      const group = document.createElement("optgroup");
+      group.label = category;
+      items.forEach(channel => {
+        const option = document.createElement("option");
+        option.value = channel.id;
+        option.textContent = "#" + channel.name + (Number(channel.type) === 5 ? " · ประกาศ" : "");
+        group.appendChild(option);
+      });
+      select.appendChild(group);
+    });
+    if (currentId && !channels.some(channel => channel.id === currentId)) {
+      const existing = document.createElement("option");
+      existing.value = currentId;
+      existing.textContent = "Channel ปัจจุบัน (" + currentId + ") · Bot อาจไม่มีสิทธิ์ส่ง";
+      select.appendChild(existing);
+    }
+    select.value = currentId || "";
+    select.disabled = false;
+    if (status) status.textContent = "Server: " + (data.guild?.name || "Discord") + " · พบ " + channels.length + " ห้องที่ Bot มองเห็นและส่งข้อความได้";
+  } catch (error) {
+    if (status) status.textContent = error.message || "โหลดรายชื่อห้องไม่สำเร็จ";
+    select.innerHTML = '<option value="">โหลดรายชื่อห้องไม่สำเร็จ</option>';
+    select.disabled = false;
+  } finally {
+    button.disabled = false;
+    button.textContent = originalLabel || "โหลดห้องจาก Discord";
+  }
+}
+
+async function saveDiscordChannelSelection(select) {
+  const channelId = String(select?.value || "").trim();
+  if (!select || !/^\\d{17,20}$/.test(channelId)) return;
+  const picker = select.closest("[data-discord-channel-picker]");
+  const status = picker?.querySelector("[data-discord-channel-status]");
+  const button = picker?.querySelector("[data-discord-load-channels]");
+  select.disabled = true;
+  if (button) button.disabled = true;
+  if (status) status.textContent = "กำลังบันทึก Channel ID...";
+  try {
+    if (select.dataset.channelTarget === "test") {
+      const { data, error } = await supabaseClient.from("guild_discord_integration_settings")
+        .update({ test_channel_id: channelId, updated_by: currentUser.id, updated_at: new Date().toISOString() })
+        .eq("id", 1).select("id").maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("ไม่พบแถวการตั้งค่า Discord Integration");
+      $("discord-integration-test-channel").value = channelId;
+    } else {
+      const routeKey = String(select.dataset.routeKey || "");
+      const row = select.closest("[data-discord-route]");
+      const { data, error } = await supabaseClient.from("guild_discord_event_routes")
+        .update({ channel_id: channelId, updated_by: currentUser.id, updated_at: new Date().toISOString() })
+        .eq("event_key", routeKey).select("event_key").maybeSingle();
+      if (error) throw error;
+      if (!data) throw new Error("ไม่พบ Route ที่ต้องการบันทึก");
+      const hiddenInput = row?.querySelector("[data-discord-route-channel]");
+      if (hiddenInput) hiddenInput.value = channelId;
+      updateDiscordRouteOverview();
+      filterDiscordIntegrationRoutes();
+    }
+    if (status) status.textContent = "บันทึกห้อง Discord เรียบร้อยแล้ว · Channel ID: " + channelId;
+  } catch (error) {
+    if (status) status.textContent = "บันทึกไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด");
+    showMessage("discord-integration-message", "บันทึก Channel ไม่สำเร็จ: " + (error.message || "เกิดข้อผิดพลาด"));
+  } finally {
+    select.disabled = false;
+    if (button) button.disabled = false;
+  }
+}
+
 function renderDiscordIntegrationRoutes(routes = []) {
   const container = $("discord-integration-routes");
   if (!container) return;
@@ -9475,11 +9571,15 @@ function renderDiscordIntegrationRoutes(routes = []) {
             value="${escapeHTML(displayLabel)}">
         </label>
         <label class="discord-route-field">
-          <span>Discord Channel ID</span>
-          <input type="text" inputmode="numeric" autocomplete="off" maxlength="20"
-            placeholder="กรอก Channel ID"
-            aria-label="Discord Channel ID สำหรับ ${escapeHTML(displayLabel)}"
-            data-discord-route-channel value="${escapeHTML(route.channel_id || "")}">
+          <span>ห้อง Discord สำหรับ Event นี้</span>
+          <input type="hidden" data-discord-route-channel value="${escapeHTML(route.channel_id || "")}">
+          <div class="discord-channel-picker" data-discord-channel-picker="route" data-route-key="${escapeHTML(key)}">
+            <button type="button" class="btn btn-outline" data-discord-load-channels>โหลดห้องจาก Discord</button>
+            <select data-discord-channel-select data-channel-target="route" data-route-key="${escapeHTML(key)}" aria-label="เลือกห้อง Discord สำหรับ ${escapeHTML(displayLabel)}">
+              <option value="">${route.channel_id ? "Channel ปัจจุบัน (" + escapeHTML(route.channel_id) + ") · กดโหลดเพื่อดูชื่อห้อง" : "กดโหลดรายชื่อห้องก่อน"}</option>
+            </select>
+            <small data-discord-channel-status>เลือกห้องแล้วระบบจะบันทึกให้อัตโนมัติ</small>
+          </div>
         </label>
         <div class="discord-route-card-footer">
           <span class="discord-route-footer-state ${route.enabled ? "is-on" : "is-off"}">${route.enabled ? "ON" : "OFF"}</span>
@@ -10170,6 +10270,16 @@ function registerDiscordIntegrationEvents() {
   $("discord-integration-mode")?.addEventListener("change", updateDiscordIntegrationModeHelp);
   $("discord-integration-production-enabled")?.addEventListener("change", updateDiscordIntegrationModeHelp);
   $("discord-integration-test")?.addEventListener("click", () => void sendDiscordIntegrationTest());
+  $("discord-integration-form")?.addEventListener("click", event => {
+    const button = event.target.closest("[data-discord-load-channels]");
+    if (!button) return;
+    const select = button.closest("[data-discord-channel-picker]")?.querySelector("[data-discord-channel-select]");
+    void loadDiscordChannelsForPicker(button, select);
+  });
+  $("discord-integration-form")?.addEventListener("change", event => {
+    const select = event.target.closest("[data-discord-channel-select]");
+    if (select && select.value) void saveDiscordChannelSelection(select);
+  });
   $("discord-route-search")?.addEventListener("input", filterDiscordIntegrationRoutes);
   $("discord-route-filter")?.addEventListener("change", filterDiscordIntegrationRoutes);
   $("discord-integration-routes")?.addEventListener("input", event => {
