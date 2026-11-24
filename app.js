@@ -9599,7 +9599,7 @@ const DISCORD_EVENT_ROUTE_DEFINITIONS = [
   ["war_signup_opened", "ประกาศลงชื่อวอร์"],
   ["war_signup_submitted", "แจ้งการสมัครลงชื่อวอร์"],
   ["war_signup_closed", "ประกาศปิดรับสมัครวอร์"],
-  ["war_leave_submitted", "แจ้งการถอนตัวจากวอร์"],
+  ["war_leave_submitted", "แจ้งเตือนสมาชิกแจ้งลาวอร์ (วอร์จริง / ซ้อมวอร์)"],
   ["war_roster_published", "ประกาศตี้วอร์"],
   ["war_checkin_opened", "ยืนยันความพร้อมก่อนลงวอร์"],
   ["war_attendance_finalized", "สรุปผลการเข้าร่วมวอร์"],
@@ -9785,6 +9785,7 @@ function renderDiscordIntegrationRoutes(routes = []) {
             <small data-discord-channel-status>เปิดรายการห้องเพื่อโหลดจาก Discord อัตโนมัติ</small>
           </div>
         </label>
+        ${key === "war_leave_submitted" ? '<p class="discord-route-description">ส่งแจ้งเตือนเมื่อสมาชิกส่งคำแจ้งลาจากหน้าเว็บไซต์ โดยเลือกห้อง Discord และเปิดใช้งานได้จากการ์ดนี้ · รองรับทั้งวอร์จริงและซ้อมวอร์</p>' : ''}
         <div class="discord-route-card-footer">
           <span class="discord-route-footer-state ${route.enabled ? "is-on" : "is-off"}">${route.enabled ? "ON" : "OFF"}</span>
           <label class="discord-route-enabled" aria-label="เปิดหรือปิดการแจ้งเตือน">

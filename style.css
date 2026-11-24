@@ -9870,3 +9870,17 @@ body.gallery-lightbox-open{overflow:hidden}
   #page-war-stats .war-record-form-grid > .form-group > small,
   #page-war-stats .war-record-form-grid > .form-group:not(:has(#war-record-event-hint))::after{min-height:0}
 }
+
+
+/* Discord Integration: dedicated Guild War leave notification route card */
+.discord-route-description{
+  margin:10px 0 4px;
+  padding:10px 12px;
+  border:1px solid rgba(217,45,69,.28);
+  border-left:3px solid #D92D45;
+  border-radius:10px;
+  background:rgba(217,45,69,.07);
+  color:var(--text-secondary,#b8b8c2);
+  font-size:14px;
+  line-height:1.55;
+}
