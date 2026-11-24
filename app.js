@@ -2538,14 +2538,25 @@ function renderManualMemberManagement() {
     pendingPanel = document.createElement("section");
     pendingPanel.id = "member-pending-review-panel";
     pendingPanel.className = "member-pending-review-panel";
-    const memberListPanel = list.closest(".manual-member-list-panel");
-    if (memberListPanel?.parentElement) memberListPanel.parentElement.insertBefore(pendingPanel, memberListPanel);
-    else list.parentElement?.insertBefore(pendingPanel, list);
   }
-  const pendingMembers = allMembers.filter(member => member.membership_status === "pending_review");
+  // Always enforce the panel's position, including when an earlier render or
+  // an older page version left it nested inside the member/suspended list.
+  const memberListPanel = list.closest(".manual-member-list-panel");
+  if (memberListPanel?.parentElement) {
+    if (pendingPanel.parentElement !== memberListPanel.parentElement ||
+        pendingPanel.nextElementSibling !== memberListPanel) {
+      memberListPanel.parentElement.insertBefore(pendingPanel, memberListPanel);
+    }
+  } else if (list.parentElement && pendingPanel.parentElement !== list.parentElement) {
+    list.parentElement.insertBefore(pendingPanel, list);
+  }
+  pendingPanel.setAttribute("aria-label", "สมาชิกใหม่ที่รออนุมัติ");
+  const pendingMembers = allMembers.filter(member =>
+    String(member.membership_status || "").trim().toLowerCase() === "pending_review"
+  );
   pendingPanel.innerHTML = pendingMembers.length ? `
     <div class="member-pending-review-heading">
-      <div><span class="member-pending-review-eyebrow">MEMBERSHIP CONTROL</span><h3>คำขอสมัครสมาชิกที่รออนุมัติ</h3><p>ผู้สมัครผ่านการตรวจสอบ Discord Server และ Role แล้ว แต่ยังไม่มีสิทธิ์เข้าเว็บไซต์จนกว่าจะได้รับอนุมัติ</p></div>
+      <div><span class="member-pending-review-eyebrow">MEMBERSHIP CONTROL</span><h3>สมาชิกใหม่รออนุมัติ</h3><p>ผู้สมัครผ่านการตรวจสอบ Discord Server และ Role แล้ว แต่ยังไม่มีสิทธิ์เข้าเว็บไซต์จนกว่าจะได้รับอนุมัติ</p></div>
       <strong>${pendingMembers.length} รายการ</strong>
     </div>
     <div class="member-pending-review-list">${pendingMembers.map(member => `
@@ -2567,7 +2578,7 @@ function renderManualMemberManagement() {
 
   // Pending applications are reviewed in their own panel and must never
   // appear in the active/inactive member directory or suspended-member area.
-  const approvedAccountRows = allMembers.filter(member => member.membership_status !== "pending_review");
+  const approvedAccountRows = allMembers.filter(member => String(member.membership_status || "").trim().toLowerCase() !== "pending_review");
   const linkedCount = approvedAccountRows.length;
   // A linked Manual row is represented by its real guild_members account row.
   // Keep the source record for administration, but do not render/count it twice.
@@ -2630,7 +2641,7 @@ function renderManualMemberManagement() {
     };
   });
   const allVisibleMembers = [
-    ...accountRowsWithDiscord.filter(member => member.membership_status !== "pending_review"),
+    ...accountRowsWithDiscord.filter(member => String(member.membership_status || "").trim().toLowerCase() !== "pending_review"),
     ...unlinkedManualMembers.map(member => ({ ...member, _recordType: "manual" }))
   ].sort((a, b) => {
     const rankA = guildPositionOrder.has(a.guild_position)
