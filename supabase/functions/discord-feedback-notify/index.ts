@@ -126,7 +126,10 @@ Deno.serve(async (request) => {
       message_id: String(discordMessage.id), source: "automation", last_payload: discordMessage,
       linked_by: authData.user.id, linked_at: new Date().toISOString(), updated_at: new Date().toISOString()
     }, { onConflict: "event_key,record_id,message_type" });
-    if (registryError) return json({ success: false, message: "Discord sent, but Message ID registration failed; do not resend", message_id: String(discordMessage.id) }, 500);
+    if (registryError) {
+      await admin.from("guild_feedback").update({ discord_notified_at: new Date().toISOString(), discord_notification_error: "Message sent; registry insert failed. Do not resend. Message ID: " + String(discordMessage.id) }).eq("id", feedbackId);
+      return json({ success: false, message: "Discord sent, but Message ID registration failed; do not resend", message_id: String(discordMessage.id) }, 500);
+    }
 
     const { error: updateError } = await admin.from("guild_feedback")
       .update({ discord_notified_at: new Date().toISOString(), discord_notification_error: null }).eq("id", feedbackId);
