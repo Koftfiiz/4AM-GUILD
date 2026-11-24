@@ -1356,6 +1356,9 @@
             <div class="discord-embed-studio-grid">
               <section class="discord-embed-studio-editor">
                 <h3>Embed Editor</h3>
+                <label>Author Name<input id="embed-studio-author" maxlength="256" type="text"></label>
+                <label>Author Icon URL<input id="embed-studio-author-icon" type="url" placeholder="https://..."></label>
+                <label>Author URL<input id="embed-studio-author-url" type="url" placeholder="https://..."></label>
                 <label>Title<input id="embed-studio-title" maxlength="256" type="text"></label>
                 <label>Description<textarea id="embed-studio-description" maxlength="4096" rows="5"></textarea></label>
                 <div class="discord-embed-studio-two">
@@ -1364,6 +1367,7 @@
                 </div>
                 <label>Thumbnail URL<input id="embed-studio-thumbnail" type="url" placeholder="https://..."></label>
                 <label>Main Image URL<input id="embed-studio-image" type="url" placeholder="https://..."></label>
+                <label>Timestamp<input id="embed-studio-timestamp" type="datetime-local"></label>
                 <div class="discord-embed-studio-fields-head"><h4>Fields</h4><button type="button" class="btn btn-outline" id="embed-studio-add-field">+ เพิ่ม Field</button></div>
                 <div id="embed-studio-fields"></div>
                 <div id="embed-studio-validation" class="discord-embed-studio-validation" aria-live="polite"></div>
