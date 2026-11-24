@@ -159,8 +159,8 @@ Deno.serve(async (request: Request) => {
       const SEND_MESSAGES = 2048n;
       const hasAdministrator = (basePermissions & ADMINISTRATOR) === ADMINISTRATOR;
 
-      const canSendInChannel = (channel: any) => {
-        if (hasAdministrator) return true;
+      const resolveChannelPermissions = (channel: any) => {
+        if (hasAdministrator) return { canView: true, canSend: true };
         let permissions = basePermissions;
         const overwrites = Array.isArray(channel.permission_overwrites) ? channel.permission_overwrites : [];
         const everyoneOverwrite = overwrites.find((item: any) => item.type === 0 && String(item.id) === guildId);
@@ -181,21 +181,34 @@ Deno.serve(async (request: Request) => {
           permissions &= ~BigInt(String(memberOverwrite.deny || "0"));
           permissions |= BigInt(String(memberOverwrite.allow || "0"));
         }
-        return (permissions & VIEW_CHANNEL) === VIEW_CHANNEL && (permissions & SEND_MESSAGES) === SEND_MESSAGES;
+        const canView = (permissions & VIEW_CHANNEL) === VIEW_CHANNEL;
+        const isMessageChannel = [0, 5].includes(Number(channel.type));
+        const canSend = canView && isMessageChannel && (permissions & SEND_MESSAGES) === SEND_MESSAGES;
+        return { canView, canSend };
       };
 
       const rawChannels = Array.isArray(channelsResult.data) ? channelsResult.data : [];
       const categories = new Map(rawChannels.filter((channel: any) => channel.type === 4).map((channel: any) => [String(channel.id), String(channel.name || "หมวดหมู่")]));
+      const channelTypeLabels: Record<number, string> = {
+        0: "ข้อความ", 2: "เสียง", 4: "หมวดหมู่", 5: "ประกาศ",
+        13: "เวที", 15: "ฟอรัม", 16: "สื่อ"
+      };
       const channels = rawChannels
-        .filter((channel: any) => [0, 5].includes(Number(channel.type)) && canSendInChannel(channel))
-        .map((channel: any) => ({
-          id: String(channel.id),
-          name: String(channel.name || "unnamed"),
-          parent_id: channel.parent_id ? String(channel.parent_id) : null,
-          category_name: channel.parent_id ? (categories.get(String(channel.parent_id)) || "ไม่มีหมวดหมู่") : "ไม่มีหมวดหมู่",
-          type: Number(channel.type),
-          position: Number(channel.position || 0)
-        }))
+        .filter((channel: any) => Number(channel.type) !== 4)
+        .map((channel: any) => {
+          const permissions = resolveChannelPermissions(channel);
+          return {
+            id: String(channel.id),
+            name: String(channel.name || "unnamed"),
+            parent_id: channel.parent_id ? String(channel.parent_id) : null,
+            category_name: channel.parent_id ? (categories.get(String(channel.parent_id)) || "ไม่มีหมวดหมู่") : "ไม่มีหมวดหมู่",
+            type: Number(channel.type),
+            type_label: channelTypeLabels[Number(channel.type)] || "ห้องอื่น",
+            can_view: permissions.canView,
+            can_send: permissions.canSend,
+            position: Number(channel.position || 0)
+          };
+        })
         .sort((a: any, b: any) => a.category_name.localeCompare(b.category_name, "th") || a.position - b.position || a.name.localeCompare(b.name, "th"));
 
       return json({
