@@ -7905,9 +7905,19 @@ function formatActivityTimeInput(value){
  const digits=String(value||"").replace(/\D/g,"").slice(0,4);
  return digits.length<=2?digits:digits.slice(0,2)+":"+digits.slice(2);
 }
+function activityDateTimeInputValue(value){
+ if(!value)return "";
+ const parts=activityInputParts(value);
+ return parts.date&&parts.time?parts.date+" "+parts.time:"";
+}
+function updateActivityEndMode(){
+ const mode=$("activity-end-mode")?.value||"datetime";
+ $("activity-end-datetime-wrap")?.classList.toggle("hidden",mode!=="datetime");
+ $("activity-end-description-wrap")?.classList.toggle("hidden",mode!=="description");
+}
 function activityDateRange(item){
- const start=item.starts_at?activityDateLabel(item.starts_at):"ไม่กำหนดเวลาเริ่ม";
- const end=item.ends_at?activityDateLabel(item.ends_at):"ไม่กำหนดเวลาสิ้นสุด";
+ const start=item.starts_at?activityDateLabel(item.starts_at):"ไม่ระบุเวลาเริ่ม";
+ const end=item.end_description?item.end_description:(item.ends_at?activityDateLabel(item.ends_at):"");
  return start+" – "+end;
 }
 let guildActivityCommentsCache={};
@@ -7988,7 +7998,7 @@ async function loadGuildActivityComments(){
 }
 async function loadGuildActivities(){
  const list=$("guild-activities-list");if(list)list.innerHTML='<div class="empty-state"><span>◷</span><h3>กำลังโหลดกิจกรรม</h3><p>กรุณารอสักครู่</p></div>';
- const {data,error}=await supabaseClient.from("guild_activities").select("id,title,content_html,starts_at,ends_at,created_by,updated_by,created_at,updated_at").order("created_at",{ascending:false});
+ const {data,error}=await supabaseClient.from("guild_activities").select("id,title,content_html,starts_at,ends_at,end_description,created_by,updated_by,created_at,updated_at").order("created_at",{ascending:false});
  if(error){console.error("Load guild activities:",error);if(list)list.innerHTML='<div class="empty-state"><span>!</span><h3>โหลดกิจกรรมไม่สำเร็จ</h3><p>'+escapeHTML(error.message)+'</p></div>';return;}
  guildActivitiesCache=data||[];
  await loadGuildActivityComments();
@@ -8022,9 +8032,11 @@ function openGuildActivityEditor(id=null){
  panel.dataset.editingId=item?.id||"";
  $("activity-editor-title").textContent=item?"แก้ไขกิจกรรม":"สร้างกิจกรรมใหม่";
  title.value=item?.title||"";body.innerHTML=sanitizeGuildActivityHTML(item?.content_html||"");
- const startParts=activityInputParts(item?.starts_at),endParts=activityInputParts(item?.ends_at);
- $("activity-start-date-input").value=startParts.date;$("activity-start-time-input").value=startParts.time;
- $("activity-end-date-input").value=endParts.date;$("activity-end-time-input").value=endParts.time;
+ $("activity-start-datetime-input").value=activityDateTimeInputValue(item?.starts_at);
+ $("activity-end-datetime-input").value=activityDateTimeInputValue(item?.ends_at);
+ $("activity-end-description-input").value=item?.end_description||"";
+ $("activity-end-mode").value=item?.end_description?"description":"datetime";
+ updateActivityEndMode();
  if(msg){msg.textContent="";msg.className="message";}
  $("activity-save-button").textContent=item?"บันทึกการแก้ไข":"บันทึกกิจกรรม";
  panel.classList.remove("hidden");$("activity-add-button")?.classList.add("hidden");
@@ -8044,8 +8056,8 @@ async function uploadGuildActivityImage(file){
 function closeGuildActivityEditor(){
  $("activity-editor")?.classList.add("hidden");$("activity-editor")?.removeAttribute("data-editing-id");
  $("activity-title-input").value="";$("activity-editor-body").innerHTML="";
- $("activity-start-date-input").value="";$("activity-start-time-input").value="";
- $("activity-end-date-input").value="";$("activity-end-time-input").value="";
+ $("activity-start-datetime-input").value="";$("activity-end-datetime-input").value="";
+ $("activity-end-description-input").value="";$("activity-end-mode").value="datetime";updateActivityEndMode();
  $("activity-emoji-picker")?.classList.add("hidden");
  $("activity-add-button")?.classList.toggle("hidden",!isManagement());
 }
@@ -8075,6 +8087,7 @@ function registerGuildActivityEvents(){
   if(emojiValue){insertActivityEmoji(GUILD_ACTIVITY_EMOJIS[Number(emojiValue.dataset.activityEmojiValue)]||"✨");return;}
   if(image){if(isManagement())$("activity-image-input")?.click();return;}
   if(event.target.closest("#activity-cancel-button")){if(isManagement())closeGuildActivityEditor();return;}
+  if(event.target.closest("#activity-end-mode")){updateActivityEndMode();return;}
   const commentEdit=event.target.closest("[data-activity-comment-edit]");
   if(commentEdit){
    const card=commentEdit.closest("[data-activity-comment-card]"),id=commentEdit.dataset.activityCommentEdit,comment=Object.values(guildActivityCommentsCache).flat().find(row=>row.id===id);
@@ -8103,18 +8116,32 @@ function registerGuildActivityEvents(){
    if(!title){msg.textContent="กรุณาระบุหัวข้อกิจกรรม";msg.className="message error";$("activity-title-input").focus();return;}
    const content=sanitizeGuildActivityHTML(body.innerHTML);
    if(!content.trim()){msg.textContent="กรุณากรอกรายละเอียดกิจกรรม";msg.className="message error";body.focus();return;}
-   let startsAt,endsAt;
+   let startsAt,endsAt=null,endDescription=null;
    try{
-    startsAt=parseActivityDateTime($("activity-start-date-input").value,$("activity-start-time-input").value,"เริ่ม");
-    endsAt=parseActivityDateTime($("activity-end-date-input").value,$("activity-end-time-input").value,"สิ้นสุด");
+    const startValue=$("activity-start-datetime-input").value.trim();
+    if(!startValue)throw new Error("กรุณาระบุวันและเวลาเริ่มกิจกรรม");
+    const startParts=startValue.split(" ");
+    if(startParts.length!==2)throw new Error("กรุณาเลือกวันและเวลาเริ่มกิจกรรมจากปฏิทิน");
+    startsAt=parseActivityDateTime(startParts[0],startParts[1],"เริ่ม");
+    const endMode=$("activity-end-mode").value;
+    if(endMode==="datetime"){
+     const endValue=$("activity-end-datetime-input").value.trim();
+     if(!endValue)throw new Error("กรุณาระบุวันและเวลาสิ้นสุดกิจกรรม");
+     const endParts=endValue.split(" ");
+     if(endParts.length!==2)throw new Error("กรุณาเลือกวันและเวลาสิ้นสุดกิจกรรมจากปฏิทิน");
+     endsAt=parseActivityDateTime(endParts[0],endParts[1],"สิ้นสุด");
+     if(new Date(endsAt)<new Date(startsAt))throw new Error("เวลาสิ้นสุดต้องไม่ก่อนเวลาเริ่ม");
+    }else{
+     endDescription=$("activity-end-description-input").value.trim();
+     if(!endDescription)throw new Error("กรุณาระบุรายละเอียดการสิ้นสุดกิจกรรม");
+    }
    }catch(validationError){msg.textContent=validationError.message;msg.className="message error";return;}
-   if(startsAt&&endsAt&&new Date(endsAt)<new Date(startsAt)){msg.textContent="เวลาสิ้นสุดต้องไม่ก่อนเวลาเริ่ม";msg.className="message error";return;}
    save.disabled=true;save.textContent="กำลังบันทึก...";
    try{
-    const payload={title,content_html:content,starts_at:startsAt,ends_at:endsAt,updated_by:currentUser.id,updated_at:new Date().toISOString()};
+    const payload={title,content_html:content,starts_at:startsAt,ends_at:endsAt,end_description:endDescription,updated_by:currentUser.id,updated_at:new Date().toISOString()};
     let result;
-    if(id)result=await supabaseClient.from("guild_activities").update(payload).eq("id",id).select("id,title,content_html,starts_at,ends_at,created_by,updated_by,created_at,updated_at").single();
-    else result=await supabaseClient.from("guild_activities").insert({...payload,created_by:currentUser.id}).select("id,title,content_html,starts_at,ends_at,created_by,updated_by,created_at,updated_at").single();
+    if(id)result=await supabaseClient.from("guild_activities").update(payload).eq("id",id).select("id,title,content_html,starts_at,ends_at,end_description,created_by,updated_by,created_at,updated_at").single();
+    else result=await supabaseClient.from("guild_activities").insert({...payload,created_by:currentUser.id}).select("id,title,content_html,starts_at,ends_at,end_description,created_by,updated_by,created_at,updated_at").single();
     if(result.error)throw result.error;
     const saved=result.data,index=guildActivitiesCache.findIndex(row=>row.id===saved.id);
     if(index>=0)guildActivitiesCache[index]=saved;else guildActivitiesCache.unshift(saved);
