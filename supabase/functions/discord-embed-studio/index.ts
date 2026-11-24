@@ -74,8 +74,8 @@ Deno.serve(async (request: Request) => {
     if (authError || !authData.user) return json({ success: false, message: "Session ไม่ถูกต้องหรือหมดอายุ" }, 401);
     const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
     const { data: member } = await admin.from("guild_members").select("role,active").eq("user_id", authData.user.id).maybeSingle();
-    if (!member?.active || !["developer", "leader", "management"].includes(member.role)) {
-      return json({ success: false, message: "ต้องเป็น Developer, Leader หรือ Management ที่ Active เท่านั้น" }, 403);
+    if (!member?.active || String(member.role || "").toLowerCase() !== "developer") {
+      return json({ success: false, message: "เฉพาะ Developer ที่ Active เท่านั้นที่ใช้งาน Discord Integration และ Embed Studio ได้" }, 403);
     }
 
     const body = await request.json().catch(() => ({}));
