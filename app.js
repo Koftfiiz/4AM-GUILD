@@ -9449,18 +9449,22 @@ function filterDiscordIntegrationRoutes() {
     section.hidden = !section.querySelector("[data-discord-route]:not([hidden])");
   });
 }
-async function loadDiscordChannelsForPicker(button, select) {
-  if (!button || !select) return;
+async function loadDiscordChannelsForPicker(button, select, force = false) {
+  if (!select) return;
   const picker = select.closest("[data-discord-channel-picker]");
   const status = picker?.querySelector("[data-discord-channel-status]");
+  if (!force && select.dataset.channelsLoaded === "true") return;
+  if (select.dataset.channelsLoading === "true") return;
   const currentId = select.dataset.channelTarget === "test"
     ? String($("discord-integration-test-channel")?.value || "")
     : String(picker?.closest("[data-discord-route]")?.querySelector("[data-discord-route-channel]")?.value || "");
-  button.disabled = true;
-  const originalLabel = button.textContent;
-  button.textContent = "กำลังโหลด...";
+  select.dataset.channelsLoading = "true";
+  if (button) {
+    button.disabled = true;
+    button.classList.add("is-loading");
+  }
   select.disabled = true;
-  if (status) status.textContent = "กำลังเชื่อมต่อ Discord และตรวจสอบสิทธิ์ Bot...";
+  if (status) status.textContent = "กำลังโหลดรายชื่อห้องจาก Discord...";
   try {
     const data = await invokeEmbedStudio("list_channels", {});
     const channels = Array.isArray(data.channels) ? data.channels : [];
@@ -9496,15 +9500,20 @@ async function loadDiscordChannelsForPicker(button, select) {
       select.appendChild(existing);
     }
     select.value = currentId || "";
+    select.dataset.channelsLoaded = "true";
     select.disabled = false;
-    if (status) status.textContent = "Server: " + (data.guild?.name || "Discord") + " · พบ " + channels.length + " ห้องทั้งหมด (เลือกได้เฉพาะห้องที่ Bot ส่งข้อความได้)";
+    if (status) status.textContent = "พบ " + channels.length + " ห้องใน " + (data.guild?.name || "Discord") + " · เลือกได้เฉพาะห้องที่ Bot ส่งข้อความได้";
   } catch (error) {
-    if (status) status.textContent = error.message || "โหลดรายชื่อห้องไม่สำเร็จ";
-    select.innerHTML = '<option value="">โหลดรายชื่อห้องไม่สำเร็จ</option>';
+    select.dataset.channelsLoaded = "false";
+    select.innerHTML = '<option value="">โหลดรายชื่อห้องไม่สำเร็จ · ลองรีเฟรช</option>';
     select.disabled = false;
+    if (status) status.textContent = error.message || "โหลดรายชื่อห้องไม่สำเร็จ";
   } finally {
-    button.disabled = false;
-    button.textContent = originalLabel || "โหลดห้องจาก Discord";
+    select.dataset.channelsLoading = "false";
+    if (button) {
+      button.disabled = false;
+      button.classList.remove("is-loading");
+    }
   }
 }
 
@@ -9513,7 +9522,7 @@ async function saveDiscordChannelSelection(select) {
   if (!select || !/^\d{17,20}$/.test(channelId)) return;
   const picker = select.closest("[data-discord-channel-picker]");
   const status = picker?.querySelector("[data-discord-channel-status]");
-  const button = picker?.querySelector("[data-discord-load-channels]");
+  const button = picker?.querySelector("[data-discord-refresh-channels]");
   select.disabled = true;
   if (button) button.disabled = true;
   if (status) status.textContent = "กำลังบันทึก Channel ID...";
@@ -9578,11 +9587,13 @@ function renderDiscordIntegrationRoutes(routes = []) {
           <span>ห้อง Discord สำหรับ Event นี้</span>
           <input type="hidden" data-discord-route-channel value="${escapeHTML(route.channel_id || "")}">
           <div class="discord-channel-picker" data-discord-channel-picker="route" data-route-key="${escapeHTML(key)}">
-            <button type="button" class="btn btn-outline" data-discord-load-channels>โหลดห้องจาก Discord</button>
-            <select data-discord-channel-select data-channel-target="route" data-route-key="${escapeHTML(key)}" aria-label="เลือกห้อง Discord สำหรับ ${escapeHTML(displayLabel)}">
-              <option value="">${route.channel_id ? "Channel ปัจจุบัน (" + escapeHTML(route.channel_id) + ") · กดโหลดเพื่อดูชื่อห้อง" : "กดโหลดรายชื่อห้องก่อน"}</option>
-            </select>
-            <small data-discord-channel-status>เลือกห้องแล้วระบบจะบันทึกให้อัตโนมัติ</small>
+            <div class="discord-channel-select-row">
+              <select data-discord-channel-select data-channel-target="route" data-route-key="${escapeHTML(key)}" aria-label="เลือกห้อง Discord สำหรับ ${escapeHTML(displayLabel)}">
+                <option value="">${route.channel_id ? "ห้องที่เลือกไว้ · กำลังโหลดชื่อ..." : "เลือกห้อง Discord..."}</option>
+              </select>
+              <button type="button" class="discord-channel-refresh" data-discord-refresh-channels aria-label="รีเฟรชรายชื่อห้อง Discord" title="รีเฟรชรายชื่อห้อง"><i class="fa-solid fa-rotate" aria-hidden="true"></i></button>
+            </div>
+            <small data-discord-channel-status>เปิดรายการห้องเพื่อโหลดจาก Discord อัตโนมัติ</small>
           </div>
         </label>
         <div class="discord-route-card-footer">
@@ -10275,10 +10286,16 @@ function registerDiscordIntegrationEvents() {
   $("discord-integration-production-enabled")?.addEventListener("change", updateDiscordIntegrationModeHelp);
   $("discord-integration-test")?.addEventListener("click", () => void sendDiscordIntegrationTest());
   $("discord-integration-form")?.addEventListener("click", event => {
-    const button = event.target.closest("[data-discord-load-channels]");
+    const button = event.target.closest("[data-discord-refresh-channels]");
     if (!button) return;
     const select = button.closest("[data-discord-channel-picker]")?.querySelector("[data-discord-channel-select]");
-    void loadDiscordChannelsForPicker(button, select);
+    void loadDiscordChannelsForPicker(button, select, true);
+  });
+  $("discord-integration-form")?.addEventListener("focusin", event => {
+    const select = event.target.closest("[data-discord-channel-select]");
+    if (select && select.dataset.channelsLoaded !== "true") {
+      void loadDiscordChannelsForPicker(select.closest("[data-discord-channel-picker]")?.querySelector("[data-discord-refresh-channels]"), select);
+    }
   });
   $("discord-integration-form")?.addEventListener("change", event => {
     const select = event.target.closest("[data-discord-channel-select]");
