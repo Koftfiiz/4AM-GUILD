@@ -543,7 +543,7 @@ Deno.serve(async (request: Request) => {
     const kindLabel = event.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const eventLabel = event.registration_type === "practice" ? "ซ้อมวอร์" : String(event.event_name || "GUILD WAR");
     let configuredRounds: string[] = [];
-    const configMatch = String(event.description || "").match(/\\[\\[WAR_CONFIG:(\\{.*?\\})\\]\\]/);
+    const configMatch = String(event.description || "").match(/\[\[WAR_CONFIG:(\{.*?\})\]\]/);
     if (configMatch) {
       try {
         const savedConfig = JSON.parse(configMatch[1]);
