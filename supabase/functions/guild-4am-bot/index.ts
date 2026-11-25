@@ -610,6 +610,70 @@ Deno.serve(async (request: Request) => {
   }
 
 
+
+  if (interaction.type === 3 && String(interaction.data?.custom_id || "").startsWith("war_leave_form:")) {
+    const eventId = String(interaction.data.custom_id).slice("war_leave_form:".length);
+    if (!/^[0-9a-f-]{36}$/i.test(eventId)) return respond({ type: 4, data: { content: "ปุ่มแจ้งลาไม่ถูกต้อง", flags: 64 } });
+    const actor = await linkedMember();
+    if (!actor) return respond({ type: 4, data: { content: "กรุณาเชื่อมบัญชี Discord กับสมาชิก 4AM GUILD และยืนยันการเชื่อมต่อก่อนแจ้งลา", flags: 64 } });
+    const { data: leaveEvent, error: leaveEventError } = await supabase.from("war_events")
+      .select("id,event_name,event_date,start_time,registration_type,is_published,status,signup_closes_at")
+      .eq("id", eventId).maybeSingle();
+    if (leaveEventError || !leaveEvent || leaveEvent.is_published !== true || leaveEvent.status === "cancelled") {
+      return respond({ type: 4, data: { content: "ไม่พบ Event ที่เปิดให้แจ้งลา หรือ Event ถูกยกเลิก/ลบแล้ว", flags: 64 } });
+    }
+    const deadline = leaveEvent.registration_type === "official"
+      ? new Date(String(leaveEvent.event_date) + "T14:00:00+07:00").getTime()
+      : new Date(leaveEvent.signup_closes_at || "").getTime();
+    if (!Number.isFinite(deadline) || Date.now() >= deadline) return respond({ type: 4, data: { content: "Event นี้ปิดรับแจ้งลาแล้ว", flags: 64 } });
+    return respond({
+      type: 9,
+      data: {
+        custom_id: "war_leave_modal:" + eventId,
+        title: leaveEvent.registration_type === "practice" ? "แจ้งลาซ้อมวอร์" : "แจ้งลากิลด์วอร์",
+        components: [{ type: 1, components: [{
+          type: 4, custom_id: "reason", label: "เหตุผลในการแจ้งลา", style: 2,
+          min_length: 1, max_length: 1000, required: true,
+          placeholder: "ระบุเหตุผลที่ไม่สามารถเข้าร่วมกิจกรรมได้"
+        }]}]
+      }
+    });
+  }
+
+  if (interaction.type === 5 && String(interaction.data?.custom_id || "").startsWith("war_leave_modal:")) {
+    const eventId = String(interaction.data.custom_id).slice("war_leave_modal:".length);
+    if (!/^[0-9a-f-]{36}$/i.test(eventId)) return respond({ type: 4, data: { content: "ข้อมูล Event สำหรับแจ้งลาไม่ถูกต้อง", flags: 64 } });
+    const actor = await linkedMember();
+    if (!actor) return respond({ type: 4, data: { content: "ไม่พบการเชื่อมบัญชี Discord ที่ยืนยันแล้ว หรือบัญชีสมาชิกถูกระงับ", flags: 64 } });
+    const rows = Array.isArray(interaction.data?.components) ? interaction.data.components : [];
+    const reason = String(rows[0]?.components?.[0]?.value || "").trim();
+    if (!reason || reason.length > 1000) return respond({ type: 4, data: { content: "กรุณาระบุเหตุผลการแจ้งลา 1–1000 ตัวอักษร", flags: 64 } });
+    const { data: leaveEvent, error: leaveEventError } = await supabase.from("war_events")
+      .select("id,event_name,event_date,registration_type,is_published,status,signup_closes_at")
+      .eq("id", eventId).maybeSingle();
+    if (leaveEventError || !leaveEvent || leaveEvent.is_published !== true || leaveEvent.status === "cancelled") {
+      return respond({ type: 4, data: { content: "ไม่สามารถส่งคำแจ้งลาได้ เพราะ Event ไม่พบ ถูกยกเลิก หรือยังไม่ได้เผยแพร่", flags: 64 } });
+    }
+    const deadline = leaveEvent.registration_type === "official"
+      ? new Date(String(leaveEvent.event_date) + "T14:00:00+07:00").getTime()
+      : new Date(leaveEvent.signup_closes_at || "").getTime();
+    if (!Number.isFinite(deadline) || Date.now() >= deadline) return respond({ type: 4, data: { content: "หมดเวลาแจ้งลาสำหรับ Event นี้แล้ว", flags: 64 } });
+    const { data: existing, error: existingError } = await supabase.from("war_leave_requests")
+      .select("id,status").eq("event_id", eventId).eq("member_id", actor.user_id).maybeSingle();
+    if (existingError) return respond({ type: 4, data: { content: "ตรวจสอบคำแจ้งลาเดิมไม่สำเร็จ กรุณาลองอีกครั้ง", flags: 64 } });
+    if (existing?.status === "approved") return respond({ type: 4, data: { content: "คำแจ้งลาของคุณสำหรับ Event นี้ได้รับการรับทราบแล้ว ไม่ต้องส่งซ้ำ", flags: 64 } });
+    const now = new Date().toISOString();
+    const saved = await supabase.from("war_leave_requests").upsert({
+      event_id: eventId, member_id: actor.user_id, reason, status: "approved",
+      reviewed_by: null, reviewed_at: now, character_name_snapshot: actor.character_name, updated_at: now
+    }, { onConflict: "event_id,member_id" }).select("id").single();
+    if (saved.error) {
+      console.error("[WAR LEAVE MODAL] Save failed:", saved.error.message);
+      return respond({ type: 4, data: { content: "บันทึกคำแจ้งลาไม่สำเร็จ กรุณาลองใหม่อีกครั้ง", flags: 64 } });
+    }
+    return respond({ type: 4, data: { content: "ส่งคำแจ้งลาเรียบร้อยแล้ว\nกิจกรรม: **" + String(leaveEvent.event_name || "กิจกรรมวอร์").slice(0,180) + "**\nตัวละคร: **" + String(actor.character_name || "สมาชิก 4AM").slice(0,100) + "**", flags: 64 } });
+  }
+
   if (interaction.type === 3 && String(interaction.data?.custom_id || "").startsWith("war_signup_join:")) {
     const eventId = String(interaction.data.custom_id).slice("war_signup_join:".length);
     if (!/^[0-9a-f-]{36}$/i.test(eventId)) {
@@ -740,7 +804,8 @@ Deno.serve(async (request: Request) => {
   return respond({ type: 4, data: { content: "ไม่รองรับคำสั่งนี้", flags: 64 } });
   };
 
-  if (interaction.type === 3) {
+  const leaveFormButton = interaction.type === 3 && String(interaction.data?.custom_id || "").startsWith("war_leave_form:");
+  if ((interaction.type === 3 && !leaveFormButton) || interaction.type === 5) {
     const edgeRuntime = (globalThis as any).EdgeRuntime;
     if (!edgeRuntime || typeof edgeRuntime.waitUntil !== "function") {
       console.error("[DISCORD INTERACTION] EdgeRuntime.waitUntil unavailable");
