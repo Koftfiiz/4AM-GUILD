@@ -919,7 +919,7 @@ Deno.serve(async (request: Request) => {
     edgeRuntime.waitUntil(task);
     // Discord receives the deferred acknowledgement immediately; database
     // work and message refresh continue in the Edge Runtime background.
-    return jsonResponse({ type: 6 });
+    return jsonResponse(interaction.type === 5 ? { type: 5, data: { flags: 64 } } : { type: 6 });
   }
 
   return await processInteraction();
