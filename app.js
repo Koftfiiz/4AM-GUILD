@@ -5738,18 +5738,27 @@ if(!document.documentElement.dataset.warDeleteHandlerBound){
 }
 
 async function publishWarEvent(){
-  if(!isManagement())return;
-  const event=allWarEvents.find(item=>item.id===selectedWarEventId);
-  if(!event||!event.is_draft_confirmed)return;
-  const button=$("war-publish-event");if(button){button.disabled=true;button.textContent="กำลังอัปเดต...";}
-  try{
-    const result=await supabaseClient.from("war_events").update({is_published:true}).eq("id",event.id);if(result.error)throw result.error;
-    const keepId=event.id;await loadWarEvents();selectedWarEventId=keepId;renderWarLayout(keepId);
-    if($("war-attendance-content"))await loadWarAttendance();
-    alert(event.is_published?"อัปเดตรายชื่อวอร์ที่ประกาศแล้วเรียบร้อย":"Publish รายชื่อวอร์เรียบร้อย");
-  }catch(error){console.error("Publish/update war roster failed:",error);alert("Publish / อัปเดตรายชื่อวอร์ไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));}
-  finally{if(button){button.disabled=false;button.textContent="Publish อัปเดตรายชื่อ";}}
-}
+   if(!isManagement())return;
+   const event=allWarEvents.find(item=>item.id===selectedWarEventId);
+   if(!event||!event.is_draft_confirmed)return;
+   const button=$("war-publish-event");if(button){button.disabled=true;button.textContent="กำลังอัปเดต...";}
+   try{
+     const result=await supabaseClient.from("war_events").update({is_published:true}).eq("id",event.id);
+     if(result.error)throw result.error;
+     const leaveFormResult=await supabaseClient.functions.invoke("discord-war-leave-form-publish",{body:{event_id:event.id}});
+     const keepId=event.id;await loadWarEvents();selectedWarEventId=keepId;renderWarLayout(keepId);
+     if($("war-attendance-content"))await loadWarAttendance();
+     if(leaveFormResult.error||leaveFormResult.data?.success!==true){
+       const detail=leaveFormResult.error?.message||leaveFormResult.data?.message||"ไม่สามารถโพสต์แบบฟอร์มแจ้งลาได้";
+       alert((event.is_published?"อัปเดตรายชื่อวอร์เรียบร้อย":"Publish รายชื่อวอร์เรียบร้อย")+" แต่โพสต์แบบฟอร์มแจ้งลา Discord ไม่สำเร็จ: "+detail);
+     }else if(leaveFormResult.data?.skipped){
+       alert((event.is_published?"อัปเดตรายชื่อวอร์เรียบร้อย":"Publish รายชื่อวอร์เรียบร้อย")+" · ข้ามการโพสต์ฟอร์มแจ้งลา: "+(leaveFormResult.data.message||"Route ยังไม่พร้อม"));
+     }else{
+       alert((event.is_published?"อัปเดตรายชื่อวอร์เรียบร้อย":"Publish รายชื่อวอร์เรียบร้อย")+" · "+(leaveFormResult.data.updated?"อัปเดต":"โพสต์")+" แบบฟอร์มแจ้งลาใน Discord แล้ว");
+     }
+   }catch(error){console.error("Publish/update war roster failed:",error);alert("Publish / อัปเดตรายชื่อวอร์ไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด"));}
+   finally{if(button){button.disabled=false;button.textContent="Publish อัปเดตรายชื่อ";}}
+ }
 async function loadWarHtml2Canvas(){
   if(typeof window.html2canvas==="function")return window.html2canvas;
   if(window.__warHtml2CanvasPromise)return window.__warHtml2CanvasPromise;
@@ -6606,7 +6615,7 @@ function renderWarLeaveLists(){
   management.innerHTML=warLeaveRequests.length?'<div class="war-leave-management-list">'+warLeaveRequests.map(row=>{
     const member=warLeaveMembers.find(item=>item.user_id===row.member_id)||allMembers.find(item=>item.user_id===row.member_id)||{};
     const event=eventName(row.event_id);
-    return '<article class="war-leave-review-row"><div class="war-leave-review-main"><strong>'+escapeHTML(getMemberName(member))+'</strong><span>'+escapeHTML(event?.event_name||"กิจกรรมวอร์")+' · '+escapeHTML(event?formatDate(event.event_date):"")+'</span><p>'+escapeHTML(row.reason||"ไม่ได้ระบุเหตุผล")+'</p></div><div class="war-leave-review-actions"><span class="war-leave-status '+escapeHTML(row.status)+'">'+warLeaveStatusLabel(row.status)+'</span>'+(row.status==="pending"?'<button class="btn btn-primary btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="approved" type="button">รับทราบ</button><button class="btn btn-outline btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="rejected" type="button">ไม่อนุมัติ</button>':"")+'<button class="btn btn-outline btn-sm" data-war-leave-edit="'+escapeHTML(row.id)+'" type="button">แก้ไข</button><button class="btn btn-danger btn-sm" data-war-leave-delete="'+escapeHTML(row.id)+'" type="button">ลบ</button></div></article>';
+    return '<article class="war-leave-review-row"><div class="war-leave-review-main"><strong>'+escapeHTML(row.character_name_snapshot||getMemberName(member))+'</strong><span>'+escapeHTML(event?.event_name||"กิจกรรมวอร์")+' · '+escapeHTML(event?formatDate(event.event_date):"")+'</span><p>'+escapeHTML(row.reason||"ไม่ได้ระบุเหตุผล")+'</p></div><div class="war-leave-review-actions"><span class="war-leave-status '+escapeHTML(row.status)+'">'+warLeaveStatusLabel(row.status)+'</span>'+(row.status==="pending"?'<button class="btn btn-primary btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="approved" type="button">รับทราบ</button><button class="btn btn-outline btn-sm" data-war-leave-review="'+escapeHTML(row.id)+'" data-status="rejected" type="button">ไม่อนุมัติ</button>':"")+'<button class="btn btn-outline btn-sm" data-war-leave-edit="'+escapeHTML(row.id)+'" type="button">แก้ไข</button><button class="btn btn-danger btn-sm" data-war-leave-delete="'+escapeHTML(row.id)+'" type="button">ลบ</button></div></article>';
   }).join("")+'</div>':'<div class="war-roster-empty">ยังไม่มีสมาชิกแจ้งลาวอร์</div>';
 }
 async function loadWarLeavePage(){
@@ -6615,7 +6624,7 @@ async function loadWarLeavePage(){
   if(mine)mine.innerHTML='<p class="muted">กำลังโหลดข้อมูล...</p>';
   const [eventsQ,requestsQ,membersQ]=await Promise.all([
     supabaseClient.from("war_events").select("id,event_name,event_date,start_time,signup_opens_at,signup_closes_at,status,registration_type").not("signup_opens_at","is",null).order("event_date",{ascending:true}),
-    supabaseClient.from("war_leave_requests").select("id,event_id,member_id,reason,status,created_at").order("created_at",{ascending:false}),
+    supabaseClient.from("war_leave_requests").select("id,event_id,member_id,reason,status,created_at,character_name_snapshot").order("created_at",{ascending:false}),
     supabaseClient.from("guild_members").select("user_id,character_name,nickname,discord_name,game_class,active").eq("active",true)
   ]);
   if(eventsQ.error||requestsQ.error||membersQ.error){
