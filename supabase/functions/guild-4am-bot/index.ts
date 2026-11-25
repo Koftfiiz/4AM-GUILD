@@ -267,7 +267,77 @@ Deno.serve(async (request: Request) => {
         }
       }
     }
-    return jsonResponse({ success: failures.length === 0, checked: (eventsQ.data || []).length, updated, skipped, failures });
+    // Disable each published leave-form button after its Event closes, is cancelled, or is deleted.
+    let leaveFormsDisabled = 0;
+    const leaveFormsQ = await admin.from("discord_embed_messages")
+      .select("record_id,channel_id,message_id")
+      .eq("event_key", "war_leave_form_published")
+      .eq("message_type", "primary");
+    if (leaveFormsQ.error) {
+      failures.push({ event_id: "leave_forms", status: "database", detail: leaveFormsQ.error.message });
+    } else {
+      const formRows = leaveFormsQ.data || [];
+      const formEventIds = [...new Set(formRows.map((row: any) => String(row.record_id)).filter((id: string) => /^[0-9a-f-]{36}$/i.test(id)))];
+      const formEventsQ = formEventIds.length
+        ? await admin.from("war_events").select("id,event_date,registration_type,signup_closes_at,status,is_published").in("id", formEventIds)
+        : { data: [], error: null };
+      if (formEventsQ.error) {
+        failures.push({ event_id: "leave_forms", status: "database", detail: formEventsQ.error.message });
+      } else {
+        const formEvents = new Map((formEventsQ.data || []).map((event: any) => [String(event.id), event]));
+        for (const formRow of formRows) {
+          const formEvent = formEvents.get(String(formRow.record_id));
+          let shouldDisable = !formEvent || formEvent.is_published !== true || formEvent.status === "cancelled";
+          if (formEvent && !shouldDisable) {
+            const deadline = formEvent.registration_type === "official"
+              ? new Date(String(formEvent.event_date) + "T14:00:00+07:00").getTime()
+              : new Date(formEvent.signup_closes_at || "").getTime();
+            shouldDisable = !Number.isFinite(deadline) || Date.now() >= deadline;
+          }
+          if (!shouldDisable) continue;
+          const channelId = String(formRow.channel_id || "");
+          const messageId = String(formRow.message_id || "");
+          if (!/^\d{17,20}$/.test(channelId) || !/^\d{17,20}$/.test(messageId)) {
+            failures.push({ event_id: String(formRow.record_id), status: "LEAVE_FORM_ROUTE_INVALID", detail: "Leave-form message has no valid Discord channel/message ID" });
+            continue;
+          }
+          const messageUrl = "https://discord.com/api/v10/channels/" + encodeURIComponent(channelId) + "/messages/" + encodeURIComponent(messageId);
+          const messageCheck = await fetch(messageUrl, { headers: { Authorization: "Bot " + botToken } });
+          if (messageCheck.status === 404) continue;
+          if (!messageCheck.ok) {
+            failures.push({ event_id: String(formRow.record_id), status: messageCheck.status, detail: "Could not read leave-form message before disabling" });
+            continue;
+          }
+          const messageData = await messageCheck.json();
+          const components = Array.isArray(messageData.components) ? messageData.components : [];
+          let foundButton = false;
+          let changedButton = false;
+          for (const actionRow of components) {
+            for (const component of (actionRow.components || [])) {
+              if (String(component.custom_id || "").startsWith("war_leave_form:")) {
+                foundButton = true;
+                if (component.disabled !== true) {
+                  component.disabled = true;
+                  changedButton = true;
+                }
+              }
+            }
+          }
+          if (!foundButton || !changedButton) continue;
+          const updateResponse = await fetch(messageUrl, {
+            method: "PATCH",
+            headers: { Authorization: "Bot " + botToken, "Content-Type": "application/json" },
+            body: JSON.stringify({ components })
+          });
+          if (!updateResponse.ok) {
+            failures.push({ event_id: String(formRow.record_id), status: updateResponse.status, detail: (await updateResponse.text()).slice(0, 300) });
+            continue;
+          }
+          leaveFormsDisabled++;
+        }
+      }
+    }
+    return jsonResponse({ success: failures.length === 0, checked: (eventsQ.data || []).length, updated, skipped, leave_forms_disabled: leaveFormsDisabled, failures });
   }
 
   const rawBody = await request.text();
