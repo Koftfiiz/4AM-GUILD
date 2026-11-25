@@ -10048,14 +10048,13 @@ function renderDiscordIntegrationRoutes(routes = [], savedLayout = null) {
             <small data-discord-channel-status>เปิดรายการห้องเพื่อโหลดจาก Discord อัตโนมัติ</small>
           </div>
         </label>
-        ${key === "war_leave_discord_submitted" ? '<p class="discord-route-description">กำหนดห้อง Discord สำหรับให้บอทโพสต์แบบฟอร์มแจ้งลาของแต่ละกิจกรรมหลังยืนยันเผยแพร่ Event สมาชิกกดปุ่มเพื่อกรอกสาเหตุการลา โดยระบบจะดึงบัญชี Discord และชื่อตัวละครที่เชื่อมกับเว็บไซต์ 4AM GUILD ให้อัตโนมัติ</p>' : ''}
         <div class="discord-route-card-footer">
           <span class="discord-route-footer-state ${route.enabled ? "is-on" : "is-off"}">${route.enabled ? "ON" : "OFF"}</span>
           <label class="discord-route-enabled" aria-label="เปิดหรือปิดการแจ้งเตือน">
             <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
             <span class="discord-route-switch-state"></span>
           </label>
-          ${key === "war_leave_discord_submitted" ? "" : '<button type="button" class="discord-route-manage-embed" data-discord-embed-manage="' + escapeHTML(key) + '">จัดการ Embed</button>'}
+          <button type="button" class="discord-route-manage-embed" data-discord-embed-manage="' + escapeHTML(key === "war_leave_discord_submitted" ? "war_leave_form_published" : key) + '">จัดการ Embed</button>
         </div>
       </div>`];
   }));
@@ -10318,6 +10317,7 @@ function embedStudioRecordConfig(eventKey) {
     war_signup_opened: ["war_events", "event_name"],
     war_signup_closed: ["war_events", "event_name"],
     war_leave_submitted: ["war_leave_requests", "id"],
+    war_leave_form_published: ["war_events", "event_name", "id"],
     war_roster_published: ["war_events", "event_name"],
     war_checkin_opened: ["war_events", "event_name"],
     war_attendance_finalized: ["war_attendance_reports", "event_id"],
@@ -10493,6 +10493,8 @@ async function openDiscordEmbedStudio(eventKey, eventLabel) {
   $("discord-embed-studio-event-label").textContent = (eventLabel || eventKey) + " · " + eventKey;
   const typeWrap = $("embed-studio-message-type-wrap");
   if (typeWrap) typeWrap.hidden = eventKey !== "war_roster_published";
+  const sendNewButton = $("embed-studio-send-new");
+  if (sendNewButton) sendNewButton.hidden = eventKey === "war_leave_form_published";
   if ($("embed-studio-message-type")) $("embed-studio-message-type").value = eventKey === "war_roster_published" ? "raid_a" : "primary";
   $("discord-embed-studio-modal").classList.remove("hidden");
   $("embed-studio-meta").textContent = "";
