@@ -1310,18 +1310,20 @@ function frame(now){
         const rank=ranked.indexOf(k)+1;
         const rule=settings[rank];
         if(!rule){
-          k.leadHold=0;k.leadRank=0;return;
+          k.leadHold=0;k.leadRank=0;k.leadHoldTarget=0;return;
         }
         const nextDuck=ranked[rank];
         const gap=nextDuck?rawProg(k)-rawProg(nextDuck):0;
-        if(gap<duckSize()*1.2){
-          k.leadHold=0;k.leadRank=rank;return;
+        if(gap<duckSize()*1.2||k.mode!=='normal'||(k.leadPressureCooldown||0)>0){
+          k.leadHold=0;k.leadRank=rank;k.leadHoldTarget=0;return;
         }
-        if(k.leadRank!==rank){k.leadHold=0;k.leadRank=rank;}
+        if(k.leadRank!==rank){
+          k.leadHold=0;k.leadRank=rank;k.leadHoldTarget=randomBetween(...rule.hold);
+        }
         k.leadHold=(k.leadHold||0)+raceDt;
-        if(k.leadHold>=randomBetween(...rule.hold)&&(k.leadPressureCooldown||0)<=0){
-          k.leadHold=0;
-          if(k.mode==='normal'&&Math.random()<randomBetween(...rule.chance)){
+        if(k.leadHold>=(k.leadHoldTarget||rule.hold[0])){
+          k.leadHold=0;k.leadHoldTarget=randomBetween(...rule.hold);
+          if(Math.random()<randomBetween(...rule.chance)){
             k.mode='nerf';
             k.modeLeft=randomBetween(...rule.duration);
             k.nerfMultiplier=randomBetween(...rule.multiplier);
@@ -1430,9 +1432,10 @@ function reset(){
     // All ducks share the exact same horizontal start line. Each gets an
     // independent distance counter; race events create gaps only after Start.
     distance:0,currentSpeedX:RACE_SPEED,cruiseFactor:.985+Math.random()*.03,mode:'normal',modeLeft:0,
-    leadHold:0,leadPressureCooldown:0,boostMultiplier:1.28,tiredMultiplier:.84,
+    leadHold:0,leadRank:0,leadHoldTarget:0,leadPressureCooldown:0,boostMultiplier:1.28,tiredMultiplier:.84,
     // A few ducks can boost immediately; every duck receives an independent first trigger.
-    // Give every duck an early independent event roll; later rolls use rank and gap-based cooldowns.\n    eventIn:Math.random()*Math.min(5,Math.max(1,cfg.T*.03)),
+    // Give every duck an early independent event roll; later rolls use rank and gap-based cooldowns.
+    eventIn:Math.random()*Math.min(5,Math.max(1,cfg.T*.03)),
     fx:''
   }));
   const sceneOrder=[0,1,2,3,4].sort(()=>Math.random()-.5);
