@@ -471,7 +471,7 @@ Deno.serve(async (request: Request) => {
   async function buildWarSignupMessage(eventId: string) {
     const { data: event, error: eventError } = await supabase
       .from("war_events")
-      .select("id,event_name,event_date,start_time,registration_type,signup_opens_at,signup_closes_at,status")
+      .select("id,event_name,event_date,start_time,description,registration_type,signup_opens_at,signup_closes_at,status")
       .eq("id", eventId).maybeSingle();
     if (eventError || !event) throw new Error("ไม่พบกิจกรรม Guild War นี้");
 
@@ -542,7 +542,16 @@ Deno.serve(async (request: Request) => {
 
     const kindLabel = event.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const eventLabel = event.registration_type === "practice" ? "ซ้อมวอร์" : String(event.event_name || "GUILD WAR");
-    const configuredRounds = event.round_times || [];
+    let configuredRounds: string[] = [];
+    const configMatch = String(event.description || "").match(/\\[\\[WAR_CONFIG:(\\{.*?\\})\\]\\]/);
+    if (configMatch) {
+      try {
+        const savedConfig = JSON.parse(configMatch[1]);
+        if (Array.isArray(savedConfig.rounds)) configuredRounds = savedConfig.rounds.map((value: unknown) => String(value).slice(0, 5));
+      } catch {
+        configuredRounds = [];
+      }
+    }
     const roundLabel = configuredRounds.length >= 2
       ? "รอบแรก " + configuredRounds[0] + " น. | รอบสอง " + configuredRounds[1] + " น."
       : "วอร์รอบเดียว " + String(configuredRounds[0] || event.start_time || "-").slice(0, 5) + " น.";
