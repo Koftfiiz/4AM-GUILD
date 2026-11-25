@@ -207,18 +207,14 @@ Deno.serve(async (request) => {
       }).format(date).replace(",", "");
     };
     const signupFields: any[] = [
-      { name: "**ผู้ลงชื่อทั้งหมด**", value: String(warSignupRows.length) + " / 80 คน", inline: true },
-      { name: "**ตัวจริง**", value: String(warSignupRows.filter(x => Number(x.queue_position) <= 60).length) + " / 60 คน", inline: true },
-      { name: "**ตัวสำรอง**", value: String(warSignupRows.filter(x => Number(x.queue_position) > 60).length) + " / 20 คน", inline: true }
+      { name: "**ผู้ลงชื่อทั้งหมด**", value: String(warSignupRows.length) + " / 80 คน", inline: true }
     ];
     const roleIcons: Record<string, string> = { Tank: "🛡️", DPS: "⚔️", Bloodstrom: "🩸", Healer: "💚" };
     const roleSummary = ["Tank", "DPS", "Bloodstrom", "Healer"].map((role) => {
       const roleRows = roleGroups.get(role) || [];
       return roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**";
     });
-    const rosterLines = warSignupMembers.filter(x => Number(x.queue_position) <= 60)
-      .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
-    const reserveLines = warSignupMembers.filter(x => Number(x.queue_position) > 60)
+    const rosterLines = warSignupMembers
       .map(x => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
     const addRosterFields = (heading: string, lines: string[], prefix = "") => {
       const chunks: string[] = [];
@@ -243,8 +239,7 @@ Deno.serve(async (request) => {
         inline: false
       }));
     };
-    addRosterFields("\u200b", rosterLines, roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**เข้าร่วม (" + rosterLines.length + " คน)**");
-    addRosterFields("**รายชื่อสำรอง (" + reserveLines.length + " คน)**", reserveLines);
+    addRosterFields("\u200b", rosterLines, roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**ผู้ลงชื่อ (" + rosterLines.length + " คน)**");
     const kindLabel = record.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const closeLabel = formatDateTime(record.signup_closes_at);
     const startTimeLabel = String(record.start_time || "-").slice(0, 5);
