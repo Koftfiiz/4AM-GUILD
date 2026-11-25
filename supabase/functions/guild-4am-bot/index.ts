@@ -127,7 +127,7 @@ Deno.serve(async (request: Request) => {
       // Always update an existing Discord message in the channel where it was
       // originally created. The fallback is only for legacy rows without it.
       const channelId = String(event.discord_channel_id || fallbackChannelId || "");
-      if (!/^\\d{17,20}$/.test(channelId)) {
+      if (!/^\d{17,20}$/.test(channelId)) {
         failures.push({ event_id: event.id, status: "NO_ROUTE", detail: "No valid channel is stored for this signup message" });
         continue;
       }
@@ -182,7 +182,7 @@ Deno.serve(async (request: Request) => {
         if (existingClosedMessage?.channel_id) closedChannelId = String(existingClosedMessage.channel_id);
         else if (mode === "test") closedChannelId = String(settingsQ.data.test_channel_id || "");
         else if (mode === "production" && settingsQ.data.production_enabled === true && closedRouteQ.data?.enabled === true) closedChannelId = String(closedRouteQ.data.channel_id || "");
-        if (!/^\\d{17,20}$/.test(closedChannelId)) {
+        if (!/^\d{17,20}$/.test(closedChannelId)) {
           const detail = "No valid Production route configured for war_signup_closed";
           failures.push({ event_id: event.id, status: "CLOSED_ROUTE_MISSING", detail });
           await admin.from("war_events").update({ discord_signup_closed_error: detail }).eq("id", event.id);
