@@ -57,7 +57,7 @@ Deno.serve(async (request: Request) => {
       embeds: [{
         title,
         description: "**" + String(event.event_name || "กิจกรรมวอร์").slice(0,180) + "**",
-        color: isPractice ? 0x3498DB : 0xD92D45,
+        color: isPractice ? 0x3488D8 : 0xD92D45,
         fields: [
           {
             name: "📅 วันและเวลา",
