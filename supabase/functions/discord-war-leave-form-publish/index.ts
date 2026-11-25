@@ -22,7 +22,7 @@ Deno.serve(async (request: Request) => {
     if (actorError || !actor || actor.active !== true || !isManager) return json({ success: false, message: "เฉพาะ Developer / Management ที่เป็นสมาชิก Active เท่านั้น" }, 403);
     const body = await request.json().catch(() => ({})), eventId = String(body?.event_id || "");
     if (!/^[0-9a-f-]{36}$/i.test(eventId)) return json({ success: false, message: "Event ID ไม่ถูกต้อง" }, 400);
-    const { data: event, error: eventError } = await admin.from("war_events").select("id,event_name,event_date,start_time,description,registration_type,is_published,status").eq("id", eventId).maybeSingle();
+    const { data: event, error: eventError } = await admin.from("war_events").select("id,event_name,event_date,start_time,signup_closes_at,description,registration_type,is_published,status").eq("id", eventId).maybeSingle();
     if (eventError || !event) return json({ success: false, message: "ไม่พบ Event นี้" }, 404);
     if (event.is_published !== true || event.status === "cancelled") return json({ success: false, message: "ฟอร์มแจ้งลาจะโพสต์ได้หลัง Publish Event เท่านั้น และ Event ต้องไม่ถูกยกเลิก" }, 409);
     const [{ data: settings, error: settingsError }, { data: route, error: routeError }, { data: existing, error: existingError }] = await Promise.all([
@@ -49,13 +49,34 @@ Deno.serve(async (request: Request) => {
     }
     const isPractice = event.registration_type === "practice";
     const title = isPractice ? "🔵 แจ้งลาซ้อมวอร์" : "🔴 แจ้งลากิลด์วอร์";
-    const description = String(event.event_name || "กิจกรรมวอร์").slice(0,180) + " · " + dateLabel + (timeLabel ? " · " + timeLabel + " น." : "");
+    const deadlineText = isPractice
+      ? "🚨 สมาชิกสามารถแจ้งลา **ซ้อมวอร์** ได้จนถึงวัน/เวลาปิดรับสมัครที่กำหนดไว้"
+      : "🚨 สมาชิกสามารถแจ้งลา **วอร์จริง** ได้ถึงวันเสาร์ 14:00 น. ของสัปดาห์นั้นๆ";
     const payload = {
       content: "<@&" + roleIds[0] + "> <@&" + roleIds[1] + ">",
-      embeds: [{ title, description, color: isPractice ? 0x3498DB : 0xD92D45, fields: [
-        { name: "รายละเอียด", value: isPractice ? "สมาชิกที่ไม่สามารถเข้าร่วมซ้อมวอร์ สามารถกดปุ่มด้านล่างเพื่อแจ้งลาได้" : "สมาชิกที่ไม่สามารถเข้าร่วมวอร์จริง สามารถกดปุ่มด้านล่างเพื่อแจ้งลาได้", inline: false },
-        { name: "วิธีแจ้งลา", value: "⚠️ ต้องใช้ดิสอันเดียวกันกับที่ใช้ในเว็บกิลด์ในการแจ้งลา ระบบจะดึงข้อมูลลงให้อัตโนมัติ", inline: false }
-      ], footer: { text: "4AM GUILD · War Leave Form" } }],
+      embeds: [{
+        title,
+        description: "**" + String(event.event_name || "กิจกรรมวอร์").slice(0,180) + "**",
+        color: isPractice ? 0x3498DB : 0xD92D45,
+        fields: [
+          {
+            name: "📅 วันและเวลา",
+            value: "**" + dateLabel + "**" + (timeLabel ? "\\n🕒 " + timeLabel + " น." : ""),
+            inline: false
+          },
+          {
+            name: "📝 วิธีแจ้งลา",
+            value: "หากไม่สามารถเข้าร่วมกิจกรรมนี้ได้ สามารถกดปุ่มด้านล่างเพื่อแจ้งลาได้\\n\\n⚠️ ต้องใช้ Discord บัญชีเดียวกับที่เชื่อมต่อกับเว็บไซต์ 4AM GUILD ระบบจะดึงบัญชี Discord และชื่อตัวละครให้อัตโนมัติ",
+            inline: false
+          },
+          {
+            name: "🚨 กำหนดเวลาการแจ้งลา",
+            value: deadlineText,
+            inline: false
+          }
+        ],
+        footer: { text: "4AM GUILD · War Leave Form" }
+      }],
       components: [{ type: 1, components: [{ type: 2, style: isPractice ? 1 : 4, label: isPractice ? "แจ้งลาซ้อมวอร์" : "แจ้งลาวอร์", custom_id: "war_leave_form:" + eventId }] }],
       allowed_mentions: { parse: [], roles: roleIds }
     };
