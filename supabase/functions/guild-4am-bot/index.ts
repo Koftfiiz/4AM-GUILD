@@ -441,12 +441,10 @@ Deno.serve(async (request: Request) => {
     };
     const signupDeadline = new Date(event.signup_closes_at || "").getTime();
     const closed = event.status === "cancelled" || !Number.isFinite(signupDeadline) || Date.now() >= signupDeadline;
-    const mainCount = rows.filter((x: any) => Number(x.queue_position) <= 60).length;
-    const reserveCount = rows.filter((x: any) => Number(x.queue_position) > 60).length;
     const fields: any[] = [
       {
         name: "\u200b",
-        value: "👥 ผู้สมัคร " + rows.length + "/80  ·  🟢 ตัวจริง " + mainCount + "/60  ·  🔵 สำรอง " + reserveCount + "/20",
+        value: "👥 ผู้สมัครทั้งหมด " + rows.length + "/80 คน",
         inline: false
       }
     ];
@@ -455,9 +453,7 @@ Deno.serve(async (request: Request) => {
       const roleRows = roleGroups.get(role) || [];
       return roleIcons[role] + " **" + role + " · " + roleRows.length + " คน**";
     });
-    const rosterLines = rows.filter((x: any) => Number(x.queue_position) <= 60)
-      .map((x: any) => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
-    const reserveLines = rows.filter((x: any) => Number(x.queue_position) > 60)
+    const rosterLines = rows
       .map((x: any) => String(x.queue_position) + ". " + String(x.member.character_name || x.member.nickname || "สมาชิก"));
     const addRosterFields = (heading: string, lines: string[], prefix = "") => {
       const chunks: string[] = [];
@@ -479,8 +475,7 @@ Deno.serve(async (request: Request) => {
         inline: false
       }));
     };
-    addRosterFields("\u200b", rosterLines, roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**เข้าร่วม (" + rosterLines.length + " คน)**");
-    addRosterFields("**รายชื่อสำรอง (" + reserveLines.length + " คน)**", reserveLines);
+    addRosterFields("\u200b", rosterLines, roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**ผู้ลงชื่อ (" + rosterLines.length + " คน)**");
 
     const kindLabel = event.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const eventLabel = event.registration_type === "practice" ? "ซ้อมวอร์" : String(event.event_name || "GUILD WAR");
