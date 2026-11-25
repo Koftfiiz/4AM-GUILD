@@ -10054,7 +10054,7 @@ function renderDiscordIntegrationRoutes(routes = [], savedLayout = null) {
             <input type="checkbox" data-discord-route-enabled ${route.enabled ? "checked" : ""}>
             <span class="discord-route-switch-state"></span>
           </label>
-          <button type="button" class="discord-route-manage-embed" data-discord-embed-manage="' + escapeHTML(key === "war_leave_discord_submitted" ? "war_leave_form_published" : key) + '">จัดการ Embed</button>
+          <button type="button" class="discord-route-manage-embed" data-discord-embed-manage="${escapeHTML(key === "war_leave_discord_submitted" ? "war_leave_form_published" : key)}">จัดการ Embed</button>
         </div>
       </div>`];
   }));
