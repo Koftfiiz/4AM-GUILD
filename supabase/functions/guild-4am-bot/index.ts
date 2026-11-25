@@ -511,13 +511,7 @@ Deno.serve(async (request: Request) => {
     };
     const signupDeadline = new Date(event.signup_closes_at || "").getTime();
     const closed = event.status === "cancelled" || !Number.isFinite(signupDeadline) || Date.now() >= signupDeadline;
-    const fields: any[] = [
-      {
-        name: "\u200b",
-        value: "👥 ผู้สมัครทั้งหมด " + rows.length + "/80 คน",
-        inline: false
-      }
-    ];
+    const fields: any[] = [];
     const roleIcons: Record<string, string> = { Tank: "🛡️", DPS: "⚔️", Bloodstrom: "🩸", Healer: "💚" };
     const roleSummary = roleOrder.map((role) => {
       const roleRows = roleGroups.get(role) || [];
@@ -529,7 +523,7 @@ Deno.serve(async (request: Request) => {
       const chunks: string[] = [];
       let chunk = prefix;
       for (const line of lines) {
-        const next = chunk ? chunk + (chunk.endsWith("\n") ? "" : "\n") + line : line;
+        const next = chunk ? chunk + (chunk.endsWith("\\n") ? "" : "\\n") + line : line;
         if (next.length > 980 && chunk) {
           chunks.push(chunk);
           chunk = line;
@@ -540,12 +534,11 @@ Deno.serve(async (request: Request) => {
       if (chunk) chunks.push(chunk);
       if (!chunks.length) chunks.push(prefix ? prefix + "—" : "—");
       chunks.forEach((value, index) => fields.push({
-        name: index === 0 && prefix ? "\u200b" : heading,
+        name: index === 0 && prefix ? "📋 รายชื่อผู้เข้าร่วม" : heading,
         value,
         inline: false
       }));
     };
-    addRosterFields("\u200b", rosterLines, roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**ผู้ลงชื่อ (" + rosterLines.length + " คน)**");
 
     const kindLabel = event.registration_type === "practice" ? "SCRIM" : "GUILD WAR";
     const eventLabel = event.registration_type === "practice" ? "ซ้อมวอร์" : String(event.event_name || "GUILD WAR");
@@ -554,21 +547,42 @@ Deno.serve(async (request: Request) => {
       ? "รอบแรก " + configuredRounds[0] + " น. | รอบสอง " + configuredRounds[1] + " น."
       : "วอร์รอบเดียว " + String(configuredRounds[0] || event.start_time || "-").slice(0, 5) + " น.";
     const hasOfficialRoundLabel = event.registration_type === "official";
-    const startDateTime = "📅 **" + formatThaiDate(event.event_date) + "**　🕒 **" + String(event.start_time || "-").slice(0, 5) + " น.**";
-    const eventDateLine = hasOfficialRoundLabel
-      ? "**" + eventLabel + " · " + formatThaiDate(event.event_date) + "** · " + roundLabel
-      : "**" + eventLabel + "**";
     const closeLabel = formatDateTime(event.signup_closes_at);
     const leaveDeadlineLine = event.registration_type === "practice"
       ? "🚨 สมาชิกสามารถแจ้งลา **ซ้อมวอร์** ได้จนถึงวัน/เวลาปิดรับสมัครที่กำหนดไว้"
       : "🚨 สมาชิกสามารถแจ้งลา **วอร์จริง** ได้ถึงวันเสาร์ 14:00 น. ของสัปดาห์นั้นๆ";
-    const description = "**◥◣④AM◥◣ " + kindLabel + "**" +
-      "\n\n" + eventDateLine +
-      (hasOfficialRoundLabel ? "" : "\n\n" + startDateTime) +
-      "\n\n⏳ **ปิดรับสมัคร:** " + closeLabel + " น." +
-      "\n\n" + leaveDeadlineLine +
-      (closed ? "" : "\n\nหากไม่สะดวกเข้าร่วมแล้ว กรุณากดปุ่ม [ถอนชื่อออก] ด้านล่าง") +
-      "\n\n[เปิดดูรายละเอียดบนเว็บไซต์ 4AM GUILD](https://4am-guild.vercel.app/guildwar/signup)";
+
+    fields.push(
+      {
+        name: "📅 วันและเวลา",
+        value: "**" + formatThaiDate(event.event_date) + "**\\n🕒 " + (hasOfficialRoundLabel ? roundLabel : String(event.start_time || "-").slice(0, 5) + " น."),
+        inline: false
+      },
+      {
+        name: "⏳ ปิดรับสมัคร",
+        value: "**" + closeLabel + " น.**",
+        inline: false
+      },
+      {
+        name: "🚨 กำหนดเวลาการแจ้งลา",
+        value: leaveDeadlineLine,
+        inline: false
+      },
+      {
+        name: "📝 วิธีจัดการการลงชื่อ",
+        value: closed
+          ? "กิจกรรมนี้ปิดรับสมัครแล้ว"
+          : "กด **เข้าร่วม** เพื่อลงชื่อ หรือกด **ถอนชื่อออก** หากไม่สะดวกเข้าร่วมแล้ว",
+        inline: false
+      },
+      {
+        name: "👥 ผู้ลงชื่อทั้งหมด",
+        value: "**" + rows.length + " / 80 คน**",
+        inline: false
+      }
+    );
+
+    addRosterFields("\\u200b", rosterLines, roleSummary[0] + "　　" + roleSummary[1] + "\\n" + roleSummary[2] + "　　" + roleSummary[3] + "\\n\\n**ผู้ลงชื่อ (" + rosterLines.length + " คน)**");
     if (closed) {
       fields.push({
         name: "🔒 ปิดการลงชื่อแล้ว",
@@ -576,10 +590,13 @@ Deno.serve(async (request: Request) => {
         inline: false
       });
     }
+    const description = "**◥◣④AM◥◣ " + kindLabel + "**\\n\\n**" + eventLabel + "**";
+
     return {
       embeds: [{
         color: event.registration_type === "practice" ? 0x3488D8 : 0xD92D45,
         title: "4AM SIGN-UP",
+        url: "https://4am-guild.vercel.app/guildwar/signup",
         description,
         fields,
         image: { url: "https://raw.githubusercontent.com/Koftfiiz/4AM-GUILD/main/assets/animated-4am-logo.gif" },
