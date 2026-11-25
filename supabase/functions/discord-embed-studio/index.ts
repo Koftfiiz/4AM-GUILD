@@ -365,48 +365,28 @@ Deno.serve(async (request: Request) => {
       return json({ success: true, message: patched.data, message_id: messageId, channel_id: channelId });
     }
 
-    if (action === "send_war_leave_preview") {
-      const channelId = "1485969852790341632";
-      const payload = {
-        embeds: [{
-          title: "🔴 แจ้งลากิลด์วอร์",
-          description: "ตัวอย่าง Guild War · 25/11/2026 · 20:00 น.",
-          color: 0xD92D45,
-          fields: [
-            { name: "รายละเอียด", value: "สมาชิกที่ไม่สามารถเข้าร่วมวอร์จริง สามารถกดปุ่มด้านล่างเพื่อแจ้งลาได้", inline: false },
-            { name: "วิธีแจ้งลา", value: "⚠️ ต้องใช้ดิสอันเดียวกันกับที่ใช้ในเว็บกิลด์ในการแจ้งลา ระบบจะดึงข้อมูลลงให้อัตโนมัติ", inline: false }
-          ],
-          footer: { text: "4AM GUILD · War Leave Form" }
-        }],
-        components: [{ type: 1, components: [{ type: 2, style: 4, label: "แจ้งลาวอร์", custom_id: "war_leave_preview_test" }] }],
-        allowed_mentions: { parse: [] }
-      };
-      const sent = await discord("/channels/" + channelId + "/messages", { method: "POST", body: JSON.stringify(payload) });
-      if (!sent.response.ok) return json({ success: false, message: "ส่งตัวอย่าง Embed ไม่สำเร็จ", discord_status: sent.response.status, details: sent.data }, 502);
-      await admin.from("discord_embed_history").insert({
-        event_key: "war_leave_form_preview", record_id: null, message_type: "primary",
-        channel_id: channelId, message_id: String(sent.data.id), action: "test_send",
-        after_payload: sent.data, actor_id: authData.user.id
-      });
-      return json({ success: true, channel_id: channelId, message: sent.data });
-    }
-
     if (action === "send_test") {
+      if (!eventKey || !/^[a-z0-9_]{2,80}$/.test(eventKey)) {
+        return json({ success: false, message: "ไม่พบ Event Key ของการ์ดที่กำลังทดสอบ กรุณาปิดแล้วเปิด Embed Studio จากการ์ดอีกครั้ง" }, 400);
+      }
       const payload = body.payload || {};
       const errors = validatePayload(payload);
       if (errors.length) return json({ success: false, message: "Embed ไม่ผ่านการตรวจสอบ", errors }, 422);
       const { data: settings } = await admin.from("guild_discord_integration_settings").select("test_channel_id").eq("id", 1).maybeSingle();
       const channelId = String(settings?.test_channel_id || "");
       if (!isId(channelId)) return json({ success: false, message: "ยังไม่ได้กำหนด Test Channel ID" }, 400);
+      // Test the currently selected card's Embed only. Interactive components are intentionally omitted
+      // so test messages cannot trigger real signup, leave, or management actions.
       const testPayload = { content: payload.content || undefined, embeds: payload.embeds || [], allowed_mentions: { parse: [] } };
       const sent = await discord("/channels/" + channelId + "/messages", { method: "POST", body: JSON.stringify(testPayload) });
-      if (!sent.response.ok) return json({ success: false, message: "ส่ง Test Message ไม่สำเร็จ", discord_status: sent.response.status, details: sent.data }, 502);
-      await admin.from("discord_embed_history").insert({
-        event_key: eventKey || "embed_studio_test", record_id: recordId || null, message_type: messageType,
+      if (!sent.response.ok) return json({ success: false, message: "ทดสอบ Embed บอทไม่สำเร็จ", discord_status: sent.response.status, details: sent.data }, 502);
+      const { error: historyError } = await admin.from("discord_embed_history").insert({
+        event_key: eventKey, record_id: recordId || null, message_type: messageType,
         channel_id: channelId, message_id: String(sent.data.id), action: "test_send",
         after_payload: sent.data, actor_id: authData.user.id
       });
-      return json({ success: true, channel_id: channelId, message: sent.data });
+      if (historyError) console.error("[EMBED STUDIO TEST HISTORY]", historyError);
+      return json({ success: true, event_key: eventKey, channel_id: channelId, message: sent.data });
     }
 
     if (action === "send_new") {
