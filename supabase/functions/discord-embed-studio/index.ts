@@ -24,6 +24,7 @@ const eventTitleHints: Record<string, string[]> = {
   feedback_submitted: ["FEEDBACK", "แจ้งปัญหา"],
   duck_race_results: ["DUCK RACE"],
   war_leave_submitted: ["แจ้งลาวอร์", "ถอนตัวจากวอร์"],
+  war_leave_form_published: ["แจ้งลากิลด์วอร์", "แจ้งลาวอร์", "แจ้งลาซ้อมวอร์", "War Leave Form"],
   portfolio_published: ["PORTFOLIO", "แฟ้มผลงาน"],
 };
 
@@ -92,8 +93,9 @@ Deno.serve(async (request: Request) => {
     const resolveDestination = async () => {
       const { data: settings } = await admin.from("guild_discord_integration_settings")
         .select("mode,test_channel_id,production_enabled").eq("id", 1).maybeSingle();
+      const routeEventKey = eventKey === "war_leave_form_published" ? "war_leave_discord_submitted" : eventKey;
       const { data: route } = await admin.from("guild_discord_event_routes")
-        .select("enabled,channel_id").eq("event_key", eventKey).maybeSingle();
+        .select("enabled,channel_id").eq("event_key", routeEventKey).maybeSingle();
       const channelId = settings?.mode === "test"
         ? String(settings?.test_channel_id || "")
         : (settings?.production_enabled && route?.enabled ? String(route?.channel_id || "") : "");
@@ -363,6 +365,32 @@ Deno.serve(async (request: Request) => {
       return json({ success: true, message: patched.data, message_id: messageId, channel_id: channelId });
     }
 
+    if (action === "send_war_leave_preview") {
+      const channelId = "1485969852790341632";
+      const payload = {
+        embeds: [{
+          title: "🔴 แจ้งลากิลด์วอร์",
+          description: "ตัวอย่าง Guild War · 25/11/2026 · 20:00 น.",
+          color: 0xD92D45,
+          fields: [
+            { name: "รายละเอียด", value: "สมาชิกที่ไม่สามารถเข้าร่วมวอร์จริง สามารถกดปุ่มด้านล่างเพื่อแจ้งลาได้", inline: false },
+            { name: "วิธีแจ้งลา", value: "⚠️ ต้องใช้ดิสอันเดียวกันกับที่ใช้ในเว็บกิลด์ในการแจ้งลา ระบบจะดึงข้อมูลลงให้อัตโนมัติ", inline: false }
+          ],
+          footer: { text: "4AM GUILD · War Leave Form" }
+        }],
+        components: [{ type: 1, components: [{ type: 2, style: 4, label: "แจ้งลาวอร์", custom_id: "war_leave_preview_test" }] }],
+        allowed_mentions: { parse: [] }
+      };
+      const sent = await discord("/channels/" + channelId + "/messages", { method: "POST", body: JSON.stringify(payload) });
+      if (!sent.response.ok) return json({ success: false, message: "ส่งตัวอย่าง Embed ไม่สำเร็จ", discord_status: sent.response.status, details: sent.data }, 502);
+      await admin.from("discord_embed_history").insert({
+        event_key: "war_leave_form_preview", record_id: null, message_type: "primary",
+        channel_id: channelId, message_id: String(sent.data.id), action: "test_send",
+        after_payload: sent.data, actor_id: authData.user.id
+      });
+      return json({ success: true, channel_id: channelId, message: sent.data });
+    }
+
     if (action === "send_test") {
       const payload = body.payload || {};
       const errors = validatePayload(payload);
@@ -382,6 +410,7 @@ Deno.serve(async (request: Request) => {
     }
 
     if (action === "send_new") {
+      if (eventKey === "war_leave_form_published") return json({ success: false, message: "แบบฟอร์มแจ้งลาวอร์ถูกสร้างโดยระบบอัตโนมัติหลัง Publish Event เท่านั้น กรุณาค้นหาและแก้ไขข้อความเดิมใน Embed Studio" }, 409);
       requireKeys();
       const { data: existing } = await admin.from("discord_embed_messages").select("message_id,channel_id")
         .eq("event_key", eventKey).eq("record_id", recordId).eq("message_type", messageType).maybeSingle();
