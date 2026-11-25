@@ -37,14 +37,10 @@ Deno.serve(async (request: Request) => {
     else if (settings.mode === "test") channelId = String(settings.test_channel_id || "");
     else if (settings.mode === "production" && settings.production_enabled === true) channelId = String(route.channel_id || "");
     if (!/^\d{17,20}$/.test(channelId)) return json({ success: false, message: "ไม่พบ Channel ID ที่ถูกต้องสำหรับโพสต์แบบฟอร์มแจ้งลา" }, 503);
-    const rolesResponse = await fetch("https://discord.com/api/v10/guilds/" + encodeURIComponent(guildId) + "/roles", { headers: { Authorization: "Bot " + botToken } });
-    if (!rolesResponse.ok) return json({ success: false, message: "อ่าน Role จาก Discord Server ไม่สำเร็จ", details: (await rolesResponse.text()).slice(0,400) }, 502);
-    const roles = await rolesResponse.json(), wantedNames = ["สมาชิก 4AM", "ทีมงาน 4AM"];
-    const roleIds = wantedNames.map((name) => {
-      const match = Array.isArray(roles) ? roles.find((r: any) => String(r.name || "").trim().replace(/^@/, "") === name) : null;
-      return match ? String(match.id) : "";
-    });
-    if (roleIds.some((id) => !/^\d{17,20}$/.test(id))) return json({ success: false, message: "ไม่พบ Role ชื่อ สมาชิก 4AM หรือ ทีมงาน 4AM ใน Discord Server กรุณาตรวจสอบชื่อ Role ให้ตรงกัน" }, 409);
+    // Exact Discord Role IDs supplied by the guild owner (24 Nov 2026).
+    // Keep role mentions restricted to these two IDs only.
+    const roleIds = ["1482073441501970513", "1571418707664568393"];
+    if (roleIds.some((id) => !/^\d{17,20}$/.test(id))) return json({ success: false, message: "Discord Role ID configuration is invalid" }, 500);
     const dateLabel = event.event_date ? String(event.event_date).split("-").reverse().join("/") : "-";
     let timeLabel = String(event.start_time || "").slice(0,5);
     if (event.registration_type === "official") {
