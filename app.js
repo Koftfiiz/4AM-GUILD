@@ -10039,7 +10039,7 @@ function renderDiscordIntegrationRoutes(routes = [], savedLayout = null) {
             <small data-discord-channel-status>เปิดรายการห้องเพื่อโหลดจาก Discord อัตโนมัติ</small>
           </div>
         </label>
-        ${key === "war_leave_discord_submitted" ? '<p class="discord-route-description">การ์ดแยกสำหรับกำหนดห้องรับแจ้งเตือนเมื่อสมาชิกส่งคำแจ้งลาผ่าน Discord Bot · ต้องเชื่อมการทำงานฝั่ง Bot ก่อนเปิดใช้งานจริง</p>' : ''}
+        ${key === "war_leave_discord_submitted" ? '<p class="discord-route-description">กำหนดห้อง Discord สำหรับให้บอทโพสต์แบบฟอร์มแจ้งลาของแต่ละกิจกรรมหลังยืนยันเผยแพร่ Event สมาชิกกดปุ่มเพื่อกรอกสาเหตุการลา โดยระบบจะดึงบัญชี Discord และชื่อตัวละครที่เชื่อมกับเว็บไซต์ 4AM GUILD ให้อัตโนมัติ</p>' : ''}
         <div class="discord-route-card-footer">
           <span class="discord-route-footer-state ${route.enabled ? "is-on" : "is-off"}">${route.enabled ? "ON" : "OFF"}</span>
           <label class="discord-route-enabled" aria-label="เปิดหรือปิดการแจ้งเตือน">
