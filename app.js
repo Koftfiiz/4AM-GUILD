@@ -10731,7 +10731,8 @@ function registerDiscordEmbedStudioEvents() {
   });
   ["author","author-icon","author-url","title","description","color","footer","thumbnail","image","timestamp"].forEach(key => $("embed-studio-" + key)?.addEventListener("input", renderEmbedStudioPreview));
   $("embed-studio-update-existing")?.addEventListener("click", () => void updateDiscordEmbedStudioExisting().catch(error => setEmbedStudioStatus(error.message, "error")));
-  $("embed-studio-send-war-leave-preview")?.addEventListener("click", () => void sendDiscordWarLeavePreviewTest().catch(error => setEmbedStudioStatus(error.message, "error")));\n  $("embed-studio-send-test")?.addEventListener("click", () => void sendDiscordEmbedStudioTest().catch(error => setEmbedStudioStatus(error.message, "error")));
+  $("embed-studio-send-war-leave-preview")?.addEventListener("click", () => void sendDiscordWarLeavePreviewTest().catch(error => setEmbedStudioStatus(error.message, "error"))); 
+  $("embed-studio-send-test")?.addEventListener("click", () => void sendDiscordEmbedStudioTest().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-send-new")?.addEventListener("click", () => void sendNewDiscordEmbedStudioMessage().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-save-template")?.addEventListener("click", () => void saveDiscordEmbedStudioTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-load-template")?.addEventListener("click", () => void loadSelectedDiscordEmbedTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
