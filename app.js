@@ -10578,19 +10578,20 @@ async function updateDiscordEmbedStudioExisting() {
   populateEmbedStudio(data.message);
   setEmbedStudioStatus("อัปเดตข้อความเดิมสำเร็จแล้ว", "success");
 }
-async function sendDiscordWarLeavePreviewTest() {
-  if (!isDeveloper() || isRolePreviewActive()) throw new Error("เฉพาะ Developer ที่ไม่ได้อยู่ในโหมด Preview เท่านั้น");
-  if (!window.confirm("ส่งตัวอย่าง Embed แจ้งลากิลด์วอร์ไปยังห้องทดสอบ 1485969852790341632 ใช่หรือไม่?\\nข้อความนี้ไม่มีการ Mention และปุ่มจะไม่ส่งคำขอลาจริง")) return;
-  setEmbedStudioStatus("กำลังส่งตัวอย่างแจ้งลากิลด์วอร์...", "muted");
-  const data = await invokeEmbedStudio("send_war_leave_preview", {});
-  setEmbedStudioStatus("ส่งตัวอย่างแจ้งลากิลด์วอร์สำเร็จ · Message ID " + data.message.id, "success");
-}
 async function sendDiscordEmbedStudioTest() {
+  if (!discordEmbedStudioState.eventKey) throw new Error("ไม่พบ Event ของการ์ดที่กำลังทดสอบ");
   const payload = getEmbedStudioPayload();
-  if (!payload.embeds?.[0]?.title && !payload.embeds?.[0]?.description) throw new Error("กรุณากรอก Title หรือ Description ก่อนส่งทดสอบ");
-  if (!window.confirm("ส่ง Test Message ไปยัง Test Channel ที่ตั้งค่าไว้ใช่หรือไม่?")) return;
-  const data = await invokeEmbedStudio("send_test", { payload: payload });
-  setEmbedStudioStatus("ส่ง Test Message สำเร็จ · Message ID " + data.message.id, "success");
+  if (!payload.embeds?.[0]?.title && !payload.embeds?.[0]?.description) throw new Error("กรุณาเลือกข้อมูลต้นทางหรือกรอก Title หรือ Description ก่อนทดสอบ");
+  const eventLabel = discordEmbedStudioState.eventLabel || discordEmbedStudioState.eventKey;
+  if (!window.confirm("ส่ง Embed ตัวอย่างของ “" + eventLabel + "” ไปยัง Test Channel ที่ตั้งค่าไว้ใช่หรือไม่?\\nการทดสอบนี้จะไม่แก้ไขข้อความจริงใน Discord")) return;
+  setEmbedStudioStatus("กำลังทดสอบ Embed บอท · " + eventLabel + "...", "muted");
+  const data = await invokeEmbedStudio("send_test", {
+    event_key: discordEmbedStudioState.eventKey,
+    record_id: discordEmbedStudioState.recordId || undefined,
+    message_type: discordEmbedStudioState.messageType || "primary",
+    payload: payload
+  });
+  setEmbedStudioStatus("ทดสอบ Embed บอทสำเร็จ · " + eventLabel + " · Message ID " + data.message.id, "success");
 }
 
 async function sendNewDiscordEmbedStudioMessage() {
@@ -10733,8 +10734,7 @@ function registerDiscordEmbedStudioEvents() {
   });
   ["author","author-icon","author-url","title","description","color","footer","thumbnail","image","timestamp"].forEach(key => $("embed-studio-" + key)?.addEventListener("input", renderEmbedStudioPreview));
   $("embed-studio-update-existing")?.addEventListener("click", () => void updateDiscordEmbedStudioExisting().catch(error => setEmbedStudioStatus(error.message, "error")));
-  $("embed-studio-send-war-leave-preview")?.addEventListener("click", () => void sendDiscordWarLeavePreviewTest().catch(error => setEmbedStudioStatus(error.message, "error"))); 
-  $("embed-studio-send-test")?.addEventListener("click", () => void sendDiscordEmbedStudioTest().catch(error => setEmbedStudioStatus(error.message, "error")));
+$("embed-studio-send-test")?.addEventListener("click", () => void sendDiscordEmbedStudioTest().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-send-new")?.addEventListener("click", () => void sendNewDiscordEmbedStudioMessage().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-save-template")?.addEventListener("click", () => void saveDiscordEmbedStudioTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
   $("embed-studio-load-template")?.addEventListener("click", () => void loadSelectedDiscordEmbedTemplate().catch(error => setEmbedStudioStatus(error.message, "error")));
