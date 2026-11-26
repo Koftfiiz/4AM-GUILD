@@ -2033,8 +2033,9 @@ $('sendResultsDiscord').onclick=async()=>{
       try{if(error.context&&typeof error.context.json==='function'){const body=await error.context.json();message=body.message||message;}}catch(_){}
       throw new Error(message);
     }
+    if(data?.skipped)throw new Error(data?.message||'Route ประกาศผล Duck Race ถูกปิดใช้งาน');
     if(!data?.success)throw new Error(data?.message||'ส่งผลการแข่งขันไม่สำเร็จ');
-    status.textContent='ส่งผลการแข่งขันไปยัง Discord สำเร็จแล้ว'+(data.mode==='test'?' (TEST MODE · #ทดสอบบอท)':'');
+    status.textContent='ส่งผลการแข่งขันไปยัง Discord สำเร็จแล้ว'+(data.mode==='test'?' (TEST MODE · #ทดสอบบอท)':' (PRODUCTION MODE)');
     button.textContent='ส่งผลแล้ว ✓';
   }catch(error){
     console.error('Duck Race Discord results:',error);
