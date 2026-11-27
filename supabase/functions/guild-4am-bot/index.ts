@@ -147,11 +147,13 @@ Deno.serve(async (request: Request) => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            components: [{
+            content: ["1486243901684846722", "1482073441501970513"].map((id: string) => "<@&" + id + ">").join(" "),
+            allowed_mentions: { parse: [], roles: ["1486243901684846722", "1482073441501970513"] },
+            components: shouldBeClosed ? [] : [{
               type: 1,
               components: [
-                { type: 2, style: 3, label: "เข้าร่วม", custom_id: "war_signup_join:" + event.id, disabled: shouldBeClosed },
-                { type: 2, style: 4, label: "ถอนชื่อออก", custom_id: "war_signup_leave:" + event.id, disabled: shouldBeClosed },
+                { type: 2, style: 3, label: "เข้าร่วมวอร์", custom_id: "war_signup_join:" + event.id, disabled: false },
+                { type: 2, style: 4, label: "แจ้งลาวอร์", custom_id: "war_leave_form:" + event.id, disabled: false },
               ],
             }],
           }),
