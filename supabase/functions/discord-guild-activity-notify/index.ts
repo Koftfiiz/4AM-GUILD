@@ -174,14 +174,19 @@ Deno.serve(async (request) => {
     let warSignupRows: any[] = [];
     let warSignupMembers: any[] = [];
     if (kind === "war_signup") {
-      const [signupResult, memberResult] = await Promise.all([
+      const [signupResult, memberResult, affiliationResult] = await Promise.all([
         admin.from("war_signups").select("member_id,queue_position,status").eq("event_id", recordId).neq("status", "cancelled").order("queue_position", { ascending: true }),
-        admin.from("guild_members").select("user_id,character_name,nickname,game_class,active").eq("active", true)
+        admin.from("guild_members").select("user_id,character_name,nickname,game_class,active,membership_status").eq("active", true),
+        admin.from("guild_member_affiliations").select("user_id,guilds!inner(code)").is("ended_at", null).eq("guilds.code", "4AM")
       ]);
-      if (signupResult.error || memberResult.error) return json({ success: false, message: "Unable to load Guild War registration roster" }, 500);
-      warSignupRows = signupResult.data || [];
+      if (signupResult.error || memberResult.error || affiliationResult.error) return json({ success: false, message: "Unable to load current 4AM Guild War registration roster" }, 500);
       const memberMap = new Map((memberResult.data || []).map((m: any) => [m.user_id, m]));
-      warSignupMembers = warSignupRows.map(row => ({ ...row, member: memberMap.get(row.member_id) })).filter(row => row.member);
+      const current4amIds = new Set((affiliationResult.data || []).map((row: any) => row.user_id));
+      warSignupRows = (signupResult.data || []).filter(row => {
+        const member: any = memberMap.get(row.member_id);
+        return member && member.active === true && member.membership_status === "active" && current4amIds.has(row.member_id);
+      });
+      warSignupMembers = warSignupRows.map(row => ({ ...row, member: memberMap.get(row.member_id) }));
     }
     const now = Date.now();
     const deadlineMs = record?.signup_closes_at
