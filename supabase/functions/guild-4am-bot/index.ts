@@ -153,7 +153,7 @@ Deno.serve(async (request: Request) => {
               type: 1,
               components: [
                 { type: 2, style: 3, label: "เข้าร่วมวอร์", custom_id: "war_signup_join:" + event.id, disabled: false },
-                { type: 2, style: 4, label: "แจ้งลาวอร์", custom_id: "war_leave_form:" + event.id, disabled: false },
+                { type: 2, style: 4, label: "ลาวอร์", custom_id: "war_leave_form:" + event.id, disabled: false },
               ],
             }],
           }),
@@ -624,7 +624,7 @@ Deno.serve(async (request: Request) => {
         type: 1,
         components: [
           { type: 2, style: 3, label: "เข้าร่วมวอร์", custom_id: "war_signup_join:" + eventId },
-          { type: 2, style: 4, label: "แจ้งลาวอร์", custom_id: "war_leave_form:" + eventId }
+          { type: 2, style: 4, label: "ลาวอร์", custom_id: "war_leave_form:" + eventId }
         ]
       }],
       allowed_mentions: { parse: [] }
