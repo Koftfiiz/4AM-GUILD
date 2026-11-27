@@ -149,7 +149,7 @@ const PAGE_TITLES = {
   war: "จัดตี้วอร์",
   "war-attendance": "ประกาศรายชื่อวอร์",
   "war-signup": "ลงชื่อวอร์",
-  "war-leave": "แจ้งลาวอร์",
+  "war-leave": "ลาวอร์",
   "war-stats": "สถิติกิลด์วอร์",
   "war-attendance-stats": "สถิติการเข้าร่วมวอร์",
   rules: "กฎกิลด์",
