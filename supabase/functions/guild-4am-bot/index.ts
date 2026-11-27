@@ -382,6 +382,7 @@ Deno.serve(async (request: Request) => {
   const supabase = createClient(supabaseUrl, serviceRoleKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });
+  const botToken = Deno.env.get("DISCORD_BOT_TOKEN") || "";
 
   const expectedGuildId = Deno.env.get("DISCORD_GUILD_ID") || "";
   if (expectedGuildId && interaction.guild_id !== expectedGuildId) {
@@ -523,7 +524,7 @@ Deno.serve(async (request: Request) => {
       const chunks: string[] = [];
       let chunk = prefix;
       for (const line of lines) {
-        const next = chunk ? chunk + (chunk.endsWith("\\n") ? "" : "\\n") + line : line;
+        const next = chunk ? chunk + (chunk.endsWith("\n") ? "" : "\n") + line : line;
         if (next.length > 980 && chunk) {
           chunks.push(chunk);
           chunk = line;
@@ -564,7 +565,7 @@ Deno.serve(async (request: Request) => {
     fields.push(
       {
         name: "📅 วันและเวลา",
-        value: "**" + formatThaiDate(event.event_date) + "**\\n🕒 " + (hasOfficialRoundLabel ? roundLabel : String(event.start_time || "-").slice(0, 5) + " น."),
+        value: "**" + formatThaiDate(event.event_date) + "**\n🕒 " + (hasOfficialRoundLabel ? roundLabel : String(event.start_time || "-").slice(0, 5) + " น."),
         inline: false
       },
       {
@@ -591,7 +592,7 @@ Deno.serve(async (request: Request) => {
       }
     );
 
-    addRosterFields("\\u200b", rosterLines, roleSummary[0] + "　　" + roleSummary[1] + "\\n" + roleSummary[2] + "　　" + roleSummary[3] + "\\n\\n**ผู้ลงชื่อ (" + rosterLines.length + " คน)**");
+    addRosterFields("\\u200b", rosterLines, roleSummary[0] + "　　" + roleSummary[1] + "\n" + roleSummary[2] + "　　" + roleSummary[3] + "\n\n**ผู้ลงชื่อ (" + rosterLines.length + " คน)**");
     if (closed) {
       fields.push({
         name: "🔒 ปิดการลงชื่อแล้ว",
@@ -599,7 +600,7 @@ Deno.serve(async (request: Request) => {
         inline: false
       });
     }
-    const description = "**◥◣④AM◥◣ " + kindLabel + "**\\n\\n**" + eventLabel + "**";
+    const description = "**◥◣④AM◥◣ " + kindLabel + "**\n\n**" + eventLabel + "**";
 
     return {
       embeds: [{
@@ -615,12 +616,32 @@ Deno.serve(async (request: Request) => {
       components: closed ? [] : [{
         type: 1,
         components: [
-          { type: 2, style: 3, label: "เข้าร่วม", custom_id: "war_signup_join:" + eventId },
-          { type: 2, style: 4, label: "ถอนชื่อออก", custom_id: "war_signup_leave:" + eventId }
+          { type: 2, style: 3, label: "เข้าร่วมวอร์", custom_id: "war_signup_join:" + eventId },
+          { type: 2, style: 4, label: "แจ้งลาวอร์", custom_id: "war_leave_form:" + eventId }
         ]
       }],
       allowed_mentions: { parse: [] }
     };
+  }
+
+  async function refreshWarSignupAnnouncement(eventId: string) {
+    const { data: event, error } = await supabase.from("war_events")
+      .select("discord_channel_id,discord_message_id")
+      .eq("id", eventId).maybeSingle();
+    if (error) throw new Error("อ่านข้อมูลประกาศ Discord ไม่สำเร็จ");
+    if (!event?.discord_channel_id || !event?.discord_message_id || !botToken) return false;
+    const message = await buildWarSignupMessage(eventId);
+    const response = await fetch(
+      "https://discord.com/api/v10/channels/" + encodeURIComponent(event.discord_channel_id) +
+        "/messages/" + encodeURIComponent(event.discord_message_id),
+      {
+        method: "PATCH",
+        headers: { Authorization: "Bot " + botToken, "Content-Type": "application/json" },
+        body: JSON.stringify(message)
+      }
+    );
+    if (!response.ok) throw new Error("อัปเดตประกาศ Discord ไม่สำเร็จ: " + response.status);
+    return true;
   }
 
   // Slash command: /reward-open title:<name> signup_closes_at:<ISO timestamp> (uses the latest published Guild War)
@@ -754,20 +775,21 @@ Deno.serve(async (request: Request) => {
       ? new Date(String(leaveEvent.event_date) + "T14:00:00+07:00").getTime()
       : new Date(leaveEvent.signup_closes_at || "").getTime();
     if (!Number.isFinite(deadline) || Date.now() >= deadline) return respond({ type: 4, data: { content: "หมดเวลาแจ้งลาสำหรับ Event นี้แล้ว", flags: 64 } });
-    const { data: existing, error: existingError } = await supabase.from("war_leave_requests")
-      .select("id,status").eq("event_id", eventId).eq("member_id", actor.user_id).maybeSingle();
-    if (existingError) return respond({ type: 4, data: { content: "ตรวจสอบคำแจ้งลาเดิมไม่สำเร็จ กรุณาลองอีกครั้ง", flags: 64 } });
-    if (existing?.status === "approved") return respond({ type: 4, data: { content: "คำแจ้งลาของคุณสำหรับ Event นี้ได้รับการรับทราบแล้ว ไม่ต้องส่งซ้ำ", flags: 64 } });
-    const now = new Date().toISOString();
-    const saved = await supabase.from("war_leave_requests").upsert({
-      event_id: eventId, member_id: actor.user_id, reason, status: "approved",
-      reviewed_by: null, reviewed_at: now, character_name_snapshot: actor.character_name, updated_at: now
-    }, { onConflict: "event_id,member_id" }).select("id").single();
-    if (saved.error) {
-      console.error("[WAR LEAVE MODAL] Save failed:", saved.error.message);
-      return respond({ type: 4, data: { content: "บันทึกคำแจ้งลาไม่สำเร็จ กรุณาลองใหม่อีกครั้ง", flags: 64 } });
+    const saved = await supabase.rpc("submit_war_leave_from_discord", {
+      p_event_id: eventId,
+      p_discord_user_id: discordUserId,
+      p_reason: reason
+    });
+    if (saved.error || !saved.data) {
+      console.error("[WAR LEAVE MODAL] Save failed:", saved.error?.message || "empty response");
+      return respond({ type: 4, data: { content: saved.error?.message || "บันทึกคำแจ้งลาไม่สำเร็จ กรุณาลองใหม่อีกครั้ง", flags: 64 } });
     }
-    return respond({ type: 4, data: { content: "ส่งคำแจ้งลาเรียบร้อยแล้ว\nกิจกรรม: **" + String(leaveEvent.event_name || "กิจกรรมวอร์").slice(0,180) + "**\nตัวละคร: **" + String(actor.character_name || "สมาชิก 4AM").slice(0,100) + "**", flags: 64 } });
+    try {
+      await refreshWarSignupAnnouncement(eventId);
+    } catch (e) {
+      console.error("[WAR LEAVE MODAL] Public announcement refresh failed:", e instanceof Error ? e.message : String(e));
+    }
+    return respond({ type: 4, data: { content: "ส่งคำแจ้งลาวอร์เรียบร้อยแล้ว\\nกิจกรรม: **" + String(leaveEvent.event_name || "กิจกรรมวอร์").slice(0,180) + "**\\nตัวละคร: **" + String(actor.character_name || "สมาชิก 4AM").slice(0,100) + "**", flags: 64 } });
   }
 
   if (interaction.type === 3 && String(interaction.data?.custom_id || "").startsWith("war_signup_join:")) {
@@ -808,11 +830,55 @@ Deno.serve(async (request: Request) => {
       return respond({ type: 4, data: { content: joinError?.message || joined?.message || "ลงชื่อเข้าร่วมวอร์ไม่สำเร็จ", flags: 64 } });
     }
     try {
-      const updatedMessage = await buildWarSignupMessage(eventId);
-      return respond({ type: 7, data: updatedMessage });
+      await refreshWarSignupAnnouncement(eventId);
     } catch (e) {
-      return respond({ type: 4, data: { content: "ลงชื่อสำเร็จ แต่รีเฟรชรายชื่อใน Discord ไม่สำเร็จ: " + (e instanceof Error ? e.message : "unknown error"), flags: 64 } });
+      console.error("[WAR SIGNUP] Public announcement refresh failed:", e instanceof Error ? e.message : String(e));
     }
+    return respond({
+      type: 4,
+      data: {
+        content: String(joined.message || "ลงชื่อเข้าร่วมวอร์สำเร็จ"),
+        flags: 64,
+        components: [{
+          type: 1,
+          components: [{
+            type: 2,
+            style: 4,
+            label: "ถอนชื่อออก",
+            custom_id: "war_signup_withdraw:" + eventId
+          }]
+        }]
+      }
+    });
+  }
+
+  if (interaction.type === 3 && String(interaction.data?.custom_id || "").startsWith("war_signup_withdraw:")) {
+    const eventId = String(interaction.data.custom_id).slice("war_signup_withdraw:".length);
+    if (!/^[0-9a-f-]{36}$/i.test(eventId)) {
+      return respond({ type: 4, data: { content: "ปุ่มถอนชื่อออกไม่ถูกต้อง", flags: 64 } });
+    }
+    const actor = await linkedMember();
+    if (!actor) return respond({ type: 4, data: { content: "กรุณาเชื่อมบัญชี Discord กับสมาชิก 4AM GUILD ก่อนถอนชื่อ", flags: 64 } });
+    const { data: eventRow, error: eventError } = await supabase.from("war_events")
+      .select("signup_closes_at,status").eq("id", eventId).maybeSingle();
+    if (eventError || !eventRow) return respond({ type: 4, data: { content: "ไม่พบกิจกรรม Guild War นี้", flags: 64 } });
+    const deadline = new Date(eventRow.signup_closes_at || "").getTime();
+    if (eventRow.status === "cancelled" || !Number.isFinite(deadline) || Date.now() >= deadline) {
+      return respond({ type: 4, data: { content: "ปิดรับถอนชื่อแล้ว", flags: 64 } });
+    }
+    const { data: cancelled, error: cancelError } = await supabase.rpc("cancel_war_signup_from_discord", {
+      p_event_id: eventId,
+      p_discord_user_id: discordUserId
+    });
+    if (cancelError || !cancelled?.success) {
+      return respond({ type: 4, data: { content: cancelError?.message || cancelled?.message || "ถอนชื่อออกไม่สำเร็จ", flags: 64 } });
+    }
+    try {
+      await refreshWarSignupAnnouncement(eventId);
+    } catch (e) {
+      console.error("[WAR SIGNUP] Public announcement refresh failed after withdrawal:", e instanceof Error ? e.message : String(e));
+    }
+    return respond({ type: 4, data: { content: "ถอนชื่อออกจาก Guild War เรียบร้อยแล้ว · คุณสามารถกดเข้าร่วมใหม่ได้หากยังเปิดรับสมัคร", flags: 64 } });
   }
 
   if (interaction.type === 3 && String(interaction.data?.custom_id || "").startsWith("war_signup_leave:")) {
