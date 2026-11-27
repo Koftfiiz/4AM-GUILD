@@ -478,13 +478,18 @@ Deno.serve(async (request: Request) => {
       .eq("id", eventId).maybeSingle();
     if (eventError || !event) throw new Error("ไม่พบกิจกรรม Guild War นี้");
 
-    const [signupsQ, membersQ] = await Promise.all([
+    const [signupsQ, membersQ, affiliationsQ] = await Promise.all([
       supabase.from("war_signups").select("member_id,queue_position,status").eq("event_id", eventId).neq("status", "cancelled").order("queue_position", { ascending: true }),
-      supabase.from("guild_members").select("user_id,character_name,nickname,game_class,active").eq("active", true)
+      supabase.from("guild_members").select("user_id,character_name,nickname,game_class,active,membership_status").eq("active", true),
+      supabase.from("guild_member_affiliations").select("user_id,guilds!inner(code)").is("ended_at", null).eq("guilds.code", "4AM")
     ]);
-    if (signupsQ.error || membersQ.error) throw new Error("โหลดรายชื่อผู้สมัคร Guild War ไม่สำเร็จ");
+    if (signupsQ.error || membersQ.error || affiliationsQ.error) throw new Error("โหลดรายชื่อสมาชิก 4AM สำหรับ Guild War ไม่สำเร็จ");
     const members = new Map((membersQ.data || []).map((m: any) => [m.user_id, m]));
-    const rows = (signupsQ.data || []).map((row: any) => ({ ...row, member: members.get(row.member_id) })).filter((row: any) => row.member);
+    const current4amIds = new Set((affiliationsQ.data || []).map((row: any) => row.user_id));
+    const rows = (signupsQ.data || [])
+      .map((row: any) => ({ ...row, member: members.get(row.member_id) }))
+      .filter((row: any) => row.member && row.member.active === true
+        && row.member.membership_status === "active" && current4amIds.has(row.member_id));
 
     const roleForClass = (value: unknown) => {
       const gameClass = String(value || "").trim().toLowerCase();
