@@ -77,6 +77,11 @@ Deno.serve(async (request) => {
       return json({ success: false, message: "Active guild member required" }, 403);
     }
     const role = String(requester.role || "").toLowerCase();
+    const isManager = ["developer", "leader", "admin", "management"].includes(role);
+    const manualSend = body.manual_send === true;
+    if (manualSend && (kind !== "war_signup" || !isManager)) {
+      return json({ success: false, message: "Management permission required for manual Discord publishing" }, 403);
+    }
     let existingWarMessage: any = null;
     if (kind === "war_signup") {
       const { data, error } = await admin.from("war_events")
@@ -100,14 +105,17 @@ Deno.serve(async (request) => {
     if (integrationSettings.mode === "test") {
       channelId = String(integrationSettings.test_channel_id || "");
     } else if (integrationSettings.mode === "production" && integrationSettings.production_enabled === true) {
-      if (kind === "war_signup" && existingWarMessage?.discord_message_id && existingWarMessage?.discord_channel_id) {
+      if (kind === "war_signup" && manualSend) {
+        // A manager's explicit UPDATE TO DISCORD action follows the current route.
+        // The existing message is preserved when the route points to a different channel.
+        channelId = String(route.channel_id || "");
+      } else if (kind === "war_signup" && existingWarMessage?.discord_message_id && existingWarMessage?.discord_channel_id) {
         channelId = String(existingWarMessage.discord_channel_id);
       } else {
         channelId = String(route.channel_id || "");
       }
     }
     if (!/^\d{17,20}$/.test(channelId)) return json({ success: false, message: "No valid destination configured for this Discord event; notification was not sent" }, 503);
-    const isManager = ["developer", "leader", "management"].includes(role);
     const requesterName = requester.character_name || requester.nickname || requester.discord_name || "สมาชิก 4AM";
 
     let record: any;
@@ -291,6 +299,12 @@ Deno.serve(async (request) => {
 
     const messagePayload: any = { embeds: [embed], allowed_mentions: { parse: [] } };
     if (kind === "war_signup") {
+      // Always mention the two configured 4AM GUILD roles on new posts and updates.
+      const warAnnouncementRoleIds = ["1486243901684846722", "1482073441501970513"];
+      messagePayload.content = warAnnouncementRoleIds.map((id: string) => `<@&${id}>`).join(" ");
+      messagePayload.allowed_mentions = { parse: [], roles: warAnnouncementRoleIds };
+    }
+    if (kind === "war_signup") {
       const signupClosed = isSignupClosed || record.status === "cancelled";
       if (signupClosed) {
         embed.fields.push({
@@ -304,8 +318,8 @@ Deno.serve(async (request) => {
         messagePayload.components = [{
           type: 1,
           components: [
-            { type: 2, style: 3, label: "เข้าร่วม", custom_id: "war_signup_join:" + recordId },
-            { type: 2, style: 4, label: "ถอนชื่อออก", custom_id: "war_signup_leave:" + recordId }
+            { type: 2, style: 3, label: "เข้าร่วมวอร์", custom_id: "war_signup_join:" + recordId },
+            { type: 2, style: 4, label: "แจ้งลาวอร์", custom_id: "war_leave_form:" + recordId }
           ]
         }];
       }
@@ -332,7 +346,9 @@ Deno.serve(async (request) => {
     }
 
     const discordMessagesUrl = "https://discord.com/api/v10/channels/" + channelId + "/messages";
-    const hasPreviousWarMessage = kind === "war_signup" && Boolean(record.discord_message_id);
+    const hasPreviousWarMessage = kind === "war_signup"
+      && Boolean(record.discord_message_id)
+      && String(record.discord_channel_id || "") === channelId;
     let discordResponse = await fetch(
       discordMessagesUrl + (hasPreviousWarMessage ? "/" + record.discord_message_id : ""),
       {
