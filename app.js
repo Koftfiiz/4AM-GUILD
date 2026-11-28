@@ -6304,7 +6304,7 @@ function warSignupClassSummary(rows,members=allMembers){
 }
 function renderWarSignupSummary(rows,members=allMembers,leaveRows=[]){
   const eligibleIds=new Set((members||[]).filter(member=>member.active!==false).map(member=>member.user_id).filter(Boolean));
-  const leaveIds=new Set((leaveRows||[]).filter(row=>row.status!=="rejected").map(row=>row.member_id).filter(id=>eligibleIds.has(id)));
+  const leaveIds=new Set((leaveRows||[]).filter(row=>row.status==="approved").map(row=>row.member_id).filter(id=>eligibleIds.has(id)));
   const joinedIds=new Set((rows||[]).map(row=>row.member_id).filter(id=>eligibleIds.has(id)&&!leaveIds.has(id)));
   const noResponse=Math.max(0,eligibleIds.size-joinedIds.size-leaveIds.size);
   return '<section class="war-signup-summary" aria-label="สรุปสถานะการตอบรับ"><div class="war-signup-summary-head"><strong>สรุปสถานะการตอบรับ</strong></div>'+
