@@ -9990,6 +9990,20 @@ body.activity-lightbox-open{overflow:hidden}
 @media(max-width:650px){.war-signup-summary{padding:12px}.war-signup-summary-stats{gap:7px}.war-signup-summary-stats>div{min-height:86px;padding:10px}.war-signup-summary-stats>div strong{font-size:15px}.war-signup-summary-stats>div b{font-size:28px}}
 
 
+/* Management-only no-response member list on Guild War signup */
+.war-signup-no-response-trigger{width:100%;text-align:left;font:inherit;cursor:pointer;appearance:none}
+.war-signup-no-response-trigger:focus-visible{outline:2px solid #f87171;outline-offset:3px}
+.war-signup-no-response-trigger span{font-size:15px;line-height:1.5;color:rgba(255,255,255,.82)}
+.war-signup-no-response-list{margin-top:12px;padding:14px;border:1px solid rgba(239,68,68,.3);border-radius:10px;background:rgba(239,68,68,.045)}
+.war-signup-no-response-list[hidden]{display:none}
+.war-signup-no-response-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px;color:#fca5a5;font-size:15px}
+.war-signup-no-response-members{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.war-signup-no-response-member{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0;padding:9px 11px;border:1px solid rgba(255,255,255,.07);border-radius:8px;background:rgba(255,255,255,.025);font-size:15px}
+.war-signup-no-response-member strong{min-width:0;overflow-wrap:anywhere;color:#f5eeee}
+.war-signup-no-response-member span{flex-shrink:0;color:#b7aeb1;font-size:14px}
+.war-signup-no-response-empty{margin:0;color:#b7aeb1;font-size:15px}
+@media(max-width:650px){.war-signup-no-response-list{padding:10px}.war-signup-no-response-members{grid-template-columns:1fr}.war-signup-no-response-member{align-items:flex-start;flex-direction:column;gap:3px}}
+ 
 /* MEMBER DIRECTORY — profile update notice */
 .member-profile-update-notice{display:flex;flex-direction:column;gap:9px;margin:0 0 20px;padding:18px 20px;border:1px solid rgba(232,51,63,.42);border-left:5px solid #e8333f;border-radius:10px;background:linear-gradient(105deg,rgba(179,32,46,.16),rgba(12,8,10,.78) 72%)}
 .member-profile-update-notice p{margin:0}
