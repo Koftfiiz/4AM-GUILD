@@ -5183,6 +5183,10 @@ function renderWarLayout(eventId = selectedWarEventId) {
   const event=allWarEvents.find(item=>item.id===eventId)||null;
   if(!event){selectedWarEventId=null;currentWarParties=[];currentWarPartyAssignments=[];currentWarAssignmentEventId=null;if(summary)summary.innerHTML="";if(boards)boards.innerHTML="";stage?.classList.add("hidden");return;}
   selectedWarEventId=event.id;
+  const checkinPanel=$("war-checkin-channel-panel");if(checkinPanel)checkinPanel.classList.toggle("hidden",!isManagement());
+  const checkinChannelInput=$("war-checkin-channel-id");if(checkinChannelInput)checkinChannelInput.value=event.discord_checkin_channel_id||"";
+  const checkinEventInput=$("war-checkin-event-id");if(checkinEventInput)checkinEventInput.value=event.id;
+  const checkinStatus=$("war-checkin-channel-status");if(checkinStatus)checkinStatus.textContent="";
   const config=getWarEventConfig(event),letters=["A","B","C","D"].slice(0,config.raidCount);
   warArrangeMode=false;warAssignmentFilter="all";warAssignmentClassFilter="all";warAssignmentSearch="";warAssignmentSignups=[];warAssignmentLeaves=[];warAssignmentAbsentees=[];warAssignmentRosterSnapshot=[];closeWarAssignmentModal();
   stage?.classList.remove("hidden");
@@ -5656,6 +5660,22 @@ function openPracticeTimePicker(){
     timeInput.value=panel.querySelector(".war-time-hour").value+":"+panel.querySelector(".war-time-minute").value;
     syncPracticeTimeDisplay();closePracticeTimePicker();
   });
+}
+async function saveWarCheckinChannel(){
+  if(!isManagement()||isRolePreviewActive())return;
+  const event=allWarEvents.find(item=>item.id===selectedWarEventId);
+  const input=$("war-checkin-channel-id"),status=$("war-checkin-channel-status"),button=$("war-checkin-channel-save");
+  if(!event||!input||!status)return;
+  const channelId=String(input.value||"").trim();
+  if(channelId&&!/^\\d{17,20}$/.test(channelId)){status.textContent="Channel ID ต้องเป็นตัวเลข Discord 17–20 หลัก";status.className="war-checkin-channel-status is-error";return;}
+  if(button){button.disabled=true;button.textContent="กำลังบันทึก...";}
+  try{
+    const {data,error}=await supabaseClient.from("war_events").update({discord_checkin_channel_id:channelId||null,discord_checkin_message_id:null,discord_checkin_sent_at:null}).eq("id",event.id).select("id,discord_checkin_channel_id").single();
+    if(error)throw error;
+    event.discord_checkin_channel_id=data.discord_checkin_channel_id;event.discord_checkin_message_id=null;event.discord_checkin_sent_at=null;
+    status.textContent=channelId?"บันทึกห้อง Check-in สำหรับกิจกรรมนี้แล้ว":"ล้างการกำหนดห้อง Check-in แล้ว";status.className="war-checkin-channel-status is-success";
+  }catch(error){console.error("Save war check-in channel:",error);status.textContent="บันทึกไม่สำเร็จ: "+(error.message||"เกิดข้อผิดพลาด");status.className="war-checkin-channel-status is-error";}
+  finally{if(button){button.disabled=false;button.textContent="บันทึก Channel ID";}}
 }
 async function handleWarCreate(event) {
   event.preventDefault();if(!isManagement())return;
@@ -11442,3 +11462,16 @@ supabaseClient.auth.onAuthStateChange((event, session) => {
 });
 
 // Sync deployment revision for the member cover crop and war-record lightbox UI updates.
+
+if(!document.documentElement.dataset.warCheckinChannelHandlerBound){
+  document.documentElement.dataset.warCheckinChannelHandlerBound="true";
+  document.addEventListener("click",async event=>{
+    const target=event.target instanceof Element?event.target:event.target?.parentElement;
+    if(target?.closest("#war-checkin-channel-save")){event.preventDefault();await saveWarCheckinChannel();return;}
+    if(target?.closest("#war-checkin-copy-event-id")){
+      event.preventDefault();const value=$("war-checkin-event-id")?.value||"";
+      try{await navigator.clipboard.writeText(value);const status=$("war-checkin-channel-status");if(status){status.textContent="คัดลอก Event ID แล้ว";status.className="war-checkin-channel-status is-success";}}
+      catch{const input=$("war-checkin-event-id");input?.select();document.execCommand("copy");}
+    }
+  });
+}
