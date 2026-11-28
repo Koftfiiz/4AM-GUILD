@@ -9988,3 +9988,11 @@ body.activity-lightbox-open{overflow:hidden}
 .war-signup-summary-stats>div.is-leave,.war-signup-summary-stats>.is-leave{color:#3b82f6;border-color:rgba(59,130,246,.45);background:rgba(59,130,246,.08)}
 .war-signup-summary-stats>div.is-no-response,.war-signup-summary-stats>.is-no-response{color:#ef4444;border-color:rgba(239,68,68,.45);background:rgba(239,68,68,.08)}
 @media(max-width:650px){.war-signup-summary{padding:12px}.war-signup-summary-stats{gap:7px}.war-signup-summary-stats>div{min-height:86px;padding:10px}.war-signup-summary-stats>div strong{font-size:15px}.war-signup-summary-stats>div b{font-size:28px}}
+
+
+/* MEMBER DIRECTORY — profile update notice */
+.member-profile-update-notice{display:flex;flex-direction:column;gap:9px;margin:0 0 20px;padding:18px 20px;border:1px solid rgba(232,51,63,.42);border-left:5px solid #e8333f;border-radius:10px;background:linear-gradient(105deg,rgba(179,32,46,.16),rgba(12,8,10,.78) 72%)}
+.member-profile-update-notice p{margin:0}
+.member-profile-update-notice-title{color:#fff1f2;font-size:19px;font-weight:800;line-height:1.65}
+.member-profile-update-notice-description{color:#f0a3ad;font-size:15px;font-weight:400;line-height:1.7}
+@media(max-width:650px){.member-profile-update-notice{padding:14px 15px;margin-bottom:16px}.member-profile-update-notice-title{font-size:17px;line-height:1.6}.member-profile-update-notice-description{font-size:15px;line-height:1.65}}
